@@ -604,6 +604,7 @@ These mechanics have no table yet. An item gets one when its text uses the same 
   - A save harder for creatures named by their trait as a word (`src/compiler/kind-saves.js`): Mythotoxin's "Mythic creatures take a -2 circumstance penalty to saves against mythotoxin".
   - More damage on a failure for a kind (`failDamage`, 2026-10-26): Locust Leather's "Swarms that fail this save also take 1d6 persistent poison damage". A swarm's failure rows deal the basic save's damage and that.
   - A sense its user keeps by doing something, beside its own time: Darkvision Scope's "as long as you continue to look through the scope" is on the Effect's words, not a note.
+  - A sense while its user Sustains, up to a time (2026-10-27): Dragon's Eye Charm's Darkvision through the charm, sustained up to 10 minutes, lasts 10 minutes. The Sustain is on the Effect's words ("at most while you Sustain the Activation (end it sooner if you stop)").
   - "On this check, you roll twice": the check the sentence before attempts (`src/compiler/fortune.js`). Brooch of Inspiration's "Recall Knowledge using Lore" is PF2e's `lore-skill-check`; the Major's "with any skill" is `skill-check`.
   - Breathing underwater, which no PF2e rule plays: "You can breathe underwater for 8 hours" is in words on its user's Effect, for its time (Submersible Helmet, Sailor's Collar).
   - A sentence that says only what the bonus's time already means: Affliction Suppressant's daily saves, which its 10 minutes never reach.

@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1344,
+  "entries": 1343,
   "results": {
    "partial": 425,
-   "none": 551,
+   "none": 550,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -36,7 +36,7 @@
    "triggers": 91,
    "situational": 18,
    "dying": 29,
-   "senses": 22,
+   "senses": 21,
    "speech": 19,
    "from-events": 4,
    "forms": 26,
@@ -57,7 +57,7 @@
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 110,
-   "lasting": 241,
+   "lasting": 240,
    "moving": 116,
    "triggers": 125,
    "visibility": 51,
@@ -73,13 +73,13 @@
    "no-rules": 18,
    "situational": 86,
    "creatures": 72,
-   "mind": 65,
+   "mind": 64,
    "illusions": 60,
    "removed": 7,
    "range": 6,
    "cooldown": 12,
    "vehicles": 27,
-   "senses": 29,
+   "senses": 28,
    "forms": 27,
    "fortune": 10,
    "retaliation": 3,
@@ -2868,18 +2868,6 @@
    "work": "glide",
    "needs": [
     "moving"
-   ]
-  },
-  {
-   "name": "Dragon's Eye Charm",
-   "kind": "activation",
-   "result": "none",
-   "main": "senses",
-   "work": "darkvision",
-   "needs": [
-    "senses",
-    "lasting",
-    "mind"
    ]
   },
   {

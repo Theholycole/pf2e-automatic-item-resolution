@@ -53,6 +53,14 @@ test("a sense its user keeps by doing something, beside its own time: Darkvision
     }
 });
 
+test("a sense while its user Sustains, up to a time (2026-10-27): Dragon's Eye Charm's Darkvision through the charm, 10 minutes at most", () => {
+    const charm = compileActivations(item("Dragon's Eye Charm"), { spellEffects }).map((entry) => entry.plan).find((plan) => plan?.item?.senses);
+    assert.equal(charm.partial, undefined);
+    const [sense] = charm.item.senses;
+    assert.deepEqual([sense.selector, sense.duration.value, sense.duration.unit], ["darkvision", 10, "minutes"]);
+    assert.equal(senseText(sense), "Darkvision for 10 minutes, at most while you Sustain the Activation (end it sooner if you stop)");
+});
+
 test("'On this check, you roll twice': the check the sentence before attempts (Brooch of Inspiration's Recall Knowledge)", () => {
     assert.deepEqual(["Brooch of Inspiration", "Brooch of Inspiration (Greater)", "Brooch of Inspiration (Major)"].map((name) => [activation(name).builtin, activation(name).rollTwice.selector, activation(name).notes]), [["roll-twice", "lore-skill-check", []], ["roll-twice", "lore-skill-check", []], ["roll-twice", "skill-check", []]]);
 });

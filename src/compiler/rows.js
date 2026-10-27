@@ -741,7 +741,7 @@ function suppressOf(sentences, duration, used = new Set()) {
 const SENSES = { "greater darkvision": "greater-darkvision", darkvision: "darkvision", "low-light vision": "low-light-vision" };
 function sensesOf(sentences, duration, used = new Set()) {
     const found = [];
-    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you)(?: the)? (greater darkvision|darkvision|low-light vision)\b/gi;
+    const pattern = /\b(?:you (?:gain|have|get)|grants? you|granting you|You can look through (?:the|this|your) [\w' -]+? to gain)(?: the)? (greater darkvision|darkvision|low-light vision)\b/gi;
     for (const [index, sentence] of sentences.entries()) {
         if (/^\s*(?:If|When|Whenever|While|Each time|Unless)\b/i.test(sentence) || /\b(?:all(?:y|ies)|creatures? (?:in|within)|emanation|as if you had)\b/i.test(sentence)) continue;
         for (const match of sentence.matchAll(pattern)) {
@@ -756,8 +756,12 @@ function sensesOf(sentences, duration, used = new Set()) {
             // (Its user's own doing that keeps it, beside a time of its own — Darkvision Scope's "until the beginning of your next turn, as long as
             // you continue to look through the scope": on the Effect's words, its user's to keep doing, 2026-10-25.)
             const keeps = until ? /,\s*(as long as you continue to look through (?:the|this|your) [\w' -]+?)\.?$/i.exec(sentence.trim()) : null;
-            if (deactivate || keeps || !/\bas long as\b|\bwhichever comes first\b|\bor (?:until|the item)\b/i.test(sentence)) used.add(index);
-            found.push({ selector, duration: time, ...(deactivate ? { toggle: true, ...(/\bno longer invested\b/i.test(deactivate[0]) ? { invested: true } : {}) } : {}), ...(keeps ? { keeps: keeps[1] } : {}) });
+            // (Or Sustained, up to a time — Dragon's Eye Charm's "for as long as you Sustain the Activation, to a maximum of 10 minutes":
+            // that long at most, its user's Sustain on the Effect's words, 2026-10-27.)
+            const sustained = /\bfor as long as you Sustain the Activation, (?:to|up to) a maximum of (\d+|one|an?|ten) (rounds?|minutes?|hours?)\.?$/i.exec(sentence.trim());
+            if (deactivate || keeps || sustained || !/\bas long as\b|\bwhichever comes first\b|\bor (?:until|the item)\b/i.test(sentence)) used.add(index);
+            const lasting = sustained ? { mode: "fixed", value: WORD_NUMBERS[sustained[1].toLowerCase()] ?? Number(sustained[1]), unit: UNITS[sustained[2].toLowerCase()], expiry: "turn-start", anchor: "effect-start" } : time;
+            found.push({ selector, duration: lasting, ...(deactivate ? { toggle: true, ...(/\bno longer invested\b/i.test(deactivate[0]) ? { invested: true } : {}) } : {}), ...(keeps ? { keeps: keeps[1] } : sustained ? { keeps: "at most while you Sustain the Activation (end it sooner if you stop)" } : {}) });
         }
     }
     // (Other senses with their acuity and range: Nosoi Charm's "You gain lifesense as an imprecise sense with a range of 30 feet for 1
