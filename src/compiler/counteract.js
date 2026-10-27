@@ -143,7 +143,11 @@ function readCounteractOwn(html, { level = 0 } = {}) {
     if (free && !/\bcan't be counteracted\b/i.test(said)) {
         const modifierOf = /\+(\d+) counteract modifier\b|\bcounteract (?:check )?modifier (?:of |is )?\+(\d+)|\bcounteract (?:check )?modifier (?:of |is )?1d20\s*\+\s*(\d+)/i.exec(said);
         const fromUser = { ...(CLASS_DC_MODIFIER.test(said) ? { modifier: "class-dc" } : {}), ...(HALF_LEVEL_RANK.test(said) ? { rank: "half-level" } : {}) };
-        if (!modifierOf && !fromUser.modifier) return null;
+        // (No modifier given, Rod of Cancellation's "attempt to counteract the effect or item", Spell Duelist's Siphon's "the triggering spell": GM
+        // Core's DC for the item's level less 10, the user's answer to question 5 (2026-10-26), a line of the card saying the GM may change it —
+        // 2026-10-27. Only when that's what the activation is about: not Splendid Floodlight's darkness, beside its light.)
+        const levelModifier = !modifierOf && !fromUser.modifier && Number(level) > 0 && /^the (?:effect or item|triggering spell)$/i.test(free[1] ?? free[2] ?? "") ? (LEVEL_DCS[Math.max(0, Math.min(25, Number(level)))] ?? 14) - 10 : null;
+        if (!modifierOf && !fromUser.modifier && levelModifier === null) return null;
         const stated = new RegExp(String.raw`\bcounteract rank (?:of |is )?${ORDINAL}\b|\ban? ${ORDINAL}-rank (?:Dispel Magic|counteract)\b`, "i").exec(said);
         const stored = /\busing the rank of the spell stored in\b/i.test(said);
         const rank = fromUser.rank ? null : stated ? Number(stated[1] ?? stated[2]) : stored ? null : Math.max(1, Math.ceil(Number(level) / 2));
@@ -158,7 +162,7 @@ function readCounteractOwn(html, { level = 0 } = {}) {
         // GM's by the result the card reports.)
         const degrees = sentences.slice(at + 1).map((sentence) => /^(Critical Success|Success|Failure|Critical Failure) (.+)$/.exec(sentence.trim())).filter(Boolean).map(([, degree, what]) => `${degree.charAt(0)}${degree.slice(1).toLowerCase()}: ${what.replace(/\.$/, "")} (by hand).`);
         after.push(...degrees);
-        return { modifier: modifierOf ? Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]) : null, rank, ...(Object.keys(fromUser).length ? { fromUser } : {}), conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
+        return { modifier: modifierOf ? Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]) : levelModifier, rank, ...(Object.keys(fromUser).length ? { fromUser } : {}), conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...(levelModifier !== null ? [`Its counteract modifier +${levelModifier}: the item gives none, so its level's DC less 10 (the GM's call).`] : []), ...after] };
     }
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
     if (!near && !adjacent && !listed && !/\b(?:on you|affecting you|afflicting you|you are currently suffering|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;

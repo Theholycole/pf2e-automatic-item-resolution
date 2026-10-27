@@ -2,7 +2,7 @@
 // the rest — Eidetic Potion's "+2 status bonus to create representations of that memory, whether using Crafting to create an artistic rendition
 // or Society to create a Forgery", Fake Blood Pack's "When faking an injury, a punctured blood pack grants a +2 item bonus to relevant Deception
 // checks", Empath's Cordial's "Perception check with a +2 item bonus … to discern that information", Restful Sleep Fulu's "+2 status bonus to
-// saves against mental effects that occur in your dreams". PF2e's own rules on the item's note Effect for its time: a toggle for the situation
+// saves against mental effects that occur in your dreams"; and Antimagic Oil's immunity to magic for a minute. PF2e's own rules on the item's note Effect for its time: a toggle for the situation
 // (a RollOption its user switches on, domain all, as Red Rose's "Beloved within 10 feet") and the FlatModifier predicated on it, or on PF2e's
 // own roll options where it has them (action:sense-motive, item:trait:mental). A bonus that lasts "until you benefit from the bonus … for the
 // first time" is removed after that roll (removeAfterRoll "if-enabled"). The item's other words — what it senses, its memory, its rest — on
@@ -48,6 +48,18 @@ const READINGS = [
         })
     },
     {
+        // Antimagic Oil: immune to magic for a minute. PF2e's Immunity "magic" (spells and what they make); the rest words on its Effect, as
+        // PF2e's "magical" immunity would take its armor's and the attackers' fundamental runes too.
+        test: /^This oil contains energy that repels nearly all types of magic\. When you apply this oil to armor, the creature wearing the armor becomes immune to all spells, effects of magic items \(the wearer's and those of others\), and effects with the magical trait for 1 minute\. The oil affects neither the magic of the armor nor the fundamental runes of weapons attacking the wearer\. Magical effects from a source of 20th level or higher, such as a deity, still function on the armor's wearer\.$/,
+        recipient: "drinker",
+        note: () => ({
+            label: "Antimagic",
+            text: "Immune to all spells, effects of magic items (its own and others'), and effects with the magical trait; not to the magic of its armor or the fundamental runes of weapons attacking it, nor to magical effects from a source of 20th level or higher, such as a deity (the GM's call). PF2e's immunity to magic holds off spells; the rest by hand.",
+            duration: time(1, "minutes"),
+            rules: [{ key: "Immunity", type: "magic" }]
+        })
+    },
+    {
         // Restful Sleep Fulu: sleep within its hour.
         test: /^This fulu depicts the five-spoke wheel of Qi Zhong, god of magic and medicine, and burns away slowly, like incense\. If you fall asleep within the fulu's duration, you regain double the amount of Hit Points you usually gain from resting\. You also gain a \+2 status bonus to saves against mental effects that occur in your dreams, such as the Nightmare spell\.$/,
         note: () => ({
@@ -75,6 +87,8 @@ export function withSituational(plan, item) {
         partial: undefined,
         automation: { ...(plan.automation ?? {}), level: "automatic" },
         ...(reading.line ? { notes: [...(plan.notes ?? []), reading.line] } : {}),
+        // (Its Effect on the creature it's applied to: its user or one beside it, picked on the card.)
+        ...(reading.recipient ? { item: { ...plan.item, recipient: reading.recipient } } : {}),
         resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...success, noteEffects: [...success.noteEffects.filter((entry) => !entry.reminder), reading.note()] } } }
     };
 }
@@ -115,5 +129,50 @@ export function withToastedMarks(plan, item) {
         resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...success, modifiers, noteEffects } } },
         item: { ...plan.item, recipient: "user", mark: { slug, duration: modifiers.find((modifier) => modifier.duration?.mode === "fixed")?.duration ?? null, several: true } },
         ...(plan.partial && !left ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {})
+    };
+}
+
+// (And an activation's: Magnetic Shield's "When an activated magnetic shield is raised, the circumstance bonus increases by 1 against attacks
+// made with weapons primarily made of metal" — no PF2e roll option tells a metal weapon, so its toggle, and the raised shield's +2 made +3
+// (circumstance bonuses don't stack) while raised (self:shield:raised); Coral Aspect's Cohabitate, "you gain resistance 5 to any damage caused by
+// a creature sharing the same space as you" — PF2e's Resistance while its toggle says so. What else they say on the same Effect; the bottled
+// lightning used up a line of the card.)
+const ACTIVATION_READINGS = [
+    {
+        test: /^The shield becomes an electromagnet for 3 rounds\. When an activated magnetic shield is raised, the circumstance bonus increases by 1 against attacks made with weapons primarily made of metal\. If you use a Shield Block against a creature attacking you with such a weapon, you also gain a \+1 item bonus to Disarm attempts against that weapon until the end of your next turn\. The activation uses up the bottled lightning ?, and the shield can't be activated again until a new one is installed\.$/,
+        line: "It uses up the bottled lightning installed in the shield (remove it); it can be activated again once a new one is installed (moderate or better, 3 Interact actions).",
+        note: () => ({
+            label: "Electromagnet",
+            text: "While the shield is raised, its circumstance bonus to AC is 1 higher against attacks made with weapons primarily made of metal (its toggle on against one). After a Shield Block against a creature attacking with such a weapon, +1 item bonus to Disarm attempts against that weapon until the end of your next turn.",
+            duration: time(3, "rounds"),
+            rules: [toggle("magnetic-shield-metal", "Attacked with a metal weapon"), { key: "FlatModifier", selector: "ac", type: "circumstance", value: 3, predicate: ["self:shield:raised", "magnetic-shield-metal"], label: "Magnetic Shield" }]
+        })
+    },
+    {
+        test: /^For 1 minute, your body becomes a mobile coral reef, letting much smaller creatures pass through or shelter in it\. Creatures at least one size category smaller than you can share your space\. Allies that share your space gain a \+2 circumstance bonus to their AC, and you gain resistance 5 to any damage caused by a creature sharing the same space as you\.$/,
+        note: () => ({
+            label: "Coral reef",
+            text: "Creatures at least one size smaller than you can share your space, and pass through or shelter in it. Allies sharing your space gain a +2 circumstance bonus to AC (give it to them by hand), and you have resistance 5 to damage from a creature sharing your space (its toggle on for one).",
+            duration: time(1, "minutes"),
+            rules: [toggle("coral-aspect-sharer", "Damage from a creature sharing its space"), { key: "Resistance", type: "all-damage", value: 5, predicate: ["coral-aspect-sharer"] }]
+        })
+    }
+];
+
+// An activation's plan and its html → the plan with its situation's Effect, or the same plan.
+export function withActivationSituational(plan, html) {
+    const success = plan?.resolution?.outcomes?.success;
+    if (!success || !(success.noteEffects ?? []).some((note) => note.reminder)) return plan;
+    const effect = /<strong>\s*Effect\s*<\/strong>([\s\S]*)$/i.exec(String(html ?? ""));
+    const words = effect ? flat(effect[1]).replace(/\s*Craft Requirements\b.*$/, "") : "";
+    const reading = ACTIVATION_READINGS.find((entry) => entry.test.test(words));
+    if (!reading) return plan;
+    return {
+        ...plan,
+        noteOnly: undefined,
+        partial: undefined,
+        automation: { ...(plan.automation ?? {}), level: "automatic" },
+        ...(reading.line ? { notes: [...(plan.notes ?? []), reading.line] } : {}),
+        resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...success, noteEffects: [...success.noteEffects.filter((entry) => !entry.reminder), reading.note()] } } }
     };
 }

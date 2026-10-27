@@ -246,7 +246,8 @@ test("a counteract card's other rules (2026-10-27): its notes and partial — Fu
     assert.deepEqual([mask.builtin, mask.item.counteract.thenSpell, mask.item.counteract.notes, mask.partial], ["counteract", { name: "truesight", value: 1, unit: "minutes" }, undefined, undefined]);
     // (Etheric Essence Disruptor's line to tick an active spell, a card line: whole.)
     assert.equal(compileItem(source("Etheric Essence Disruptor (Lesser)")).partial, undefined);
-    // (Cloth of Nullification's wait is its recharge; its absorbing the magic instead isn't played: partial.)
+    // (Cloth of Nullification's wait is its recharge; its absorbing the magic instead isn't played — partial until 2026-10-27, when what
+    // follows its check became lines of its card, each the GM's call, as a free counteract's end is: src/compiler/table-lines.js.)
     const cloth = compileActivations(source("Cloth of Nullification"))[0].plan;
-    assert.deepEqual([Boolean(cloth.trigger.recharge), cloth.partial], [true, true]);
+    assert.deepEqual([Boolean(cloth.trigger.recharge), cloth.partial], [true, undefined]);
 });

@@ -4,16 +4,30 @@
 // rulings (src/compiler/decided.js) left it as it was. Each returns the plan as it was when it isn't its item's. Pure.
 
 import { withFoodImmunityLine, withSecondaryFatigue, withShellBreathing, withSoberedImmunity } from "./immune-after.js";
+import { withHeartbeatFloor } from "./heartbeat.js";
+import { withIntactShot } from "./intact-shot.js";
 import { withMerged } from "./merged.js";
-import { withMechanismLine, withSituational, withToastedMarks } from "./situational.js";
+import { oneOff } from "./one-offs.js";
+import { isSpecialItem } from "./decided.js";
+import { withOathCritical } from "./oath.js";
+import { withActivationLines, withNullifyLines, withTableLines } from "./table-lines.js";
+import { withActivationSituational, withMechanismLine, withSituational, withToastedMarks } from "./situational.js";
 
-// An activation's plan, its activation ({ name, html }) and its item → the plan as these read it.
-export function withActivationRules(plan, activation, item) {
-    const html = activation?.html ?? "";
-    return withShellBreathing(withToastedMarks(withMerged(plan, html), item), html, item);
+// (A one-off rule left in a builtin's notes — Earthglide Cloak's expulsion beside its teleport card's Burrow —, which decided.js leaves to the
+// builtin: its card's lines, counted done, as decided.js's one-offs are.)
+function withBuiltinOneOff(plan, item) {
+    if (!plan?.builtin || !plan.partial || isSpecialItem(item) || !oneOff(plan.source?.name) || (plan.unread ?? []).length) return plan;
+    return { ...plan, partial: undefined, decided: "one-off", automation: { ...(plan.automation ?? {}), level: "automatic" } };
 }
 
-// A consumable's plan and the item → the plan as these read it.
-export function withConsumableRules(plan, item) {
-    return withFoodImmunityLine(withSecondaryFatigue(withSoberedImmunity(withMechanismLine(withSituational(plan, item)), item), item));
+// An activation's plan, its entry ({ activation: { name, html }, index }), its item and its base (a plan maker, for one nothing read) → the
+// plan as these read it.
+export function withActivationRules(plan, entry, item, base) {
+    const html = entry?.activation?.html ?? "";
+    return withNullifyLines(withBuiltinOneOff(withIntactShot(withOathCritical(withShellBreathing(withToastedMarks(withActivationSituational(withMerged(withActivationLines(plan, entry, item, base), html), html), item), html, item), item), item), item), html);
+}
+
+// A consumable's plan, the item and its base → the plan as these read it.
+export function withConsumableRules(plan, item, base) {
+    return withHeartbeatFloor(withFoodImmunityLine(withSecondaryFatigue(withSoberedImmunity(withMechanismLine(withSituational(withTableLines(plan, item, base), item)), item), item)), item);
 }

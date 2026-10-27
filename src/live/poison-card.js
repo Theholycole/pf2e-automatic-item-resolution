@@ -151,7 +151,7 @@ export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|
 // and must succeed at a @Check…".)
 const OWN_SAVE = /^(?:Upon (?:drinking|consuming|eating|imbibing)[^,]*,\s*(?:you )?attempt an? @Check|When you (?:drink|consume|eat|imbibe)[^,.]*?,? you must (?:succeed at|attempt) an? @Check)|\bYou (?:drink|consume|eat|imbibe)\b[^.]*? and must (?:succeed at|attempt) an? @Check/;
 export const isOwnSave = (plan, text = "") => useSave(plan, text) && String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).some((sentence) => OWN_SAVE.test(sentence.replace(/^(?:Activate\b[^.]*?\)\s*|Effect\s+)/, "")));
-export const isUseSave = (plan, text = "") => useSave(plan, text) && !LATER.test(text) && !ATTACKER.test(text);
+export const isUseSave = (plan, text = "") => useSave(plan, text) && !LATER.test(text) && !ATTACKER.test(text) && !KILLED.test(text);
 // One for later (a breath potion's "grants you the Energy Breath action for 1 hour"; not an aura): the same card, kept
 // open until the drinker uses it — then the presser targets the creatures and presses it.
 // (One its drinker's attacker sets off is set off by that, whatever else its save's sentence says: Frogskin Tincture's "If you are
@@ -159,14 +159,17 @@ export const isUseSave = (plan, text = "") => useSave(plan, text) && !LATER.test
 // (And one its target's own later action sets off, Stumbling Fulu's "When the creature to which the fulu is affixed completes a Stride
 // action, the creature must attempt …": affixed on use, pressed when it does.)
 const AFFIXED_LATER = /\bWhen the creature to which the fulu is affixed (?:completes|takes|uses|attempts)\b/i;
-export const isLaterSave = (plan, text = "") => (useSave(plan, text) && LATER.test(text) && !/\baura\b/i.test(text)) || (savedOnUse(plan) && (ATTACKER.test(text) || AFFIXED_LATER.test(text)));
+// (And a whetstone's at its wielder's kill, Penultimate Heartbeat's "When you reduce a living creature to 0 Hit Points with a weapon under the
+// effect of a penultimate heartbeat": open for its hour, pressed at each such kill — 2026-10-27, src/compiler/heartbeat.js.)
+export const KILLED = /\bWhen you reduce a living creature to 0 Hit Points with a weapon under the effect of\b/i;
+export const isLaterSave = (plan, text = "") => (useSave(plan, text) && LATER.test(text) && !/\baura\b/i.test(text)) || (savedOnUse(plan) && (ATTACKER.test(text) || AFFIXED_LATER.test(text) || KILLED.test(text)));
 
 export const AREA_WORDS = (area) => (area?.value ? `the creatures in its ${area.value}-foot ${area.type}` : "the creature it targets");
 
 // One used again for the item's time ("After you use Energy Breath, you can't do so again for 1d4 rounds", Roaring
 // Potion's "Frequency once every 1d4 rounds"): its later card stays open until then (Frost Breath's one exhale doesn't).
 const AGAIN = /\bcan't (?:do so|use (?:it|this|that)(?: [\w' -]+?)?) again for\b|\bFrequency once (?:per|every)\b/i;
-export const repeatsLater = (text = "") => AGAIN.test(text) || ATTACKER.test(text);
+export const repeatsLater = (text = "") => AGAIN.test(text) || ATTACKER.test(text) || KILLED.test(text);
 
 // later: kept for an action the item gives; repeat and until (world time in seconds): used again until then.
 // own: the drinker's own save (no targets: the user's own token); attacker: set off by a creature attacking the user.
