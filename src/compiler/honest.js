@@ -368,7 +368,9 @@ export function withGmCalls(plan) {
 // the spell", an intelligent item's statistics. Those left out of the words looked at; a note the GM's call (withGmCalls) is a card line.
 const CAST_RULE = /\b\d+d\d+\b|\bdamage\b|\bcounteract\b|\bbonus\b|\bpenalty\b|\b(?:frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|fatigued|drained|quickened|off-guard|concealed|invisible|hidden)\b|\brange\b|\b\d+ (?:feet|foot|miles?)\b|\b\d+ (?:rounds?|minutes?|hours?|days?)\b|\binstead\b|\bexcept\b|\bdegree of success\b|\bStrike\b|\bweakness\b|\bresistance\b|\bimmune\b|\bdoesn't require\b|\bas a (?:one|two|three)-action\b|\bsave DC is your\b|\bheightened\b|\bmore targets?\b|\bon another creature\b|\barea\b/i;
 // (Or the spell's own end said again: Phantom Shroud's "When the activation ends, you return to material form" for Ethereal Jaunt.)
-const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b|When the activation ends, you return to material form\.$)/i;
+// (Or what the spell itself does, in the item's words: Animate Dreamer's "focuses on a single unattended inanimate object in an area it can see
+// and exerts its will over the object, temporarily levitating it around" for Telekinetic Hand, 2026-10-27.)
+const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b|When the activation ends, you return to material form\.$|The [\w' -]+? focuses on a single unattended inanimate object in an area it can see and exerts its will over the object, temporarily levitating it around\.$)/i;
 const literal = (words) => words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const castWords = (note, plan, spell) => {
     let text = said(note);

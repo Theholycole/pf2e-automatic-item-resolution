@@ -8,6 +8,7 @@ import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf }
 import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
+import { arrivalAfterMove } from "./cast-arrival.js";
 import { castDegreeEffectSource, castPenaltySource } from "../src/live/card.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
@@ -91,6 +92,8 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (far.length) throw new Error(`${far.join(", ")} ${far.length === 1 ? "is" : "are"} beyond ${state.item.name}'s range.`);
         // (Smoke where its user was and where it arrives, Charlatan's Cape's Translocate: watched for before the cast moves it, scripts/cast-smoke.js.)
         const smoke = state.plan.castSmoke ? smokeAfterMove(state.plan.castSmoke, { actor, token, item: state.item }) : null;
+        // (Damage beside where it was and where it arrives, Fiendish Teleportation's brimstone: scripts/cast-arrival.js, watched for the same way.)
+        const arrival = state.plan.castArrival ? arrivalAfterMove(state.plan.castArrival, { actor, token, item: state.item }) : null;
         // (A worse save for targets of a kind, Radiant Spark's celestials: PF2e's AdjustDegreeOfSuccess on each before the cast, till its save.)
         if (state.plan.castDegree) {
             for (const target of targetTokens) {
@@ -125,6 +128,7 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
         if (heals) lines.push(heals);
         if (smoke) lines.push(smoke);
+        if (arrival) lines.push(arrival);
         // (A light spell against darkness, Dawnlight's: its counteract card, the spell's rank and 1 more — src/live/cast-card.js darkLightCounteract.)
         const dark = darkLightCounteract(state.plan, chosenSpell(state), cast?.rank ?? request.rank);
         if (dark) {

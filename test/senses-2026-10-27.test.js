@@ -141,3 +141,52 @@ test("Corpseward Pendant: Undetected by undead in words for 10 minutes, ended by
     assert.equal(planFor(save, { system: { traits: { value: ["humanoid"] } } }), null);
     assert.equal(planFor(save, { system: { traits: { value: ["undead", "zombie"] } } }), save);
 });
+
+test("Horn of the Aoyin's Cannibal Call: a DC 30 Will card in its 60-foot emanation, the rage a note Effect with PF2e's rules (jaws, +2 unarmed damage, +2 against mental, bloodsense 30, +10 Speed, –1 AC), a round or a minute; the critical success's immunity", () => {
+    const horn = activation("Horn of the Aoyin", "Cannibal Call");
+    assert.deepEqual([horn.noteOnly, horn.partial, horn.resolution.kind, horn.resolution.check.statistic, horn.resolution.check.against.value, horn.targeting.area], [undefined, undefined, "save", "will", 30, { type: "emanation", value: 60 }]);
+    const [rage] = horn.resolution.outcomes.failure.noteEffects;
+    assert.deepEqual([rage.duration.value, rage.duration.unit, horn.resolution.outcomes.criticalFailure.noteEffects[0].duration.unit], [1, "rounds", "minutes"]);
+    assert.deepEqual(rage.rules.map((rule) => [rule.key, rule.selector ?? rule.slug, rule.value ?? rule.range ?? rule.damage?.base?.die]), [["Strike", "aoyin-jaws", "d8"], ["FlatModifier", "strike-damage", 2], ["FlatModifier", "saving-throw", 2], ["Sense", "bloodsense", 30], ["FlatModifier", "land-speed", 10], ["FlatModifier", "ac", -1]]);
+    assert.deepEqual(horn.trigger.immunity.degrees, ["criticalSuccess"]);
+    assert.ok(horn.traits.includes("incapacitation"));
+    assert.ok(horn.notes.some((note) => /above level 13/.test(note)) && horn.notes.some((note) => /critically fail, with no save/.test(note)));
+});
+
+test("words on an Effect for what PF2e can't play: Infiltrator's Elixir's disguise beside its +4, Look-Me-Not's untrained Feint and reactionless Strikes beside its +2, Sinister Knight's disguise until dismissed, Scope of Truth's 10 minutes of the GM's secret counteracts", () => {
+    const elixir = consumable("Infiltrator's Elixir");
+    assert.deepEqual([elixir.partial, elixir.unread, elixir.resolution.outcomes.success.noteEffects.map((note) => [note.label, note.duration.value])], [undefined, undefined, [["Disguised", 10]]]);
+    const look = consumable("Look-Me-Not");
+    assert.deepEqual([look.partial, look.unread, look.resolution.outcomes.success.noteEffects.map((note) => [note.label, note.duration.value, note.duration.unit])], [undefined, undefined, [["Hard to look at", 1, "minutes"]]]);
+    const knight = activation("Sinister Knight");
+    const [disguise] = knight.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([knight.builtin, disguise.duration], [undefined, null]);
+    assert.match(disguise.text, /lifesense.*\+14, rank 4/);
+    const scope = activation("Scope of Truth", "Reveal All");
+    const [truth] = scope.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([scope.builtin, truth.duration.value, truth.duration.unit], [undefined, 10, "minutes"]);
+    assert.match(truth.text, /\+20, rank 7/);
+    assert.equal(activation("Animate Dreamer", "Animate Object").partial, undefined, "its note only says what Telekinetic Hand does");
+});
+
+test("Fiendish Teleportation: its brimstone's 2d6 spirit damage, after the teleport, at the creatures next to the space it left or arrived in", async () => {
+    const { adjacentTo } = await import("../src/live/arrival.js");
+    const fiendish = activation("Fiendish Teleportation");
+    assert.deepEqual([fiendish.builtin, fiendish.partial, fiendish.notes], ["cast-spell", undefined, undefined]);
+    const damage = fiendish.castArrival.plan.resolution;
+    assert.deepEqual([damage.check.roll, damage.sharedDamage.components[0].formula, damage.sharedDamage.components[0].type, damage.outcomes.success.damage.multiplier], ["automatic", "2d6", "spirit", 1]);
+    // (A 100-pixel grid: next to the old square or the new, each once; not the one standing on it, nor one two squares off.)
+    const tokens = [{ id: "a", x: 100, y: 0 }, { id: "b", x: 200, y: 0 }, { id: "c", x: 1100, y: 1000 }, { id: "d", x: 1000, y: 1000 }, { id: "e", x: 100, y: 100 }];
+    assert.deepEqual(adjacentTo([{ x: 0, y: 0, width: 1, height: 1 }, { x: 1000, y: 1000, width: 1, height: 1 }], tokens, 100).map((token) => token.id), ["a", "e", "c"]);
+});
+
+test("Appetizing Flavor Snare's DC 15 Reflex save, its failures doused for the hour (a note Effect); Aquarium Lamp's 60 feet of bright light for 10 minutes at its user's square", () => {
+    const snare = consumable("Appetizing Flavor Snare");
+    assert.deepEqual([snare.builtin, snare.partial, snare.noteOnly], ["zone", undefined, undefined]);
+    const save = snare.zone.saves[0].plan;
+    assert.deepEqual([save.resolution.check.statistic, save.resolution.check.against.value], ["reflex", 15]);
+    for (const degree of ["failure", "criticalFailure"]) assert.deepEqual(save.resolution.outcomes[degree].noteEffects.map((note) => [note.label, note.duration.value, note.duration.unit]), [["Doused with bait", 1, "hours"]]);
+    assert.deepEqual(save.resolution.outcomes.success.noteEffects, []);
+    const lamp = activation("Aquarium Lamp");
+    assert.deepEqual([lamp.noteOnly, lamp.item.placedLight.bright, lamp.item.placedLight.dim, lamp.item.placedLight.duration.value], [undefined, 60, 120, 10]);
+});

@@ -508,7 +508,12 @@ test("bonuses narrower than PF2e's rolls, on the whole roll for their time: Phan
         return [bonus.selector, bonus.value, bonus.type, bonus.predicate ?? null, `${bonus.duration.value} ${bonus.duration.unit}`, plan.partial, plan.unread[0]];
     };
     assert.deepEqual(summary("Phantom Roll"), ["stealth", 1, "item", null, "24 hours", true, "The bonus is only for Stealth checks during the Avoid Notice exploration activity."]);
-    assert.deepEqual(summary("Infiltrator's Elixir"), ["deception-dc", 4, "status", null, "10 minutes", true, "The bonus is only to avoid others seeing through your disguise, and you add your level to this DC even if untrained."]);
+    // (2026-10-27: Infiltrator's Elixir's narrower words are now words on its note Effect for the 10 minutes, its disguise with them — the user's
+    // note-Effect rule, src/compiler/rule-words.js; its bonus still on the whole Deception DC.)
+    const elixir = compileItem(item("Infiltrator's Elixir"));
+    const [disguise] = elixir.resolution.outcomes.success.modifiers;
+    assert.deepEqual([disguise.selector, disguise.value, disguise.type, disguise.predicate ?? null, `${disguise.duration.value} ${disguise.duration.unit}`, elixir.partial, elixir.unread], ["deception-dc", 4, "status", null, "10 minutes", undefined, undefined]);
+    assert.match(elixir.resolution.outcomes.success.noteEffects[0].text, /only against others seeing through that disguise, and its level counts toward that DC even if it's untrained/);
     assert.deepEqual(summary("Armor Polishing Kit"), ["diplomacy", 1, "circumstance", ["action:make-an-impression"], "24 hours", true, "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit."]);
 });
 
