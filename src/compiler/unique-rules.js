@@ -110,6 +110,19 @@
 //   of the Wise and of the other gemstone can communicate telepathically with one another over any distance … This connection is broken if the
 //   other gemstone is damaged, if the Eye of the Wise becomes attuned to another gemstone, or if the bearer … dismisses the activation." → its
 //   user's Effect with no end (item.ruleEffects, the last link replaced), its telepathy and its ends in words.
+// - A Repair in moments, one degree better (withReweave): Flawless Celestial Shawl's "The tennin uses the sash to Repair an item. This Repair
+//   activity loses the exploration trait." with its passive "On any Crafting check the tennin attempts using the shawl, they use the outcome one
+//   degree of success better than the result of their roll" → the objects card's repair of an item within reach as PF2e's own Repair
+//   (objects.pf2eRepair: game.pf2e.actions.repair, its Crafting check against the item's level DC and its restore buttons), with the readied
+//   card's AdjustDegreeOfSuccess on that check first (spent by it, scripts/fortune.js). Only its own tennin can use it: a line.
+// - What a minute's concentration tells (withSenseSoulheart): Kindler Cameo's Sense Soulheart, "you know the direction and approximate distance
+//   to a nearby soulheart … If no soulhearts can be detected, you know this, but the activation's daily use is still consumed." → information,
+//   the whispered card (builtin "whisper") with all its words for the GM to fill in.
+// - A phantom raised, every PC's Hit Points up, the soulheart spent (withPhantomBolster): Soulheart's Bolster Maiserene Phantom, "When touched
+//   to a rank 0 Maiserene phantom, the soulheart flashes with bright red light and is destroyed … it permanently increases the targeted phantom
+//   to rank 1, and increases each PC's maximum Hit Points by 1 for as long as they remain within Bastardhall while the castle remains cursed."
+//   → plan.item.phantom: the targeted phantom's note Effect (rank 1, for good), each PC's Effect of PF2e's FlatModifier to Hit Points — one
+//   Effect counting every soulheart spent so —, and the soulheart deleted (scripts/live.js).
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -610,6 +623,65 @@ function withGemLink(plan, { activation, index }, item) {
     return { ...ownCard(base, {}), item: { ...base.item, ruleEffects: [{ name: "linked to a gem", words, rules: [], duration: null, replaces: "gem-link" }] } };
 }
 
+// --- A Repair in moments, one degree better ------------------------------------------------------------------------------------------------------
+
+const REWEAVE = [/^The (\w+) uses the sash to Repair an item\.$/, /^This Repair activity loses the exploration trait\.$/];
+const BETTER_CRAFT = /\bOn any Crafting check the (\w+) attempts using the [\w' -]+?, they use the outcome one degree of success better than the result of their roll\./i;
+const ONLY_FOR = /\bfunctions only for a spec\w+ (\w+)\b/i;
+function withReweave(plan, { activation, index }, item) {
+    // (No "Effect" in it: its words after its Activation line, "Activation - Reweave".)
+    const name = String(activation.name ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const words = plainText(activation.html).replace(new RegExp(String.raw`^\s*Activat(?:e|ion)\s*[—–-]?\s*${name}\s*\d?\s*`), "").trim();
+    const whole = plainText(item?.system?.description?.value);
+    const better = BETTER_CRAFT.exec(whole);
+    if (!unread(plan) || !matches(REWEAVE, sentencesOf(words)) || !better) return plan;
+    const who = ONLY_FOR.exec(whole)?.[1] ?? REWEAVE[0].exec(sentencesOf(words)[0])[1];
+    return {
+        ...keptBase(plan, item, { activation, index }),
+        builtin: "objects",
+        automation: { level: "automatic" },
+        targeting: { target: "self", range: null, area: null },
+        objects: { op: "repair", reach: true, pf2eRepair: true, degree: { selector: "crafting", adjustment: { criticalSuccess: "one-degree-better", success: "one-degree-better", failure: "one-degree-better", criticalFailure: "one-degree-better" }, predicate: ["action:repair"] } },
+        notes: [`It works only for its own ${who}.`, "In moments rather than exploration: PF2e's Repair, its Crafting check one degree of success better."]
+    };
+}
+
+// --- What a minute's concentration tells ------------------------------------------------------------------------------------------------------
+
+const SENSE_SOULHEART = [
+    /^By clutching the closed cameo in a fist, shutting your eyes, and concentrating, the cameo's magic reaches out through ([A-Z]\w+) toward the closest (soulheart)\s*\.$/,
+    /^At the end of a minute of concentration, you know the direction and approximate distance to a nearby soulheart \(this is typically, but not always, the closest soulheart\s*\)\.$/,
+    /^This activation doesn't discern between soulhearts whose locations you already know about or not, and as such, Activating this power while you or a nearby ally carry a soulheart isn't particularly helpful\.$/,
+    /^The cameo can't detect a soulheart that's still within a section of [A-Z]\w+ that hasn't yet been unlocked\.$/,
+    /^If no soulhearts can be detected, you know this, but the activation's daily use is still consumed\.$/
+];
+function withSenseSoulheart(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(SENSE_SOULHEART, sentences)) return plan;
+    const place = SENSE_SOULHEART[0].exec(sentences[0])[1];
+    const text = `${item.name} (only in ${place} while the castle is cursed): after a minute of concentration its user knows the direction and rough distance of a nearby soulheart — usually, not always, the closest. It can't tell ones already found from the rest (a carried one counts), nor sense one in a section not yet unlocked. With none to sense, its user learns that, and the daily use is spent. The GM fills in where.`;
+    return { ...keptBase(plan, item, { activation, index }), builtin: "whisper", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, whisper: { text } };
+}
+
+// --- A phantom raised, every PC's Hit Points up, the soulheart spent --------------------------------------------------------------------------------
+
+const BOLSTER = [
+    /^When touched to a rank (\d+) ([A-Z]\w+) phantom, the soulheart flashes with bright red light and is destroyed\.$/,
+    /^As it does so, it permanently increases the targeted phantom to rank (\d+), and increases each PC's maximum Hit Points by (\d+) for as long as they remain within ([A-Z]\w+) while the castle remains cursed\.$/
+];
+function withPhantomBolster(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(BOLSTER, sentences)) return plan;
+    const [, from, kind] = BOLSTER[0].exec(sentences[0]);
+    const [, to, hp, place] = BOLSTER[1].exec(sentences[1]);
+    const base = keptBase(plan, item, { activation, index });
+    return {
+        ...ownCard({ ...base, targeting: { target: `a rank ${from} ${kind} phantom`, range: "touch", area: null } }, {}),
+        item: { ...base.item, phantom: { from: Number(from), to: Number(to), kind, hp: Number(hp), place, key: slugOf(`${item.name} ${place}`) }, spentOnUse: true },
+        notes: [`Target the rank ${from} ${kind} phantom it touches.`]
+    };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
@@ -618,7 +690,7 @@ export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Nu
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
     let next = plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel, withRitualCast, withCompanionSenses, withMassSuggestion, withRedemption, withGemLink]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel, withRitualCast, withCompanionSenses, withMassSuggestion, withRedemption, withGemLink, withReweave, withSenseSoulheart, withPhantomBolster]) {
         next = reader(plan, entry, item);
         if (next !== plan) break;
     }

@@ -280,3 +280,21 @@ test("Eye of the Wise: linked to a gem it touched, its user's Effect with no end
     assert.match(effect.words, /telepathy at any distance/);
     assert.match(effect.words, /gem is damaged/);
 });
+
+test("Flawless Celestial Shawl's Reweave: PF2e's Repair of an item within reach, its Crafting check one degree better", async () => {
+    const { objectsText } = await import("../src/live/objects-card.js");
+    const [reweave] = plans("Flawless Celestial Shawl");
+    assert.deepEqual([reweave.builtin, reweave.objects.op, reweave.objects.pf2eRepair, reweave.objects.reach, reweave.objects.degree.predicate, routeOf(reweave)], ["objects", "repair", true, true, ["action:repair"], "objects"]);
+    assert.ok(Object.values(reweave.objects.degree.adjustment).every((step) => step === "one-degree-better"));
+    assert.match(reweave.notes[0], /its own tennin/);
+    assert.match(objectsText(reweave.objects, { name: "Flawless Celestial Shawl" }), /PF2e's Repair .* one degree of success better/);
+});
+
+test("Kindler Cameo's Sense Soulheart: what it tells whispered for the GM to fill in; Soulheart's phantom raised, every PC's Hit Points up, the soulheart spent", () => {
+    const sense = plans("Kindler Cameo")[1];
+    assert.deepEqual([sense.builtin, routeOf(sense), sense.trigger.frequency.max], ["whisper", "whisper", 1]);
+    assert.match(sense.whisper.text, /direction and rough distance/);
+    assert.match(sense.whisper.text, /daily use is spent/);
+    const bolster = plans("Soulheart")[1];
+    assert.deepEqual([bolster.item.phantom, bolster.item.spentOnUse, routeOf(bolster)], [{ from: 0, to: 1, kind: "Maiserene", hp: 1, place: "Bastardhall", key: "soulheart-bastardhall" }, true, "item"]);
+});

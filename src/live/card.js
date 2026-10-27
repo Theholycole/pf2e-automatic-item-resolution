@@ -175,6 +175,8 @@ export function previewLines(state) {
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     // (PF2e's own rules on it, Mirrorblade's flanking.)
     for (const entry of plan?.item?.ruleEffects ?? []) lines.push(`${entry.words}${forTime(entry.duration)}`);
+    // (A phantom raised, every PC's Hit Points up, the soulheart spent — Soulheart's, 2026-10-27.)
+    if (plan?.item?.phantom) lines.push(`The targeted rank ${plan.item.phantom.from} ${plan.item.phantom.kind} phantom rises to rank ${plan.item.phantom.to} for good; each PC gets +${plan.item.phantom.hp} maximum Hit Points while within ${plan.item.phantom.place} as long as it stays cursed${plan.item.spentOnUse ? `; the item is destroyed` : ""}`);
     // (Put out, Soulspark Candle's prayer: its light and its areas end — 2026-10-27.)
     if (plan?.item?.putsOut) lines.push(`Puts it out: its light and its area end${plan.item.putsOut.lingers ? `, and what its light marked lasts ${timeText(plan.item.putsOut.lingers.duration)} more` : ""}`);
     // (Another of its activations recharged: Smoldering Armor's Fire Shield.)

@@ -18,7 +18,7 @@ import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
-import { attackFloorRule, abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
+import { attackFloorRule, abilityState, itemNoteSource, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
@@ -724,7 +724,10 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     // (Or its flat check, the creature its user touches: Nettle Balm's.)
     const byLevel = (state.plan.item?.levelTemp ?? []).some((entry) => entry.from !== "amount");
     const marks = Boolean(state.plan.item?.mark);
-    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks ? await targetedCreatures(targets) : [];
+    // (Or the phantom a soulheart raises, its one creature: src/compiler/unique-rules.js withPhantomBolster.)
+    const phantom = Boolean(state.plan.item?.phantom);
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks || phantom ? await targetedCreatures(targets) : [];
+    if (phantom && others.length !== 1) throw new Error("Target the one phantom it touches first, then press Apply.");
     // (The creature its bonuses are against, src/compiler/marked.js: that one targeted.)
     if (marks && !state.plan.item.mark.several && others.length !== 1) throw new Error("Target the one creature it's against first, then press Apply.");
     // (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones: one or more.)
@@ -920,6 +923,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         if (became) lines.push(became);
     }
     // (Its light and its areas put out, Soulspark Candle's prayer: src/compiler/unique-rules.js withPutOut, 2026-10-27.)
+    // (A phantom raised and every PC's maximum Hit Points up, the soulheart spent: src/compiler/unique-rules.js withPhantomBolster, 2026-10-27.)
+    if (state.plan.item?.phantom) lines.push(...await bolsterPhantom(state, others));
     if (state.plan.item?.putsOut && user.actor) lines.push(...await putOut(state, user.actor));
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const given of state.plan.item?.ruleEffects ?? []) {
@@ -1376,4 +1381,39 @@ async function postUserSave(price, { actor, token, used }) {
         return;
     }
     await postCard({ plan: price.plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, sourceActor: actor, sourceToken: placeable.document ?? placeable, tokens: [placeable] });
+}
+
+// A phantom raised a rank for good (a note Effect on it), every PC's maximum Hit Points up (one Effect each counting every soulheart spent so,
+// PF2e's FlatModifier to Hit Points), and the soulheart gone. PCs: PF2e's party members, else the characters players own. → lines.
+async function bolsterPhantom(state, others) {
+    const phantom = state.plan.item.phantom;
+    const context = { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: null, moduleId: MODULE_ID };
+    const lines = [];
+    const [target] = others;
+    if (target?.actor) {
+        await target.actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: `rank ${phantom.to}`, words: `Raised from rank ${phantom.from} to rank ${phantom.to} for good`, duration: null }, context)]);
+        lines.push(`${target.name}: rank ${phantom.to} for good.`);
+    }
+    const members = game.actors?.party?.members?.length ? game.actors.party.members : (game.actors?.filter?.((actor) => actor.type === "character" && actor.hasPlayerOwner) ?? []);
+    for (const pc of members) {
+        const held = (pc.itemTypes?.effect ?? []).find((effect) => effect.flags?.[MODULE_ID]?.partyHp?.key === phantom.key);
+        const total = (Number(held?.flags?.[MODULE_ID]?.partyHp?.value) || 0) + phantom.hp;
+        const words = `+${total} maximum Hit Points while within ${phantom.place} while the castle is cursed (end this Effect when it leaves, or the curse lifts)`;
+        const rules = [{ key: "FlatModifier", selector: "hp", value: total, label: state.item.name }];
+        if (held) await held.update({ "system.rules": rules, [`flags.${MODULE_ID}.partyHp.value`]: total, "system.description.value": `<p>${escapeHTML(words)}, from <strong>${escapeHTML(state.item.name)}</strong>.</p>` });
+        else {
+            const source = ruleEffectSource({ name: "maximum Hit Points", words, rules, duration: null }, context);
+            source.flags[MODULE_ID].partyHp = { key: phantom.key, value: total };
+            await pc.createEmbeddedDocuments("Item", [source]);
+        }
+    }
+    lines.push(members.length ? `${members.map((pc) => pc.name).join(", ")}: +${phantom.hp} maximum Hit Points while within ${phantom.place} as long as it stays cursed.` : `No PCs found: give each +${phantom.hp} maximum Hit Points by hand.`);
+    if (state.plan.item.spentOnUse) {
+        const spent = state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+        if (spent?.delete) {
+            await spent.delete();
+            lines.push(`${state.item.name} is destroyed.`);
+        }
+    }
+    return lines;
 }

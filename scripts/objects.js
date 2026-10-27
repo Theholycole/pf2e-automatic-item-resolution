@@ -7,6 +7,7 @@
 import { storable } from "../src/compiler/stored-spell.js";
 import { ruleEffectSource } from "../src/live/card.js";
 import { createObjectsCard, douseable, objectsCardHTML } from "../src/live/objects-card.js";
+import { fortuneEffectSource } from "../src/live/fortune-card.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { chargesOf } from "../src/live/charges.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, isActiveGM, spaceOf, stateOf } from "./foundry.js";
@@ -271,6 +272,13 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
         const after = Math.min(max, before + Math.max(0, roll.total));
         await chosen.update({ "system.hp.value": after });
         line = `${chosen.name} regains ${after - before} Hit Points (rolled ${objects.amount} = ${roll.total}): ${after}/${max}`;
+    } else if (objects.op === "repair" && objects.pf2eRepair) {
+        // (PF2e's own Repair, Flawless Celestial Shawl's Reweave: its Crafting check one degree better — the readied card's AdjustDegreeOfSuccess on
+        // its user first, spent by that roll (scripts/fortune.js) — 2026-10-27.)
+        if (objects.degree) await actor.createEmbeddedDocuments("Item", [fortuneEffectSource({ state: { plan: { builtin: "readied-bonus", bonus: { modifiers: [], degree: objects.degree, spend: [objects.degree.selector], duration: { value: 1, unit: "minutes", expiry: "turn-start" } } }, item: state.item, user: state.user }, worldTime: game.time.worldTime, moduleId: MODULE_ID })]);
+        if (!game.pf2e?.actions?.repair) throw new Error("PF2e's Repair action isn't there.");
+        await game.pf2e.actions.repair({ item: chosen, actors: [actor] });
+        line = `PF2e's Repair of ${owner ? `${owner.name}'s ` : ""}${chosen.name}: ${actor.name}'s Crafting check${objects.degree ? ", one degree of success better" : ""} (its card's buttons restore the Hit Points)`;
     } else if (objects.op === "repair") {
         const max = Number(chosen.system?.hp?.max) || 0;
         const destroyed = (Number(chosen.system?.hp?.value) || 0) <= 0;
