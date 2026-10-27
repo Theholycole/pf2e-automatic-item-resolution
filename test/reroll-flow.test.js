@@ -42,8 +42,10 @@ test("the reading: what's rerolled, which result is kept, and what isn't read", 
     // A bonus on the reroll: the card's own roll; a companion's: the creature targeted.
     assert.deepEqual(compileActivations(source("Redsand Hourglass")).find((entry) => entry.plan?.builtin === "reroll").plan.reroll.bonus, { value: 4, type: "circumstance" });
     assert.equal(compileActivations(source("Navaratna of the Solar Ruby")).find((entry) => entry.plan?.builtin === "reroll").plan.reroll.who, "companion");
-    // A later blessing, a table's reroll, allies' after the user's own: not read.
-    for (const name of ["Old Tillimaquin", "Pistol of Wonder"]) assert.equal(compileActivations(source(name)).some((entry) => entry.plan?.builtin === "reroll"), false, name);
+    // A table's reroll, allies' after the user's own: not read. (2026-10-27: Old Tillimaquin's later blessing is now its own card, kept for its
+    // 24 hours — src/compiler/artifact-readings.js — not this reading's: test/b4-3-artifacts-2026-10-27.test.js.)
+    for (const name of ["Pistol of Wonder"]) assert.equal(compileActivations(source(name)).some((entry) => entry.plan?.builtin === "reroll"), false, name);
+    assert.equal(readReroll(source("Old Tillimaquin").system.description.value), null);
     assert.equal(readReroll(source("Beckoning Cat Amulet").system.description.value), null);
     // The search: newest first, not a reroll already, the user's own (or an attack at them).
     const messages = [{ id: "a", type: "saving-throw", actorUuid: "Actor.x" }, { id: "b", type: "saving-throw", actorUuid: "Actor.x", isReroll: true }, { id: "c", type: "skill-check", actorUuid: "Actor.x" }, { id: "d", type: "attack-roll", actorUuid: "Actor.y", targetActorUuid: "Actor.x" }];

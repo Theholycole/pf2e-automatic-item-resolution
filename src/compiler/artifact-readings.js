@@ -386,6 +386,57 @@ const READINGS = [
             targeting: { target: null, range: `${within[1]} feet`, area: null },
             portal: { color: through[1].toLowerCase(), other: through[2].toLowerCase(), within: Number(within[1]), unloaded: true }
         })
+    },
+    {
+        // Scene Stealer's Tunic's Look At Me!: its save's rows given PF2e's own Effect: Look at Me! (its penalties and bonus by the origin's
+        // signature, for the minute) on a success or worse, Off-Guard on a failure or worse and Slowed 1 on a critical failure, for that minute.
+        names: ["Scene Stealer's Tunic: Look At Me!"],
+        over: (plan) => plan?.resolution?.kind === "save" && Boolean(plan.resolution.outcomes?.success),
+        sentences: [
+            /^You make yourself visible and apparent to a creature you can see that's within (\d+) feet\.$/,
+            /^The scene stealer's tunic transforms into something incredibly gaudy, distracting, or otherwise compelling to the target creature, who must attempt a @Check\[will\|dc:\d+\] save\.$/,
+            /^Critical Success The target is unaffected\.$/,
+            /^Success The target is distracted by you and keeps looking your way\.$/,
+            /^They take a [-–]1 status penalty to Perception checks against everything but you, a [-–]1 status penalty to all saving throws against your visual effects, and gain a \+2 status bonus to all saving throws against visual effects created by anyone else; these penalties and bonus last for (\d+) (minutes?)\.$/,
+            /^Failure As success, but the target is also Off-Guard to everyone other than you as long as you remain visible\.$/,
+            /^Critical Failure As failure, but the target also becomes Slowed 1 as they spend extra time on their turn admiring, glowering, or otherwise being distracted by you\.$/,
+            /^Effect: Look at Me!$/
+        ],
+        card: ([within, , , , lasts], plan, { html }) => {
+            const link = /@UUID\[(Compendium\.pf2e\.equipment-effects\.Item\.[A-Za-z0-9]+)\]\{(Effect: Look at Me!)\}/.exec(String(html ?? ""));
+            if (!link) return null;
+            const time = { mode: "fixed", value: Number(lasts[1]), unit: "minutes", expiry: "turn-start", anchor: "effect-start" };
+            const native = [{ uuid: link[1], label: link[2] }];
+            const row = (effects) => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects, nativeEffects: native });
+            const offGuard = { kind: "condition", slug: "off-guard", value: null, duration: time };
+            const outcomes = { ...plan.resolution.outcomes, success: row([]), failure: row([offGuard]), criticalFailure: row([offGuard, { kind: "condition", slug: "slowed", value: 1, duration: time }]) };
+            return {
+                keep: true,
+                targeting: { ...(plan.targeting ?? {}), target: `a creature its user can see within ${within[1]} feet`, range: `${within[1]} feet` },
+                resolution: { ...plan.resolution, outcomes },
+                notes: ["Off-Guard to everyone but its user (its own attacks don't count it), while its user stays visible: end it sooner if they turn invisible."],
+                partial: undefined,
+                automation: { level: "automatic" }
+            };
+        }
+    },
+    {
+        // Old Tillimaquin's Luck of the Mascot: the reroll card kept for the day — the latest failed save of the creature targeted rerolled, the
+        // second result taken — once a month for each creature (src/live/reroll-card.js laterRefusal), the item's own frequency none (it's each
+        // person's).
+        names: ["Old Tillimaquin: Luck of the Mascot"],
+        sentences: [
+            /^You rub Old Tillimaquin 's bronzed claws for good luck before setting out on a task that might benefit the town\.$/,
+            /^You can reroll a single failed saving throw within the next (\d+) (hours?)\, but you must take the second result, even if it's worse than your original result\.$/,
+            /^Each person who rubs the claws can benefit only once per (month)\, but there's no limit to how many people can draw on Old Tillimaquin 's luck\.$/
+        ],
+        card: ([, within, per]) => ({
+            builtin: "reroll",
+            targeting: { target: "the creature that rubbed its claws", range: null, area: null },
+            trigger: { event: "use" },
+            reroll: { what: "save", keep: "new", who: "target", failed: true, within: { value: Number(within[1]), unit: "hours" }, perCreature: { per: per[1].toLowerCase() } },
+            notes: [`Kept for ${within[1]} hours: when the creature that rubbed the claws fails a saving throw, target it and press — its latest failed save is rerolled, the second result taken. Each creature once a ${per[1].toLowerCase()}.`]
+        })
     }
 ];
 

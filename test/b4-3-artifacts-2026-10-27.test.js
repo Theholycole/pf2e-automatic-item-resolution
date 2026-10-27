@@ -13,6 +13,7 @@ import { swapRules, swapWords } from "../src/live/skill-swap.js";
 import { adjacentBonus, isAdjacent } from "../src/live/adjacent-bonus.js";
 import { drainCandidates, pickDrain } from "../src/live/arcane-drain.js";
 import { portalRegion } from "../src/live/portals.js";
+import { laterRefusal, triggeringRoll, withLaterUse } from "../src/live/reroll-card.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
 import { aroundZone, createInertCard, exemptSpec, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
@@ -199,4 +200,22 @@ test("Mountebank's Passage: a white portal and a black one, each a Region whose 
     assert.deepEqual([done(onyx), done(pearl), routeOf(onyx), onyx.portal, pearl.portal.color], [true, true, "portal", { color: "white", other: "black", within: 120, unloaded: true }, "black"]);
     const region = portalRegion({ name: "white portal", square: { x: 100, y: 200 }, size: 100, color: "white", other: "Scene.a.Region.b", flags: {} });
     assert.deepEqual([region.shapes[0].x, region.behaviors[0].type, region.behaviors[0].system.destinations], [100, "teleportToken", ["Scene.a.Region.b"]]);
+});
+
+test("Scene Stealer's Tunic's Look At Me!: PF2e's Effect: Look at Me! on a success or worse, Off-Guard on a failure or worse and Slowed 1 on a critical failure, for the minute", () => {
+    const plan = activation("Scene Stealer's Tunic", "Look At Me!");
+    const rows = plan.resolution.outcomes;
+    assert.deepEqual([done(plan), routeOf(plan), rows.success.nativeEffects[0].label, rows.failure.effects.map((effect) => effect.slug), rows.criticalFailure.effects.map((effect) => [effect.slug, effect.duration.value]), rows.success.manualInstructions], [true, "save", "Effect: Look at Me!", ["off-guard"], [["off-guard", 1], ["slowed", 1]], undefined]);
+});
+
+test("Old Tillimaquin's Luck of the Mascot: the reroll card kept for 24 hours, the latest failed save of the creature targeted, once a month for each creature", () => {
+    const plan = activation("Old Tillimaquin", "Luck of the Mascot");
+    assert.deepEqual([done(plan), routeOf(plan), plan.reroll.who, plan.reroll.failed, plan.reroll.keep, plan.trigger.frequency], [true, "reroll", "target", true, "new", undefined]);
+    const day = 86_400;
+    assert.match(laterRefusal(plan.reroll, { at: 0, now: day + 1 }), /over/);
+    const record = withLaterUse(null, plan.reroll, { now: 100, actorUuid: "Actor.a" });
+    assert.match(laterRefusal(plan.reroll, { at: 0, now: 200, record, actorUuid: "Actor.a" }), /this month/);
+    assert.equal(laterRefusal(plan.reroll, { at: 0, now: 200, record, actorUuid: "Actor.b" }), null);
+    const messages = [{ id: "1", type: "saving-throw", actorUuid: "Actor.a", outcome: "failure" }, { id: "2", type: "saving-throw", actorUuid: "Actor.a", outcome: "success" }];
+    assert.equal(triggeringRoll(messages, plan.reroll, { actorUuid: "Actor.a" }), "1");
 });
