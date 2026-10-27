@@ -7,6 +7,8 @@
 import { sentencesOf } from "./lasting.js";
 import { spherePlanOf } from "./sphere.js";
 import { cubeWaysOf, inertPlanOf } from "./cube-faces.js";
+import { dragonArmyOf } from "./spectral-army.js";
+import { contractSpellsOf } from "./contract-spells.js";
 
 // Each reading: the source names it's for (an activation's "Item: Activation"), whether it reads over the plan read before (by default only
 // none, note-only, or the GM's no-effect), its Requirements line's pattern when it has one, a pattern for each of its effect's sentences —
@@ -62,6 +64,37 @@ const READINGS = [
             /^A living creature can bring attended objects across the walls without needing to attempt a saving throw\. 3 The walls block living matter\b.*\b6 The cube is Dismissed \(this takes only an Interact action and isn't an activation\)\.$/
         ],
         card: (found, _plan, { info }) => inertPlanOf(found, info)
+    },
+    {
+        // Dragon-Lotus Drum: its army's marker, its Arrive's save (read before) and its Depart's later card (src/compiler/spectral-army.js).
+        names: ["Dragon-Lotus Drum: Summon Dragon-Lotus Army"],
+        over: (plan) => plan?.resolution?.kind === "save" && plan.spend?.mythicPoints === 1,
+        sentences: [
+            /^Spend a Mythic Point; beating the drum summons a spectral army to an area you designate within (\d+) feet\.$/,
+            /^The army takes its Arrive action when you finish playing\.$/,
+            /^At the end of your next turn, the army Strides up to (\d+) feet and then takes its Depart action\.$/,
+            /^The Dragon-Lotus Army follows your orders and attempts to not harm you and your allies when possible\.$/,
+            /^The spectral force isn't fully a creature\.$/,
+            /^It can't take any other actions, nor can it be targeted or harmed by Strikes, spells, or other effects unless they would be able to target or end a spell effect \(such as Dispel Magic\)\.$/,
+            /^The army is (Gargantuan), but it doesn't block movement\.$/,
+            /^Arrive \(([a-z, ]+)\) The Sound of Thunder The beating of the drum amplifies to become like the stomping of hundreds of booted feet\.$/,
+            /^The Dragon- ?Lotus Army appears in perfect formation and gives a brief, staccato battle cry\.$/,
+            /^All enemies in a (\d+)-foot emanation around the army take \d+d\d+ sonic damage \(@Check\[fortitude\|dc:\d+\|basic\|[^\]]*\] save\); each creature who fails its save is also Frightened 3 \(Frightened 4 on a critical failure\)\.$/,
+            /^Depart Devastating Charge The army readies their motley collection of weapons and Strides forward up to (\d+) feet in a straight line\.$/,
+            /^Each creature it moves through takes (\d+d\d+) bludgeoning, piercing, or slashing damage \(whichever would be most harmful at the GM's discretion\) with a @Check\[reflex\|dc:(\d+)\|basic\|[^\]]*\] save\.$/,
+            /^A creature who critically fails its save is also knocked (Prone)\.$/
+        ],
+        card: (found, plan, { base }) => dragonArmyOf(found, plan, { base })
+    },
+    {
+        // Limitless Power's Unleash Power: the cast card of its signer's selected spells, each non-cantrip once a day (src/compiler/contract-spells.js).
+        names: ["Limitless Power: Unleash Power"],
+        sentences: [
+            /^The contract casts one of the selected spells \(spell attack modifier \+(\d+), DC (\d+)\)\.$/,
+            /^The contract can cast each non-cantrip spell only once per day\.$/,
+            /^You use the same number of actions for this activation as the selected spell normally takes\.$/
+        ],
+        card: (found, _plan, { item, spells, info }) => contractSpellsOf(found, item, spells, info)
     }
 ];
 
@@ -77,8 +110,9 @@ export const hasArtifactReading = (name) => READINGS.some((reading) => named(rea
 
 // The plan (null, note-only or the GM's no-effect — or any, for a reading over it) and its effect's words → the reading's card, or the same
 // plan. name: its source name; base, info, frequency: its own (src/compiler/lasting.js activationBase); requirements, trigger: its activation's
-// lines; item: its item's whole text, plain (itemHtml: as it is); index: the activation's (a reading for one of several unnamed ones).
-export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, base, info, frequency = null }) {
+// lines; item: its item's whole text, plain (itemHtml: as it is); index: the activation's (a reading for one of several unnamed ones); spells:
+// PF2e's spells by name (options.spells).
+export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, spells = {}, base, info, frequency = null }) {
     const readings = READINGS.filter((reading) => named(reading, name) && (reading.index === undefined || reading.index === index) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
@@ -86,7 +120,7 @@ export function withArtifactReading(plan, { name, words, requirements = null, tr
         if (reading.requirements && !asked) continue;
         if (reading.trigger && !reading.trigger.test(String(trigger ?? "").trim())) continue;
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { html, item, itemHtml, requirements: asked, trigger, base, info }) : null;
+        const card = found ? reading.card(found, plan, { html, item, itemHtml, requirements: asked, trigger, spells, base, info }) : null;
         if (!card) continue;
         if (card.keep) {
             const { keep, ...changes } = card;

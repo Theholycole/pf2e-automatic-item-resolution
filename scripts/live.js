@@ -313,6 +313,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.alsoRetaliation && route !== "later") await postExposureCard({ message, plan: { ...plan.alsoRetaliation, item: plan.item, spend: undefined }, used, actor, token, later: true }).catch((error) => console.error(`${MODULE_ID} | retaliation card`, error));
     // (Its user's move beside the rest, Phase Spike's Stride with its resistance: the teleport card's as a move, src/compiler/move.js.)
     if (plan?.item?.move && route !== "teleport") await postTeleportCard({ message, plan: { ...plan, builtin: "teleport", teleport: plan.item.move, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | move card`, error));
+    // (A marker beside its card, Dragon-Lotus Drum's army: the ability module's conjured token first — scripts/zones.js.)
+    if (plan?.item?.alsoConjure) await startItemConjure({ plan: plan.item.alsoConjure, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | marker`, error));
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });

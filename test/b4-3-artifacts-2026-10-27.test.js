@@ -6,6 +6,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
 import { compileActivations } from "../src/compiler/permanent.js";
+import { spellIndex } from "../src/compiler/index.js";
+import { contractChoices, contractRefusal, withContractCast } from "../src/live/contract-spells.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
 import { aroundZone, createInertCard, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
@@ -17,7 +19,8 @@ const item = (name) => {
     return { ...doc, ownerLevel: Number(doc.system.level?.value) || 1 };
 };
 const activations = (name) => compileActivations(item(name)).map((entry) => entry.plan);
-const activation = (name, which) => compileActivations(item(name)).find((entry) => entry.activation.name === which).plan;
+const activation = (name, which, options = {}) => compileActivations(item(name), options).find((entry) => entry.activation.name === which).plan;
+const spells = spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items"));
 const done = (plan) => Boolean(plan) && !plan.partial && !plan.noteOnly && plan.builtin !== "no-effect";
 
 test("Sphere of Annihilation: the sphere card — its control check, its Sustain, its moves and what it destroys", () => {
@@ -66,4 +69,33 @@ test("Cube of Nex: its face picked on the ways card — zones round its user, th
     const grid = { size: 100, gridFeet: 5 };
     assert.deepEqual(squareCellsAround({ x: 300, y: 300, w: 100, h: 100 }, 10, grid), [{ x: 300, y: 300 }, { x: 300, y: 400 }, { x: 400, y: 300 }, { x: 400, y: 400 }]);
     assert.equal(aroundZone(gas.zone, { x: 300, y: 300, w: 100, h: 100 }, grid).area.type, "squares");
+});
+
+test("Dragon-Lotus Drum: its army a Gargantuan marker, its Arrive's save at its enemies (its own traits), its Depart's later card — the charge's basic Reflex, its type picked, Prone on a critical failure; once every 20 years", () => {
+    const plan = activation("Dragon-Lotus Drum", "Summon Dragon-Lotus Army");
+    assert.deepEqual([done(plan), routeOf(plan), plan.spend.mythicPoints, plan.trigger.recharge], [true, "save", 1, { value: 7300, unit: "days" }]);
+    assert.ok(["emotion", "fear", "mental", "sonic"].every((trait) => plan.traits.includes(trait)));
+    const army = plan.item.alsoConjure;
+    assert.deepEqual([army.builtin, army.creatures[0].size, army.creatures[0].stats.speeds.land, army.lasts.expiry], ["conjure", "gargantuan", 60, "turn-end"]);
+    const depart = plan.again.plan;
+    assert.deepEqual([plan.again.later, depart.resolution.check.statistic, depart.resolution.check.against.value, depart.resolution.sharedDamage.components[0].formula], [true, "reflex", 48, "20d8[bludgeoning]"]);
+    assert.deepEqual(depart.damageChoices.map((choice) => choice.formula), ["20d8[bludgeoning]", "20d8[piercing]", "20d8[slashing]"]);
+    assert.deepEqual([depart.resolution.outcomes.criticalFailure.effects[0].slug, depart.resolution.outcomes.criticalFailure.damage.multiplier], ["prone", 2]);
+});
+
+test("Limitless Power's Unleash Power: the cast card of every common divine cantrip (10th rank) and spell of 1st to 9th, DC 40 and +30; the first cast of each slot its signer's selection, each non-cantrip once a day", () => {
+    const plan = activation("Limitless Power", "Unleash Power", { spells });
+    assert.deepEqual([done(plan), routeOf(plan), plan.dc, plan.attack, plan.contract.slots.length], [true, "cast", 40, 30, 10]);
+    const cantrip = plan.choices.find((choice) => choice.slot === "cantrip");
+    const heal = plan.choices.find((choice) => choice.spell.name === "Heal");
+    const bless = plan.choices.find((choice) => choice.spell.name === "Bless");
+    assert.deepEqual([cantrip.rank, heal.slot, heal.rank, bless.slot], [10, "1", 1, "1"]);
+    assert.ok(plan.choices.every((choice) => choice.slot === "cantrip" || (choice.rank >= 1 && choice.rank <= 9)));
+    const record = withContractCast(null, heal, 5);
+    const now = contractChoices(plan, record, 5);
+    assert.ok(!now.some((choice) => choice.slot === "1"));
+    assert.ok(contractChoices(plan, record, 6).filter((choice) => choice.slot === "1").every((choice) => choice.spell.name === "Heal"));
+    assert.match(contractRefusal(plan, record, bless, 6), /another/);
+    assert.match(contractRefusal(plan, record, heal, 5), /today/);
+    assert.equal(contractRefusal(plan, withContractCast(record, cantrip, 5), cantrip, 5), null);
 });

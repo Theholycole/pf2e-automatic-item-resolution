@@ -1,6 +1,7 @@
 // Live play for items that cast a spell PF2e has no Effect for (src/live/cast-card.js): the spell module casts it
 // through PF2e (its api.castFromItem), so its own cast handling resolves it as any cast.
 
+import { CONTRACT, contractChoices, contractRefusal, dayOf, withContractCast } from "../src/live/contract-spells.js";
 import { castCardHTML, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
@@ -17,6 +18,13 @@ import { rememberTurnHeal } from "./turn-heal.js";
 const SPELL_ID = "pf2e-automatic-resolution";
 
 export async function postCastCard({ message, plan, used, actor, token }) {
+    // (A contract's selected spells, Limitless Power's: its record on the item narrowing the choices — src/live/contract-spells.js.)
+    if (plan.contract) {
+        const holder = used.data.uuid ? await fromUuid(used.data.uuid).catch(() => null) : null;
+        const choices = contractChoices(plan, holder?.getFlag?.(MODULE_ID, CONTRACT), dayOf(game.time.worldTime));
+        if (!choices.length) throw new Error(`${used.data.name}: each of its spells has been cast today.`);
+        plan = { ...plan, choices, spell: choices[0].spell, rank: choices[0].rank };
+    }
     const state = createCastCard({
         plan,
         item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null },
@@ -133,8 +141,13 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             }
             if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out the ${state.plan.castTraits.immune.join(" and ")}s and give the penalty.`);
         }
+        // (A contract's spell cast today already, or not its signer's selection: refused.)
+        const holder = state.plan.contract && state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+        const refused = holder ? contractRefusal(state.plan, holder.getFlag(MODULE_ID, CONTRACT), chosenSpell(state), dayOf(game.time.worldTime)) : null;
+        if (refused) throw new Error(`${state.item.name}: ${refused}.`);
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
+        if (holder) await holder.setFlag(MODULE_ID, CONTRACT, withContractCast(holder.getFlag(MODULE_ID, CONTRACT), chosenSpell(state), dayOf(game.time.worldTime)));
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
         // (Or the chosen spell's own, Cloak of the False Foe's Medium cryptid's hour and Large cryptid's 10 minutes.)
         const duration = chosenSpell(state).castDuration ?? state.plan.castDuration;
