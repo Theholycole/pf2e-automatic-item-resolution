@@ -106,8 +106,9 @@ test("a conjured creature as its item's text has it (2026-10-27): Fossil Fragmen
     const [tree] = activations(item("Fossil Fragment (Petrified Wood)"), options);
     const creature = tree.plan.creatures[0];
     assert.deepEqual([creature.replaceType, creature.immunities.includes("death-effects"), creature.own, tree.plan.partial], [true, true, { noWeaknesses: true, conditions: ["immobilized"] }, undefined]);
+    // (2026-10-27: its scent's sight is words on the dog's own Effect, src/compiler/conjured.js own.text — no longer partial.)
     const [dog] = activations(item("Wondrous Figurine (Onyx Dog)"), options);
-    assert.deepEqual([dog.plan.creatures[0].own.rules[0].predicate, dog.plan.partial], [["action:track"], true]);
+    assert.deepEqual([dog.plan.creatures[0].own.rules[0].predicate, dog.plan.partial], [["action:track"], undefined]);
 });
 
 test("how a creature ends an item's effect early (2026-10-27): Fire-Douse Snare's DC 10, then DC 5, then outright; Grease Snare's three Interact actions", async () => {

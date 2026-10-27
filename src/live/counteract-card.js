@@ -122,3 +122,11 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
 }
 
 export { DEGREE_WORDS };
+
+// What a success keeps the creature picked from, against its user alone (counteract.afterFree { against: "user", penalty }, Bloodstone Doll's
+// summoned creature's –2 status penalty to attack rolls against its user): PF2e's TokenMark of its user's token on the Effect, the penalty
+// only at the mark — as the ability module marks one creature. 2026-10-27.
+export function afterFreeRules(after, tokenUuid) {
+    const slug = `air-${String(after.name ?? "after").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    return [{ key: "TokenMark", slug, uuid: tokenUuid }, { key: "FlatModifier", selector: after.penalty.selector, type: after.penalty.type, value: after.penalty.value, predicate: [`target:mark:${slug}`] }];
+}

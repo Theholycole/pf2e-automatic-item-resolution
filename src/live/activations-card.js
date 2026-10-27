@@ -6,7 +6,8 @@
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 // Seconds per frequency period, for counting uses in world time (a day's uses reset at the next day, and so on).
-const PERIOD_SECONDS = { round: 6, turn: 6, minute: 60, "10-minutes": 600, hour: 3600, day: 86_400 };
+// (A week's and a month's — 30 days — for a figurine's "once per week", a fossil fragment's "four times per month": 2026-10-27.)
+const PERIOD_SECONDS = { round: 6, turn: 6, minute: 60, "10-minutes": 600, hour: 3600, day: 86_400, week: 604_800, month: 2_592_000 };
 
 // The period a use falls in: its index in world time (an encounter's: the combat's id).
 export function periodOf(frequency, { worldTime = 0, combatId = null } = {}) {
@@ -55,7 +56,7 @@ export function waitText(seconds) {
     return `${Math.ceil(left / 6)} ${Math.ceil(left / 6) === 1 ? "round" : "rounds"}`;
 }
 
-const PER_WORDS = { round: "round", turn: "turn", minute: "minute", "10-minutes": "10 minutes", hour: "hour", day: "day", encounter: "encounter" };
+const PER_WORDS = { round: "round", turn: "turn", minute: "minute", "10-minutes": "10 minutes", hour: "hour", day: "day", week: "week", month: "month", encounter: "encounter" };
 export const frequencyText = (frequency) => (frequency?.max ? `${frequency.max === 1 ? "once" : frequency.max === 2 ? "twice" : `${frequency.max} times`} per ${PER_WORDS[frequency.per] ?? frequency.per}` : null);
 export const perWord = (frequency) => PER_WORDS[frequency?.per] ?? "period";
 

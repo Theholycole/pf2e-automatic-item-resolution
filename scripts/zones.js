@@ -6,6 +6,11 @@
 import { ABILITY_ID, MODULE_ID } from "./foundry.js";
 import { effectSource } from "../src/live/card.js";
 import { lightZone } from "./placed-light.js";
+import { pickConjured } from "./creature-pick.js";
+import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
+import { SLAIN } from "./slain-wait.js";
+
+const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export async function startItemZone({ plan, used, actor, token }) {
     const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
@@ -30,25 +35,21 @@ export async function startItemZone({ plan, used, actor, token }) {
     });
 }
 
-// PF2e's creature types (a trait a creature has one or two of).
-const CREATURE_TYPES = new Set(["humanoid", "animal", "undead", "plant", "construct", "fey", "beast", "fiend", "dragon", "celestial", "elemental", "fungus", "ooze", "aberration", "giant", "spirit", "monitor", "dream", "astral", "time", "ethereal", "petitioner"]);
-// The made creatures as the item's text has them (src/compiler/conjured.js): its creature type traded for the traits the item gives
-// (Fossil Fragments' construct and earth), its immunities added — PF2e's own immunity entries.
+// The made creatures as the item's text has them (src/live/conjured.js conjuredChanges): its creature type traded for the traits the item
+// gives (Fossil Fragments' construct and earth), traits and weaknesses it lacks (a Galvasphere's zombie), its immunities added — PF2e's own
+// entries —, its size, its Strikes gone (Cordelia's Construct Key's broom).
 async function finishConjured(made, plan) {
     const creature = plan.creatures?.[0];
-    if (!creature?.replaceType && !creature?.immunities?.length && !creature?.own) return;
+    if (!creature) return;
     for (const { actor } of made ?? []) {
         if (!actor) continue;
-        const changes = {};
-        if (creature.replaceType) changes["system.traits.value"] = [...new Set([...(actor.system?.traits?.value ?? []).filter((trait) => !CREATURE_TYPES.has(trait) || (creature.traits ?? []).includes(trait)), ...(creature.traits ?? [])])];
-        if (creature.immunities?.length) {
-            const had = (actor._source?.system?.attributes?.immunities ?? []).filter((entry) => entry?.type);
-            changes["system.attributes.immunities"] = [...had, ...creature.immunities.filter((type) => !had.some((entry) => entry.type === type)).map((type) => ({ type }))];
-        }
-        if (creature.own?.noWeaknesses) changes["system.attributes.weaknesses"] = [];
-        if (Object.keys(changes).length) await actor.update(changes);
-        // (Its entry's own: an Effect of PF2e's rules — the Onyx Dog's +4 to Track and darkvision —, a condition — the tree's Immobilized.)
-        if (creature.own?.rules?.length) await actor.createEmbeddedDocuments("Item", [{ name: `${plan.source?.name ?? "Conjured"}: its own`, type: "effect", img: "icons/svg/aura.svg", system: { duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, rules: creature.own.rules } }]);
+        const source = actor._source?.system ?? {};
+        const changes = conjuredChanges({ traits: actor.system?.traits?.value ?? [], immunities: source.attributes?.immunities ?? [], weaknesses: source.attributes?.weaknesses ?? [], size: source.traits?.size?.value ?? null, items: [...(actor.items ?? [])].map((entry) => ({ id: entry.id, type: entry.type })) }, creature);
+        if (changes && Object.keys(changes.update).length) await actor.update(changes.update);
+        if (changes?.deleteIds.length) await actor.deleteEmbeddedDocuments("Item", changes.deleteIds);
+        // (Its entry's own: an Effect of PF2e's rules — the Onyx Dog's +4 to Track and darkvision, Kotodama Bells' object failing every save —,
+        // its words on it for what PF2e can't play — the Onyx Dog's scent —, a condition — the tree's Immobilized.)
+        if (creature.own?.rules?.length || creature.own?.text) await actor.createEmbeddedDocuments("Item", [{ name: `${plan.source?.name ?? "Conjured"}: its own`, type: "effect", img: "icons/svg/aura.svg", system: { description: { value: creature.own.text ? `<p>${escape(creature.own.text)}</p>` : "" }, duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, rules: creature.own.rules ?? [] } }]);
         for (const slug of creature.own?.conditions ?? []) await actor.increaseCondition?.(slug);
     }
 }
@@ -57,6 +58,20 @@ export async function startItemConjure({ plan, used, actor, token }) {
     const startConjure = game.modules.get(ABILITY_ID)?.api?.live?.startConjure;
     const item = { name: used.data.name, uuid: used.data.uuid ?? null, actor, img: used.data.img ?? null };
     if (startConjure) {
+        // (A creature its user picks from the compendiums first, Dust of Corpse Animation's: scripts/creature-pick.js — on this client, as the
+        // item may be used up by now; none picked, nothing made.)
+        if (plan.pick) {
+            const picked = await pickConjured(plan, used.data.name);
+            if (!picked) return null;
+            plan = pickedPlan(plan, picked);
+        }
+        // (One of a pair slain within its wait, Golden Lions': the other comes alone — scripts/slain-wait.js; none while both wait.)
+        if (plan.slainWait?.each && used.data.uuid) {
+            const holder = await fromUuid(used.data.uuid).catch(() => null);
+            const count = countNow(plan.creatures?.[0]?.count, holder?.getFlag?.(MODULE_ID, SLAIN), game.time.worldTime);
+            if (!count) throw new Error(`${used.data.name}: every one of them was slain within its wait, and none can be called yet.`);
+            plan = { ...plan, creatures: plan.creatures.map((creature, index) => (index ? creature : { ...creature, count })) };
+        }
         const made = await startConjure({ item, plan, sourceToken: token?.document ?? token });
         await finishConjured(made, plan);
         return made;
