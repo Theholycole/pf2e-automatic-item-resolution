@@ -172,6 +172,7 @@ export function previewLines(state) {
     for (const attack of plan?.item?.attacks ?? []) lines.push(attackText(attack));
     for (const healing of plan?.item?.fastHealing ?? []) lines.push(fastHealingText(healing));
     if (plan?.item?.creates) lines.push(createsText(plan.item.creates));
+    if (plan?.item?.space) lines.push(spaceText(plan.item.space));
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     // (PF2e's own rules on it, Mirrorblade's flanking.)
     for (const entry of plan?.item?.ruleEffects ?? []) lines.push(`${entry.words}${forTime(entry.duration)}`);
@@ -603,6 +604,54 @@ export function levelTempText(entry) {
     return `Temporary Hit Points equal to ${TIMES_WORDS[entry.multiplier] ? `${TIMES_WORDS[entry.multiplier]} ` : ""}the level of the creature targeted${held}${entry.duration?.mode === "fixed" ? `, for ${timeText(entry.duration)}` : ""}`;
 }
 
+// A weapon's runes raised the first time at each of its wielder's levels (plan.lifedrink.upgrades [{ level, rune, from, to }], Meloth's
+// Lifedrinker's: its potency and striking runes) — PF2e's runes { potency, striking } (striking 1 striking, 2 greater, 3 major) and its
+// wielder's level → { runes, lines }, each step once its level's met and the rune is still what it was.
+const STRIKING = { striking: 1, greaterStriking: 2, majorStriking: 3 };
+const STRIKING_WORDS = { 1: "striking", 2: "greater striking", 3: "major striking" };
+export function runesAfter(runes, upgrades, level) {
+    const next = { potency: Number(runes?.potency) || 0, striking: Number(runes?.striking) || 0 };
+    const lines = [];
+    for (const step of [...(upgrades ?? [])].sort((a, b) => a.level - b.level)) {
+        if (Number(level) < step.level) continue;
+        if (step.rune === "potency" && next.potency === Number(step.from)) {
+            next.potency = Number(step.to);
+            lines.push(`its +${step.from} potency rune is now +${step.to}`);
+        }
+        if (step.rune === "striking" && next.striking === STRIKING[step.from]) {
+            next.striking = STRIKING[step.to];
+            lines.push(`its ${STRIKING_WORDS[STRIKING[step.from]]} rune is now ${STRIKING_WORDS[STRIKING[step.to]]}`);
+        }
+    }
+    return { runes: next, lines };
+}
+
+// What an item holds, one more or all let out (plan.item.store { max, add | release }, Mindsponge's memories, four at most): the count it holds
+// (its flag) → { count, line } after, or { full } when there's no room.
+export function storeAfter(count, store, name = "it") {
+    const held = Math.max(0, Number(count) || 0);
+    if (store?.release) return { count: 0, line: held ? `${name}: all ${held} let out` : `${name}: holds nothing to let out` };
+    if (held >= (Number(store?.max) || 0)) return { full: `${name} is full (${held} of ${store.max}): squeeze it out first` };
+    const next = held + (Number(store?.add) || 1);
+    return { count: next, line: `${name} now holds ${next} of ${store.max}` };
+}
+
+// A curse of impending doom on an Effect (its RollOption "air-doom-curse:<DC>:<days>", Hex Blaster's: scripts/doom-hex.js) → { dc, days }, or null.
+export function doomCurseOf(effect) {
+    const option = (effect?.system?.rules ?? []).find((rule) => rule?.key === "RollOption" && /^air-doom-curse:\d+:\d+$/.test(String(rule.option ?? "")))?.option;
+    if (!option) return null;
+    const [, dc, days] = option.split(":");
+    return { dc: Number(dc), days: Number(days) };
+}
+
+// An extradimensional space it opens, What Doors We Open's door (plan.item.space { uuid, name, like }): "Opens the Door Within, a space as a
+// Spacious Pouch (Type II)"; and its container, that PF2e item's own data renamed and flagged as the item's (made once, opened after).
+export const spaceText = (space) => `Opens ${space.name}, an extradimensional space as ${/^[aeiou]/i.test(space.like) ? "an" : "a"} ${space.like} (a container in its user's inventory)`;
+export function spaceSource(source, { space, itemUuid, moduleId = "pf2e-automatic-item-resolution" }) {
+    const { _id, ...rest } = source ?? {};
+    return { ...rest, name: space.name, flags: { ...(rest.flags ?? {}), [moduleId]: { ...(rest.flags?.[moduleId] ?? {}), spaceOf: itemUuid } } };
+}
+
 // Fruit it grows in words: "1d4 Verdant Branch Fruit in its user's inventory, each eaten for 2d6+5 Hit Points".
 export function createsText(creates) {
     const heal = String(creates.heal ?? "").replace(/^@Damage\[\(?([^\[\])]+)\)?\[healing\]\]$/, "$1");
@@ -794,16 +843,25 @@ export function strikeDamageText(extra) {
 // The creature its bonuses are against, src/compiler/marked.js: "Marks the creature targeted (its bonuses against it alone) for 7 days".
 // (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones, src/compiler/situational.js: "Marks the creatures targeted
 // (its bonuses against them alone) for 1 hour".)
+// (And how it ends besides, mark.words — Hunter's Dawn's "until it dies or another is marked", 2026-10-27.)
 export function markText(mark, name = null) {
-    if (mark.several) return `Marks ${name ?? "the creatures targeted"} (its bonuses against them alone)${forTime(mark.duration)}`;
-    return `Marks ${name ?? "the creature targeted"} (its bonuses against that creature alone)${forTime(mark.duration)}`;
+    const ends = mark.words ? `, ${mark.words}` : "";
+    if (mark.several) return `Marks ${name ?? "the creatures targeted"} (its bonuses against them alone)${forTime(mark.duration)}${ends}`;
+    return `Marks ${name ?? "the creature targeted"} (its bonuses against that creature alone)${forTime(mark.duration)}${ends}`;
 }
 
 // The mark's Effect on its user: PF2e's TokenMark at that creature's token, which its bonuses' target:mark predicates read.
 // (Several: tokens, one TokenMark at each, the same slug.)
+// (Gone once its creature dies, mark.endsOnDeath — scripts/mark-ends.js: Hunter's Dawn's, 2026-10-27.)
 export function markEffectSource(mark, { token, tokens = null, name = null, item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const marked = tokens?.length ? tokens : [token];
-    return ownEffectSource({ name: `${name ?? "creature"} marked`, img: "icons/svg/target.svg", words: markText(mark, name), rules: marked.map((uuid) => ({ key: "TokenMark", slug: mark.slug, uuid })), duration: mark.duration, flag: { mark: mark.slug }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: `${name ?? "creature"} marked`, img: "icons/svg/target.svg", words: markText(mark, name), rules: marked.map((uuid) => ({ key: "TokenMark", slug: mark.slug, uuid })), duration: mark.duration, flag: { mark: mark.slug, ...(mark.endsOnDeath ? { markEndsOnDeath: true } : {}) }, item, user, worldTime, initiative, moduleId });
+}
+
+// Its user's mark Effects ([{ id, flags, system: { rules } }]) at any of those tokens (their uuids) that end as their creature dies → their ids.
+export function marksEndingAt(effects, tokenUuids, moduleId = "pf2e-automatic-item-resolution") {
+    const at = new Set(tokenUuids ?? []);
+    return (effects ?? []).filter((effect) => effect?.flags?.[moduleId]?.markEndsOnDeath && (effect.system?.rules ?? []).some((rule) => rule?.key === "TokenMark" && at.has(rule.uuid))).map((effect) => effect.id);
 }
 
 // Its Effect: PF2e's DamageDice on Strike damage (a FlatModifier for a number), with its predicate.

@@ -619,7 +619,8 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     assert.deepEqual(compileActivations(item("Soulpiercer"))[0].plan?.item?.weapon?.map((entry) => [entry.property, entry.value]), [["reach", 15]]);
     const vision = compileActivations(item("Meloth's Lifedrinker (Level 7)"))[1].plan;
     assert.deepEqual([vision.resolution.check.statistic, vision.resolution.check.basic, vision.resolution.check.against], ["will", true, { dc: "owner", statistic: "class-spell" }]);
-    assert.ok(vision.notes.some((note) => /^If the target is reduced to 0 HP by this effect/.test(note)), vision.notes.join(" / "));
+    // (2026-10-27: its at-0-HP death the core's postDamageTerminal, no longer a note — test/unique-b4-5-2026-10-27.test.js.)
+    assert.deepEqual([vision.resolution.postDamageTerminal, (vision.notes ?? []).some((note) => /^If the target is reduced to 0 HP by this effect/.test(note))], [{ kind: "death", threshold: 0 }, false]);
     // (Its rows' Frightened, beside a "basic" save: on the success row once the ability compiler reads it there, else a note — never dropped,
     // src/compiler/honest.js.)
     const frightened = (vision.resolution.outcomes.success.effects ?? []).some((effect) => effect.slug === "frightened");
@@ -1034,8 +1035,10 @@ test("rewords for the save and thrown cards: Spiral Labyrinth's blocked damage t
     assert.deepEqual([rust.plan.resolution.sharedDamage.components[0].formula, rust.plan.resolution.check.basic, rust.plan.resolution.outcomes.failure.damage.formulas[0].formula], ["8d6[untyped]", true, "2d6[persistent,untyped]"]);
     const [hope] = compileActivations(item("Last Hope"));
     assert.deepEqual([hope.plan.scaled.die, hope.plan.resolution.sharedDamage.components[0].formula, hope.plan.resolution.check.against.value], ["d10", "1d10[vitality]", 37]);
+    // (2026-10-27: Briar's partner's +4 to saves against Nyrissa's spells first, its item card; her save the card after it, plan.again —
+    // test/unique-b4-5-2026-10-27.test.js.)
     const briar = compileActivations(item("Briar"))[9];
-    assert.deepEqual(["failure", "criticalFailure"].map((degree) => briar.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["stunned 1"], ["stunned 3"]]);
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => briar.plan.again.plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [["stunned 1"], ["stunned 3"]]);
     // (Key to the Stomach's Cleanse Affliction "to remove a poison": the counteract card for one poison on its user, +15 at rank 5.)
     const [key] = compileActivations(item("Key to the Stomach"));
     assert.deepEqual([key.plan.builtin, key.plan.item.counteract.modifier, key.plan.item.counteract.rank, key.plan.item.counteract.afflictions], ["counteract", 15, 5, ["poison"]]);

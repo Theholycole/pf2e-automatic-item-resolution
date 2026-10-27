@@ -39,6 +39,19 @@ export function creaturesNear(token, feet = 5) {
         .map((other) => entryOf(other, other.actor));
 }
 
+// How many items of a name there are within that many feet of a token, its own actor's too — a creature's or a pile's (each item's
+// quantity): Flawed Orb of Gold Dragonkind's Orb Shards (plan.dcNear, 2026-10-27).
+export function itemsNear(token, name, feet) {
+    const placeable = token?.object ?? token;
+    const sceneId = placeable?.document?.parent?.id ?? placeable?.parent?.id;
+    if (!placeable || !canvas?.ready || sceneId !== canvas.scene?.id) return 0;
+    const from = spaceOf(placeable);
+    const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
+    const want = String(name ?? "").toLowerCase();
+    const near = canvas.tokens.placeables.filter((other) => other.actor && (other === placeable || other.document?.uuid === placeable.document?.uuid || distanceFeet(from, spaceOf(other), grid) <= feet));
+    return [...new Set(near.map((other) => other.actor))].reduce((sum, actor) => sum + [...(actor.items ?? [])].filter((item) => String(item.name ?? "").toLowerCase() === want).reduce((count, item) => count + (Number(item.system?.quantity) || 1), 0), 0);
+}
+
 // The actor and token of a card's entry.
 export async function creatureOf(entry) {
     const token = entry?.tokenUuid ? await fromUuid(entry.tokenUuid).catch(() => null) : null;

@@ -1,83 +1,79 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 174,
+  "entries": 153,
   "results": {
-   "none": 87,
-   "partial": 55,
-   "note-only": 18,
-   "builtin:no-effect": 13,
-   "gaps": 1
+   "none": 73,
+   "partial": 50,
+   "note-only": 16,
+   "builtin:no-effect": 10,
+   "gaps": 4
   },
   "main": {
-   "areas": 25,
-   "lasting": 7,
-   "cast-changes": 7,
+   "areas": 22,
+   "lasting": 6,
+   "creatures": 16,
    "choice": 4,
-   "creatures": 15,
-   "triggers": 14,
    "counteract": 3,
    "actions": 2,
-   "spells": 10,
-   "several": 6,
+   "spells": 6,
+   "several": 5,
+   "triggers": 12,
    "afflictions": 5,
    "reader": 2,
    "visibility": 4,
-   "missing-number": 1,
-   "forms": 4,
-   "moving": 5,
-   "strike": 14,
+   "moving": 4,
+   "strike": 11,
    "fortune": 3,
-   "situational": 3,
-   "removed": 1,
-   "objects": 8,
+   "cast-changes": 6,
+   "objects": 7,
    "information": 3,
-   "immunity": 5,
+   "immunity": 4,
    "mind": 2,
+   "situational": 3,
    "illusions": 2,
-   "dying": 8,
+   "dying": 7,
    "out-of-combat": 4,
    "vehicles": 1,
    "speech": 1,
    "senses": 2,
    "by-kind": 1,
+   "forms": 3,
    "retaliation": 1,
    "no-rules": 1
   },
   "any": {
-   "areas": 36,
+   "areas": 33,
    "range": 3,
-   "out-of-combat": 54,
-   "lasting": 37,
-   "several": 20,
-   "objects": 50,
-   "reader": 36,
-   "counteract": 14,
-   "cast-changes": 7,
-   "choice": 16,
-   "creatures": 15,
-   "strike": 30,
-   "triggers": 16,
-   "dying": 18,
-   "spells": 25,
-   "information": 34,
-   "moving": 8,
+   "out-of-combat": 42,
+   "lasting": 34,
+   "several": 18,
+   "objects": 42,
+   "reader": 31,
+   "counteract": 12,
+   "creatures": 16,
+   "choice": 14,
+   "strike": 26,
+   "moving": 7,
    "mind": 14,
-   "immunity": 18,
-   "speech": 14,
-   "actions": 4,
-   "afflictions": 14,
+   "information": 29,
+   "spells": 20,
+   "immunity": 17,
+   "speech": 13,
+   "actions": 3,
+   "triggers": 14,
+   "afflictions": 13,
    "visibility": 4,
-   "situational": 9,
-   "missing-number": 1,
-   "forms": 4,
-   "illusions": 4,
+   "dying": 14,
    "fortune": 3,
-   "removed": 1,
+   "cast-changes": 6,
+   "situational": 8,
+   "illusions": 3,
    "vehicles": 1,
    "senses": 4,
    "from-events": 4,
    "by-kind": 1,
+   "forms": 3,
    "retaliation": 1,
    "speeds": 1,
    "no-rules": 1
@@ -148,9 +144,11 @@
    "tier": "special",
    "level": 22,
    "result": "partial",
-   "main": "cast-changes",
+   "main": "creatures",
+   "work": "summoned",
    "needs": [
-    "cast-changes"
+    "creatures",
+    "lasting"
    ]
   },
   {
@@ -171,30 +169,13 @@
    "kind": "activation",
    "tier": "special",
    "level": 23,
-   "result": "none",
+   "result": "partial",
    "main": "creatures",
    "work": "conjured",
    "needs": [
     "creatures",
     "strike",
-    "objects",
-    "reader"
-   ]
-  },
-  {
-   "name": "Hunter's Dawn",
-   "kind": "activation",
-   "tier": "special",
-   "level": 23,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: the target is …",
-   "needs": [
-    "triggers",
-    "dying",
-    "spells",
-    "counteract",
-    "information"
+    "several"
    ]
   },
   {
@@ -403,21 +384,6 @@
    ]
   },
   {
-   "name": "Slithermaw's Bane",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "activation": "Terrain Adaptation",
-   "result": "partial",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "situational",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Book of Lost Days",
    "kind": "activation",
    "tier": "special",
@@ -435,20 +401,6 @@
    ]
   },
   {
-   "name": "Flawed Orb of Gold Dragonkind",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "partial",
-   "main": "missing-number",
-   "work": "doesn't say how much",
-   "needs": [
-    "missing-number",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "The Unicorn",
    "kind": "activation",
    "tier": "special",
@@ -461,24 +413,6 @@
     "dying",
     "objects",
     "speech"
-   ]
-  },
-  {
-   "name": "Spectacles of Discernment",
-   "kind": "activation",
-   "tier": "special",
-   "level": 13,
-   "activation": "Reveal the Truth",
-   "result": "builtin:no-effect",
-   "main": "forms",
-   "work": "polymorph",
-   "needs": [
-    "forms",
-    "illusions",
-    "counteract",
-    "information",
-    "speech",
-    "out-of-combat"
    ]
   },
   {
@@ -508,30 +442,16 @@
    ]
   },
   {
-   "name": "Jax",
-   "kind": "activation",
-   "tier": "special",
-   "level": 8,
-   "result": "partial",
-   "main": "lasting",
-   "work": "until you",
-   "needs": [
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "The Uprising",
    "kind": "activation",
    "tier": "special",
    "level": 20,
-   "result": "note-only",
+   "result": "partial",
    "main": "strike",
-   "work": "unarmed strike",
+   "work": "they strike",
    "needs": [
     "strike",
     "lasting",
-    "choice",
     "reader"
    ]
   },
@@ -632,18 +552,6 @@
    ]
   },
   {
-   "name": "Red Hand's Satchel",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "result": "none",
-   "main": "spells",
-   "work": "infused reagents",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
    "name": "The Lens of the Outreaching Eye",
    "kind": "activation",
    "tier": "special",
@@ -671,47 +579,6 @@
     "moving",
     "lasting",
     "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Briar",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: briar resurrects its …",
-   "needs": [
-    "triggers",
-    "dying"
-   ]
-  },
-  {
-   "name": "Briar",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "situational",
-   "work": "bonus to all saving throws against",
-   "needs": [
-    "situational",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Carnival",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "removed",
-   "work": "into the future",
-   "needs": [
-    "removed",
-    "several",
     "out-of-combat"
    ]
   },
@@ -791,22 +658,6 @@
    ]
   },
   {
-   "name": "Hex Blaster",
-   "kind": "activation",
-   "tier": "special",
-   "level": 11,
-   "result": "partial",
-   "main": "strike",
-   "work": "this strike",
-   "needs": [
-    "strike",
-    "afflictions",
-    "dying",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "The Waxworks",
    "kind": "activation",
    "tier": "special",
@@ -836,19 +687,6 @@
    "kind": "activation",
    "tier": "special",
    "level": 11,
-   "result": "none",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike",
-    "objects"
-   ]
-  },
-  {
-   "name": "Emerald Fulcrum Lens",
-   "kind": "activation",
-   "tier": "special",
-   "level": 10,
    "result": "none",
    "main": "strike",
    "work": "attack roll",
@@ -931,19 +769,6 @@
     "information",
     "speech",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Tengu Feather Fan",
-   "kind": "activation",
-   "tier": "special",
-   "level": 5,
-   "activation": "Wave Fan",
-   "result": "none",
-   "main": "spells",
-   "work": "cantrip",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -1097,18 +922,6 @@
    ]
   },
   {
-   "name": "Piereta",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "strike",
-   "work": "retributive strike",
-   "needs": [
-    "strike"
-   ]
-  },
-  {
    "name": "Portable Seal (Moderate)",
    "kind": "consumable",
    "tier": "general",
@@ -1228,22 +1041,6 @@
    ]
   },
   {
-   "name": "Horns of Naraga",
-   "kind": "activation",
-   "tier": "special",
-   "level": 26,
-   "result": "builtin:no-effect",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "actions",
-    "lasting",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Cube of Force",
    "kind": "activation",
    "tier": "general",
@@ -1264,13 +1061,11 @@
    "tier": "special",
    "level": 9,
    "activation": "Absorb Memories",
-   "result": "none",
+   "result": "partial",
    "main": "dying",
    "work": "dies",
    "needs": [
     "dying",
-    "lasting",
-    "several",
     "objects",
     "mind"
    ]
@@ -1489,29 +1284,12 @@
    "kind": "activation",
    "tier": "special",
    "level": 25,
-   "result": "none",
-   "main": "objects",
-   "work": "locks",
+   "result": "gaps",
+   "main": "situational",
+   "work": "only while the",
    "needs": [
-    "objects",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Passage Pane",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "builtin:no-effect",
-   "main": "dying",
-   "work": "dead",
-   "needs": [
-    "dying",
-    "lasting",
-    "objects",
-    "information",
-    "out-of-combat"
+    "situational",
+    "information"
    ]
   },
   {
@@ -1519,40 +1297,11 @@
    "kind": "activation",
    "tier": "special",
    "level": 20,
-   "result": "none",
+   "result": "gaps",
    "main": "spells",
    "work": "ritual",
    "needs": [
     "spells",
-    "reader",
-    "information",
-    "speech"
-   ]
-  },
-  {
-   "name": "Void Mirror",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "immunity",
-   "work": "resist being",
-   "needs": [
-    "immunity",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Void Mirror",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells",
-    "reader",
     "mind",
     "information",
     "out-of-combat"
@@ -1716,11 +1465,14 @@
    "kind": "activation",
    "tier": "special",
    "level": 20,
-   "result": "none",
-   "main": "spells",
-   "work": "ritual",
+   "result": "gaps",
+   "main": "creatures",
+   "work": "spirit of",
    "needs": [
-    "spells",
+    "creatures",
+    "reader",
+    "information",
+    "speech",
     "out-of-combat"
    ]
   },
@@ -1943,21 +1695,6 @@
    ]
   },
   {
-   "name": "Spear of the Destroyer's Flame",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "note-only",
-   "main": "moving",
-   "work": "move you",
-   "needs": [
-    "moving",
-    "choice",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Soulheart (Pure)",
    "kind": "activation",
    "tier": "special",
@@ -2080,19 +1817,6 @@
    ]
   },
   {
-   "name": "The Empty Throne",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "several",
-   "work": "allies",
-   "needs": [
-    "several",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Spell Reservoir",
    "kind": "activation",
    "tier": "general",
@@ -2155,21 +1879,6 @@
    ]
   },
   {
-   "name": "Meloth's Lifedrinker (Level 7)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 7,
-   "activation": "Lifedrink",
-   "result": "partial",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas",
-    "strike",
-    "objects"
-   ]
-  },
-  {
    "name": "Whisperer of Souls",
    "kind": "activation",
    "tier": "special",
@@ -2219,21 +1928,6 @@
     "fortune",
     "triggers",
     "choice"
-   ]
-  },
-  {
-   "name": "What Doors We Open",
-   "kind": "activation",
-   "tier": "special",
-   "level": 14,
-   "activation": "Open the Door Within",
-   "result": "none",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "objects",
-    "information"
    ]
   },
   {

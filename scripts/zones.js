@@ -7,8 +7,9 @@ import { ABILITY_ID, MODULE_ID } from "./foundry.js";
 import { effectSource } from "../src/live/card.js";
 import { lightZone } from "./placed-light.js";
 import { pickFor } from "./creature-pick.js";
-import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
+import { attitudeOf, conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
 import { SLAIN } from "./slain-wait.js";
+import { pauseItem } from "./paused-item.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -54,6 +55,22 @@ async function finishConjured(made, plan) {
     }
 }
 
+// Its user's check against the picked creature's DC (plan.attitudeCheck { statistic, against, degrees, stunned }): PF2e's own roll, the creature's
+// DC from its stat block (10 + its save or Perception); Stunned on a critical failure when the text says so. → attitudeOf's, or null.
+async function checkAttitude(plan, actor, itemName) {
+    const check = plan.attitudeCheck;
+    const uuid = plan.creatures?.[0]?.from?.uuid;
+    const creature = uuid ? await fromUuid(uuid).catch(() => null) : null;
+    const modifier = Number(creature?.system?.saves?.[check.against]?.value ?? creature?.system?.perception?.mod);
+    const statistic = actor?.getStatistic?.(check.statistic);
+    if (!creature || !Number.isFinite(modifier) || !statistic) throw new Error(`${itemName}: roll ${check.statistic} against the creature's ${check.against} DC by hand.`);
+    const roll = await statistic.roll({ dc: { value: 10 + modifier, label: `${creature.name}'s ${check.against} DC` }, skipDialog: true });
+    if (!roll) return null;
+    const found = attitudeOf(roll.degreeOfSuccess ?? roll.options?.degreeOfSuccess, check.degrees);
+    if (found.degree === "criticalFailure" && check.stunned && actor?.increaseCondition) await actor.increaseCondition("stunned", { value: check.stunned });
+    return found;
+}
+
 // userId: who used it (a consumable's PF2e Use message's author, a sheet's Activate's presser), for its pick.
 export async function startItemConjure({ plan, used, actor, token, userId = null }) {
     const startConjure = game.modules.get(ABILITY_ID)?.api?.live?.startConjure;
@@ -66,6 +83,9 @@ export async function startItemConjure({ plan, used, actor, token, userId = null
             if (!picked) return null;
             plan = pickedPlan(plan, picked);
         }
+        // (Its attitude by its user's check against the creature's DC first, Void Mirror's Call from the Void: src/live/conjured.js attitudeOf.)
+        const attitude = plan.attitudeCheck ? await checkAttitude(plan, actor, used.data.name) : null;
+        if (plan.attitudeCheck && !attitude) return null;
         // (One of a pair slain within its wait, Golden Lions': the other comes alone — scripts/slain-wait.js; none while both wait.)
         if (plan.slainWait?.each && used.data.uuid) {
             const holder = await fromUuid(used.data.uuid).catch(() => null);
@@ -75,6 +95,13 @@ export async function startItemConjure({ plan, used, actor, token, userId = null
         }
         const made = await startConjure({ item, plan, sourceToken: token?.document ?? token });
         await finishConjured(made, plan);
+        // (The item's other benefits off while it's out, Horns of Naraga's helm: scripts/paused-item.js.)
+        if (plan.pauseItem && made?.length) await pauseItem(used.data.uuid, made);
+        if (attitude) for (const { actor: called, token: placed } of made ?? []) {
+            await placed?.update?.({ disposition: attitude.disposition });
+            if (called?.type === "npc") await called.update({ "system.details.alliance": attitude.alliance });
+            await called?.createEmbeddedDocuments?.("Item", [{ name: `${used.data.name}: ${attitude.attitude}`, type: "effect", img: "icons/svg/aura.svg", system: { description: { value: `<p>${escape(`Its attitude toward ${actor?.name ?? "its caller"}: ${attitude.attitude}.`)}</p>` }, duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, rules: [] } }]);
+        }
         return made;
     }
     const names = (plan.creatures ?? []).map((creature) => `${creature.count > 1 ? `${creature.count} ` : ""}${creature.name}`).join(", ");

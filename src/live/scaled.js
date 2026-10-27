@@ -25,6 +25,42 @@ export function withConditionDC(plan, valueOf) {
     return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...against, value } } } };
 }
 
+// A save's DC higher for each item of a name near its user (plan.dcNear { name, within, each }, src/compiler/hostile-ends.js: Flawed Orb of Gold
+// Dragonkind's Orb Shards, each within 60 feet +1): count, how many there are → the plan with that DC; the plan as it was without dcNear.
+export function withNearbyDC(plan, count) {
+    const near = plan?.dcNear;
+    const against = plan?.resolution?.check?.against;
+    if (!near || !Number.isFinite(Number(against?.value)) || !(Number(count) > 0)) return plan;
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...against, value: Number(against.value) + Number(count) * (Number(near.each) || 1) } } } };
+}
+
+// Its user's own check at the highest DC of the creature targeted, with its best statistic of several (plan.dcFromTarget { statistics },
+// plan.bestOf, src/compiler/special-sentences.js: Spear of the Destroyer's Flame's "Will save, Diplomacy check, Intimidation check, or Warfare
+// Lore check … equal to the current Commander's Will DC, … whichever is highest"): dcs, the creature's DCs by statistic; mods, its user's
+// modifiers → the plan with that DC and statistic; the plan as it was without them.
+export function withTargetDC(plan, dcs, mods = {}) {
+    const from = plan?.dcFromTarget;
+    if (!from || plan.resolution?.check?.against?.dc !== "fixed") return plan;
+    const values = (from.statistics ?? []).map((slug) => Number(dcs?.[slug])).filter(Number.isFinite);
+    if (!values.length) return null;
+    const best = (plan.bestOf ?? []).filter((slug) => Number.isFinite(Number(mods?.[slug]))).sort((a, b) => Number(mods[b]) - Number(mods[a]))[0] ?? plan.resolution.check.statistic;
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: best, against: { ...plan.resolution.check.against, value: Math.max(...values) } } } };
+}
+
+// A check at its user's own attack modifier, filled in as it's used (check.attackFrom "unarmed", src/compiler/special-sentences.js: The
+// Uprising's mob, its user's unarmed Strike against each creature's Fortitude DC), wherever in the plan — its zone's entries too: the plan with
+// that modifier; the plan as it was without one.
+export function withAttackModifiers(plan, modifiers = {}) {
+    const walk = (value) => {
+        if (Array.isArray(value)) return value.map(walk);
+        if (!value || typeof value !== "object") return value;
+        const walked = Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, walk(entry)]));
+        if (value.attackFrom && Number.isFinite(Number(modifiers[value.attackFrom]))) return { ...walked, modifier: Number(modifiers[value.attackFrom]) };
+        return walked;
+    };
+    return plan && JSON.stringify(plan).includes('"attackFrom"') ? walk(plan) : plan;
+}
+
 // Its hit's damage gone, an ignition failed (Oil's flat check, plan.ownCheck.ignite): the plan with its success rows dealing none.
 export function withoutHitDamage(plan) {
     const none = { mode: "none", multiplier: 0, sourceComponentIds: [] };

@@ -6,51 +6,51 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1418,
-   "builtin:cast-spell": 473,
-   "builtin:focus-point": 48,
+   "resolves": 1427,
+   "builtin:cast-spell": 472,
+   "builtin:focus-point": 49,
    "builtin:counteract": 39,
-   "builtin:readied-bonus": 52,
+   "builtin:readied-bonus": 54,
    "builtin:reroll": 46,
-   "builtin:ways": 67,
-   "builtin:whisper": 49,
+   "builtin:ways": 74,
+   "builtin:whisper": 50,
    "builtin:table": 8,
-   "none": 85,
+   "none": 71,
    "builtin:teleport": 31,
+   "builtin:zone": 40,
    "builtin:pf2e-rules": 23,
-   "builtin:zone": 38,
    "builtin:modes": 36,
    "builtin:objects": 38,
    "builtin:item-action": 28,
-   "builtin:conjure": 24,
-   "partial": 19,
+   "builtin:conjure": 25,
+   "partial": 13,
    "builtin:roll-twice": 15,
-   "note-only": 15,
-   "builtin:no-effect": 13,
+   "note-only": 13,
+   "builtin:no-effect": 10,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1,
    "builtin:structure": 1,
-   "gaps": 1
+   "gaps": 4
   },
   "live": {
-   "save": 444,
-   "cast": 473,
-   "item": 870,
-   "focus": 48,
+   "save": 445,
+   "cast": 472,
+   "item": 873,
+   "focus": 49,
    "counteract": 39,
-   "fortune": 67,
+   "fortune": 69,
    "reroll": 46,
-   "ways": 67,
+   "ways": 74,
    "strike": 130,
-   "whisper": 49,
+   "whisper": 50,
    "table": 8,
-   "none": 123,
+   "none": 106,
    "teleport": 31,
-   "zone": 38,
+   "zone": 40,
    "toggle": 36,
    "objects": 38,
    "action": 28,
-   "conjure": 24,
+   "conjure": 25,
    "coat": 4,
    "later": 3,
    "spellstrike": 9,
@@ -64,51 +64,51 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 862,
+    "resolves": 867,
     "builtin:cast-spell": 346,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
-    "builtin:readied-bonus": 33,
+    "builtin:readied-bonus": 34,
     "builtin:reroll": 35,
-    "builtin:ways": 41,
-    "builtin:whisper": 45,
+    "builtin:ways": 45,
+    "builtin:whisper": 46,
     "builtin:table": 5,
-    "none": 63,
+    "none": 54,
     "builtin:teleport": 18,
     "builtin:objects": 22,
-    "builtin:zone": 20,
+    "builtin:zone": 21,
     "builtin:item-action": 16,
-    "builtin:conjure": 23,
-    "partial": 11,
+    "builtin:conjure": 24,
+    "partial": 8,
     "builtin:modes": 19,
     "builtin:roll-twice": 11,
-    "note-only": 10,
-    "builtin:no-effect": 10,
+    "note-only": 9,
+    "builtin:no-effect": 7,
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
     "builtin:structure": 1,
-    "gaps": 1
+    "gaps": 4
    }
   },
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 273,
-    "builtin:cast-spell": 81,
+    "resolves": 277,
+    "builtin:cast-spell": 80,
     "builtin:reroll": 7,
-    "none": 20,
+    "builtin:zone": 9,
+    "builtin:ways": 13,
     "builtin:table": 1,
     "builtin:modes": 13,
-    "builtin:ways": 10,
+    "none": 16,
     "builtin:item-action": 9,
-    "builtin:zone": 8,
     "builtin:counteract": 2,
-    "builtin:readied-bonus": 9,
+    "builtin:readied-bonus": 10,
     "builtin:objects": 6,
     "builtin:pf2e-rules": 2,
-    "partial": 6,
-    "note-only": 4,
+    "note-only": 3,
     "builtin:teleport": 7,
+    "partial": 3,
     "builtin:roll-twice": 2,
     "builtin:whisper": 1
    }
@@ -130,9 +130,8 @@
    "activations": 26,
    "results": {
     "resolves": 14,
-    "builtin:focus-point": 1,
+    "builtin:focus-point": 2,
     "builtin:objects": 6,
-    "none": 1,
     "builtin:cast-spell": 1,
     "builtin:whisper": 1,
     "builtin:table": 2
@@ -1363,9 +1362,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:zone",
    "kind": null,
-   "live": "cast"
+   "live": "zone"
   },
   {
    "name": "Bewitching Bloom (Purple Iris)",
@@ -1484,9 +1483,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Hunter's Dawn",
@@ -1495,9 +1494,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Hunter's Dawn",
@@ -4551,7 +4550,7 @@
    "time": "2",
    "frequency": "Three times per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -5102,9 +5101,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Mail of Luck",
@@ -5578,9 +5577,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Mat of Resilience",
@@ -6904,9 +6903,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:focus-point",
    "kind": null,
-   "live": null
+   "live": "focus"
   },
   {
    "name": "Energized Shield (Major)",
@@ -7377,9 +7376,9 @@
    "time": "reaction",
    "frequency": "once per month",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Briar",
@@ -7388,9 +7387,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Humbug Pocket",
@@ -7476,9 +7475,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Caress of the Great Serpent",
@@ -8104,9 +8103,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cape of Illumination (Lesser)",
@@ -8491,9 +8490,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Ivory Baton (Greater)",
@@ -9635,9 +9634,9 @@
    "time": null,
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Chronicler Wayfinder",
@@ -11451,9 +11450,9 @@
    "time": "reaction",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Piereta",
@@ -13581,9 +13580,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:conjure",
    "kind": null,
-   "live": null
+   "live": "conjure"
   },
   {
    "name": "Silkspinner's Shield",
@@ -14110,9 +14109,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Nightmare",
@@ -16446,9 +16445,9 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "gaps",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Passage Pane",
@@ -16457,9 +16456,9 @@
    "time": "3",
    "frequency": "once per week",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Passage Pane",
@@ -16523,9 +16522,9 @@
    "time": "1 hour",
    "frequency": "once per month",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:readied-bonus",
    "kind": null,
-   "live": null
+   "live": "fortune"
   },
   {
    "name": "Void Mirror",
@@ -16534,9 +16533,9 @@
    "time": "1 hour",
    "frequency": "once per year",
    "trigger": false,
-   "result": "partial",
-   "kind": "check",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Void Mirror",
@@ -16545,9 +16544,9 @@
    "time": "7 days",
    "frequency": "once per century",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "gaps",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Pyrite Rat",
@@ -19030,9 +19029,9 @@
    "time": "1 hour",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "gaps",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Smoke Veil",
@@ -21834,9 +21833,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Eternal Eruption of Droskar's Crag",
@@ -23799,7 +23798,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -24785,7 +24784,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "save"
   },
@@ -25479,9 +25478,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Glorious Plate",

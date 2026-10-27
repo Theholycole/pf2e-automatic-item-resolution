@@ -40,7 +40,10 @@ const SUNLIGHT = /\bsunlight\b|\bvampire (?:vulnerabilities|weaknesses)\b/;
 export const sunlightVulnerable = (actor) => abilityNames(actor).some((name) => SUNLIGHT.test(name));
 // (Or a creature without it, lacks: Dawnlight's flash only for creatures with darkvision, the rest immune — 2026-10-27.)
 const fits = (entry, actor) => (entry.lacks ? !fitsKind({ ...entry, lacks: false }, actor) : fitsKind(entry, actor));
-const fitsKind = (entry, actor) => (entry.breathes ? breathes(actor) : entry.sunlight ? sunlightVulnerable(actor) : entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
+// (A kind PF2e gives no trait of its own by its creatures' name, Flawed Orb of Gold Dragonkind's gold dragons — "Gold Dragon (Ancient)": named,
+// 2026-10-27.)
+const named = (actor, words) => new RegExp(`\\b${String(words).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(String(actor?.name ?? ""));
+const fitsKind = (entry, actor) => (entry.named ? named(actor, entry.named) : entry.breathes ? breathes(actor) : entry.sunlight ? sunlightVulnerable(actor) : entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
 
 // The plan for that creature: its riders added to their degree's effects when it fits; a save's bonus or penalty for its kind (Lamentation of
 // the Faithless's holy creatures' –2); null for a kind immune to it (its unholy ones).

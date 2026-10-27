@@ -3,10 +3,12 @@
 // message) — and "air-ends-on:long-move" — after Foundry moves its token farther than half its land Speed (the "moveToken" hook, as
 // scripts/move-damage.js reads it). The Effect goes, and its Hidden and Undetected with it. (And "air-ends-on:<condition>", Ring of the Weary
 // Traveler's fatigue ignored — src/compiler/fatigue-ignored.js —: when PF2e gives the creature that condition again, the Effect goes, and the
-// condition's penalties are back.)
+// condition's penalties are back.) And "air-ends-on:targeted" — its creature subject to a hostile act, src/live/targeted.js: an attack roll at it,
+// a save it rolls, damage it takes (PF2e's damageTaken), none of them its own source's — Flawed Orb of Gold Dragonkind's stun (2026-10-27).
 
 import { movedFarEnough } from "./move-damage.js";
 import { MODULE_ID, isActiveGM } from "./foundry.js";
+import { endsFor, hostileAt } from "../src/live/targeted.js";
 
 const HOSTILE = new Set(["attack-roll", "spell-attack-roll", "damage-roll", "spell-cast"]);
 
@@ -38,6 +40,25 @@ export function setUpEndsOnHostile() {
         if (effects.length) endThem(actor, effects, "used a hostile action").catch((error) => console.error(`${MODULE_ID} | ends on hostile`, error));
         const attacked = isAttackMessage(message) ? endingOn(actor, "attack") : [];
         if (attacked.length) endThem(actor, attacked, "attacked or dealt damage", { unhide: false }).catch((error) => console.error(`${MODULE_ID} | ends on an attack`, error));
+    });
+    // (Its creature subject to a hostile act: an attack at it or a save it rolls — not its own source's —, or damage it takes.)
+    Hooks.on("createChatMessage", (message) => {
+        if (!isActiveGM()) return;
+        const roller = message.actor ?? ChatMessage.getSpeakerActor?.(message.speaker) ?? null;
+        const found = hostileAt(message.flags?.pf2e?.context, roller?.uuid ?? null);
+        if (!found) return;
+        const origin = message.flags?.pf2e?.origin?.uuid ? fromUuidSync(message.flags.pf2e.origin.uuid)?.name ?? null : message.item?.name ?? null;
+        for (const uuid of new Set(found.at)) {
+            const doc = fromUuidSync(uuid);
+            const actor = doc?.actor ?? doc;
+            const effects = endingOn(actor, "targeted").filter((effect) => endsFor(effect.name, origin));
+            if (effects.length) endThem(actor, effects, "was subject to a hostile act", { unhide: false }).catch((error) => console.error(`${MODULE_ID} | ends when targeted`, error));
+        }
+    });
+    Hooks.on("updateActor", (actor, changed, options) => {
+        if (!isActiveGM() || !(Number(options?.damageTaken) > 0) || options?.damageUndo) return;
+        const effects = endingOn(actor, "targeted");
+        if (effects.length) endThem(actor, effects, "took damage", { unhide: false }).catch((error) => console.error(`${MODULE_ID} | ends on damage`, error));
     });
     Hooks.on("createItem", (item) => {
         if (!isActiveGM() || item?.type !== "condition" || !item.slug) return;

@@ -51,3 +51,22 @@ const WAIT_SECONDS = { days: 86_400, weeks: 604_800 };
 export const slainUntil = (slainWait, worldTime) => (Number(worldTime) || 0) + (Number(slainWait?.value) || 0) * (WAIT_SECONDS[slainWait?.unit] ?? 0);
 export const stillSlain = (slain, worldTime) => (slain ?? []).filter((entry) => (Number(entry?.until) || 0) > (Number(worldTime) || 0));
 export const countNow = (count, slain, worldTime) => Math.max(0, (Number(count) || 1) - stillSlain(slain, worldTime).length);
+
+// The item a creature it became pauses while it's out (plan.pauseItem, Horns of Naraga's "You don't receive any of the helm's other benefits
+// while it is transformed"): kept on the item as { actorIds, invested } — the made actors, and whether it was invested before. One of them
+// gone (present: whether an actor is still there) → { keep } the pause for the others, or { restore } its invested state once none is left.
+export function pausedAfter(paused, goneId, present = () => true) {
+    const left = (paused?.actorIds ?? []).filter((id) => id !== goneId && present(id));
+    return left.length ? { keep: { ...paused, actorIds: left } } : { restore: paused?.invested !== false };
+}
+
+// A called creature's attitude by its user's check (plan.attitudeCheck, Void Mirror's Call from the Void: helpful on a critical success,
+// indifferent on a success, hostile on a failure): PF2e's degree index (0 critical failure … 3 critical success) and the plan's degrees →
+// { degree, attitude, disposition, alliance } — its token's side and its actor's alliance.
+const DEGREES = ["criticalFailure", "failure", "success", "criticalSuccess"];
+const SIDES = { helpful: { disposition: 1, alliance: "party" }, friendly: { disposition: 1, alliance: "party" }, indifferent: { disposition: 0, alliance: null }, unfriendly: { disposition: -1, alliance: "opposition" }, hostile: { disposition: -1, alliance: "opposition" } };
+export function attitudeOf(index, degrees = {}) {
+    const degree = DEGREES[Math.max(0, Math.min(3, Number(index) || 0))];
+    const attitude = degrees[degree] ?? "indifferent";
+    return { degree, attitude, ...(SIDES[attitude] ?? SIDES.indifferent) };
+}

@@ -18,9 +18,9 @@ import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
-import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
+import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, storeAfter, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -28,7 +28,7 @@ import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
 import { startItemConjure, startItemZone } from "./zones.js";
 import { answerPick } from "./creature-pick.js";
-import { scaledByCondition, withConditionDC } from "../src/live/scaled.js";
+import { scaledByCondition, withAttackModifiers, withConditionDC, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
@@ -210,6 +210,17 @@ async function postWhisper({ plan, used, actor, token }) {
     const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER") || also.some((other) => other.testUserPermission?.(user, "OWNER"))).map((user) => user.id);
     const who = token?.name ?? actor?.name ?? "its user";
     const told = also.length ? `, and ${also.map((other) => other.name).join(", ")}'s` : "";
+    // (Its secret flat check, The Carnival's: rolled now, for the GM alone — whisper.flat { dc, failure }.)
+    if (plan.whisper.flat?.dc) {
+        const roll = await new Roll("1d20").evaluate();
+        const passed = roll.total >= Number(plan.whisper.flat.dc);
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), blind: true, content: `<p><strong>${escapeHTML(used.data.name)}</strong>: secret flat check DC ${Number(plan.whisper.flat.dc)}: ${roll.total} — ${passed ? "a success: the answer is as it is" : `a failure. ${escapeHTML(plan.whisper.flat.failure ?? "")}`}</p>` });
+    }
+    // (A secret check of its own, Spectacles of Discernment's counteract to see through: rolled now, for the GM alone — whisper.secret.)
+    if (plan.whisper.secret?.formula) {
+        const roll = await new Roll(String(plan.whisper.secret.formula)).evaluate();
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), blind: true, content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(plan.whisper.secret.words ?? "secret check")}: ${roll.total}.</p>` });
+    }
     return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor, token: token?.document ?? token ?? undefined }),
         whisper: owners,
@@ -311,6 +322,29 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.toggleOn && actor) await toggleOn(plan, { actor, used }).catch((error) => console.error(`${MODULE_ID} | toggle on`, error));
     // (Its save's DC its user's conditions higher, Death Tusk Helm's doomed and wounded: src/live/scaled.js.)
     if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
+    // (Its save's DC higher for each item of a name near its user, Flawed Orb of Gold Dragonkind's Orb Shards: src/live/scaled.js.)
+    if (plan?.dcNear && token) plan = withNearbyDC(plan, itemsNear(token, plan.dcNear.name, plan.dcNear.within));
+    // (A check at its user's unarmed attack modifier as it is now, The Uprising's mob: PF2e's basic unarmed Strike — src/live/scaled.js.)
+    if (actor && JSON.stringify(plan ?? {}).includes('"attackFrom"')) {
+        const unarmed = (actor.system?.actions ?? []).find((action) => action?.slug === "basic-unarmed" || action?.item?.slug === "basic-unarmed" || action?.item?.system?.category === "unarmed");
+        plan = withAttackModifiers(plan, { unarmed: unarmed?.totalModifier });
+    }
+    // (A save against its user's own skill DC, Void Mirror's return of the creature it called: their Occultism DC as it is now — plan.dcFromUser.)
+    if (plan?.dcFromUser && actor && plan.resolution?.check?.against?.dc === "fixed") {
+        const dc = Number(actor.getStatistic?.(plan.dcFromUser)?.dc?.value);
+        if (!Number.isFinite(dc)) throw new Error(`${used.data.name}: ${actor.name} has no ${plan.dcFromUser} DC.`);
+        plan = { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...plan.resolution.check.against, value: dc } } } };
+    }
+    // (Its user's check at the highest DC of the creature its presser targets, with their best statistic — Spear of the Destroyer's Flame's tie to
+    // the living Commander: src/live/scaled.js.)
+    if (plan?.dcFromTarget && actor) {
+        const aimed = [...(game.user?.targets ?? [])].filter((target) => target.actor && target.actor !== actor);
+        if (aimed.length !== 1) throw new Error(`${used.data.name}: target the one creature whose DCs it's against first.`);
+        const statisticsOf = (creature, slugs, read) => Object.fromEntries(slugs.map((slug) => [slug, read(creature.getStatistic?.(slug))]));
+        const next = withTargetDC(plan, statisticsOf(aimed[0].actor, plan.dcFromTarget.statistics ?? [], (statistic) => statistic?.dc?.value), statisticsOf(actor, plan.bestOf ?? [], (statistic) => statistic?.mod ?? statistic?.check?.mod));
+        if (!next) throw new Error(`${used.data.name}: ${aimed[0].name} has none of those DCs.`);
+        plan = next;
+    }
     // (A light it puts in a square, Flare Beacon's: placed at its user's square as it's used, src/compiler/placed-light.js.)
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)
@@ -616,6 +650,12 @@ async function giveUserConditions(effects, { actor, token, used }) {
         if (effect.kind === "rules") {
             await actor.createEmbeddedDocuments("Item", [ruleEffectSource(effect, { item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
             lines.push(`${name}: ${effect.words}`);
+            continue;
+        }
+        // (A note Effect of its own, with PF2e's rules — Jax's judgment on her Dominate's save: the ability module's note Effect, 2026-10-27.)
+        if (effect.kind === "note") {
+            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note: effect.note } }, state) : null;
+            lines.push(line ?? `${name}: ${effect.note?.label ?? "a note"}${ability?.applyChange ? "" : " (add it by hand: the ability module isn't active)"}`);
             continue;
         }
         // (PF2e's own Effect on its user beside a zone, Arctic Worm Chitin Shield's Effect: Misty Chill: the ability module's native Effect,
@@ -1033,6 +1073,29 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             const said = await ability.applyChange(entry.heal ? { op: "heal", target: DRINKER_ID, amount } : { op: "tempHp", target: DRINKER_ID, amount, duration: entry.duration ?? null }, abilityState(state));
             lines.push(`${said ?? `${recipient.name}: ${amount} ${entry.heal ? "Hit Points regained" : "temporary Hit Points"}`} (from ${others[0].name}, level ${level})`);
         } else lines.push(`${recipient.name}: ${levelTempText(entry)} — ${others[0] ? `${others[0].name}'s level gives none` : "no creature targeted"}; apply it by hand.`);
+    }
+    // (What it holds, Mindsponge's memories: its count on the item, one more or all let out — refused once full, src/live/card.js storeAfter.)
+    if (state.plan.item?.store && state.item.uuid) {
+        const holder = await fromUuid(state.item.uuid).catch(() => null);
+        if (holder?.setFlag) {
+            const after = storeAfter(holder.getFlag(MODULE_ID, "stored"), state.plan.item.store, state.item.name);
+            if (after.full) throw new Error(after.full);
+            await holder.setFlag(MODULE_ID, "stored", after.count);
+            lines.push(after.line);
+        }
+    }
+    // (An extradimensional space it opens, What Doors We Open's: its container made on its user once — PF2e's own pouch, flagged as the item's.)
+    if (state.plan.item?.space && target.actor) {
+        const space = state.plan.item.space;
+        const held = [...(target.actor.items ?? [])].find((entry) => entry.flags?.[MODULE_ID]?.spaceOf === state.item.uuid);
+        if (held) lines.push(`${recipient.name}: ${space.name} is open`);
+        else {
+            const pouch = await fromUuid(space.uuid).catch(() => null);
+            if (pouch) {
+                await target.actor.createEmbeddedDocuments("Item", [spaceSource(pouch.toObject(), { space, itemUuid: state.item.uuid, moduleId: MODULE_ID })]);
+                lines.push(`${recipient.name}: ${space.name} opens, a container in the inventory`);
+            } else lines.push(`${recipient.name}: ${space.name} — no ${space.like} in the compendium; give it a container by hand`);
+        }
     }
     // (Fruit it grows, Verdant Branch's: consumables in its user's inventory, each eaten for its healing — the module's own heal then.)
     if (state.plan.item?.creates && target.actor) {
