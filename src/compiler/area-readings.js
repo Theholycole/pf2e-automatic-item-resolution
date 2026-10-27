@@ -59,7 +59,7 @@ const LENS_TYPES = {
     Detecting: {
         sentences: [/^Type: Detecting When held up to light\b.*\.$/, /^While Detecting Magic in exploration mode\b.*\bit pulsates faintly\.$/, /^This makes it easier to triangulate\b.*\.$/, /^You also gain a \+(\d) item bonus\b.*\bto Identify Magic within the light\.$/],
         card: ([, , , identify]) => ownRow({
-            noteEffects: [lensEffect("Detecting", `While its user Detects Magic in exploration, magic the lantern's light falls on pulsates faintly, so it can find it in the light's cone (the GM shows where). +${identify[1]} item bonus to checks to Identify Magic within the light (its toggle on for those).`, [toggle("exploration-lens-identify", "Identifying Magic within the lens's light"), bonus("skill-check", "item", Number(identify[1]), ["exploration-lens-identify"])])],
+            noteEffects: [lensEffect("Detecting", `While its user Detects Magic in exploration, magic the lantern's light falls on pulsates faintly, so it can find it in the light's cone (the GM shows where). +${identify[1]} item bonus when it Identifies Magic in the light (its toggle on for those).`, [toggle("exploration-lens-identify", "Identifying Magic within the lens's light"), bonus("skill-check", "item", Number(identify[1]), ["exploration-lens-identify"])])],
             notes: ["Fitted to a bull's-eye lantern, or to a wayfinder its user holds with a light shining through it."]
         })
     },
@@ -67,7 +67,7 @@ const LENS_TYPES = {
     Searching: {
         sentences: [/^Type: Searching This lens\b.*\bopalescent\b.*\.$/, /^The lens subtly outlines hidden doors\b.*\bgranting you a \+(\d) item bonus\b.*\bPerception checks\b.*\bwhile Searching\.$/, /^Even if you aren't Searching\b.*\bfind traps\b.*\.$/],
         card: ([, spot]) => ownRow({
-            noteEffects: [lensEffect("Searching", `+${spot[1]} item bonus to Perception checks to spot hidden doors and concealed hazards while Searching (its toggle on for those). Even when it isn't Searching, it gets a check to find traps that normally need a Search (the GM rolls it in secret).`, [toggle("exploration-lens-search", "Searching for hidden doors and hazards in the lens's light"), bonus("perception", "item", Number(spot[1]), ["exploration-lens-search"])])],
+            noteEffects: [lensEffect("Searching", `+${spot[1]} item bonus to Perception to notice hidden doors and concealed hazards as it Searches (its toggle on for those). Even when it isn't Searching, it still gets a secret check to notice traps that would need a Search (the GM rolls it in secret).`, [toggle("exploration-lens-search", "Searching for hidden doors and hazards in the lens's light"), bonus("perception", "item", Number(spot[1]), ["exploration-lens-search"])])],
             notes: ["Fitted to a bull's-eye lantern, or to a wayfinder its user holds with a light shining through it."]
         })
     }
@@ -93,7 +93,7 @@ const PRIVACY = [
     /^When applied to a wall inside a room\b.*\bitem bonus to Stealth checks\b.*\bcreatures outside the room\.$/,
     /^The privacy ward fulu can shield\b.*\bup to (\d+) square feet, grants a \+(\d) item bonus\b.*\bduration of (\d+) (hours?)\.$/
 ];
-const PRIVACY_HIDDEN = /^If you become Hidden within the room\b.*\bUndetected to creatures of the fulu's level or lower\.$/;
+const PRIVACY_HIDDEN = /^If you become Hidden within the room\b.*\bUndetected\b.*\bfulu's level or lower\.$/;
 
 // Each reading: the source names it's for (an activation's "Item: Activation"; any when none), whether it reads over the plan read before
 // (by default only none, note-only, or the GM's no-effect), a pattern for each of its effect's sentences — every sentence must be one, in
@@ -685,14 +685,14 @@ const READINGS = [
         sentences: [
             /^The ancient inhabitants of Bloodsalt\b.*\.$/,
             /^In its stone form, a barricade stone\b.*\.$/,
-            /^The size and shape of the stone's final form\b.*\.$/,
-            /^When you activate the barricade stone ?, you drop it\b.*\bthrow it up to (\d+) feet away\b.*\bsling weapon\.$/,
+            /^The size and shape\b.*\bfinal form\b.*\.$/,
+            /^When you activate the barricade stone\b.*\bdrop it\b.*\bthrow it up to (\d+) feet away\b.*\bsling weapon\.$/,
             /^Upon landing, the stone instantly\b.*\.$/,
             /^The stone grows to its maximum size\.$/,
             /^While normally items with the structure trait\b.*\bcan't be placed\b.*\bcreatures\.$/,
             /^While it's likely to take some time\b.*\bstone structure \(Hardness (\d+), HP (\d+)\)\.$/,
             /^Type: Cube This seemingly simple six-sided die\b.*\.$/,
-            /^When activated, it grows to fill a solid square\b.*\bno more than (\d+) feet on any side\.$/,
+            /^When activated, it grows\b.*\bsolid square\b.*\bno more than (\d+) feet on any side\.$/,
             /^The cube fills spaces well enough\b.*\bTiny creatures\b.*\.$/,
             /^Liquids, gases, and minuscule creatures\b.*\.$/,
             /^Depending on the irregularities\b.*\bsee or hear past it\.$/
@@ -704,7 +704,7 @@ const READINGS = [
             notes: [
                 `Dropped, thrown up to ${thrown[1]} feet or slung with a sling, it grows where it lands into solid stone filling a square or rectangular space up to ${space[1]} feet on any side, for good (fit the zone to it and draw its walls on the map).`,
                 "Not where creatures are: it's solid stone, with no room inside.",
-                "Tiny creatures can't slip past it; liquids, gases and minuscule creatures such as insects can, and where the space is uneven creatures may see or hear past it (the GM's call).",
+                "Tiny creatures can't slip past it, though liquids, gases and tiny things like insects find ways round it, and where the space is uneven creatures may see or hear past it (the GM's call).",
                 `Destroyed as any stone structure is: Hardness ${stone[1]}, ${stone[2]} Hit Points (an object's, the GM's).`
             ]
         }))
@@ -746,9 +746,9 @@ const READINGS = [
         names: ["Setup Snare"],
         sentences: [
             /^This snare is designed to divert\b.*\.$/,
-            /^You may choose to have the target attempt a Will saving throw\b.*\bfear and mental traits\b.*\bvisual or auditory trait\.$/,
-            /^When a Small or larger creature enters the square\b.*\bPushes the creature (\d+) feet\b.*\bClumsy (\d+) until the end of their next turn\.$/,
-            /^On a critical failure the snare Pushes the target (\d+) feet\b.*\bClumsy (\d+) until the end of their next turn\.$/
+            /^You may choose to have the target\b.*\bWill saving throw\b.*\bfear and mental traits\b.*\bvisual or auditory trait\.$/,
+            /^When a Small or larger creature\b.*\bsquare\b.*\bPushes the creature (\d+) feet\b.*\bClumsy (\d+) until the end of their next turn\.$/,
+            /^On a critical failure\b.*\bPushes the target (\d+) feet\b.*\bClumsy (\d+) until the end of their next turn\.$/
         ],
         card: ([, , pushed, worse], _plan, { base, info }) => {
             const dc = levelDC(info?.level);
@@ -793,7 +793,7 @@ const READINGS = [
             const others = "Other repellents like it, against other creatures, may exist (the GM's call); ones against uncommon or rare creatures are harder to make.";
             const coated = ownRow({
                 target: "the creature coated",
-                noteEffects: [{ label: `Coated in ${worm} repellent`, text: `Each ${worm} avoids attacking it in melee while it has something else nearby to attack — not its ranged attacks; with no creature in its reach, one that wants to make a melee attack goes for an uncoated creature if it can without spending more actions. A ${worm} that swallows it must succeed at a DC ${dc} Fortitude save or regurgitate it on the next round, a single action (no DC of its own: its level's, the GM may change it). Scrubbed clean with ${scrub} minute${scrub === "1" ? "" : "s"} of work, it ends: delete this then.`, duration: lasts }],
+                noteEffects: [{ label: `Coated in ${worm} repellent`, text: `Each ${worm} avoids attacking it in melee while it has something else nearby to attack — not its ranged attacks; with no creature in its reach, one set on a melee attack goes for an uncoated creature instead, if that costs it no more actions. A ${worm} that swallows it must succeed at a DC ${dc} Fortitude save or regurgitate it on the next round, a single action (no DC of its own: its level's, the GM may change it). Scrubbed clean with ${scrub} minute${scrub === "1" ? "" : "s"} of work, it ends: delete this then.`, duration: lasts }],
                 notes: ["Target the creature it's applied to (its user, or another), then press Apply.", others]
             });
             const sprinkled = ownRow({ notes: [`Sprinkled in a circle round a ${radius}-foot radius: for ${hours} ${unit}, or until it's scrubbed off with ${scrub} minute${scrub === "1" ? "" : "s"} of work, there's no chance of a random encounter with ${worm}s there — they avoid it (out of combat, the GM's).`, others] });
@@ -814,26 +814,26 @@ const READINGS = [
         // Ring of Fair Assessment's Fair Assessment: the values it estimates, whispered; a creature's own items first a Society check to
         // Decipher Writing against its Will DC, its user's own roll.
         names: ["Ring of Fair Assessment: Fair Assessment"],
-        sentences: [/^The Prophecies of Kalistrade reveal\b.*\.$/, /^Choose an area of up to 1 cubic foot within (\d+) feet\b.*\bvalue in gold pieces\b.*\.$/, /^If you attempt to estimate the value of items worn or held\b.*\bSociety check to Decipher Writing against their Will DC\.$/],
-        card: ([, area]) => whisper(`Its user picks an area of up to 1 cubic foot within ${area[1]} feet and estimates the value in gold pieces of the items in it, on a balance sheet only it can see. For items a creature wears or holds, it must first succeed at a Society check to Decipher Writing against that creature's Will DC (its own roll). The GM tells the values.`)
+        sentences: [/^The Prophecies of Kalistrade reveal\b.*\.$/, /^Choose an area\b.*\b1 cubic foot within (\d+) feet\b.*\bvalue in gold pieces\b.*\.$/, /^If you attempt to estimate\b.*\bworn or held\b.*\bSociety check\b.*\btheir Will DC\.$/],
+        card: ([, area]) => whisper(`Its user picks a space no bigger than 1 cubic foot, within ${area[1]} feet, and estimates what the items in it are worth in gold pieces, on a balance sheet only it can see. For items a creature wears or holds, it needs a successful Society check to Decipher Writing first, against that creature's Will DC (its own roll). The GM tells the values.`)
     },
     {
         // Slippery Ribbon: as much more Speed as its Tumble Through needs, to the end of its user's turn — its own move on the map.
         names: ["Slippery Ribbon"],
-        sentences: [/^Usage affixed to armor Activation\b.*\bTrigger You succeed at an Acrobatics check to Tumble Through\b.*\bRequirements You are an expert in Acrobatics\.$/, /^This ribbon is constantly greasy\b.*\.$/, /^When you activate the slippery ribbon, your Speed increases\b.*\benemy's space\.$/],
+        sentences: [/^Usage affixed to armor Activation\b.*\bTrigger You succeed\b.*\bto Tumble Through\b.*\bRequirements You are an expert in Acrobatics\.$/, /^This ribbon is constantly greasy\b.*\.$/, /^When you activate the slippery ribbon\b.*\bSpeed increases\b.*\benemy's space\.$/],
         card: () => ownRow({
-            noteEffects: [{ label: "Slippery Ribbon", text: "Its Speed is as much higher as it needs to move all the way through the space of the enemy it Tumbled Through (its own move on the map).", duration: THIS_TURN }],
+            noteEffects: [{ label: "Slippery Ribbon", text: "Its Speed is as much higher as it needs to get right through the space of the enemy it Tumbled Through (its own move on the map).", duration: THIS_TURN }],
             notes: ["When its Tumble Through succeeds without the Speed to get all the way through; its user must be an expert in Acrobatics."]
         })
     },
     {
         // Cowl of Keys' doorway (its second activation, unnamed): a door through a wall, floor or ceiling — the map's, the GM's call for thick walls.
         names: ["Cowl of Keys"],
-        sentences: [/^You place your hand against a wall, floor, or ceiling\.$/, /^You create a magical doorway within the surface\b.*\.$/, /^The doorway can penetrate up to (\d+) feet of material\b.*\bexpending its use for the day\.$/, /^You can use an Interact action on the door to remove it\b.*\.$/],
+        sentences: [/^You place your hand against\b.*\bor ceiling\.$/, /^You create a magical doorway within the surface\b.*\.$/, /^The doorway can penetrate up to (\d+) feet of material\b.*\bexpending its use for the day\.$/, /^You can use an Interact action\b.*\bremove it\b.*\.$/],
         card: ([, , through]) => ownRow({
             notes: [
-                `Its user's hand on a wall, floor or ceiling makes a doorway in it that a creature can move through, as if it had always been there, through up to ${through[1]} feet of material (cut it on the map).`,
-                "Particularly thick material, such as heavy stone walls, can make it fail, its use for the day spent (the GM's call).",
+                `Its user's hand on a wall, floor or ceiling makes a doorway in it a creature can pass through, as though it had always been there, through up to ${through[1]} feet of material (cut it on the map).`,
+                "Very thick material (heavy stone walls, say) can make it fail, its use for the day spent (the GM's call).",
                 "An Interact action on the door removes it, the surface as it was (the map's)."
             ]
         })
@@ -850,8 +850,8 @@ const READINGS = [
             lasts: timeOf(ward[3], ward[4]),
             inside: [{ rules: [toggle("privacy-ward-fulu", "Against creatures outside the warded room"), bonus("stealth", "item", Number(ward[2]), ["privacy-ward-fulu"])] }],
             notes: [
-                `Applied to a wall inside a room of up to ${ward[1]} square feet: the zone is that room (fit it to the room's walls).`,
-                `Each creature inside has a +${ward[2]} item bonus to Stealth checks against creatures outside the room (its toggle on for those).`,
+                `Applied to a wall inside a room no larger than ${ward[1]} square feet: the zone is that room (fit it to the room's walls).`,
+                `Each creature inside has a +${ward[2]} item bonus to Stealth against those outside the room (its toggle on for those).`,
                 ...(hides ? [`One inside that becomes Hidden is Undetected instead to creatures of level ${Number(info?.level) || 0} or lower (the GM's).`] : [])
             ]
         }))
@@ -861,22 +861,22 @@ const READINGS = [
         // after it's put away the GM's.
         names: ["Shadow Manse"],
         sentences: [
-            /^You cause the dollhouse to grow into a mansion, (\d+) feet across and (\d+) feet high\b.*\.$/,
+            /^You cause the dollhouse to grow\b.*\b(\d+) feet across and (\d+) feet high\b.*\.$/,
             /^The mansion pushes aside rather than traps\b.*\.$/,
             /^The door appears in front of you\b.*\.$/,
             /^The mansion's interior is well-appointed\b.*\.$/,
             /^Each day at dusk, the mansion's dining room\b.*\.$/,
             /^Except for this nourishment\b.*\bHardness (\d+)\.$/,
             /^The material inside the mansion vanishes\b.*\.$/,
-            /^Although the mansion is easy for anyone to enter\b.*\bdesignate\b.*\.$/,
+            /^Although the mansion is easy\b.*\bdesignate\b.*\.$/,
             /^Others find themselves entering some other part\b.*\.$/,
             /^A creature that succeeds at a @Check\[occultism\|dc:(\d+)\] check\b.*\bForces Open an exit\b.*@Check\[athletics\|dc:(\d+)\] check\b.*\.$/,
-            /^You can return the shadow manse to its dollhouse form\b.*\(as a single action\)\.$/,
+            /^You can return the shadow manse\b.*\bdollhouse form\b.*\(as a single action\)\.$/,
             /^Once deactivated, it can't be reactivated for (\d+) (hours?)\.$/
         ],
         card: ([size, , , , , hard, , , , exits, , wait]) => ownRow({
             notes: [
-                `The dollhouse grows into a mansion ${size[1]} feet across and ${size[2]} feet high, of a dozen rooms, pushing aside the creatures there; its door, with no lock and open to anyone, in front of its user (place it on the map).`,
+                `The dollhouse grows into a mansion of a dozen rooms, ${size[1]} feet across, ${size[2]} feet high, pushing aside the creatures there; its door, with no lock and open to anyone, in front of its user (place it on the map).`,
                 `Inside, dim light from pale, heatless flames; each dusk, food and water for those inside then; its furnishings Hardness ${hard[1]}, and gone if taken out, back with the next activation (out of combat, the GM's).`,
                 `Only its user and the creatures it named as it activated it can leave: anyone else going out by a door or window comes into another part of the mansion, unless it succeeds at a DC ${exits[1]} Occultism check as it tries, or Forces Open an exit with a DC ${exits[2]} Athletics check (their own rolls); the opening closes behind it.`,
                 `Its user turns it back into a dollhouse by twisting the front door's handle and speaking a command (a single action); then it can't be activated again for ${wait[1]} ${wait[2]} (the GM's).`
@@ -888,11 +888,11 @@ const READINGS = [
         // and bright light's halved Hardness an object's, the GM's — the cast card's lines.
         names: ["Passage Charm: Shape the Shadows"],
         over: (plan) => plan?.builtin === "cast-spell" && plan.spell?.name === "Wall of Stone" && plan.castDuration?.value === 24,
-        sentences: [/^You command the shadows to do your bidding\b.*\bor stairs\.$/, /^The passage charm casts 5th-rank Wall of Stone\b.*\bshadow trait\b.*\bsolid shadows, rather than stone\.$/, /^If any section of the wall is exposed to bright light\b.*\(to Hardness (\d+)\)\.$/],
+        sentences: [/^You command the shadows to do your bidding\b.*\bor stairs\.$/, /^The passage charm casts 5th-rank Wall of Stone\b.*\bshadow trait\b.*\bsolid shadows, rather than stone\.$/, /^If any section of the wall\b.*\bbright light\b.*\(to Hardness (\d+)\)\.$/],
         card: ([, , lit]) => ({
             keep: true,
             drop: true,
-            notes: ["Its Wall of Stone is of solid shadow, with the shadow trait instead of earth, shaped as a path, a ramp, a wall or stairs (the map's).", `A section in bright light has its Hardness halved, to ${lit[1]}, while it's lit (an object's, the GM's).`]
+            notes: ["Its Wall of Stone is of solid shadow, with the shadow trait instead of earth, in the shape its user commands — path, ramp, wall or stairs (the map's).", `A section in bright light has its Hardness halved, to ${lit[1]}, while it's lit (an object's, the GM's).`]
         })
     },
     {
@@ -934,13 +934,13 @@ const READINGS = [
         names: ["Effortless Garden"],
         sentences: [
             /^Azeradni, third runelord of sloth\b.*\.$/,
-            /^Activate - Sow Garden\b.*\bEffect You place the seed on the ground in an adjacent space\.$/,
+            /^Activate - Sow Garden\b.*\bEffect You place the seed\b.*\badjacent space\.$/,
             /^Over the next minute, the seed's magic creates\b.*\bin a (\d+)-foot-square area\b.*\.$/,
-            /^As the garden grows, you choose to fill each (\d+)-foot-square space with lawns \(normal terrain\), flower beds \(difficult terrain\), or hedgerows\.$/,
+            /^As the garden grows\b.*\beach (\d+)-foot-square space with lawns \(normal terrain\), flower beds \(difficult terrain\), or hedgerows\.$/,
             /^Hedgerows are filled with (\d+)-foot-tall hedges\b.*\bstandard cover\b.*\bgreater difficult terrain\.$/,
             /^The garden withers after (\d+) (hours?)\.$/,
-            /^If you place the seed on natural earth and spend 1 Mythic Point\b.*\bgrows indefinitely\b.*\.$/,
-            /^While it remains, the garden remains free of weeds\b.*\.$/
+            /^If you place the seed on natural earth\b.*\bMythic Point\b.*\bgrows indefinitely\b.*\.$/,
+            /^While it remains\b.*\bfree of weeds\b.*\.$/
         ],
         card: ([, , garden, squares, hedges, withers], _plan, { base, info }) => {
             const zone = (lasts, end) => zoneCard(zoneOf({

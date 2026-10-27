@@ -87,7 +87,7 @@ test("a light, a whisper, a door, a dig: Lance of Sun's Radiance's torch at the 
     assert.deepEqual([lance.item.placedLight.bright, lance.item.placedLight.dim, lance.item.placedLight.duration.value, lance.item.placedLight.duration.unit, lance.trigger.frequency.per], [20, 40, 1, "hours", "hour"]);
     const ring = activation("Ring of Fair Assessment", "Fair Assessment");
     assert.equal(ring.builtin, "whisper");
-    assert.match(ring.whisper.text, /within 30 feet.*Society check to Decipher Writing against that creature's Will DC/);
+    assert.match(ring.whisper.text, /within 30 feet.*Society check to Decipher Writing first, against that creature's Will DC/);
     const [, doorway] = activations("Cowl of Keys").map((entry) => entry.plan);
     assert.ok(done(doorway));
     assert.match(doorway.notes[0], /up to 10 feet of material/);
@@ -178,7 +178,7 @@ test("Sage's Bloom's three Recall Knowledge checks, a Nature critical failure on
     assert.deepEqual(note(bloom).rules, [{ key: "AdjustDegreeOfSuccess", selector: "nature", adjustment: { criticalFailure: "to-failure" } }]);
     const incense = consumable("Netherwalk Incense");
     assert.deepEqual([done(incense), incense.item.recipient, note(incense).duration.value, note(incense).duration.unit], [true, "targets", 8, "hours"]);
-    assert.match(incense.targeting.target, /up to 10 willing creatures within 20 feet/);
+    assert.match(incense.targeting.target, /up to 10 willing creatures it picks within 20 feet/);
 });
 
 test("the Essence Forges' Craft an Item: a one-off (crafting through Forge Points), its words the card's line", () => {

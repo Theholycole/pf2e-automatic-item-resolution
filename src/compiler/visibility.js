@@ -124,7 +124,7 @@ const READINGS = [
         // a spell's or a zone's fog, a creature hidden only by it — its words on its user in place of the reminder.)
         name: "Ixamè's Eye",
         over: true,
-        sentences: [/^\bUsage affixed to headgear Activate\b.*\.$/, /^\bVia some strange alchemical reaction\b.*\.$/, /^\bThe dragon's sense of vision\b.*\.$/, /^\bOnce removed, each gem\b.*\.$/, /^\bIxamè's eye sparkles\b.*\bfog or mist\.$/, /^\bActivating the talisman enables you to see clearly through fog and mist for (\d+|an?|one) (minutes?)\b.*\bno longer concealed to you\.$/, /^\bIf such a creature was relying on the concealment\b.*\bno longer hidden or undetected\.$/],
+        sentences: [/^\bUsage affixed to headgear Activate\b.*\.$/, /^\bVia some strange alchemical reaction\b.*\.$/, /^\bThe dragon's sense of vision\b.*\.$/, /^\bOnce removed, each gem\b.*\.$/, /^\bIxamè's eye sparkles\b.*\bfog or mist\.$/, /^\bActivating the talisman enables you\b.*\bfog and mist for (\d+|an?|one) (minutes?)\b.*\bno longer concealed to you\.$/, /^\bIf such a creature was relying\b.*\bconcealment\b.*\bno longer hidden or undetected\.$/],
         card: ([, , , , , clear], read) => {
             const row = read?.resolution?.outcomes?.success;
             if (!read?.weatherIgnores?.ignores?.includes("fog-mist") || !row) return null;
@@ -141,7 +141,7 @@ const READINGS = [
     {
         // (A devil's look and smell: its words on its user, no time of its own; its +1 to Lie PF2e's action:lie.)
         name: "Hellhusk Shroud: Horned Husk",
-        sentences: [/^\bThe cloak wraps around you\b.*\.$/, /^\bYour appearance becomes that of a nondescript low-level devil\b.*\+(\d) status bonus to your Deception checks when you Lie\b.*\.$/, /^\bTo creatures with scent, you also smell like a devil\.$/],
+        sentences: [/^\bThe cloak wraps around you\b.*\.$/, /^\bYour appearance becomes\b.*\blow-level devil\b.*\+(\d) status bonus\b.*\bDeception checks when you Lie\b.*\.$/, /^\bTo creatures with scent\b.*\bsmell like a devil\.$/],
         card: ([, lie]) => ownRow({
             noteEffects: [{ label: "Horned Husk", text: `It looks like a nondescript low-level devil, an illusion — and to creatures with scent smells like one. +${lie[1]} status bonus to Deception checks to Lie to keep up the disguise. No time of its own: delete this when it takes the cloak off.`, duration: null, rules: [{ key: "FlatModifier", selector: "deception", type: "status", value: Number(lie[1]), predicate: ["action:lie"] }] }],
             notes: ["A creature that doubts it sees through the disguise as PF2e's Impersonate has it: a Perception check against its Deception DC (the GM's call)."]
@@ -151,7 +151,7 @@ const READINGS = [
         // (Blood sight's keener reading, the Major's: words on the drinker for the hour beside PF2e's sense, read before — the reminder gone.)
         name: "Blood Sight Elixir (Major)",
         over: true,
-        sentences: [/^\bThis thick, blood-red elixir\b.*\.$/, /^\bYou gain blood sight as a precise sense with a duration of (\d+) (hours?)\.$/, /^\bBlood sight has a range of \d+ feet\b.*\bwounded conditions\.$/, /^\bYou also detect free-standing puddles\b.*\.$/, /^\bAt the GM's discretion, living creatures without blood\b.*\.$/, /^\bYour blood sight is especially accurate\b.*\bhalf or less of their maximum\.$/, /^\bWhen you detect a creature with blood sight\b.*\bvague approximation\b.*\.$/, /^\bThis approximation can be noticed as\b.*\bexact value\.$/],
+        sentences: [/^\bThis thick, blood-red elixir\b.*\.$/, /^\bYou gain blood sight as a precise sense\b.*\bduration of (\d+) (hours?)\.$/, /^\bBlood sight has a range of \d+ feet\b.*\bwounded conditions\.$/, /^\bYou also detect free-standing puddles\b.*\.$/, /^\bAt the GM's discretion, living creatures without blood\b.*\.$/, /^\bYour blood sight is especially accurate\b.*\bhalf or less of their maximum\.$/, /^\bWhen you detect a creature with blood sight\b.*\bvague approximation\b.*\.$/, /^\bThis approximation can be noticed as\b.*\bexact value\.$/],
         card: ([, lasts], read) => {
             const row = read?.resolution?.outcomes?.success;
             if (!read?.partial || !row || !(read.item?.senses ?? []).some((sense) => sense.selector === "bloodsense")) return null;
@@ -164,9 +164,9 @@ const READINGS = [
         name: "Netherwalk Incense",
         sentences: [/^\bThis stick of dark-gray incense\b.*\.$/, /^\bYou begin the activation\b.*\bup to (\d+) willing creatures within (\d+) feet of you\.$/, /^\bAfter spending a minute concentrating\b.*\bNetherworld\b.*\.$/, /^\bEach hour, your travel covers a distance of (\d+) miles\b.*\.$/, /^\bYou arrive within a mile\b.*\bDismiss the effect or after (\d+) (hours) have passed\.$/],
         card: ([, who, , miles, arrive]) => ownRow({
-            targeting: { target: `its user and up to ${who[1]} willing creatures within ${who[2]} feet`, range: null, area: null },
+            targeting: { target: `its user and up to ${who[1]} willing creatures it picks within ${who[2]} feet`, range: null, area: null },
             noteEffects: [{ label: "Netherwalking", text: `Travelling through the Netherworld with the incense's user, ${miles[1]} miles each hour, landmarks only vague, symbolic images. It arrives within a mile of where it meant to go when its user Dismisses this or after ${arrive[1]} hours (out of combat, the GM's).`, duration: time(arrive[1], arrive[2]) }],
-            notes: [`Lit with an Interact action, then a minute's concentration: target its user and up to ${who[1]} willing creatures within ${who[2]} feet, then press Apply.`],
+            notes: [`Lit with an Interact action, then a minute's concentration: target its user and the willing creatures it takes along (${who[1]} at most, within ${who[2]} feet), then press Apply.`],
             item: forTargets
         })
     },
@@ -174,7 +174,7 @@ const READINGS = [
         // (Recall Knowledge three times, its user's own rolls; a critical failure with Nature only a failure — PF2e's AdjustDegreeOfSuccess on
         // its Effect, to the end of its user's turn.)
         name: "Sage's Bloom",
-        sentences: [/^\bTrigger You attempt a Nature check to Recall Knowledge\b.*\bRequirements You're trained in Nature\.$/, /^\bThis simple white flower\b.*\.$/, /^\bWhen activated, it releases a soothing scent\b.*\.$/, /^\bWhen you activate the talisman, you Recall Knowledge three times, rather than once\.$/, /^\bIf you use Nature for any of these checks\b.*\bcritical failure\b.*\binstead a failure\.$/],
+        sentences: [/^\bTrigger You attempt a Nature check\b.*\bRecall Knowledge\b.*\bRequirements You're trained in Nature\.$/, /^\bThis simple white flower\b.*\.$/, /^\bWhen activated, it releases a soothing scent\b.*\.$/, /^\bWhen you activate the talisman\b.*\bRecall Knowledge three times\b.*\.$/, /^\bIf you use Nature\b.*\bthese checks\b.*\bcritical failure\b.*\binstead a failure\.$/],
         card: () => ownRow({
             noteEffects: [{ label: "Sage's Bloom", text: "This Recall Knowledge three times instead of once (its own rolls); a critical failure on any of them with Nature is a failure instead.", duration: TURN_END, rules: [{ key: "AdjustDegreeOfSuccess", selector: "nature", adjustment: { criticalFailure: "to-failure" } }] }],
             notes: ["When its user is about to roll Nature to Recall Knowledge; it must be trained in Nature."]
@@ -197,9 +197,9 @@ const READINGS = [
     {
         // (See invisibility for the hour, PF2e's own sense, on its user; spirits seen solid its words.)
         name: "Spectral Opera Glasses",
-        sentences: [/^\bFor (\d+|an?|one) (hours?), anyone who looks through the glasses can see Invisible creatures and objects\b.*\bspirit trait\b.*\.$/],
+        sentences: [/^\bFor (\d+|an?|one) (hours?), anyone who looks through the glasses\b.*\bInvisible creatures and objects\b.*\bspirit trait\b.*\.$/],
         card: ([sight]) => ownRow({
-            noteEffects: [{ label: "Spectral sight", text: "Looking through the glasses, it sees Invisible creatures and objects, and creatures with the spirit trait as solid and substantial rather than ghostly.", duration: time(sight[1], sight[2]), rules: [{ key: "Sense", selector: "see-invisibility" }] }],
+            noteEffects: [{ label: "Spectral sight", text: "Looking through the glasses, it sees Invisible creatures and objects, and spirits (creatures with the spirit trait) look solid to it, not ghostly.", duration: time(sight[1], sight[2]), rules: [{ key: "Sense", selector: "see-invisibility" }] }],
             notes: ["Anyone else who looks through them in that hour sees the same (the GM's)."]
         })
     },

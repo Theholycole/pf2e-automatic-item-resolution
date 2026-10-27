@@ -180,9 +180,9 @@ const READINGS = [
         sentences: [
             /^\bThis gingerbread biscuit is stamped\b.*\.$/,
             /^\bWhen you eat the biscuit\b.*\bfor (\d+) (minutes?), granting you a \+(\d) status bonus\b.*\bhag's disguise\b.*\bRecall Knowledge about hags\b.*\bsaving throws\b.*\bhags' abilities and spells\.$/,
-            /^\bDuring this time, weapons you wield count as cold iron\b.*\bagainst hags\.$/,
+            /^\bDuring this time, weapons you wield\b.*\bcold iron\b.*\bagainst hags\.$/,
             /^\bThe biscuit tastes especially bitter\b.*\bhag bloodline\)\.$/,
-            /^\bIf such a creature attempts to eat the biscuit\b.*@Check\[fortitude\|dc:(\d+)[^\]]*\] save\b.*\bSickened (\d) on a critical failure\)\.$/
+            /^\bIf such a creature attempts\b.*\bthe biscuit\b.*@Check\[fortitude\|dc:(\d+)[^\]]*\] save\b.*\bSickened (\d) on a critical failure\)\.$/
         ],
         card: ([, eat, , , bitter], plan) => {
             const row = plan?.resolution?.outcomes?.success;
@@ -191,7 +191,7 @@ const READINGS = [
             const toggle = (option, label) => ({ key: "RollOption", domain: "all", option, toggleable: true, label });
             const note = {
                 label: "Hagbane Biscuit",
-                text: `+${value} status bonus to Perception checks to see through a hag's disguise and to skill checks to Recall Knowledge about hags (its toggles on for those), beside its saves against hags. Its weapons and unarmed attacks count as cold iron against hags.`,
+                text: `+${value} status bonus to Perception checks to see through a hag's disguise and to Recall Knowledge checks about hags (its toggles on for those), beside its saves against hags. Its weapons and unarmed attacks count as cold iron against hags.`,
                 duration: timeOf(eat[1], eat[2]),
                 rules: [
                     toggle("hagbane-disguise", "Seeing through a hag's disguise"),
@@ -224,7 +224,7 @@ const READINGS = [
         name: "Shadow's Heart",
         over: true,
         sentences: [
-            /^\bYou make a melee Strike with shadow's heart and teleport\b.*\bwithin (\d+) feet\.$/,
+            /^\bYou make a melee Strike\b.*\band teleport\b.*\bwithin (\d+) feet\.$/,
             /^\bIf the attack hits, you also leave behind\b.*\bfor up to (\d+) rounds\.$/,
             /^\bThe illusion has 1 action per round\b.*\bon your turn each round\.$/,
             /^\bIt uses this action to move up to (\d+) feet\b.*\bwith a \+(\d+) attack modifier, dealing (\d+d\d+(?:\+\d+)?) (\w+) damage\.$/,
@@ -267,7 +267,7 @@ const READINGS = [
         // now the readied card's), for its Mythic Point (plan.spend, read before).)
         name: "Hollow Robes: Hollow Target",
         over: true,
-        sentences: [/^\bSpend 1 Mythic Point\.$/, /^\bYou momentarily transform yourself into an illusory duplicate\b.*\btriggering damage or Strike\.$/, /^\bThe damage from a critical hit Strike is reduced to 0\.$/, /^\bAll persistent damage you're currently taking ends\.$/],
+        sentences: [/^\bSpend 1 Mythic Point\.$/, /^\bYou momentarily transform yourself into an illusory duplicate\b.*\btriggering damage or Strike\.$/, /^\bThe damage from a critical hit\b.*\breduced to 0\.$/, /^\bAll persistent damage you're currently taking ends\.$/],
         card: (found, plan) => {
             if (plan?.builtin || !plan?.item?.recovery?.ends || !plan.spend?.mythicPoints) return null;
             const { recovery, ...item } = plan.item;
