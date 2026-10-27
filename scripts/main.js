@@ -53,6 +53,8 @@ import { setUpFelled } from "./felled.js";
 import { setUpImplosion } from "./implosion.js";
 import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
+import { setUpPulses } from "./pulse.js";
+import { setUpTransmogrify } from "./transmogrify.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -174,6 +176,10 @@ Hooks.once("ready", async () => {
     setUpOwnSplash();
     // (A readied Strike never made, Flashblade's: its activation's use given back, scripts/strikes.js.)
     setUpReadiedRefund();
+    // (Damage each round around an item's user, then its blast: Aroden's Hearthstone's cold, scripts/pulse.js.)
+    setUpPulses();
+    // (The actions a transmogrifying mutagen gave, gone with its Effect: scripts/transmogrify.js.)
+    setUpTransmogrify();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

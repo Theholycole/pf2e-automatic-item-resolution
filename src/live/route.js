@@ -13,6 +13,8 @@ import { isTeleport } from "./teleport-card.js";
 import { isObjects } from "./objects-card.js";
 import { isTable } from "./table-card.js";
 import { isTake } from "./take-card.js";
+import { isCraft } from "./craft-card.js";
+import { isTransmogrify } from "./transmogrify.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -66,6 +68,10 @@ export function routeOf(plan, text = "") {
     if (plan.builtin === "whisper" && plan.whisper?.text) return "whisper";
     // (One of its user's items moved or changed, or itself: the objects card, scripts/objects.js.)
     if (isObjects(plan)) return "objects";
+    // (An item made from a formula its user knows, Aroden's Hearthstone's: the craft card, scripts/craft.js.)
+    if (isCraft(plan)) return "craft";
+    // (Mutagens made from a creature, or one drunk: scripts/transmogrify.js.)
+    if (isTransmogrify(plan)) return "transmogrify";
     // (An ally's condition taken onto its user: scripts/take.js.)
     if (isTake(plan)) return "take";
     // (A lasting area or a snare: the ability module's zone.)
