@@ -521,12 +521,16 @@ const READINGS = [
             /^You summon leaves that protect your allies and identify enemies\.$/,
             /^All allies and indifferent creatures within (\d+) feet of you gain lesser cover for (\d+) rounds?, while enemies come under the effect of Revealing Light for (\d+) (minutes?|rounds?)\.$/
         ],
-        card: ([, cloud]) => {
+        card: ([, cloud], plan, { base }) => {
             const area = { type: "emanation", value: Number(cloud[1]) };
             const round = { mode: "fixed", value: Number(cloud[2]), unit: "rounds", expiry: "turn-start", anchor: "effect-start" };
             const light = timeOf(cloud[3], cloud[4]);
             const row = (fields = {}) => ({ ...none(), ...fields });
             const enemies = {
+                ...base,
+                source: { ...base.source, name: `${base.source.name} (enemies)` },
+                automation: { level: "automatic" },
+                trigger: { event: "use" },
                 targeting: { target: "the enemies within 30 feet", range: null, area },
                 resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: row({ effects: [{ kind: "condition", slug: "dazzled", value: null, duration: light }], noteEffects: [{ label: "Revealing Light", text: "Revealing Light's glow: Dazzled; if it was Invisible, it's Concealed instead, and concealment it has for any other reason is gone.", duration: light }] }) } },
                 notes: ["Target the enemies within 30 feet of its user."]
