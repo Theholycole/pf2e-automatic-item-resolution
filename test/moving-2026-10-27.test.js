@@ -6,21 +6,25 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
-import { compileItem } from "../src/compiler/index.js";
+import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { fallEffectSource, fallLine } from "../src/live/card.js";
-import { teleportLines } from "../src/live/teleport-card.js";
+import { freeSpacesBeside, teleportLines, teleportText } from "../src/live/teleport-card.js";
+import { ONE_OFFS } from "../src/compiler/one-offs.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
+// (PF2e's spells, for the casts' and the one-offs' readings as live play has them.)
+const options = { spells: spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items")) };
 const item = (name) => {
     const doc = equipment.find((entry) => entry.name === name);
     return { ...doc, ownerLevel: Number(doc.system.level?.value) || 1 };
 };
 const activation = (name, which = null) => {
-    const entries = compileActivations(item(name));
+    const entries = compileActivations(item(name), options);
     return (which === null ? entries[0] : entries.find((entry) => entry.activation.name === which)).plan;
 };
+const compileItemWith = (doc) => compileItem(doc, options);
 const done = (plan) => Boolean(plan) && !plan.partial && !plan.noteOnly && plan.builtin !== "no-effect";
 
 test("a glide down is its user's own move, a line of the card — Eagle Wing's Soar 30 feet forward, the Gliding rune's 25", () => {
@@ -36,21 +40,21 @@ test("moves while time pauses, and Sustained skating: Pocket Watch of Stethelos'
     const watch = activation("Pocket Watch of Stethelos", "Step Between the Ticks");
     assert.ok(done(watch));
     assert.match(watch.notes[0], /^Take 3 actions at once, each a Leap, Stand, Step or Stride, or a Burrow, Climb, Fly or Swim with that Speed, while time pauses; .*it seems to have teleported \(its own move on the map\)\.$/);
-    const skates = compileItem(item("Gadget Skates"));
+    const skates = compileItemWith(item("Gadget Skates"));
     assert.ok(done(skates));
     assert.equal(skates.notes.length, 1);
     for (const words of [/twice its Speed/, /DC 20 Acrobatics/, /can't Stride, Step or otherwise move on the ground/, /High Jump's or Long Jump's Stride/, /Sustained up to 1 minute/, /first Sustain each turn/]) assert.match(skates.notes[0], words);
 });
 
 test("a long Leap beside a harmless fall: Emerald Grasshopper's Leap a line, its flutter and 60-foot fall the environment module's no-damage Effect until the end of its next turn", () => {
-    const grasshopper = compileItem(item("Emerald Grasshopper"));
+    const grasshopper = compileItemWith(item("Emerald Grasshopper"));
     assert.ok(done(grasshopper));
     assert.deepEqual(grasshopper.fall, { noDamage: true, rate: 60, flutter: true, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" } });
     assert.deepEqual(grasshopper.notes, ["Leap up to 40 feet horizontally and up to 10 feet vertically (its own move on the map)."]);
     assert.equal(fallLine(grasshopper.fall), "It flutters in the air until the end of its turn; then it falls 60 feet a round; it takes no damage from a fall for 1 round");
     assert.deepEqual(fallEffectSource(grasshopper.fall, { item: { name: "Emerald Grasshopper" } }).flags["pf2e-automatic-environment-resolution"].fall, { noDamage: true, source: "Emerald Grasshopper" });
     // (The greater one's other Leaps that turn: said too, not dropped.)
-    const greater = compileItem(item("Emerald Grasshopper (Greater)"));
+    const greater = compileItemWith(item("Emerald Grasshopper (Greater)"));
     assert.ok(done(greater));
     assert.deepEqual(greater.notes, ["Leap up to 100 feet horizontally and up to 30 feet vertically, and so can its other Leaps before the end of its turn (its own move on the map)."]);
 });
@@ -69,7 +73,7 @@ test("a teleport beside the other wearer, and out of a fire: Headbands of Transl
 });
 
 test("difficult terrain ignored till its turn's end: Feather Step Stone's PF2e terrain rules on its user's Effect", () => {
-    const stone = compileItem(item("Feather Step Stone"));
+    const stone = compileItemWith(item("Feather Step Stone"));
     assert.ok(done(stone));
     const [effect] = stone.item.ruleEffects;
     assert.deepEqual(effect.rules.map((rule) => rule.path), ["system.movement.terrain.difficult.ignored", "system.movement.terrain.greater.ignored"]);
@@ -92,4 +96,79 @@ test("note-only moves checked as having nothing a card plays: Frog Chair's Frog 
         const plan = activation(name, which);
         assert.deepEqual([plan.noteOnly, plan.decided, plan.automation.level], [undefined, "checked", "automatic"], name);
     }
+});
+
+test("one-offs of the moving group: their words the card's lines, counted done and kept to build later (Crown of the Companion's cast too)", () => {
+    for (const name of ["Firefoot Popcorn", "Sargassum Phial", "Colorful Coating (Red)", "Dimensional Cleavestone"]) {
+        const plan = compileItemWith(item(name));
+        assert.deepEqual([plan.decided, Boolean(plan.noteOnly), Boolean(plan.partial)], ["one-off", false, false], name);
+        assert.ok(ONE_OFFS.get(name).build, name);
+    }
+    for (const name of ["Bola Shot", "Tidal Fishhook", "Planar Tunnel"]) {
+        const plan = item(name).type === "consumable" ? compileItemWith(item(name)) : activation(name);
+        assert.equal(plan.decided, "one-off", name);
+        assert.ok(done(plan), name);
+    }
+    // (A partial cast with a one-off rule beside it: its notes the card's lines, the cast kept.)
+    const crown = activation("Crown of the Companion");
+    assert.deepEqual([crown.builtin, crown.decided, Boolean(crown.partial)], ["cast-spell", "one-off", false]);
+    assert.equal(crown.notes.length, 2);
+});
+
+test("a weapon that reshapes into one of a list: Twining Staff's staff or bo staff, its disk form and its expanding jump lines of the objects card", () => {
+    const staff = activation("Twining Staff", "Form Staff");
+    assert.ok(done(staff));
+    assert.deepEqual([staff.builtin, staff.objects], ["objects", { op: "reshape", self: true, forms: ["staff", "bo staff"] }]);
+    assert.equal(staff.notes.length, 3);
+    assert.match(staff.notes[2], /the staff's own Athletics check, 1d20\+15 \(its own action\)\.$/);
+});
+
+test("off the map and objects moving by themselves: lines of the card or whispered — Homeward Wayfinder, Cube of Recall, the Paired runes, Magnet Coin, Predictable Silver Piece, Cipher of Elemental Planes, Track Teleportation, Voyager's Pack", () => {
+    const wayfinder = activation("Homeward Wayfinder");
+    assert.ok(done(wayfinder));
+    assert.match(wayfinder.notes[0], /^Its user teleports back to the attuned Pathfinder Lodge from up to 100 miles away, alone/);
+    const cube = compileActivations(item("Cube of Recall"), options)[1].plan;
+    assert.ok(done(cube));
+    assert.match(cube.notes[0], /within 100 feet of the location attuned/);
+    assert.deepEqual(["Paired", "Paired (Greater)", "Paired (Major)"].map((name) => /both invested and ([^:]+):/.exec(activation(name).notes[0])[1]), ["within 100 feet of each other", "within 1 mile of each other", "on the same plane"]);
+    assert.match(activation("Magnet Coin").notes[0], /up to 3d10 other coins/);
+    assert.match(activation("Predictable Silver Piece", "Cheat Fate").notes[0], /always lands with the side its user rubbed face up/);
+    for (const [name, which] of [["Cipher of Elemental Planes", "Align to Plane"], ["Compass of Transpositional Awareness", "Track Teleportation"]]) {
+        const plan = activation(name, which);
+        assert.deepEqual([plan.builtin, plan.decided], ["whisper", "information"], name);
+    }
+    const pack = activation("Voyager's Pack", "Group Voyage");
+    assert.deepEqual([pack.builtin, Boolean(pack.partial), pack.notes.length], ["cast-spell", false, 4]);
+    assert.match(pack.notes[1], /DC 45 Survival check/);
+});
+
+test("teleports with others along, a creature brought, smoke: Transposition Ammunition (Greater) 2, Bring Me Near 4 within 5 miles, Blink Blade's target and smoke, Whistle of Calling's attuned creature within 30 feet", () => {
+    const ammo = activation("Transposition Ammunition (Greater)");
+    assert.ok(done(ammo));
+    assert.deepEqual([ammo.teleport.with, ammo.teleport.weaponRange, ammo.notes], [{ count: 2 }, true, undefined]);
+    const spyglass = activation("Bring Me Near");
+    assert.ok(done(spyglass));
+    assert.deepEqual([spyglass.teleport.within, spyglass.teleport.with], [26400, { count: 4 }]);
+    assert.equal(teleportLines(spyglass.teleport).length, 4);
+    const blade = compileActivations(item("Blink Blade"), options)[1].plan;
+    assert.ok(done(blade));
+    assert.deepEqual([blade.teleport.within, blade.teleport.with, blade.teleport.smoke.notes], [10, { count: 1, target: true }, ["A strong wind disperses it at once."]]);
+    const whistle = compileActivations(item("Whistle of Calling"), options)[1].plan;
+    assert.ok(done(whistle));
+    assert.deepEqual([whistle.teleport.summon, whistle.teleport.within, whistle.targeting.target], [true, 30, "1 creature"]);
+    assert.equal(teleportText(whistle.teleport), "The creature targeted, to a space within 30 feet of its user");
+});
+
+test("the free spaces beside a creature's landing space: touching it, none taken, the nearest to where the other stood first", () => {
+    const grid = 100;
+    const space = { x: 500, y: 500, w: 100, h: 100 };
+    const all = freeSpacesBeside(space, { w: 100, h: 100 }, [], { grid });
+    assert.equal(all.length, 8);
+    // (One taken, east of it; the other stood to its east: the next nearest, north-east or south-east.)
+    const spots = freeSpacesBeside(space, { w: 100, h: 100 }, [{ x: 600, y: 500, w: 100, h: 100 }], { grid, prefer: { x: 650, y: 550 } });
+    assert.equal(spots.length, 7);
+    assert.ok([600].includes(spots[0].x) && [400, 600].includes(spots[0].y));
+    // (A Large one beside a Medium space: 12 corners around it; the scene's edge cuts some.)
+    assert.equal(freeSpacesBeside(space, { w: 200, h: 200 }, [], { grid }).length, 12);
+    assert.equal(freeSpacesBeside(space, { w: 100, h: 100 }, [], { grid, bounds: { x: 500, y: 500, width: 1000, height: 1000 } }).length, 3);
 });

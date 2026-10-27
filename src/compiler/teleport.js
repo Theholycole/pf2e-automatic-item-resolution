@@ -41,6 +41,30 @@ const OTHER_WEARER = /\bteleports you to a space adjacent to the other Invested 
 // movement in the fire, it affects you as normal": its Stride its own on the map first, then the card's space within that range of where it
 // vanished — teleport.lines, 2026-10-27.)
 const FIRE_JUMP = /\bYou Stride \(or Burrow or Fly, if you have the corresponding Speed\) into any fire large enough to contain you, including magical fires\.\s*You vanish into the fire and take no damage from it\.\s*You can sense all sufficiently large fires within (\d+) feet of where you vanish, and you reemerge from any of those fires, either within the fire or adjacent to it\.(\s*If you end your movement in the fire, it affects you as normal\.)?/i;
+// (Others along, 2026-10-27: Bring Me Near's "You focus on any spot you can see within 5 miles through the spyglass and rotate its parts in a
+// meticulous order. You and up to 4 willing creatures adjacent to you are instantly teleported to that spot"; Blink Blade's "You and your target
+// teleport to a space within 10 feet"; Transposition Ammunition (Greater)'s "When you teleport, you can take along up to two willing adjacent
+// creatures" — teleport.with { count, target? }: the creatures its presser targets beside its user, each set down in a free space beside where
+// it lands, scripts/teleport.js. What their arrival says besides, WITH_LINES: lines of the card.)
+const BRING = /\bYou focus on any spot you can see within (\d+) miles through the [\w' -]+? and [^.]*\.\s*You and up to (\d+|two|three|four) willing creatures adjacent to you are instantly teleported to that spot\./i;
+const WITH_TARGET = /\bYou and your target teleport to a space within (\d+) feet\b/i;
+const ALONG = /^When you teleport, you can take along up to (\d+|two|three|four) willing adjacent creatures\.$/i;
+const WITH_LINES = [
+    [/^These creatures must each arrive in unoccupied squares adjacent to the [\w' -]+?; if there's not enough space for both of them, you choose which one is teleported\.$/i, () => "With no room beside it for both, its user picks the one that goes (the first targeted)"],
+    [/^The target arrives in a safe, open space of your choosing adjacent to your arrival space\.$/i, () => "Its target lands in a free space beside it (its user can move it to another beside it)"],
+    [/^If there's not enough room for everyone, only you are transported\.$/i, () => "With no room for them all, only its user goes"],
+    [/^If there's not enough room for you, the teleportation fails\.$/i, () => "With no room for its user, it fails"]
+];
+// (Smoke where it leaves and where it arrives, Blink Blade's "This teleportation also creates puffs of smoke, as noted with the activation
+// above" — its Translocate's: Concealed inside till the end of its user's next turn, teleport.smoke, scripts/teleport.js.)
+const SMOKE = /^This teleportation also creates puffs of smoke, as noted with the activation above\.$/i;
+// (Or a creature brought to its user, Whistle of Calling's "the creature to which it is attuned teleports instantly from as far as 1 mile away
+// to an unoccupied space within 30 feet of you. The whistle has no effect if the attuned creature is dead, on another plane, or outside the
+// range": the creature targeted moved, teleport.summon, within that range of its user — 2026-10-27.)
+const SUMMON = /\bthe creature to which it is attuned teleports instantly from as far as (\d+|one|a) miles? away to an unoccupied space within (\d+) feet of you\b/i;
+const SUMMON_FAILS = /^The [\w' -]+? has no effect if the attuned creature is dead, on another plane, or outside the range\.$/i;
+const COUNTS = { two: 2, three: 3, four: 4 };
+const countOf = (words) => COUNTS[String(words).toLowerCase()] ?? Number(words);
 // (Farther after the triggering save's critical success, Dweomerveil's "If you critically succeeded at the triggering save, you can instead
 // teleport within 45 feet": teleport.critical, the card's tick.)
 const CRITICAL = /^If you critically succeeded at the triggering save, you can instead teleport within (\d+) feet\.$/i;
@@ -65,6 +89,12 @@ const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|r
 // The text (plain) → { within, speedTimes, from, sentence } or null.
 export function readTeleport(text) {
     const plain = String(text ?? "");
+    const bring = BRING.exec(plain);
+    if (bring) return { within: Number(bring[1]) * 5280, speedTimes: null, from: "self", match: bring, with: { count: countOf(bring[2]) }, lines: [`Up to ${countOf(bring[2])} willing creatures adjacent to it go along: target them before Pick`, `Beyond this map, its token and theirs go to that scene`] };
+    const withTarget = WITH_TARGET.exec(plain);
+    if (withTarget) return { within: Number(withTarget[1]), speedTimes: null, from: "self", match: withTarget, with: { count: 1, target: true }, lines: ["Its target goes along: target it before Pick"] };
+    const summon = SUMMON.exec(plain);
+    if (summon) return { within: Number(summon[2]), speedTimes: null, from: "self", summon: true, match: summon, lines: [`The creature targeted, its attuned creature, comes from up to ${/^\d+$/.test(summon[1]) && summon[1] !== "1" ? `${summon[1]} miles` : "1 mile"} away (from beyond this map, its token goes to this scene first)`] };
     const wearer = OTHER_WEARER.exec(plain);
     if (wearer) return { within: 5, speedTimes: null, from: "target", match: wearer, lines: [`The creature targeted: the other invested wearer${wearer[1] ? `, within ${/^\d+$/.test(wearer[1]) && wearer[1] !== "1" ? `${wearer[1]} miles` : "1 mile"} of its user` : ""}`] };
     const fire = FIRE_JUMP.exec(plain);
@@ -103,19 +133,27 @@ export function teleportPlan(html, base, whole = null) {
     const alone = sentences.map((sentence) => ALONE.exec(sentence)).find(Boolean);
     const line = sentences.map((sentence) => LINE.exec(sentence)).find(Boolean);
     const lineOfEffect = sentences.some((sentence) => LINE_OF_EFFECT.test(sentence));
-    const own = (sentence) => sentence.includes(read.match[0]) || read.match[0].includes(sentence) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence) || LINE_OF_EFFECT.test(sentence);
+    // (Others along, said apart: Transposition Ammunition (Greater)'s "When you teleport, you can take along …".)
+    const along = sentences.map((sentence) => ALONG.exec(sentence)).find(Boolean);
+    const withLine = (sentence) => WITH_LINES.find(([pattern]) => pattern.test(sentence));
+    const smoke = sentences.some((sentence) => SMOKE.test(sentence));
+    const summonFails = read.summon ? sentences.find((sentence) => SUMMON_FAILS.test(sentence)) : null;
+    const said = (sentence) => (along && ALONG.test(sentence)) || ((read.with || along) && withLine(sentence)) || SMOKE.test(sentence) || sentence === summonFails;
+    const own = (sentence) => sentence.includes(read.match[0]) || read.match[0].includes(sentence) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence) || LINE_OF_EFFECT.test(sentence) || said(sentence);
     const ruled = sentences.filter((sentence) => !own(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
     const strikes = ruled.filter(OWN_STRIKE).map((sentence) => `${sentence.replace(/\.$/, "")} (its own actions).`);
     // (Or at a square, Dimension Shot's "If you fire at a square, you can teleport to a space that contains that square or an unoccupied space adjacent
     // to it": teleport.orSquare — no creature targeted, the space picked within the weapon's range of its user, 2026-10-27.)
     const square = read.from === "target" ? ruled.find((sentence) => /^If you fire at a square, you can teleport to a space that contains that square or an unoccupied space adjacent to it\.$/i.test(sentence)) : null;
     const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence) && sentence !== square);
-    const teleport = { ...(read.lines?.length ? { lines: read.lines } : {}), within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
+    const lines = [...(read.lines ?? []), ...(along ? [`Up to ${countOf(along[1])} willing creatures adjacent to it go along: target them before Pick`] : []), ...sentences.filter((sentence) => (read.with || along) && withLine(sentence)).map((sentence) => withLine(sentence)[1]()), ...(summonFails ? ["Nothing happens if it's dead, on another plane or farther away"] : [])];
+    const others = read.with ?? (along ? { count: countOf(along[1]) } : null);
+    const teleport = { ...(lines.length ? { lines } : {}), ...(others ? { with: others } : {}), ...(read.summon ? { summon: true } : {}), ...(smoke ? { smoke: { lasts: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" }, notes: ["A strong wind disperses it at once."] } } : {}), within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
     return {
         ...base,
         builtin: "teleport",
         automation: { level: notes.length ? "guided" : "automatic" },
-        targeting: read.from === "target" ? { target: "1 creature", range: null, area: null } : { target: "self", range: null, area: null },
+        targeting: read.from === "target" || read.summon ? { target: "1 creature", range: null, area: null } : { target: "self", range: null, area: null },
         trigger: { event: "use" },
         teleport,
         ...(notes.length || strikes.length ? { notes: [...strikes, ...notes] } : {}),

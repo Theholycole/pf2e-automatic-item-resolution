@@ -71,6 +71,9 @@ function asCardLines(plan, { result, base, body, decided }) {
 // special: a unique item's or an artifact's (no card-line ruling).
 export function withDecided(plan, { text = "", base = null, kind = "consumable", trigger = false, name = null, special = false } = {}) {
     const result = resultOf(plan);
+    // (A one-off rule beside a builtin card that's partial for it, Crown of the Companion's cast with its later healing — 2026-10-27: its notes
+    // the card's lines, as for any other one-off.)
+    if (plan?.builtin && plan.partial && !special && oneOff(name ?? plan?.source?.name)) return asCardLines(plan, { result: "partial", base, body: "", decided: "one-off" });
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };
     // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,

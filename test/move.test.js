@@ -108,9 +108,9 @@ test("Transposition Ammunition: its user teleported into the square shot, within
     const shot = compileActivations(item("Transposition Ammunition"))[0].plan;
     assert.deepEqual([routeOf(shot), shot.teleport.weaponRange, shot.teleport.alone, shot.notes, shot.partial], ["teleport", true, { used: false }, undefined, undefined]);
     assert.deepEqual([teleportRange(shot.teleport, { weaponRange: 60 }), teleportText(shot.teleport, { weaponRange: 60 }), teleportText(shot.teleport)], [60, "Within its weapon's first range increment (60 feet)", "Within its weapon's first range increment (no ranged weapon loaded with it)"]);
-    // (The greater one's two willing creatures along: notes.)
+    // (The greater one's two willing creatures along: 2026-10-27, teleport.with — no longer notes, the plan whole.)
     const greater = compileActivations(item("Transposition Ammunition (Greater)"))[0].plan;
-    assert.deepEqual([greater.teleport.weaponRange, greater.partial, greater.notes.length], [true, true, 2]);
+    assert.deepEqual([greater.teleport.weaponRange, greater.partial, greater.notes, greater.teleport.with], [true, undefined, undefined, { count: 2 }]);
 });
 
 test("Emergency Escape Shield's Desperate Flight: \"to an unoccupied space that you can see within 20 feet\" — the teleport card's 20 feet", () => {
