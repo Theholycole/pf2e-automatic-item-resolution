@@ -17,12 +17,23 @@ export async function postCounteractCard({ message, plan, used, actor, token }) 
     const counteract = given.fromUser ? {
         ...given,
         ...(given.fromUser.rank === "half-level" ? { rank: Math.max(1, Math.ceil((Number(actor?.level) || 0) / 2)) } : {}),
-        ...(given.fromUser.modifier === "class-dc" ? (Number.isFinite(classMod) ? { modifier: classMod } : { modifier: 0, notes: [...(given.notes ?? []), `${actor?.name ?? "Its user"} has no class DC: its modifier is their class DC − 10 (by hand).`] }) : {})
+        ...(given.fromUser.modifier === "class-dc" ? (Number.isFinite(classMod) ? { modifier: classMod } : { modifier: 0, notes: [...(given.notes ?? []), `${actor?.name ?? "Its user"} has no class DC: its modifier is their class DC − 10 (by hand).`] }) : {}),
+        // (Its user's skill, Reflecting Shard's Athletics; or its attack modifier with the weapon it's on, Spellslasher's — its best Strike's.)
+        ...(given.fromUser.modifier && !["class-dc", "weapon-attack"].includes(given.fromUser.modifier) ? userModifier(given, `${given.fromUser.modifier.charAt(0).toUpperCase()}${given.fromUser.modifier.slice(1)}`, skillModifierOf(actor, given.fromUser.modifier), actor) : {}),
+        ...(given.fromUser.modifier === "weapon-attack" ? userModifier(given, "attack modifier with the weapon it's on", bestStrikeOf(actor), actor, "its best Strike's here: the GM may change it to the weapon's") : {})
     } : given;
     // (A spell on a creature within some distance: every creature there, foe or friend, for the GM to pick.)
     // (Its user's own, Determination's: no one else to pick.)
     const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: counteract.self ? [] : creaturesNear(token, counteract.within ?? 5) });
     return ChatMessage.create({ content: counteractCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
+}
+
+// (Its user's own modifier for it: a skill's, PF2e's statistic; its Strikes' best attack modifier.)
+export const skillModifierOf = (actor, slug) => Number(actor?.skills?.[slug]?.mod ?? actor?.system?.skills?.[slug]?.totalModifier ?? actor?.system?.skills?.[slug]?.mod);
+export const bestStrikeOf = (actor) => Math.max(...(actor?.system?.actions ?? []).filter((action) => action?.type === "strike" && action.ready !== false).map((action) => Number(action.totalModifier)).filter(Number.isFinite));
+function userModifier(given, words, value, actor, note = null) {
+    if (Number.isFinite(value)) return { modifier: value, ...(note ? { notes: [...(given.notes ?? []), `Its modifier +${value} is ${actor?.name ?? "its user"}'s ${words} (${note}).`] } : {}) };
+    return { modifier: 0, notes: [...(given.notes ?? []), `${actor?.name ?? "Its user"} has no ${words}: give its modifier by hand.`] };
 }
 
 // The counteract card a Strike's hit posts (src/compiler/strike-counteract.js): { counteract, item, user, drinkers } — only those creatures to pick.
@@ -130,9 +141,16 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
             lines.push(`${row.name}: ${outcome}, not counteracted.`);
             continue;
         }
-        // (Not on a creature: the GM ends it.)
+        // (Not on a creature: the GM ends it — or turns it back, Reflecting Shard's Spell Riposte.)
         if (row.kind === "free") {
-            lines.push(`${row.name}: ${outcome}, counteracted (end it by hand).`);
+            lines.push(`${row.name}: ${outcome}, counteracted (${state.counteract.free?.counteredWords ?? "end it by hand"}).`);
+            // (What its user then has, Spell Duelist's Siphon's absorbed spell: a note Effect on it.)
+            const kept = state.counteract.onCounter;
+            if (kept) {
+                const own = await creatureOf(state.user);
+                await own.actor?.createEmbeddedDocuments?.("Item", [itemNoteSource({ name: kept.label, words: kept.text, duration: null }, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+                lines.push(`${state.user.name}: ${kept.label.toLowerCase()} (a note Effect).`);
+            }
             continue;
         }
         // (Moon Radish Soup lowers the condition rather than ending it.)

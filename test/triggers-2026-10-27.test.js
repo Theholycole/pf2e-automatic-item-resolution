@@ -16,7 +16,9 @@ const SOCKET = `module.${MODULE_ID}`;
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
 const equipment = documents("equipment");
-const options = { spells: spellIndex(documents("spells")) };
+// (The spell module's claims, as live play and tools/needs.mjs pass them: an item it doesn't cast is the item module's.)
+const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-claims.js").then((module) => module.claims).catch(() => null);
+const options = { spells: spellIndex(documents("spells")), ...(claims ? { claims } : {}) };
 const source = (name) => equipment.find((doc) => doc.name === name);
 const item = (name) => ({ ...source(name), ownerLevel: Number(source(name).system.level?.value) || 1 });
 const activation = (name, which) => compileActivations(item(name), options).find((entry, index) => (typeof which === "string" ? entry.activation.name === which : index === (which ?? 0)))?.plan;
@@ -214,4 +216,32 @@ test("Beguiling Crown's reaction: the attacker's DC 41 Will save — its attack 
     const [begs] = crown.resolution.outcomes.criticalFailure.noteEffects;
     assert.deepEqual([begs.duration.value, begs.duration.unit], [1, "minutes"]);
     assert.deepEqual(crown.resolution.outcomes.success.noteEffects, []);
+});
+
+test("a spell at its user counteracted: Reflecting Shard's Spell Riposte at its user's Athletics (rank 7, 9), Spellslasher's at half its level and its best Strike, Spell Duelist's Siphon's absorbed", () => {
+    const shard = consumable("Reflecting Shard");
+    assert.equal(routeOf(shard), "counteract");
+    const counter = shard.item.counteract;
+    assert.deepEqual([counter.free.name, counter.fromUser, counter.rank, counter.modifier, done(shard)], ["the triggering spell", { modifier: "athletics" }, 7, null, true]);
+    assert.match(counter.free.counteredWords, /^Spell Riposte turns it back/);
+    assert.equal(consumable("Reflecting Shard (Greater)").item.counteract.rank, 9);
+    const slasher = consumable("Spellslasher").item.counteract;
+    assert.deepEqual([slasher.fromUser, slasher.rank], [{ rank: "half-level", modifier: "weapon-attack" }, null]);
+    const siphon = activation("Spell Duelist's Siphon");
+    assert.deepEqual([routeOf(siphon), siphon.item.counteract.modifier, siphon.item.counteract.rank, siphon.item.counteract.onCounter.label, siphon.trigger.frequency.per], ["counteract", 20, 6, "Absorbed spell", "day"]);
+});
+
+test("Reflecting Shard live: its modifier is its user's Athletics; counteracted, the spell is turned back on its caster", async () => {
+    reaper.skills = { athletics: { mod: 21 } };
+    const shard = foundry.giveItem(reaper, source("Reflecting Shard"));
+    const data = shard.toObject();
+    const use = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: shard.uuid, sourceId: data._stats.compendiumSource, type: shard.type } } }, speaker: { actor: reaper.id }, actor: reaper, token: reaper.token.document });
+    await foundry.call("createChatMessage", use);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(use) + 1];
+    assert.equal(card.flags[MODULE_ID].card.counteract.modifier, 21);
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, rows: [{ ticked: true, dc: 25, rank: 5 }], userId: "player" });
+    await settle();
+    // (The fake d20's 10 + 21 = 31 against DC 25: a success, rank 5 ≤ 7 + 1.)
+    assert.match(card.content, /the triggering spell: 31 against DC 25: a success, counteracted \(Spell Riposte turns it back/);
 });

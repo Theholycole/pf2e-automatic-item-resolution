@@ -39,7 +39,13 @@ function baseOf(item, { activation, index }) {
     };
 }
 // (The plan's own base when it has one: its source, item part and trigger kept.)
-const keptBase = (plan, item, entry) => (plan ? { modelVersion: plan.modelVersion, source: plan.source, rank: plan.rank, traits: plan.traits, activation: plan.activation, targeting: { target: null, range: null, area: null }, trigger: { event: "use", ...(plan.trigger?.frequency ? { frequency: plan.trigger.frequency } : {}) }, item: plan.item ?? baseOf(item, entry).item } : baseOf(item, entry));
+// (A builtin no-effect's has none of them: the activation's own.)
+function keptBase(plan, item, entry) {
+    const own = baseOf(item, entry);
+    if (!plan) return own;
+    const frequency = plan.trigger?.frequency ?? own.trigger.frequency;
+    return { ...own, modelVersion: plan.modelVersion ?? own.modelVersion, source: plan.source ?? own.source, rank: plan.rank ?? own.rank, traits: plan.traits ?? own.traits, activation: plan.activation ?? own.activation, trigger: { event: "use", ...(frequency ? { frequency } : {}) }, item: plan.item?.activation ? plan.item : { ...own.item, ...(plan.item ?? {}) } };
+}
 const ownCard = (base, row, notes = []) => ({ ...base, automation: { level: "automatic" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), ...row } } }, ...(notes.length ? { notes } : {}) });
 
 // --- A condition suppressed -------------------------------------------------------------------------------------------------------------------
@@ -204,9 +210,84 @@ export function withBeguiledAttacker(plan, { item, activation, index }) {
     };
 }
 
+// --- A spell at its user counteracted -------------------------------------------------------------------------------------------------------------
+
+// GM Core's DCs by level, 0 to 25 (src/compiler/counteract.js's): a counteract modifier the text leaves out is its item's level's, less 10 (the
+// user's answer to question 5, 2026-10-26).
+const LEVEL_DCS = [14, 15, 16, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 35, 36, 38, 39, 40, 42, 44, 46, 48, 50];
+const counteractCard = (base, { counteredWords = null, ...counteract }) => ({ ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: { target: "the drinker", range: null, area: null }, item: { ...base.item, counteract: { conditions: [], traits: [], afflictions: [], free: { name: "the triggering spell", ...(counteredWords ? { counteredWords } : {}) }, pick: "one", ...counteract } } });
+// (Spell Duelist's Siphon's "You attempt to counteract the triggering spell. If you succeed, the spell is absorbed into the grimoire, and the diagrams
+// on the cover change … While the grimoire contains a spell, you can spend a spell slot of the same or higher rank as the spell in the grimoire to
+// cast that spell instead, heightened to the appropriate rank (if you spent a higher-rank spell slot). After you cast the spell, it's expended from
+// the grimoire": the counteract card at the triggering spell — no modifier given, its level's DC less 10; half its level its rank — and once
+// it's counteracted a note Effect on its user that the grimoire holds it, its casting from its user's own slot its user's to spend.)
+const ABSORB_INTRO = /^The grimoire attempts to absorb knowledge of the spell targeting you\.$/i;
+const ABSORB_COUNTER = /^You attempt to counteract the triggering spell\.$/i;
+const ABSORBED = /^If you succeed, the spell is absorbed into the grimoire, and the diagrams on the cover change to indicate the somatic gestures and sigils for the counteracted spell\.$/i;
+const ABSORBED_CAST = /^While the grimoire contains a spell, you can spend a spell slot of the same or higher rank as the spell in the grimoire to cast that spell instead, heightened to the appropriate rank \(if you spent a higher-rank spell slot\)\.$/i;
+const ABSORBED_GONE = /^After you cast the spell, it's expended from the grimoire\.$/i;
+export function withAbsorbedSpell(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const known = [ABSORB_INTRO, ABSORB_COUNTER, ABSORBED, ABSORBED_CAST, ABSORBED_GONE];
+    if (sentences.length !== known.length || !known.every((pattern, at) => pattern.test(sentences[at]))) return plan;
+    const level = Number(item?.system?.level?.value) || 0;
+    const modifier = LEVEL_DCS[Math.max(0, Math.min(25, level))] - 10;
+    const base = keptBase(plan, item, { activation, index });
+    return counteractCard(base, {
+        modifier,
+        rank: Math.max(1, Math.ceil(level / 2)),
+        onCounter: { label: "Absorbed spell", text: "The grimoire holds the spell it counteracted (its cover shows the spell's gestures and sigils). Its user can spend a spell slot of that spell's rank or higher to cast it instead, heightened to the slot's rank; then it's gone from the grimoire." },
+        notes: [`Its counteract modifier +${modifier}: the item gives none, so its level's DC less 10 (the GM's call).`]
+    });
+}
+
+// The consumable's plain text → its sentences after its Activate, Trigger and Requirements lines (a talisman's description follows them).
+const usedSentences = (text) => sentencesOf(String(text ?? "").replace(/\s*\bCraft Requirements\b.*$/s, "")).flatMap((sentence) => sentence.split(/(?<=\.)\s+(?=[A-Z])/)).map((sentence) => sentence.trim()).filter(Boolean);
+// (Reflecting Shard's "When you Activate it, you attempt to reflect the triggering spell back at its caster with Spell Riposte, using your Athletics
+// modifier for the counteract check. The talisman's counteract rank is 7th": the counteract card at the triggering spell, its user's Athletics its
+// modifier (counteract.fromUser, scripts/counteract.js); counteracted, Spell Riposte turns it on its caster.)
+const RIPOSTE = /^When you Activate it, you attempt to reflect the triggering spell back at its caster with Spell Riposte, using your (?:@Check\[)?(acrobatics|athletics|arcana|occultism|religion|nature)\]? modifier for the counteract check\.$/i;
+const TALISMAN_RANK = /^The talisman's counteract rank is (\d+)(?:st|nd|rd|th)\.$/i;
+function reflectedSpell(text, base) {
+    const sentences = usedSentences(text);
+    const riposte = sentences.map((sentence) => RIPOSTE.exec(sentence)).find(Boolean);
+    const rank = sentences.map((sentence) => TALISMAN_RANK.exec(sentence)).find(Boolean);
+    if (!riposte || !rank) return null;
+    // (Its Activate, Trigger and Requirements lines and its flavor: nothing else.)
+    if (sentences.some((sentence) => !RIPOSTE.test(sentence) && !TALISMAN_RANK.test(sentence) && !/^(?:Activate|Trigger|Requirements?)\b/.test(sentence) && !flavor(sentence))) return null;
+    return counteractCard(base, { modifier: null, fromUser: { modifier: riposte[1].toLowerCase() }, rank: Number(rank[1]), counteredWords: "Spell Riposte turns it back: it goes on with its caster as its target instead of its user (the GM's to aim)", notes: ["Counteracted, the spell goes on with its caster as its target instead (Spell Riposte); one that isn't targeted, an area spell, it can't affect."] });
+}
+// (Spellslasher's "While your weapon is under the effect of a spellslasher, you gain the Spellslash reaction; you can use this reaction only with the
+// affected weapon, and the spellslasher's effects end as soon as you use Spellslash. Spellslash … Effect … attempting to counteract the spell. Your
+// counteract rank is equal to half your level (rounded up), and your counteract check modifier is equal to your attack modifier with the affected
+// weapon": the counteract card, kept open until its user's Spellslash — half its level its rank, its best Strike's attack modifier its modifier.)
+const SLASH_GAINED = /^While your weapon is under the effect of an? [\w' -]+?\s*, you gain the (\w+) reaction; you can use this reaction only with the affected weapon, and the [\w' -]+?\s*'s effects end as soon as you use \1\.$/i;
+const SLASH_COUNTER = /^(\w+) \([^)]*\) Trigger You are the only target of a spell Effect You swing or shoot your weapon to intercept the magic, attempting to counteract the spell\.$/i;
+const SLASH_NUMBERS = /^Your counteract rank is equal to half your level \(rounded up\), and your counteract check modifier is equal to your attack modifier with the affected weapon\.$/i;
+function slashedSpell(text, base) {
+    const sentences = usedSentences(text);
+    const gained = sentences.map((sentence) => SLASH_GAINED.exec(sentence)).find(Boolean);
+    if (!gained || !sentences.some((sentence) => SLASH_COUNTER.test(sentence)) || !sentences.some((sentence) => SLASH_NUMBERS.test(sentence))) return null;
+    const known = (sentence) => SLASH_GAINED.test(sentence) || SLASH_COUNTER.test(sentence) || SLASH_NUMBERS.test(sentence) || (/^Activate\b/.test(sentence) && flavor(sentence.replace(/^Activate\s*(?:\([^)]*\))?\s*/, ""))) || flavor(sentence);
+    if (!sentences.every(known)) return null;
+    return counteractCard(base, { modifier: null, fromUser: { rank: "half-level", modifier: "weapon-attack" }, rank: null, notes: [`Applied to a weapon, it gives its user the ${gained[1]} reaction with that weapon: press Apply when it's the only target of a spell, as it uses ${gained[1]} — the spellslasher's effects end then.`] });
+}
+
+const USE_READERS = [reflectedSpell, slashedSpell];
+// A consumable's plan → the plan its trigger's effect makes, or the same plan. base: its base plan; info: its item part (src/compiler/index.js).
+export function withTriggeredUse(plan, item, { base, info }) {
+    const text = plainText(item?.system?.description?.value);
+    const ownBase = { ...base, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, item: info };
+    for (const reader of USE_READERS) {
+        const next = reader(text, ownBase, item);
+        if (next) return next;
+    }
+    return plan;
+}
+
 // --- The readers, in order --------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker];
+const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell];
 
 // The activation's plan → the plan its trigger's effect makes, or the same plan. entry: { activation, index } (compileEach's).
 export function withTriggered(plan, entry, item) {
