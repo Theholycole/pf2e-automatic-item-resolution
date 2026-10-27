@@ -320,6 +320,72 @@ const READINGS = [
                 notes: ["The shield is the sword for that time: it takes up its shield again once the sword is gone."]
             };
         }
+    },
+    {
+        // Belimarius's Invidious Halberd's Absorb Arcana: the save card at the creature struck, Will DC 37; a failure loses it an arcane spell or
+        // slot of the highest rank it has up to 6th, picked at random (plan.drainSlot, scripts/arcane-drain.js), and Quickens the wielder for 1
+        // round (its extra action only to Strike with the halberd, a line).
+        names: ["Belimarius's Invidious Halberd: Absorb Arcana"],
+        trigger: /^The halberd damages a creature capable of casting (arcane) spells$/,
+        sentences: [
+            /^The halberd attempts to absorb one of the creature's prepared arcane spells or arcane spell slots\.$/,
+            /^If the creature struck fails a @Check\[will\|dc:(\d+)\] save, it loses an arcane spell \(or lose an unused arcane spell slot\) as if it'd cast that spell\.$/,
+            /^The spell or slot lost is randomly determined from the highest rank available, starting at (\d+)(?:st|nd|rd|th) rank and working down\.$/,
+            /^The halberd passes this absorbed energy on to their wielder, who becomes Quickened for (\d+) rounds? and can use the extra action only to Strike with the halberd\.$/
+        ],
+        card: ([, fails, rank, quick]) => {
+            const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+            const failed = () => ({ ...none(), effects: [{ kind: "condition", slug: "quickened", value: null, duration: { mode: "fixed", value: Number(quick[1]), unit: "rounds", expiry: "turn-end", anchor: "source-turn" }, recipient: "self" }] });
+            return {
+                targeting: { target: "the creature struck", range: null, area: null },
+                resolution: { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: Number(fails[1]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: failed(), criticalFailure: failed() } },
+                drainSlot: { tradition: "arcane", maxRank: Number(rank[1]), degrees: ["failure", "criticalFailure"] },
+                notes: ["Only at a creature that can cast arcane spells: its card at the creature struck.", "A failure loses it an arcane spell or slot (picked at random from its highest rank up to 6th); the wielder's Quickened action is only to Strike with the halberd."]
+            };
+        }
+    },
+    {
+        // Mountain to the Sky: the climb's check card at the creatures its user targets — DC 35 Athletics, the climb trait's — a success reaching
+        // the summit after its 8 hours, plane-shifted to Heaven when no flight or magic helped (a note Effect on each, its token's new scene the
+        // GM's); the mountain on the map and its return to a shell, lines of the card.
+        names: ["Mountain to the Sky"],
+        sentences: [
+            /^This tiny, carved walnut shell contains a sacred mountain within\.$/,
+            /^You can only activate mountain to the sky on an unoccupied patch of earth or soil\.$/,
+            /^When activated, the walnut transforms into an impossibly steep mountain, ([\d,]+) feet tall and (\d+) feet wide at the base\.$/,
+            /^Climbing the mountain requires (\d+) hours and a successful @Check\[(athletics)\|dc:(\d+)\|traits:action:climb\] check\.$/,
+            /^After activating it, if you climb to the top of the mountain without any assistance from flight or magic, the mountain plane shifts you to (Heaven) when you reach the summit\.$/,
+            /^You can return the mountain to the sky into the shape of a walnut shell as a 1-minute activity, which has the concentrate and manipulate traits, so long as no living creatures are present on the mountain\.$/
+        ],
+        card: ([, , mountain, climb, plane]) => {
+            const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+            const summit = () => ({ ...none(), noteEffects: [{ label: "The summit", text: `It reaches the summit after ${climb[1]} hours of climbing. If it climbed with no help from flight or magic, the mountain plane shifts it to ${plane[1]} (its token goes to that scene).`, duration: null }] });
+            return {
+                targeting: { target: "each creature that climbs it", range: null, area: null },
+                trigger: { event: "use" },
+                resolution: { kind: "save", check: { roll: "save", statistic: climb[2], basic: false, against: { dc: "fixed", value: Number(climb[3]) } }, outcomes: { criticalSuccess: summit(), success: summit(), failure: none(), criticalFailure: none() } },
+                activation: { time: "1 minute", traits: ["manipulate"] },
+                notes: [`Only on an unoccupied patch of earth or soil: the mountain stands there, ${mountain[1]} feet tall and ${mountain[2]} feet wide at its base (the map's).`, `Climbing it takes ${climb[1]} hours: target the climbers for their checks.`, "Its user turns it back into the walnut shell with a 1-minute activity (concentrate, manipulate) while no living creature is on it."]
+            };
+        }
+    },
+    {
+        // Mountebank's Passage's Doorway to Onyx and Doorway to Pearl: a white portal or a black one on a square its user picks within 120 feet,
+        // Foundry's teleportToken behaviour from each to the other (src/live/portals.js, scripts/portals.js), refused while it's loaded.
+        names: ["Mountebank's Passage: Doorway to Onyx", "Mountebank's Passage: Doorway to Pearl"],
+        requirements: /^the mountebank's passage isn't loaded$/i,
+        sentences: [
+            /^You pull the (soapstone|onyx) trigger\.$/,
+            /^Choose a vertical surface within (\d+) feet\.$/,
+            /^A beam of (white|black) energy (?:crackles|leaps) to the (?:vertical )?surface and creates an? (white|onyx) portal(?: on that surface)?\.$/,
+            /^Any creature who moves through the (white|black) portal comes out through the mountebank's passage's (black|white) portal, if one exists on the same plane\.$/,
+            /^Using this activation causes any previous (white|black) portal to disappear[;,] even if you don't create a new portal; otherwise, the portal lasts until your next daily preparations\.$/
+        ],
+        card: ([, within, , through]) => ({
+            builtin: "portal",
+            targeting: { target: null, range: `${within[1]} feet`, area: null },
+            portal: { color: through[1].toLowerCase(), other: through[2].toLowerCase(), within: Number(within[1]), unloaded: true }
+        })
     }
 ];
 

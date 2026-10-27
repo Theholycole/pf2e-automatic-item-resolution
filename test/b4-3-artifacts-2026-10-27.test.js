@@ -11,6 +11,8 @@ import { contractChoices, contractRefusal, withContractCast } from "../src/live/
 import { withPlace } from "../src/live/embedded-places.js";
 import { swapRules, swapWords } from "../src/live/skill-swap.js";
 import { adjacentBonus, isAdjacent } from "../src/live/adjacent-bonus.js";
+import { drainCandidates, pickDrain } from "../src/live/arcane-drain.js";
+import { portalRegion } from "../src/live/portals.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
 import { aroundZone, createInertCard, exemptSpec, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
@@ -171,4 +173,30 @@ test("Vambrace of Gorum's Blade of Iron: a +3 major striking high-grade adamanti
     assert.deepEqual([done(plan), routeOf(plan), objects.weapon, objects.potency, objects.striking, objects.material, objects.lasts], [true, "objects", "greatsword", 3, 3, { type: "adamantine", grade: "high" }, { value: 1, unit: "minutes" }]);
     assert.deepEqual([adjacentBonus(objects.effect.adjacent, 2), adjacentBonus(objects.effect.adjacent, 6)], [2, 4]);
     assert.deepEqual([isAdjacent({ x: 0, y: 0, w: 100, h: 100 }, { x: 100, y: 100, w: 100, h: 100 }, 100), isAdjacent({ x: 0, y: 0, w: 100, h: 100 }, { x: 200, y: 0, w: 100, h: 100 }, 100)], [true, false]);
+});
+
+test("Belimarius's Invidious Halberd's Absorb Arcana: the save card at the creature struck (Will DC 37), a failure losing it an arcane spell or slot of its highest rank up to 6th, the wielder Quickened for 1 round", () => {
+    const plan = activation("Belimarius's Invidious Halberd", "Absorb Arcana");
+    assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.against.value, plan.drainSlot, plan.resolution.outcomes.failure.effects[0].recipient], [true, "save", 37, { tradition: "arcane", maxRank: 6, degrees: ["failure", "criticalFailure"] }, "self"]);
+    const entries = [
+        { id: "w", tradition: "arcane", prepared: "prepared", flexible: false, slots: { slot7: { max: 1, prepared: [{ id: "a" }] }, slot6: { max: 2, prepared: [{ id: "b", expended: true }, { id: "c" }] }, slot5: { max: 1, prepared: [{ id: "d" }] } } },
+        { id: "s", tradition: "arcane", prepared: "spontaneous", flexible: false, slots: { slot6: { max: 2, value: 1 } } },
+        { id: "o", tradition: "occult", prepared: "spontaneous", flexible: false, slots: { slot6: { max: 2, value: 2 } } }
+    ];
+    const found = drainCandidates(entries, { tradition: "arcane", maxRank: 6 });
+    assert.deepEqual(found, [{ entryId: "w", rank: 6, at: 1 }, { entryId: "s", rank: 6, at: null }]);
+    assert.deepEqual(pickDrain(found, 0.9), { entryId: "s", rank: 6, at: null });
+});
+
+test("Mountain to the Sky: the climb's DC 35 Athletics check card at the climbers, a success reaching the summit (plane-shifted to Heaven with no help from flight or magic)", () => {
+    const [plan] = activations("Mountain to the Sky");
+    assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.statistic, plan.resolution.check.against.value, plan.activation.time], [true, "save", "athletics", 35, "1 minute"]);
+    assert.match(plan.resolution.outcomes.success.noteEffects[0].text, /Heaven/);
+});
+
+test("Mountebank's Passage: a white portal and a black one, each a Region whose teleportToken behaviour leads to the other, within 120 feet, while it isn't loaded", () => {
+    const [onyx, pearl] = [activation("Mountebank's Passage", "Doorway to Onyx"), activation("Mountebank's Passage", "Doorway to Pearl")];
+    assert.deepEqual([done(onyx), done(pearl), routeOf(onyx), onyx.portal, pearl.portal.color], [true, true, "portal", { color: "white", other: "black", within: 120, unloaded: true }, "black"]);
+    const region = portalRegion({ name: "white portal", square: { x: 100, y: 200 }, size: 100, color: "white", other: "Scene.a.Region.b", flags: {} });
+    assert.deepEqual([region.shapes[0].x, region.behaviors[0].type, region.behaviors[0].system.destinations], [100, "teleportToken", ["Scene.a.Region.b"]]);
 });

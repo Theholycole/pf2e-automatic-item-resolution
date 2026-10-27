@@ -59,6 +59,8 @@ import { setUpDecoyDouble } from "./decoy-double.js";
 import { setUpPairedStone } from "./paired-stone.js";
 import { setUpSkillSwap } from "./skill-swap.js";
 import { setUpAdjacentBonus } from "./adjacent-bonus.js";
+import { setUpArcaneDrain } from "./arcane-drain.js";
+import { setUpPortals } from "./portals.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -192,6 +194,10 @@ Hooks.once("ready", async () => {
     setUpSkillSwap();
     // (A bonus for each adjacent enemy, Vambrace of Gorum's Blade of Iron: scripts/adjacent-bonus.js.)
     setUpAdjacentBonus();
+    // (A creature's spell or slot lost once its save card is applied, Belimarius's Invidious Halberd's Absorb Arcana: scripts/arcane-drain.js.)
+    setUpArcaneDrain();
+    // (Linked portals, Mountebank's Passage's: scripts/portals.js.)
+    setUpPortals();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
