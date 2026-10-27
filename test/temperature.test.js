@@ -49,7 +49,8 @@ test("a consumable's protection: the item card's own Effect for its time, flagge
 
 test("an activation's protection: Rime Jar's 8 hours (its Fatigued a note), Slithermaw's Bane's heat or cold its user's pick (its terrain parts notes)", () => {
     const jar = compileActivations(item("Rime Jar"))[0].plan;
-    assert.deepEqual([jar.temperature.counts, jar.temperature.duration.value, jar.partial], [{ "extreme-cold": "severe-cold" }, 8, true]);
+    // (2026-10-27: its Fatigued from the cold the ways card's second button, item.reduce — src/compiler/book-strikes.js; no longer partial.)
+    assert.deepEqual([jar.builtin, jar.temperature.counts, jar.temperature.duration.value, jar.partial, jar.ways[1].plan.item.reduce], ["ways", { "extreme-cold": "severe-cold" }, 8, undefined, [{ slug: "fatigued", by: "all" }]]);
     const bane = compileActivations(item("Slithermaw's Bane")).find((entry) => entry.activation.name === "Terrain Adaptation").plan;
     assert.deepEqual([bane.builtin, bane.ways.map((way) => way.name), bane.ways[1].plan.temperature.counts, bane.ways[0].plan.temperature.until, bane.partial], ["ways", ["Heat", "Cold"], { "severe-cold": "mild-cold", "extreme-cold": "mild-cold" }, "Until its user's next daily preparations", true]);
 });

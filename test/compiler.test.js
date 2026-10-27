@@ -521,7 +521,10 @@ test("bonuses narrower than PF2e's rolls, on the whole roll for their time: Phan
     const [disguise] = elixir.resolution.outcomes.success.modifiers;
     assert.deepEqual([disguise.selector, disguise.value, disguise.type, disguise.predicate ?? null, `${disguise.duration.value} ${disguise.duration.unit}`, elixir.partial, elixir.unread], ["deception-dc", 4, "status", null, "10 minutes", undefined, undefined]);
     assert.match(elixir.resolution.outcomes.success.noteEffects[0].text, /only against others seeing through that disguise, and its level counts toward that DC even if it's untrained/);
-    assert.deepEqual(summary("Armor Polishing Kit"), ["diplomacy", 1, "circumstance", ["action:make-an-impression"], "24 hours", true, "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit."]);
+    // (2026-10-27: Armor Polishing Kit's bonus is now on its note Effect, PF2e's action:make-an-impression and its toggle for a martially minded
+    // character, for whoever wears the armor — src/compiler/book-strikes.js.)
+    const kit = compileItem(item("Armor Polishing Kit"));
+    assert.deepEqual([kit.resolution.outcomes.success.modifiers, kit.resolution.outcomes.success.noteEffects[0].rules[1].predicate, kit.partial], [[], ["action:make-an-impression", "armor-polishing-kit-martial"], undefined]);
 });
 
 test("a condition's penalty ignored for a while: Chilled Fire Noodles' Fatigued penalty to AC and saves for 1 hour, Ring of the Weary Traveler's for 10 minutes — PF2e's AdjustModifier suppressing the fatigued modifier", async () => {
@@ -950,7 +953,9 @@ test("narrow bonuses on PF2e's roll options, the narrower words a note (the user
     // (2026-10-27: Aroma Concealer's bonus against smell is now on its note Effect with its toggle — src/compiler/visibility.js.)
     assert.deepEqual(compileItem(item("Aroma Concealer")).resolution.outcomes.success.noteEffects[0].rules[1].value, 2);
     assert.deepEqual(bonus("Potion of Disguise (Lesser)"), [["deception-dc", 4, "status", "24 hours", "null"]]);
-    assert.deepEqual(bonus("Fungal Walk Musk"), [["ac", 1, "item", "1 days", JSON.stringify(["origin:trait:fungus"])]]);
+    // (2026-10-27: Fungal Walk Musk's bonus is now on its note Effect with its toggle for a fungus creature with no vision's melee attack —
+    // src/compiler/book-strikes.js.)
+    assert.deepEqual(compileItem(item("Fungal Walk Musk")).resolution.outcomes.success.noteEffects[0].rules[1], { key: "FlatModifier", selector: "ac", type: "item", value: 1, predicate: ["fungal-walk-musk-blind-fungus"] });
     // (2026-10-27: Healing Vapor's bonus is its burst's, the ability module's zone for the creatures inside — src/compiler/area-readings.js.)
     const vapor = compileItem({ ...item("Healing Vapor (Major)"), ownerLevel: 10 });
     assert.deepEqual([vapor.builtin, vapor.zone.modifiers[0].value, vapor.zone.modifiers[0].predicate], ["zone", 3, [{ or: ["item:trait:disease", "item:trait:poison"] }]]);
