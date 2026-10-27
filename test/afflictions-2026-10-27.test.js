@@ -227,3 +227,34 @@ test("a spell's weakness added to a curse's: Arboreal's Revenge's Arboreal's Gra
     assert.equal(routeOf(grace.ways[0].plan), "item");
     assert.equal(grace.ways[1].plan.notes, undefined);
 });
+
+test("a vaccine's strain: the note Effect beside its +2 for its duration (the Major's for good), no longer unread", () => {
+    for (const [grade, time] of [["Minor", [1, "hours"]], ["Lesser", [24, "hours"]], ["Moderate", [7, "days"]], ["Greater", [365, "days"]], ["Major", null]]) {
+        const vaccine = compileItem(item(`Vaccine (${grade})`));
+        const row = vaccine.resolution.outcomes.success;
+        assert.ok(done(vaccine), grade);
+        assert.deepEqual([vaccine.unread, row.noteEffects.length, row.noteEffects[0].label], [undefined, 1, "Vaccinated"], grade);
+        assert.deepEqual(row.noteEffects[0].duration ? [row.noteEffects[0].duration.value, row.noteEffects[0].duration.unit] : null, time, grade);
+    }
+});
+
+test("clean air for a round, a swarm shooed onto an ally, a weapon on a force tripod: Gas Mask of Clean Air's PF2e immunities, Wasp Guard's note while its poison lasts, Silver Tripod's kickback penalty gone", () => {
+    const mask = activation("Gas Mask of Clean Air", "Breathe Clean");
+    const air = mask.resolution.outcomes.success.noteEffects[0];
+    assert.ok(done(mask));
+    assert.deepEqual([air.duration.value, air.duration.unit, air.rules.map((rule) => rule.type)], [1, "rounds", ["inhaled", "olfactory"]]);
+    const [wasp] = compileActivations(item("Wasp Guard")).map((entry) => entry.plan);
+    const swarm = wasp.resolution.outcomes.success;
+    assert.ok(done(wasp));
+    assert.deepEqual([wasp.notes, swarm.manualInstructions, swarm.noteEffects[0].whilePersistent, swarm.damage.mode], [undefined, undefined, "poison", "shared"]);
+    assert.match(swarm.noteEffects[0].text, /1d8 persistent poison damage instead/);
+    const tripod = compileItem(item("Silver Tripod"));
+    const steady = tripod.resolution.outcomes.success.noteEffects[0];
+    assert.ok(done(tripod));
+    assert.deepEqual([steady.duration.value, steady.duration.unit, steady.rules[0]], [1, "minutes", { key: "AdjustModifier", selector: "strike-attack-roll", slug: "kickback", suppress: true }]);
+});
+
+test("one-offs, their card's lines: Alkenstar Ice Wine (PF2e's Alcohol), Poracha Fulu (persistent damage negated); Body Recovery Kit checked", () => {
+    for (const name of ["Alkenstar Ice Wine", "Poracha Fulu"]) assert.deepEqual([compileItem(item(name)).decided, done(compileItem(item(name)))], ["one-off", true], name);
+    assert.deepEqual([compileItem(item("Body Recovery Kit")).decided, done(compileItem(item("Body Recovery Kit")))], ["checked", true]);
+});
