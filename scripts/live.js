@@ -27,6 +27,7 @@ import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, s
 import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
 import { startItemConjure, startItemZone } from "./zones.js";
+import { answerPick } from "./creature-pick.js";
 import { scaledByCondition, withConditionDC } from "../src/live/scaled.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
@@ -139,6 +140,8 @@ export function setUpLivePlay({ compileItem, compileActivations = null, claims =
         togglesOnMove(token, changes).catch((error) => console.error(`${MODULE_ID} | toggle off`, error));
     });
     game.socket.on(SOCKET, (data) => {
+        // (A creature its user picks, asked of their client and answered: scripts/creature-pick.js, 2026-10-27.)
+        if (answerPick(data)) return;
         if (isActiveGM()) onRequest(data).catch((error) => console.error(`${MODULE_ID} | ${data?.action}`, error));
     });
     // The chat log drew the messages already there before "ready".
@@ -235,7 +238,8 @@ async function triggeringMissFormula(actor) {
 }
 
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)
-export async function postCardFor({ message, plan, used, actor, token, origin = {} }) {
+// (userId: who used it, when no message says — a sheet's Activate: scripts/activations.js.)
+export async function postCardFor({ message, plan, used, actor, token, origin = {}, userId = null }) {
     // (Its moves with ability 0.9.2's hook and moveFrom, else as read before: scripts/placed-moves.js.)
     plan = forAbility(plan);
     // (Damage as its user's own Strike with it would deal, of one type — Sinew-Song's Cutting Cadenza: PF2e's formula for that Strike, src/live/strike-as.js.)
@@ -278,8 +282,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (unmet) await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p>${escapeHTML(unmet)}</p>` }).catch((error) => console.error(`${MODULE_ID} | requirement warning`, error));
     const route = routeOf(plan, plainText(used.data.system?.description?.value));
     // (An item that also counteracts on its drinker — Panacea Fruit heals too: its counteract card beside its own.)
-    // (Its cost, a Mythic Point, the main card's alone: src/compiler/spend.js.)
-    if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan: { ...plan, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));
+    // (Its cost, a Mythic Point, the main card's alone: src/compiler/spend.js. And its temporary immunity, scripts/immunity.js — 2026-10-27.)
+    if (route !== "counteract" && plan?.item?.counteract) await postCounteractCard({ message, plan: { ...plan, spend: undefined, item: { ...plan.item, immunity: undefined } }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | counteract card`, error));
     // (A cost with no card to apply it on — a zone, a conjured creature, a spell cast into ammunition: spent now, or refused.)
     if (plan?.spend && ["zone", "conjure", "spellstrike"].includes(route)) {
         checkSpend(actor, plan.spend, used.data.name);
@@ -316,7 +320,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
     if (route === "zone") return startItemZone({ plan, used, actor, token });
-    if (route === "conjure") return startItemConjure({ plan, used, actor, token });
+    // (Its user's pick, when it has one, on that user's client: scripts/creature-pick.js, 2026-10-27.)
+    if (route === "conjure") return startItemConjure({ plan, used, actor, token, userId: userId ?? message?.author?.id ?? null });
     if (route === "focus") return postFocusCard({ message, plan, used, actor, token });
     // (Spellstrike Ammunition: the spell cast into it, on this client: scripts/spellstrike.js.)
     if (route === "spellstrike") {

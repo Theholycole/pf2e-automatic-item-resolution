@@ -88,7 +88,8 @@ test("a reaction for both drinkers: Potion of Shared Life's Share Life granted o
     assert.ok(done(potion));
     assert.equal(potion.item.recipient, "targets");
     const [note] = potion.resolution.outcomes.success.noteEffects;
-    assert.deepEqual([note.label, note.duration.value, note.duration.unit, note.reminder], ["Potion of Shared Life: Share Life", 1, "minutes", undefined]);
+    // (2026-10-27: the action's name alone, as the ability module names the Effect "Potion of Shared Life: <label>".)
+    assert.deepEqual([note.label, note.duration.value, note.duration.unit, note.reminder], ["Share Life", 1, "minutes", undefined]);
     assert.deepEqual(note.rules, [{ key: "GrantItem", uuid: "Compendium.pf2e.actionspf2e.Item.MY6z2b4GPhAD2Eoa", allowDuplicate: false }]);
 });
 

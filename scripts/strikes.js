@@ -51,12 +51,9 @@ export async function applyStrikeCard(message, choices = {}) {
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
     const weaponId = state.plan.strike?.own ? itemIdOf(state.item.uuid) : null;
     const ammoId = state.plan.strike?.ammo ? itemIdOf(state.item.uuid) : null;
-    // (Resistance its damage ignores in part, Awakened Adamantine Shot's 20: the resolution core's flag on the shot, which the core stamps onto
-    // a Strike's damage roll with it loaded — src/compiler/small-needs.js, core 321af5b.)
-    if (state.plan.strike?.ignoreResistance && ammoId) {
-        const shot = actor.items?.get?.(ammoId) ?? null;
-        if (shot && !shot.getFlag?.(CORE_ID, "ignoreResistance")) await shot.setFlag(CORE_ID, "ignoreResistance", state.plan.strike.ignoreResistance);
-    }
+    // (Resistance its damage ignores in part, Awakened Adamantine Shot's 20: the resolution core's flag on the readied Strike's Effect, for that
+    // shot's damage roll alone — src/live/strike-card.js strikeEffectSource; kept for the hit's damage roll, addsToDamage. Before 2026-10-27 it
+    // went on the shot, and every later shot of its stack kept it.)
     // (A bonus only against metal, Lodestone Pellet's: whether the creature targeted now is made of metal or wears metal armor.)
     let ready = state;
     if (state.plan.strike?.attack?.against === "metal") {
@@ -65,7 +62,7 @@ export async function applyStrikeCard(message, choices = {}) {
         ready = { ...state, plan: { ...state.plan, strike: { ...state.plan.strike, attack: { ...state.plan.strike.attack, metalTarget: actors.length ? actors.every(isMetalTarget) : null } } } };
     }
     const uses = targets && !volley.oneRoll ? targets.length : null;
-    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: uses ?? 1, targets } : {}) })]);
+    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, coreId: CORE_ID, ...(targets ? { uses: uses ?? 1, targets } : {}) })]);
     const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses })}${old.length ? " (The one readied before is gone.)" : ""}`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
@@ -423,8 +420,9 @@ async function strikeInstead({ message, context, actor, effect, rider, what }) {
 // PF2e's damage roll of a Strike by a creature whose readied Strike carries extra dice: that Strike's damage is rolled, so
 // it's spent (with its Effect's rules in the roll). The item's own weapon must be the one rolled.
 // (And the damage bonuses and rune dice off of 2026-10-27, strike.flat and strike.runeDice — Morphing Weapon's Weigh, Minotaur Chair's prone foe —:
-// its readied Strike kept for the damage roll, so PF2e's roll gets them.)
-const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.withoutRune || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash || (plan.strike?.flat ?? []).length || (plan.strike?.runeDice ?? []).length);
+// its readied Strike kept for the damage roll, so PF2e's roll gets them. And resistance ignored in part, Awakened Adamantine Shot's: the core's
+// entry on that Effect, which the damage roll must find there.)
+const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.withoutRune || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash || (plan.strike?.flat ?? []).length || (plan.strike?.runeDice ?? []).length || plan.strike?.ignoreResistance);
 async function damageWithRider(message) {
     const context = message.flags.pf2e.context;
     if (context.sourceType !== "attack") return;
@@ -436,6 +434,8 @@ async function damageWithRider(message) {
     const options = context.options ?? [];
     if (rider.weaponId && !options.includes(`item:id:${rider.weaponId}`)) return;
     if (rider.plan.strike?.unarmed && !options.includes("item:category:unarmed")) return;
+    // (Another ammunition's damage roll, as its attack roll: not this one's — 2026-10-27.)
+    if (rider.ammoId && options.some((option) => /(?:^|:)ammo:id:/.test(option)) && !options.some((option) => option === `ammo:id:${rider.ammoId}` || option.endsWith(`:ammo:id:${rider.ammoId}`))) return;
     await useOne(actor, effect, rider);
 }
 

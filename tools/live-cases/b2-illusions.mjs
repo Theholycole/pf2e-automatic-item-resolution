@@ -95,6 +95,8 @@ export default (h) => {
             await h.wait(600);
             h.assert(!sawThrough(doubter, "Wooden Nickel"), `no Saw-through Effect on the doubter yet (${effectNames(doubter)})`);
             const failedFooled = [...state.fooled];
+            // (A failed Crafting, a try at seeing through it, leaves it fooled: listed so since 2026-10-27, src/live/disbelief-card.js.)
+            h.assert(failedFooled.some((name) => /Nickel Doubter/.test(name)), `the doubter under Tried and still fooled after its Crafting (${failedFooled.join(", ")})`);
             since = Date.now();
             await h.withDie(20, () => api().apply(disbelief.id, { targets: [doubterToken.uuid], check: 0 }));
             const perceived = await rollOf(since, doubter, "perception-check");
@@ -179,7 +181,8 @@ export default (h) => {
         // Arclord Eye's Open the Eye (illusions.js item.senses; src/live/card.js SENSE_WORDS magicsense): "For the next 10 minutes, you gain an
         // imprecise magic sense with a range of 30 feet." Activated on its invested PC and applied: an Effect with PF2e's Sense rule (magicsense,
         // imprecise, 30 feet) for 10 minutes, named for "Magic sense"; PF2e's senses list has magicsense, imprecise, 30 feet; the card's line
-        // reads 'Imprecise magic sense 30 feet for 10 minutes'; the 'Magic sense' note Effect beside it (what it learns, the GM's).
+        // reads 'Imprecise magic sense 30 feet for 10 minutes'; the 'Magic sense (what it learns)' note Effect beside it (the GM's; named apart
+        // from the sense's own Effect since 2026-10-27).
         async b2IllusionsArclordMagicSense(scene) {
             await h.clearSquares(scene, [[14, 12]]);
             const { actor: user } = await h.creature(scene, "Arclord Seer", { type: "character", x: 14, y: 12, level: 7 });
@@ -202,8 +205,9 @@ export default (h) => {
             const sense = sensed();
             h.assert(sense.acuity === "imprecise" && Number(sense.range) === 30, `imprecise, 30 feet (${JSON.stringify({ acuity: sense.acuity, range: sense.range })})`);
             h.assert(resultsOf(card).some((line) => line.includes("Imprecise magic sense 30 feet for 10 minutes")), `the card's line (${resultsOf(card).join("; ")})`);
-            const note = () => user.itemTypes.effect.find((entry) => entry.flags?.[ABILITY]?.note && /Magic sense$/.test(entry.name));
-            await h.until(note, `the Magic sense note Effect (${effectNames(user)})`, { timeout: 5000 });
+            const note = () => user.itemTypes.effect.find((entry) => entry.flags?.[ABILITY]?.note && /Magic sense \(what it learns\)$/.test(entry.name));
+            await h.until(note, `the Magic sense (what it learns) note Effect (${effectNames(user)})`, { timeout: 5000 });
+            h.assert(note().name !== effect().name, `named apart from the sense's Effect (${note().name} / ${effect().name})`);
             h.assert(/deceive escapes it/.test(note().system.description.value ?? ""), `its words (${note().system.description.value})`);
             return { effects: effectNames(user), sense: { type: "magicsense", acuity: sense.acuity, range: sense.range }, results: resultsOf(card) };
         }

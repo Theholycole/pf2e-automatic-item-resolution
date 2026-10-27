@@ -11,7 +11,8 @@ export function withGrantedAction(plan, html) {
     const row = plan?.resolution?.outcomes?.success;
     const notes = row?.noteEffects ?? [];
     if (!granted || notes.length !== 1 || !notes[0].duration || (plan.unread ?? []).length || (plan.notes ?? []).length || (row.manualInstructions ?? []).length) return plan;
-    const note = { ...notes[0], label: `${plan.source?.name ?? "Item"}: ${granted[2]}`, rules: [...(notes[0].rules ?? []), { key: "GrantItem", uuid: granted[1], allowDuplicate: false }] };
+    // (Named for the action alone: the ability module names a note Effect "<item>: <label>" already — 2026-10-27.)
+    const note = { ...notes[0], label: granted[2], rules: [...(notes[0].rules ?? []), { key: "GrantItem", uuid: granted[1], allowDuplicate: false }] };
     delete note.reminder;
     const { noteOnly, ...rest } = plan;
     return { ...rest, automation: { ...(plan.automation ?? {}), level: "automatic" }, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...row, noteEffects: [note] } } } };

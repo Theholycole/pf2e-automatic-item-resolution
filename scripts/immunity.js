@@ -21,7 +21,10 @@ async function recipientsOf(state, choices) {
     // (A skill action's at the creature targeted, Curled Cure Gel's on the creature treated: it, 2026-10-27.)
     const forOthers = (state.kind === "item" && state.plan?.item?.recipient === "targets") || (state.kind === "item-action" && Boolean(state.plan?.action?.targeted)) || (state.kind === "cast" && (choices.targets ?? []).length) || (state.kind === "fortune" && state.plan?.bonus?.recipient === "target") || (state.kind === "reroll" && ["companion", "target"].includes(state.plan?.reroll?.who));
     if (forOthers) return tokens(choices.targets);
-    const entry = state.kind === "item" || state.kind === "cast" ? (Number.isInteger(choices.drinker) && state.drinkers?.[choices.drinker] ? state.drinkers[choices.drinker] : recipientOf(state)) : state.user;
+    // (A counteract card's creature picked, Contagion Metabolizer's drinker: the one its find step is given, then the one it found on — 2026-10-27.)
+    const picked = (list, at) => (Number.isInteger(at) && list?.[at] ? list[at] : null);
+    const entry = state.kind === "item" || state.kind === "cast" ? picked(state.drinkers, choices.drinker) ?? recipientOf(state)
+        : state.kind === "counteract" ? picked(state.drinkers, choices.drinker) ?? picked(state.drinkers, state.drinker) ?? state.user : state.user;
     const token = entry?.tokenUuid ? await fromUuid(entry.tokenUuid).catch(() => null) : null;
     const actor = token?.actor ?? (entry?.actorUuid ? await fromUuid(entry.actorUuid).catch(() => null) : null);
     return actor ? [{ actor, token, name: entry.name ?? actor.name, uuid: token?.uuid ?? null }] : [];
@@ -47,7 +50,9 @@ const timeWords = (duration) => (duration.unit === "unlimited" ? `until ${durati
 // Around a card's Apply (run: the card's own): the immune refused or left out, then the Effect on each creature it went to → run's result.
 export async function withImmunityGuard(message, state, choices, run) {
     // (Or a skill action's own, Curled Cure Gel's: plan.action.immunity, src/compiler/item-actions.js.)
-    const immunity = state?.plan?.item?.immunity ?? (state?.kind === "item-action" ? state.plan?.action?.immunity : null);
+    // (A counteract card's, Flame Navette's one a day and Contagion Metabolizer's hour: its plan's, kept on the card as it's posted — it holds
+    // no plan, scripts/counteract.js — 2026-10-27.)
+    const immunity = state?.plan?.item?.immunity ?? (state?.kind === "item-action" ? state.plan?.action?.immunity : state?.kind === "counteract" ? state.immunity : null);
     if (!immunity?.slug || !OWN_KINDS.has(state.kind)) return run(choices);
     const creatures = await recipientsOf(state, choices);
     const immune = creatures.filter((creature) => immuneNow(creature.actor, immunity));
@@ -61,6 +66,9 @@ export async function withImmunityGuard(message, state, choices, run) {
     const now = game.messages?.get?.(message.id) ?? message;
     // (Only once it was applied: its card changed.)
     if (JSON.stringify(stateOf(now)) === before) return done;
+    // (And for a card whose Apply can leave it open, only once it isn't: a skill action's check cancelled or refused — PF2e's Treat Wounds by an
+    // untrained medic —, a counteract card's first step, finding what's there; its second, once applied, gives it — 2026-10-27.)
+    if (["item-action", "counteract"].includes(state.kind) && stateOf(now)?.status === "open") return done;
     // (From when its Effect ends, Starsong Nectar's: that Effect carries it, setUpImmunityAfter.)
     if (immunity.after) return done;
     for (const creature of creatures.filter((one) => !immune.includes(one))) await grant(creature, immunity, state);

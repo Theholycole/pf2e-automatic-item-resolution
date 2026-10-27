@@ -3,8 +3,8 @@
 // - A bonus to one Recall Knowledge check: Twig of Knowledge and Memory's "When pressed to the temple or lips of a sentient creature, that
 //   creature can immediately attempt a check to Recall Knowledge about any subject using a corresponding skill …; they gain a +1 status bonus
 //   on this check." The fortune card's readied bonus (builtin "readied-bonus", src/live/fortune-card.js) for the creature its user targets: an
-//   Effect with PF2e's FlatModifier to skill checks predicated on action:recall-knowledge, to the end of the turn, spent by that check
-//   (scripts/fortune.js). The check is the creature's own PF2e Recall Knowledge, and what it learns PF2e's secret roll and the GM's.
+//   Effect with PF2e's FlatModifier to skill checks predicated on action:recall-knowledge, spent by that check (scripts/fortune.js) — waiting
+//   for it up to a minute, as every spent bonus's Effect does (src/live/fortune-card.js; the bonus's turn-end the readers' usual, 2026-10-27). The check is the creature's own PF2e Recall Knowledge, and what it learns PF2e's secret roll and the GM's.
 // - A reaction for two: Potion of Shared Life's "If another willing creature consumes the remainder of the contents within 1 minute, your
 //   vitalities become linked for 1 minute … You both gain the @UUID[…]{Share Life} reaction." Its note Effect for the minute grants PF2e's
 //   own action (GrantItem, as src/compiler/granted-action.js does for one drinker), given to each creature its user targets (item.recipient
@@ -16,9 +16,10 @@
 // - Resistance ignored in part: Awakened Adamantine Shot's "The shot ignores the first 20 resistance a creature has to physical damage, all
 //   damage, or piercing or bludgeoning damage. Against a construct or creature who already has a resistance bypassed by adamantine, or a weakness
 //   to adamantine, the shot shatters the target's defenses, causing them to become Off-Guard for 1 minute instead." Its Strike card with the
-//   shot loaded (strike.ammo); strike.ignoreResistance { value, types } — set on the shot as the resolution core's flag (its ignoreResistance,
-//   core 321af5b) when the card is applied (scripts/strikes.js), which the core stamps onto that Strike's damage roll: each of the creature's
-//   resistances of those types counts as that much lower. Off-Guard for the minute on a hit at a construct or a creature adamantine gets past
+//   shot loaded (strike.ammo); strike.ignoreResistance { value, types } — the resolution core's flag (its ignoreResistance, core 321af5b) on
+//   the readied Strike's Effect when the card is applied, predicated on the shot's id (src/live/strike-card.js; since 2026-10-27, not on the
+//   shot's whole stack), which the core stamps onto that Strike's damage roll: each of the creature's resistances of those types counts as that
+//   much lower. Off-Guard for the minute on a hit at a construct or a creature adamantine gets past
 //   (a weakness to it, or a resistance it's an exception to): plan.ifTarget, as Moonlit Spellgun's silver (src/live/if-target.js). Its rarity's
 //   sentence a line of the card.
 // Pure.
@@ -67,7 +68,8 @@ function withSharedReaction(plan, item) {
     const row = plan?.resolution?.outcomes?.success;
     const notes = row?.noteEffects ?? [];
     if (!granted || !plan.noteOnly || !SECOND_DRINKER.test(plain(html)) || notes.length !== 1 || !notes[0].duration || (plan.unread ?? []).length || (plan.notes ?? []).length || (row.manualInstructions ?? []).length) return plan;
-    const note = { ...notes[0], label: `${plan.source?.name ?? "Item"}: ${granted[2]}`, rules: [...(notes[0].rules ?? []), { key: "GrantItem", uuid: granted[1], allowDuplicate: false }] };
+    // (Named for the action alone, as granted-action.js's: the ability module puts the item's name before it — 2026-10-27.)
+    const note = { ...notes[0], label: granted[2], rules: [...(notes[0].rules ?? []), { key: "GrantItem", uuid: granted[1], allowDuplicate: false }] };
     delete note.reminder;
     const { noteOnly, ...rest } = plan;
     return {

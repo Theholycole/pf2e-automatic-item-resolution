@@ -418,7 +418,9 @@ const READINGS = [
     },
     {
         // Candle of Revealing: for its minute, around its user, an invisible creature is only concealed — PF2e's Concealed granted to an
-        // invisible one inside (its invisibility no help there, its observers' own to treat so).
+        // invisible one inside (its invisibility no help there, its observers' own to treat so). Its GrantItem re-tested on each update of the
+        // creature (reevaluateOnUpdate, as Beacon Shot's Hidden): one turned invisible inside gets it, one no longer invisible loses it — PF2e
+        // tests a GrantItem's predicate only as its Effect is made otherwise, 2026-10-27.
         names: ["Candle of Revealing"],
         sentences: [
             /^When lit, this black candle's eerie blue flame reveals the presence of Invisible creatures\.$/,
@@ -430,7 +432,7 @@ const READINGS = [
         card: ([, radius, , burns]) => zoneCard(zoneOf({
             area: { type: "emanation", value: Number(radius[1]) },
             lasts: timeOf(burns[1], burns[2]),
-            inside: [{ rules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", predicate: ["self:condition:invisible"], allowDuplicate: true, onDeleteActions: { granter: "cascade", grantee: "cascade" } }] }],
+            inside: [{ rules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", predicate: ["self:condition:invisible"], reevaluateOnUpdate: true, allowDuplicate: false, onDeleteActions: { granter: "cascade", grantee: "cascade" } }] }],
             notes: ["The lit candle carried by its user.", "An invisible creature inside gets no benefit from being invisible: outlined, it's only concealed (its observers treat it so).", "Put out, it can't be lit again (end the zone then)."]
         }))
     },
@@ -737,16 +739,18 @@ const READINGS = [
     {
         // Sawtooth Reaper's Bloodmist Whirl: its next Strike's Off-Guard is the strike card's; the fog's Concealed on its user, on the same
         // readied Strike's Effect (strike.userRules), until it Strikes or the round is up; the free Strike after Ensnaring Disarm its own.
+        // ("The next Strike you make" and "until you Strike": any Strike, not the reaper's alone — a fist's too, so no strike.own, 2026-10-27.)
         names: ["Sawtooth Reaper: Bloodmist Whirl"],
         read: (plan) => {
             const notes = plan?.strike?.notes ?? [];
             const fog = notes.find((note) => /^A crimson fog from the whirled chain conceals you for 1 round or until you Strike \(Concealed, by hand\)\.$/.test(said(note)));
             const free = notes.find((note) => /^When you use Ensnaring Disarm, you can also Strike the same target as a free action\.$/.test(said(note)));
             if (!plan.strike.offGuard || !fog || !free || notes.length !== 2) return null;
+            const { own: _own, ...anyStrike } = plan.strike;
             return {
                 keep: true,
                 drop: true,
-                strike: { ...plan.strike, until: "next-turn-start", notes: ["Meanwhile, when it uses Ensnaring Disarm it can also Strike the same target as a free action (its own)."], userRules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", allowDuplicate: true, onDeleteActions: { granter: "cascade", grantee: "cascade" } }], userWords: "Its user is Concealed in the crimson fog until it Strikes or the start of its next turn" }
+                strike: { ...anyStrike, until: "next-turn-start", notes: ["Meanwhile, when it uses Ensnaring Disarm it can also Strike the same target as a free action (its own)."], userRules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", allowDuplicate: true, onDeleteActions: { granter: "cascade", grantee: "cascade" } }], userWords: "Its user is Concealed in the crimson fog until it Strikes or the start of its next turn" }
             };
         }
     },
@@ -763,7 +767,8 @@ const READINGS = [
         ],
         card: ([glow]) => {
             const minute = timeOf(1, "minute");
-            const concealed = [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", predicate: ["self:condition:invisible"], allowDuplicate: true, onDeleteActions: { granter: "cascade", grantee: "cascade" } }];
+            // (Re-tested as the creature changes, as the candle's: invisible after the hit, or no longer — 2026-10-27.)
+            const concealed = [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", predicate: ["self:condition:invisible"], reevaluateOnUpdate: true, allowDuplicate: false, onDeleteActions: { granter: "cascade", grantee: "cascade" } }];
             const outline = (until) => `Outlined in bright white light ${until}: if it's invisible, it's only concealed.`;
             return {
                 ...ownRow({}),

@@ -245,13 +245,17 @@ const DURATIONS = {
 // The Effect on the user that marks the readied Strike, until the end of the turn (or as long as the text says). Its flag
 // counts the Strikes left (uses) and whether a hit's damage roll is still to come (awaiting); a volley's, the creatures targeted for it
 // (targets) and those it has struck (struck).
-export function strikeEffectSource({ state, img = null, worldTime = 0, initiative = null, moduleId, weaponId = null, ammoId = null, uses = null, targets = null }) {
+// (Resistance its damage ignores in part, Awakened Adamantine Shot's 20: the resolution core's ignoreResistance on this Effect, predicated on the
+// shot's id — the core stamps an Effect's entry onto the damage rolls its predicate fits (core 321af5b) —, so only the readied Strike with that
+// shot has it, gone with the Effect: not on the shot, whose stack and loaded rounds would keep it for every later shot — 2026-10-27.)
+export function strikeEffectSource({ state, img = null, worldTime = 0, initiative = null, moduleId, weaponId = null, ammoId = null, uses = null, targets = null, coreId = "pf2e-resolution-core" }) {
     const strike = state.plan.strike ?? {};
+    const ignores = strike.ignoreResistance && ammoId ? { [coreId]: { ignoreResistance: { ...strike.ignoreResistance, predicate: [{ or: [`item:ammo:id:${ammoId}`, `ammo:id:${ammoId}`] }] } } } : {};
     return {
         name: `${state.item.name}: next ${strikeWord(state.plan)}`,
         type: "effect",
         img: img ?? "icons/svg/sword.svg",
-        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: uses ?? strike.uses ?? 1, awaiting: Boolean(strike.hit), ...(strike.volley ? { targets: targets ?? [], struck: [] } : {}) } } },
+        flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: uses ?? strike.uses ?? 1, awaiting: Boolean(strike.hit), ...(strike.volley ? { targets: targets ?? [], struck: [] } : {}) } }, ...ignores },
         system: {
             description: { value: `<p>${escape(strikeHint(state.plan, "Its user", { uses }))} ${escape(strikeLines(state.plan).join("; "))}.</p>` },
             duration: { ...(DURATIONS[strike.until] ?? DURATIONS["turn-end"]), sustained: false },

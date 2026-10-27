@@ -489,7 +489,8 @@ function ownEffectSource({ name, img, words, rules, duration, flag, extraFlags =
         img: item.img ?? img,
         flags: { [moduleId]: flag, ...extraFlags },
         system: {
-            description: { value: `<p>${escape(words)}, from <strong>${escape(item.name)}</strong>.</p>` },
+            // (Words that end a sentence of their own, Bloodstone Doll's "… while the summon lasts.": its period off before ", from …", 2026-10-27.)
+            description: { value: `<p>${escape(String(words ?? "").replace(/\.\s*$/, ""))}, from <strong>${escape(item.name)}</strong>.</p>` },
             duration: duration?.mode === "fixed" ? { value: duration.value, unit: duration.unit, expiry: duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false },
             start: { value: worldTime, initiative },
             context: { origin: { actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } },

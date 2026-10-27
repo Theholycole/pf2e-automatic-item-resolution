@@ -6,7 +6,7 @@
 import { ABILITY_ID, MODULE_ID } from "./foundry.js";
 import { effectSource } from "../src/live/card.js";
 import { lightZone } from "./placed-light.js";
-import { pickConjured } from "./creature-pick.js";
+import { pickFor } from "./creature-pick.js";
 import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
 import { SLAIN } from "./slain-wait.js";
 
@@ -54,14 +54,15 @@ async function finishConjured(made, plan) {
     }
 }
 
-export async function startItemConjure({ plan, used, actor, token }) {
+// userId: who used it (a consumable's PF2e Use message's author, a sheet's Activate's presser), for its pick.
+export async function startItemConjure({ plan, used, actor, token, userId = null }) {
     const startConjure = game.modules.get(ABILITY_ID)?.api?.live?.startConjure;
     const item = { name: used.data.name, uuid: used.data.uuid ?? null, actor, img: used.data.img ?? null };
     if (startConjure) {
-        // (A creature its user picks from the compendiums first, Dust of Corpse Animation's: scripts/creature-pick.js — on this client, as the
-        // item may be used up by now; none picked, nothing made.)
+        // (A creature its user picks from the compendiums first, Dust of Corpse Animation's: scripts/creature-pick.js — picked on its user's
+        // client, asked from this one, which goes on with what's known of the item as it may be used up by now; none picked, nothing made.)
         if (plan.pick) {
-            const picked = await pickConjured(plan, used.data.name);
+            const picked = await pickFor(userId, plan, used.data.name);
             if (!picked) return null;
             plan = pickedPlan(plan, picked);
         }

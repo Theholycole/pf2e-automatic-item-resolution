@@ -34,7 +34,7 @@ export async function postCounteractCard({ message, plan, used, actor, token }) 
     const counteract = better.afflictionsByRank ? { ...better, afflictions: better.afflictionsByRank.filter((entry) => Number(better.rank) >= entry.rank).at(-1)?.afflictions ?? [] } : better;
     // (A spell on a creature within some distance: every creature there, foe or friend, for the GM to pick.)
     // (Its user's own, Determination's: no one else to pick.)
-    const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: counteract.self ? [] : creaturesNear(token, counteract.within ?? 5) });
+    const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: counteract.self ? [] : creaturesNear(token, counteract.within ?? 5), immunity: plan.item?.immunity ?? null });
     return ChatMessage.create({ content: counteractCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 

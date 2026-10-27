@@ -11,12 +11,14 @@ import { DEGREE_WORDS, degreeOf } from "./reroll-card.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
-export function createCounteractCard({ counteract, item, user, drinkers = [], only = false }) {
+export function createCounteractCard({ counteract, item, user, drinkers = [], only = false, immunity = null }) {
     // (only: the creatures given and not its user, a Strike's hit's — Awakened Silver Shot's creature hit.)
     const choices = only && drinkers.length ? drinkers : [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)];
+    // (Its item's temporary immunity, its plan's item.immunity — Flame Navette's one a day: kept for scripts/immunity.js, 2026-10-27.)
+    const immune = immunity ? { immunity } : {};
     // (Not on a creature — the triggering spell, a magical fire: straight to its one row, its DC and rank the GM's.)
-    if (counteract.free) return { kind: "counteract", status: "open", step: "pick", counteract, item, user, drinkers: choices, drinker: 0, rows: [{ id: "free", name: counteract.free.name, kind: "free", rank: null, dc: null, ticked: true }], results: [] };
-    return { kind: "counteract", status: "open", step: "find", counteract, item, user, drinkers: choices, drinker: 0, rows: [], results: [] };
+    if (counteract.free) return { kind: "counteract", status: "open", step: "pick", counteract, item, user, drinkers: choices, drinker: 0, rows: [{ id: "free", name: counteract.free.name, kind: "free", rank: null, dc: null, ticked: true }], results: [], ...immune };
+    return { kind: "counteract", status: "open", step: "find", counteract, item, user, drinkers: choices, drinker: 0, rows: [], results: [], ...immune };
 }
 
 // PF2e's counteract rule: a critical success counteracts up to 3 ranks above the check's, a success up to 1 above, a failure
@@ -106,6 +108,9 @@ function counteractOwnText(counteract) {
         counteract.afflictions?.length ? `a ${list(counteract.afflictions)}` : null
     ].filter(Boolean).join(", or ");
     const how = counteract.pick === "each" ? "each effect" : counteract.pick === "highest" ? "the highest-rank effect" : "one effect";
+    // (Nothing at its rank, Razmiri Mask's Mercy at rank 2: said so, with the rank it starts at — not an empty "one effect ;", 2026-10-27.)
+    const from = (counteract.afflictionsByRank ?? [])[0];
+    if (!what) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${from ? `nothing at this rank (a ${list(from.afflictions ?? [])} from rank ${from.rank})` : how}`;
     return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${how} ${what}${counteract.failToSuccess ? ` (a failure is a success against a ${list(counteract.failToSuccess.traits)})` : ""}`;
 }
 

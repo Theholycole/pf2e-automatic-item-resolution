@@ -947,8 +947,9 @@ test("next-Strike riders: Hyldarf's Fang's venom a coat of the gun itself (its u
     const fang = compileActivations(item("Hyldarf's Fang"), { spellEffects })[1].plan;
     assert.deepEqual([routeOf(fang), fang.resolution.check.statistic, fang.resolution.check.against.value, fang.item.coats, fang.item.coatLasts], ["coat", "fortitude", 34, "self", { value: 1, unit: "rounds" }]);
     const reaper = compileActivations(item("Sawtooth Reaper"), { spellEffects })[1].plan;
-    assert.deepEqual([routeOf(reaper), reaper.strike.offGuard, reaper.strike.own], ["strike", true, true]);
-    assert.deepEqual(strikeRules(reaper, { weaponId: "reaper0000000001" }).filter((rule) => rule.key === "EphemeralEffect"), [{ key: "EphemeralEffect", affects: "target", selectors: ["reaper0000000001-attack"], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" }]);
+    // (2026-10-27: "The next Strike you make" — any Strike, not the reaper's alone: no strike.own, src/compiler/area-readings.js.)
+    assert.deepEqual([routeOf(reaper), reaper.strike.offGuard, reaper.strike.own], ["strike", true, undefined]);
+    assert.deepEqual(strikeRules(reaper).filter((rule) => rule.key === "EphemeralEffect"), [{ key: "EphemeralEffect", affects: "target", selectors: ["strike-attack-roll"], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" }]);
     assert.ok(strikeLines(reaper).includes("Its target is Off-Guard to it"));
     // (2026-10-27: the fog is its user's Concealed on the readied Strike's Effect now, until it Strikes — src/compiler/area-readings.js.)
     assert.deepEqual([reaper.strike.userRules[0].key, reaper.strike.until], ["GrantItem", "next-turn-start"]);
