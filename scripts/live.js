@@ -16,7 +16,7 @@ import { applyEndEarlyCard } from "./end-early.js";
 import { applyDropCard } from "./drop-held.js";
 import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
-import { armedMarkSource } from "../src/live/card.js";
+import { armedMarkSource, checkGateMet, gateOption, gateWords } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, storeAfter, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -39,6 +39,9 @@ import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { reviveCreature } from "./revive.js";
+import { setOffSinVulnerability } from "./sin-vulnerability.js";
+import { restCreature } from "./rest.js";
+import { scrapeGoo } from "./scrape.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { applyStructureCard, pickStructurePoint, postStructureCard } from "./structure.js";
 import { forAbility } from "./placed-moves.js";
@@ -51,7 +54,7 @@ import { readProficiencyRequirement, requirementWarning } from "../src/compiler/
 import { gateMet } from "../src/compiler/strike-gate.js";
 import { applyTableCard, postTableCard } from "./table.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
-import { becomeItem } from "./becomes.js";
+import { becomeItem, destroyItem } from "./becomes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
@@ -434,7 +437,7 @@ function choicesOf(state, root) {
     // (The counteract card: its drinker, then its rows' ticks, DCs and ranks.)
     if (state.kind === "counteract") return state.step === "find"
         ? { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) }
-        : { ...(root.querySelector("[data-air-field='drinker']") ? { drinker: Number(root.querySelector("[data-air-field='drinker']").value) } : {}), rows: state.rows.map((row, index) => ({ ticked: Boolean(root.querySelector(`[data-air-row="${index}"]`)?.checked), dc: root.querySelector(`[data-air-dc="${index}"]`)?.value ?? null, rank: root.querySelector(`[data-air-rank="${index}"]`)?.value ?? null, outright: Boolean(root.querySelector(`[data-air-outright="${index}"]`)?.checked) })), ...(root.querySelector("[data-air-ownrank]") ? { ownRank: root.querySelector("[data-air-ownrank]").value } : {}) };
+        : { ...(root.querySelector("[data-air-field='drinker']") ? { drinker: Number(root.querySelector("[data-air-field='drinker']").value) } : {}), rows: state.rows.map((row, index) => ({ ticked: Boolean(root.querySelector(`[data-air-row="${index}"]`)?.checked), dc: root.querySelector(`[data-air-dc="${index}"]`)?.value ?? null, rank: root.querySelector(`[data-air-rank="${index}"]`)?.value ?? null, outright: Boolean(root.querySelector(`[data-air-outright="${index}"]`)?.checked) })), ...(root.querySelector("[data-air-ownrank]") ? { ownRank: root.querySelector("[data-air-ownrank]").value } : {}), ...(root.querySelector("[data-air-amount]") ? { amount: root.querySelector("[data-air-amount]").value, targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) } : {}) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
     if (state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), ...(state.kind === "item-action" && state.plan.action?.slugs ? { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) } : {}), ...(state.kind === "expose" ? { damageChoice: Number(root.querySelector("[data-air-field='damageChoice']")?.value ?? state.damageChoice ?? 0), attackChoice: Number(root.querySelector("[data-air-field='attackChoice']")?.value ?? state.attackChoice ?? 0), checkChoice: Number(root.querySelector("[data-air-field='checkChoice']")?.value ?? state.checkChoice ?? 0), ...(root.querySelector("[data-air-field='scaled']") ? { scaled: root.querySelector("[data-air-field='scaled']").value } : {}) } : {}) };
     if (state.kind === "toggle" || state.kind === "ways" || state.kind === "structure") return { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) };
@@ -608,7 +611,7 @@ async function onRequest(data) {
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], check: data.check === 1 ? 1 : 0 }
         : state.kind === "teleport" ? { destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], critical: Boolean(data.critical) }
         : state.kind === "fortune" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
-        : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null, outright: Boolean(row?.outright) })) : null, ...(data.ownRank !== undefined ? { ownRank: data.ownRank === null ? null : String(data.ownRank) } : {}) }
+        : state.kind === "counteract" ? { drinker: Number.isInteger(data.drinker) ? data.drinker : null, rows: Array.isArray(data.rows) ? data.rows.map((row) => ({ ticked: Boolean(row?.ticked), dc: row?.dc ?? null, rank: row?.rank ?? null, outright: Boolean(row?.outright) })) : null, ...(data.ownRank !== undefined ? { ownRank: data.ownRank === null ? null : String(data.ownRank) } : {}), ...(data.amount !== undefined ? { amount: data.amount === null ? null : String(data.amount), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] } : {}) }
         : { drinker: data.drinker, ceremony: Boolean(data.ceremony), resistType: Number.isInteger(data.resistType) ? data.resistType : null, recoveryType: Number.isInteger(data.recoveryType) ? data.recoveryType : null, reduceChoice: Number.isInteger(data.reduceChoice) ? data.reduceChoice : null, runeWeapon: Number.isInteger(data.runeWeapon) ? data.runeWeapon : null, runeChoice: Number.isInteger(data.runeChoice) ? data.runeChoice : null, skillPick: Number.isInteger(data.skillPick) ? data.skillPick : null, installedPick: Number.isInteger(data.installedPick) ? data.installedPick : null, potionPick: Number.isInteger(data.potionPick) ? data.potionPick : null, ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] };
     await applyByKind(message, state, choices).catch((error) => {
         ui.notifications.error(`${state.item.name}: ${error.message}`);
@@ -767,16 +770,17 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     }
     // (Only after its user's check succeeds, Diplomat's Badge's Recall Knowledge at DC 20: its latest one in the chat, its total against the DC —
     // refused, nothing applied, when there's none or it fell short. src/compiler/consumables.js checkGated.)
+    // (Or a statistic's check at a degree, The Deck of Destiny's Resurrect: src/live/card.js checkGateMet, 2026-10-27.)
     const gate = state.plan.checkGate;
     if (gate) {
-        const option = `action:${gate.action}`;
+        const option = gateOption(gate);
         const latest = (game.messages?.contents ?? []).slice(-40).reverse().find((entry) => (entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null)) === state.user.actorUuid && (entry.flags?.pf2e?.context?.options ?? []).includes(option) && entry.rolls?.[0]);
-        const words = gate.action.replace(/-/g, " ");
+        const words = gateWords(gate);
         if (!latest) throw new Error(`Roll ${state.user.name}'s ${words} first (DC ${gate.dc}), then press Apply.`);
         const roll = latest.rolls[0];
         const natural = roll.dice?.[0]?.total ?? null;
-        if (degreeOf(Number(roll.total), gate.dc, natural) < 2) {
-            const over = { ...state, status: "applied", results: [`${state.user.name}'s ${words} (${roll.total}) didn't reach DC ${gate.dc}: no Effect.`] };
+        if (!checkGateMet(gate, degreeOf(Number(roll.total), gate.dc, natural))) {
+            const over = { ...state, status: "applied", results: [gate.degree ? `${state.user.name}'s ${words} (${roll.total} against DC ${gate.dc}) isn't the result this is for: no Effect.` : `${state.user.name}'s ${words} (${roll.total}) didn't reach DC ${gate.dc}: no Effect.`] };
             return message.update({ content: cardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
         }
     }
@@ -832,8 +836,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
 
 // The item's own Effect its other activation gave (plan.item.endsOwn), deleted on the creature it's for: a line for the card.
 async function endOwnEffect(actor, name, state) {
-    const { label } = state.plan.item.endsOwn;
-    const ids = ownEffectsToEnd(actor?.itemTypes?.effect ?? [], state.item.name, label);
+    const { label, names = null } = state.plan.item.endsOwn;
+    const ids = ownEffectsToEnd(actor?.itemTypes?.effect ?? [], state.item.name, label, names);
     if (!ids.length) return `${name} has no ${label} Effect from ${state.item.name} to end.`;
     await actor.deleteEmbeddedDocuments("Item", ids);
     return `${name}: ${label} ends.`;
@@ -985,6 +989,11 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     if (state.plan.item?.becomes) {
         const became = await becomeItem(state.item.uuid, state.plan.item.becomes);
         if (became) lines.push(became);
+    }
+    // (Or destroyed by its use, Soulheart (Angelic)'s Defy Charg: scripts/becomes.js destroyItem, 2026-10-27.)
+    if (state.plan.item?.destroyed) {
+        const gone = await destroyItem(state.item.uuid);
+        if (gone) lines.push(gone);
     }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {
@@ -1368,6 +1377,12 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     }
     // (Brought back to life, Elixir of Rejuvenation given to the dead and Gift of the Poisoned Heart: scripts/revive.js.)
     if (state.plan.item?.revive) lines.push(...await reviveCreature(target, recipient.name, state.plan.item.revive, state));
+    // (A demon's sin vulnerability set off, Soulcutter (Heroic)'s Shame Demon: scripts/sin-vulnerability.js, 2026-10-27.)
+    if (state.plan.item?.sinVulnerability) lines.push(...await setOffSinVulnerability(target, recipient.name, state.plan.item.sinVulnerability, state));
+    // (A full day's rest at once, Hallajin Key's renewal: PF2e's Rest for the Night and a night's Hit Points more, scripts/rest.js, 2026-10-27.)
+    if (state.plan.item?.rest) lines.push(...await restCreature(target, recipient.name, state.plan.item.rest));
+    // (Persistent damage scraped off a die at a time, The Waxworks' goo: scripts/scrape.js, 2026-10-27.)
+    if (state.plan.item?.scrape) lines.push(...await scrapeGoo(target, recipient.name, state.plan.item.scrape));
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
         if (!target.actor?.hasCondition?.(slug)) continue;

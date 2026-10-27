@@ -10,7 +10,7 @@ import { impulseNumbers } from "../src/compiler/cast-changes.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
 import { arrivalAfterMove } from "./cast-arrival.js";
-import { castDamageSource, castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../src/live/card.js";
+import { castDamageSource, castDegreeEffectSource, castPenaltySource, itemNoteSource, ruleEffectSource } from "../src/live/card.js";
 import { castNoteText } from "../src/compiler/cast-note.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 import { startItemZone } from "./zones.js";
@@ -151,14 +151,17 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (state.plan.castTraits) {
             const traitsOf = (target) => [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
             // (Or its user itself, Dragonfire Halfbow's "You and your mount are immune": its own token left out — castTraits.user.)
+            // (Or only those of a kind, Orb of Dragonkind's dragon: the others left out — 2026-10-27.)
             const own = (target) => Boolean(state.plan.castTraits.user) && (target.uuid ?? target.document?.uuid) === (token?.uuid ?? token?.document?.uuid ?? request.casterTokenUuid);
-            const immune = targetTokens.filter((target) => own(target) || state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait)));
+            const only = state.plan.castTraits.only ?? [];
+            const ofKind = (target) => state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait));
+            const immune = targetTokens.filter((target) => own(target) || ofKind(target) || (only.length && !only.some((trait) => traitsOf(target).includes(trait))));
             castTargets = targetTokens.filter((target) => !immune.includes(target));
-            for (const target of immune) lines.push(`${target.name} is immune (${own(target) ? "its user" : state.plan.castTraits.immune.join(" or ")}): left out of the cast.`);
+            for (const target of immune) lines.push(own(target) ? `${target.name} is immune (its user): left out of the cast.` : ofKind(target) ? `${target.name} is immune (${state.plan.castTraits.immune.join(" or ")}): left out of the cast.` : `${target.name} isn't a ${only.join(" or ")}: left out of the cast.`);
             for (const penalty of state.plan.castTraits.penalties) {
                 for (const target of castTargets.filter((one) => one.actor && penalty.traits.some((trait) => traitsOf(one).includes(trait)))) {
                     await target.actor.createEmbeddedDocuments("Item", [castPenaltySource(penalty, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-                    lines.push(`${target.name}: ${penalty.value} ${penalty.type} to its ${penalty.selector} saves against it.`);
+                    lines.push(penalty.words ? `${target.name}: ${penalty.words.charAt(0).toLowerCase()}${penalty.words.slice(1)}.` : `${target.name}: ${penalty.value} ${penalty.type} to its ${penalty.selector} saves against it.`);
                 }
             }
             if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out ${[...state.plan.castTraits.immune.map((trait) => `the ${trait}s`), ...(state.plan.castTraits.user ? ["its user"] : [])].join(" and ")}${state.plan.castTraits.penalties.length ? " and give the penalty" : ""}.`);
@@ -167,6 +170,12 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (state.plan.castDamage) {
             await actor.createEmbeddedDocuments("Item", [castDamageSource(state.plan.castDamage, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null })]);
             lines.push(`All of its ${spellName}'s damage is ${state.plan.castDamage.type} damage.`);
+        }
+        // (PF2e's rules on its caster for the cast, before it — Soulcutter (Heroic)'s Soulcutting Storm, all its damage spirit: a DamageAlteration
+        // on that spell's damage, src/compiler/legend-readings.js, 2026-10-27; the spell module rolls spell damage through PF2e.)
+        if (state.plan.castCaster) {
+            await actor.createEmbeddedDocuments("Item", [ruleEffectSource(state.plan.castCaster, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${actor.name}: ${state.plan.castCaster.words}.`);
         }
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);

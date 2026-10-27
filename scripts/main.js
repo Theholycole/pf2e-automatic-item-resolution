@@ -57,6 +57,10 @@ import { setUpShieldTemp } from "./shield-temp.js";
 import { setUpLater } from "./later.js";
 import { setUpAfflictedTurns } from "./afflicted-turns.js";
 import { setUpFelled } from "./felled.js";
+import { setUpUninvest } from "./uninvest.js";
+import { setUpInitiativeThrice } from "./initiative-thrice.js";
+import { setUpHitCounteract } from "./hit-counteract.js";
+import { setUpSoulBinding } from "./soul-binding.js";
 import { setUpImplosion } from "./implosion.js";
 import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
@@ -178,6 +182,14 @@ Hooks.once("ready", async () => {
     setUpAfflictedTurns();
     // (A reward for felling the creature marked, Doom Switch's Bragging Rights: scripts/felled.js.)
     setUpFelled();
+    // (Its user no longer invested once its attack hits, Ochre Fulcrum Lens' possession: scripts/uninvest.js.)
+    setUpUninvest();
+    // (An initiative rolled three times, the best kept, The Dance's: scripts/initiative-thrice.js.)
+    setUpInitiativeThrice();
+    // (A counteract card at the creature an attack hit, kept for when it tries to get away, Halcyon Heart's net: scripts/hit-counteract.js.)
+    setUpHitCounteract();
+    // (A weapon's soul binding when its damage fells a sapient creature of its level, Whisperer of Souls': scripts/soul-binding.js.)
+    setUpSoulBinding();
     // (An item's own attack's splash, Lady's Chalice's: scripts/own-splash.js.)
     setUpOwnSplash();
     // (A readied Strike never made, Flashblade's: its activation's use given back, scripts/strikes.js.)

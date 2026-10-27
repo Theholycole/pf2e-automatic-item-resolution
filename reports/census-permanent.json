@@ -6,16 +6,16 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1427,
+   "resolves": 1439,
    "builtin:cast-spell": 472,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
    "builtin:readied-bonus": 54,
    "builtin:reroll": 46,
-   "builtin:ways": 74,
+   "builtin:ways": 84,
    "builtin:whisper": 50,
    "builtin:table": 8,
-   "none": 71,
+   "none": 54,
    "builtin:teleport": 31,
    "builtin:zone": 40,
    "builtin:pf2e-rules": 23,
@@ -23,28 +23,28 @@
    "builtin:objects": 38,
    "builtin:item-action": 28,
    "builtin:conjure": 25,
-   "partial": 13,
    "builtin:roll-twice": 15,
-   "note-only": 13,
+   "note-only": 11,
    "builtin:no-effect": 10,
+   "partial": 9,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1,
    "builtin:structure": 1,
-   "gaps": 4
+   "gaps": 5
   },
   "live": {
-   "save": 445,
+   "save": 444,
    "cast": 472,
-   "item": 873,
+   "item": 880,
    "focus": 49,
    "counteract": 39,
    "fortune": 69,
    "reroll": 46,
-   "ways": 74,
-   "strike": 130,
+   "ways": 84,
+   "strike": 131,
    "whisper": 50,
    "table": 8,
-   "none": 106,
+   "none": 89,
    "teleport": 31,
    "zone": 40,
    "toggle": 36,
@@ -64,26 +64,26 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 867,
+    "resolves": 878,
     "builtin:cast-spell": 346,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
     "builtin:readied-bonus": 34,
     "builtin:reroll": 35,
-    "builtin:ways": 45,
+    "builtin:ways": 53,
     "builtin:whisper": 46,
     "builtin:table": 5,
-    "none": 54,
+    "none": 39,
     "builtin:teleport": 18,
     "builtin:objects": 22,
     "builtin:zone": 21,
     "builtin:item-action": 16,
     "builtin:conjure": 24,
-    "partial": 8,
     "builtin:modes": 19,
     "builtin:roll-twice": 11,
-    "note-only": 9,
+    "note-only": 8,
     "builtin:no-effect": 7,
+    "partial": 5,
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
     "builtin:structure": 1,
@@ -93,23 +93,24 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 277,
+    "resolves": 278,
     "builtin:cast-spell": 80,
     "builtin:reroll": 7,
     "builtin:zone": 9,
-    "builtin:ways": 13,
+    "builtin:ways": 15,
     "builtin:table": 1,
     "builtin:modes": 13,
-    "none": 16,
+    "none": 14,
     "builtin:item-action": 9,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 10,
     "builtin:objects": 6,
     "builtin:pf2e-rules": 2,
-    "note-only": 3,
+    "note-only": 2,
     "builtin:teleport": 7,
-    "partial": 3,
+    "partial": 2,
     "builtin:roll-twice": 2,
+    "gaps": 1,
     "builtin:whisper": 1
    }
   },
@@ -1990,9 +1991,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "The Midwife",
@@ -2443,9 +2444,9 @@
    "time": "2",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Legerdemain Handkerchief",
@@ -2928,9 +2929,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Hallajin Key",
@@ -2939,9 +2940,9 @@
    "time": "1",
    "frequency": "once per day Cost 2 charges",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Locust Leather",
@@ -3404,9 +3405,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Shot of the First Vault",
@@ -3415,9 +3416,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
-   "live": "save"
+   "live": "strike"
   },
   {
    "name": "Sawtooth Reaper",
@@ -5875,7 +5876,7 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "save"
   },
@@ -6991,7 +6992,7 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -8169,9 +8170,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Conundrum Spectacles (Greater)",
@@ -8378,9 +8379,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Trudd's Strength",
@@ -12586,9 +12587,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "The Deck of Destiny",
@@ -12619,9 +12620,9 @@
    "time": "1 hour",
    "frequency": "once per year",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Sapling Shield (Greater)",
@@ -12674,9 +12675,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "The Whispering Reeds",
@@ -14418,9 +14419,9 @@
    "time": "1",
    "frequency": "Once per day",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Herald's Ring",
@@ -15168,9 +15169,9 @@
    "time": null,
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Doomsday Door",
@@ -15179,9 +15180,9 @@
    "time": null,
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Cursebreak Bulwark",
@@ -16192,9 +16193,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Corruption Cassock",
@@ -18132,9 +18133,9 @@
    "time": "3",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Thunderblast Slippers (Greater)",
@@ -24817,9 +24818,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Whisperer of Souls",
@@ -24839,7 +24840,7 @@
    "time": "3",
    "frequency": "once per week",
    "trigger": false,
-   "result": "partial",
+   "result": "gaps",
    "kind": "save",
    "live": "save"
   },
@@ -25005,9 +25006,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Umbral Armor",
@@ -27472,7 +27473,7 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -27681,9 +27682,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Miogimo's Mask",

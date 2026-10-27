@@ -48,6 +48,7 @@ export function saveText(plan) {
     const statistic = String(check.statistic ?? "fortitude");
     // (A skill rolled as the save card's check, its user's own — Essence Prism's DC 30 Arcana, 2026-10-27 —: a check, not a save.)
     // (And Passage Pane's Religion, its user's own skill check rolled as a save is: "DC 40 Religion check", 2026-10-27.)
+    // (And Whisperer of Souls' ritual, "DC 37 Occultism check", 2026-10-27.)
     const kind = ["fortitude", "reflex", "will"].includes(statistic) ? "save" : "check";
     return `DC ${check.against?.value ?? "?"} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)} ${kind}${check.secret ? " (secret)" : ""}`;
 }
@@ -153,8 +154,11 @@ export const ATTACKER = /\b(?:any|each|a) creature (?:that|who) (?:hits|attacks|
 // Wine's "When you drink a dose of this wine you must succeed at a @Check…", Energy Toxin Bottle's "You drink from the bottle
 // and must succeed at a @Check…".)
 const OWN_SAVE = /^(?:Upon (?:drinking|consuming|eating|imbibing)[^,]*,\s*(?:you )?attempt an? @Check|When you (?:drink|consume|eat|imbibe)[^,.]*?,? you must (?:succeed at|attempt) an? @Check)|\bYou (?:drink|consume|eat|imbibe)\b[^.]*? and must (?:succeed at|attempt) an? @Check/;
-export const isOwnSave = (plan, text = "") => useSave(plan, text) && String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).some((sentence) => OWN_SAVE.test(sentence.replace(/^(?:Activate\b[^.]*?\)\s*|Effect\s+)/, "")));
-export const isUseSave = (plan, text = "") => useSave(plan, text) && !LATER.test(text) && !ATTACKER.test(text) && !KILLED.test(text);
+// (Or one its plan says is its user's own, plan.ownSave — a unique item's, src/compiler/legend-readings.js, 2026-10-27: Whisperer of Souls'
+// Occultism check at a ritual's DC and its Will save against the glaive, whatever its words.)
+const ownSaved = (plan) => plan?.ownSave === true && savedOnUse(plan);
+export const isOwnSave = (plan, text = "") => ownSaved(plan) || (useSave(plan, text) && String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).some((sentence) => OWN_SAVE.test(sentence.replace(/^(?:Activate\b[^.]*?\)\s*|Effect\s+)/, ""))));
+export const isUseSave = (plan, text = "") => ownSaved(plan) || (useSave(plan, text) && !LATER.test(text) && !ATTACKER.test(text) && !KILLED.test(text));
 // One for later (a breath potion's "grants you the Energy Breath action for 1 hour"; not an aura): the same card, kept
 // open until the drinker uses it — then the presser targets the creatures and presses it.
 // (One its drinker's attacker sets off is set off by that, whatever else its save's sentence says: Frogskin Tincture's "If you are

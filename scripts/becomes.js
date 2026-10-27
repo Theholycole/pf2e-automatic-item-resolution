@@ -14,3 +14,13 @@ export async function becomeItem(uuid, becomes) {
     await item.update({ "system.rules": rules, [`flags.${MODULE_ID}.became`]: becomes.words });
     return `${item.name}: ${becomes.words}`;
 }
+
+// (An item destroyed by its own use, plan.item.destroyed — Soulheart (Angelic)'s Defy Charg, 2026-10-27: deleted from its owner once its card
+// has applied.) The item's uuid → the card's line, or null.
+export async function destroyItem(uuid) {
+    const item = uuid ? await fromUuid(uuid).catch(() => null) : null;
+    if (!item?.delete) return null;
+    const name = item.name;
+    await item.delete();
+    return `${name} is destroyed.`;
+}

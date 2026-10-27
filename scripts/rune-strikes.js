@@ -13,10 +13,13 @@ import { withUserDCs } from "./item-dcs.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
-// What a rider checks about the creature hit: its traits, its conditions, its persistent damage's types.
-function creatureOf(actor) {
+// What a rider checks about the creature hit: its traits, its conditions, its persistent damage's types — and its level and Intelligence, for one
+// only against a sapient creature of a level (Whisperer of Souls', 2026-10-27).
+export function creatureOf(actor) {
     const conditions = actor?.itemTypes?.condition ?? [];
     return {
+        level: Number(actor?.level ?? actor?.system?.details?.level?.value),
+        int: actor?.abilities?.int?.mod ?? actor?.system?.abilities?.int?.mod ?? null,
         traits: [...(actor?.traits ?? [])],
         conditions: conditions.map((condition) => condition.slug),
         persistent: conditions.filter((condition) => condition.slug === "persistent-damage").map((condition) => condition.system?.persistent?.damageType).filter(Boolean)

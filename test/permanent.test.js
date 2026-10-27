@@ -478,8 +478,11 @@ test("conditions only under if/when come off their rows (Heart of Sarnax, Hex Bl
     assert.ok(!slugs(hex, "criticalFailure").includes("unconscious"), "unconscious only if the damage knocks it out");
     const winter = compileActivations(item("Wintershot"), { spellEffects })[0].plan;
     assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => winter.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.duration.value} ${effect.duration.unit}`)), [["dazzled 2 rounds"], ["dazzled 1 minutes"], ["dazzled 10 minutes"]]);
-    const wax = compileActivations(item("The Waxworks"), { spellEffects })[0].plan;
-    assert.deepEqual(["failure", "criticalFailure"].map((degree) => slugs(wax, degree).includes("confused")), [true, true]);
+    // (Since 2026-10-27 the save is the first way of its ways card, its Confused on the Effect the goo's scraping ends: the failure rows keep the
+    // success's, src/compiler/legend-readings.js.)
+    const wax = compileActivations(item("The Waxworks"), { spellEffects })[0].plan.ways[0].plan;
+    const granted = (plan, degree) => (plan.resolution.outcomes[degree].noteEffects ?? []).flatMap((note) => (note.rules ?? []).map((rule) => rule.uuid));
+    assert.deepEqual(["failure", "criticalFailure"].map((degree) => granted(wax, degree).includes("Compendium.pf2e.conditionitems.Item.yblD8fOR1J8rDwEQ")), [true, true]);
     const lament = compileActivations(item("Lamentation of the Faithless"), { spellEffects })[0].plan;
     const blinded = lament.resolution.outcomes.criticalFailure.effects.find((effect) => effect.slug === "blinded");
     assert.deepEqual([blinded.duration.value, blinded.duration.unit, slugs(lament, "criticalFailure").includes("slowed")], [1, "minutes", true]);
@@ -705,7 +708,8 @@ test("an item thrown as a Strike PF2e can't roll: its user's thrown attack again
     assert.deepEqual([chalice.plan.splash, chalice.plan.notes, chalice.plan.partial], [{ value: 2, damageType: "spirit", selfOnlyIf: ["evil", "unholy"] }, undefined, undefined]);
     const [net] = compileActivations(item("Halcyon Heart"), { spellEffects });
     assert.deepEqual([net.plan.resolution.outcomes.success.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.criticalSuccess.effects.map((effect) => effect.slug), net.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value])], [["off-guard"], ["off-guard", "immobilized"], [["all-speeds", -10]]]);
-    assert.match(net.plan.notes.join(" "), /The Escape DC is 44, and the net has a counteract rank of 9 and a counteract modifier of \+38\./);
+    // (Its Escape DC and counteract read since 2026-10-27, src/compiler/legend-readings.js: the riders until it Escapes, the counteract card on a hit.)
+    assert.deepEqual([net.plan.resolution.outcomes.success.effects[0].duration.escape.dc, net.plan.heldCounteract.counteract.rank, net.plan.heldCounteract.counteract.modifier], [44, 9, 38]);
     const [razors] = compileActivations(item("Rod of Razors"), { spellEffects });
     // (Its deadly d10 a component of the critical hit's alone, not doubled; its adamantine in the damage's flavor; volley and its range increment
     // the attack's penalty for distance.)

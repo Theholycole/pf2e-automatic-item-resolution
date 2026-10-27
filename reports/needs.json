@@ -1,78 +1,77 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 153,
+  "entries": 126,
   "results": {
-   "none": 73,
-   "partial": 50,
-   "note-only": 16,
+   "none": 56,
+   "partial": 41,
+   "note-only": 14,
    "builtin:no-effect": 10,
-   "gaps": 4
+   "gaps": 5
   },
   "main": {
-   "areas": 22,
-   "lasting": 6,
+   "areas": 20,
+   "lasting": 5,
    "creatures": 16,
-   "choice": 4,
+   "choice": 3,
    "counteract": 3,
-   "actions": 2,
-   "spells": 6,
-   "several": 5,
-   "triggers": 12,
-   "afflictions": 5,
-   "reader": 2,
+   "triggers": 11,
+   "afflictions": 3,
    "visibility": 4,
    "moving": 4,
-   "strike": 11,
-   "fortune": 3,
-   "cast-changes": 6,
-   "objects": 7,
+   "spells": 5,
+   "strike": 10,
+   "cast-changes": 5,
+   "fortune": 2,
+   "objects": 5,
    "information": 3,
-   "immunity": 4,
+   "immunity": 3,
    "mind": 2,
-   "situational": 3,
-   "illusions": 2,
-   "dying": 7,
-   "out-of-combat": 4,
+   "out-of-combat": 2,
+   "several": 3,
    "vehicles": 1,
-   "speech": 1,
-   "senses": 2,
+   "dying": 4,
+   "actions": 1,
+   "situational": 2,
+   "senses": 1,
    "by-kind": 1,
+   "illusions": 1,
    "forms": 3,
+   "reader": 1,
    "retaliation": 1,
    "no-rules": 1
   },
   "any": {
-   "areas": 33,
+   "areas": 31,
    "range": 3,
-   "out-of-combat": 42,
-   "lasting": 34,
-   "several": 18,
-   "objects": 42,
-   "reader": 31,
-   "counteract": 12,
+   "out-of-combat": 32,
+   "lasting": 30,
+   "several": 14,
+   "objects": 34,
+   "reader": 28,
+   "counteract": 10,
    "creatures": 16,
-   "choice": 14,
-   "strike": 26,
-   "moving": 7,
+   "choice": 9,
+   "strike": 24,
+   "moving": 6,
    "mind": 14,
-   "information": 29,
-   "spells": 20,
-   "immunity": 17,
-   "speech": 13,
-   "actions": 3,
-   "triggers": 14,
-   "afflictions": 13,
+   "information": 24,
+   "spells": 17,
+   "immunity": 16,
+   "speech": 11,
+   "triggers": 12,
+   "afflictions": 11,
    "visibility": 4,
-   "dying": 14,
-   "fortune": 3,
-   "cast-changes": 6,
-   "situational": 8,
-   "illusions": 3,
+   "dying": 9,
+   "cast-changes": 5,
+   "fortune": 2,
    "vehicles": 1,
-   "senses": 4,
+   "situational": 6,
+   "actions": 2,
+   "senses": 3,
    "from-events": 4,
    "by-kind": 1,
+   "illusions": 2,
    "forms": 3,
    "retaliation": 1,
    "speeds": 1,
@@ -214,21 +213,6 @@
    ]
   },
   {
-   "name": "Wintershot",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "activation": "Signal Flare",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "counteract",
-    "choice"
-   ]
-  },
-  {
    "name": "Oculus of Abaddon",
    "kind": "activation",
    "tier": "special",
@@ -273,45 +257,6 @@
    ]
   },
   {
-   "name": "Taljjae's Mask (The Nobleman)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 18,
-   "result": "none",
-   "main": "actions",
-   "work": "disarm",
-   "needs": [
-    "actions",
-    "objects"
-   ]
-  },
-  {
-   "name": "Hallajin Key",
-   "kind": "activation",
-   "tier": "special",
-   "level": 7,
-   "result": "none",
-   "main": "spells",
-   "work": "spell slots",
-   "needs": [
-    "spells",
-    "several",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Hallajin Key",
-   "kind": "activation",
-   "tier": "special",
-   "level": 7,
-   "result": "none",
-   "main": "several",
-   "work": "creatures within",
-   "needs": [
-    "several"
-   ]
-  },
-  {
    "name": "Reaper's Lancet",
    "kind": "activation",
    "tier": "special",
@@ -322,35 +267,6 @@
    "needs": [
     "triggers",
     "afflictions"
-   ]
-  },
-  {
-   "name": "Shot of the First Vault",
-   "kind": "activation",
-   "tier": "special",
-   "level": 23,
-   "activation": "Reload Order",
-   "result": "none",
-   "main": "afflictions",
-   "work": "persistent bleed damage",
-   "needs": [
-    "afflictions",
-    "several",
-    "objects"
-   ]
-  },
-  {
-   "name": "Shot of the First Vault",
-   "kind": "activation",
-   "tier": "special",
-   "level": 23,
-   "activation": "Vault Deposit",
-   "result": "partial",
-   "main": "reader",
-   "work": "1d20",
-   "needs": [
-    "reader",
-    "information"
    ]
   },
   {
@@ -456,22 +372,6 @@
    ]
   },
   {
-   "name": "Halcyon Heart",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "result": "partial",
-   "main": "fortune",
-   "work": "roll twice",
-   "needs": [
-    "fortune",
-    "moving",
-    "counteract",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Retribution",
    "kind": "activation",
    "tier": "special",
@@ -548,21 +448,6 @@
    "work": "climb",
    "needs": [
     "moving",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Lens of the Outreaching Eye",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "note-only",
-   "main": "lasting",
-   "work": "dismiss",
-   "needs": [
-    "lasting",
-    "objects",
-    "information",
     "out-of-combat"
    ]
   },
@@ -658,19 +543,6 @@
    ]
   },
   {
-   "name": "The Waxworks",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "several",
-   "work": "ally",
-   "needs": [
-    "several",
-    "reader"
-   ]
-  },
-  {
    "name": "The Vision",
    "kind": "activation",
    "tier": "special",
@@ -680,19 +552,6 @@
    "work": "recall knowledge",
    "needs": [
     "information"
-   ]
-  },
-  {
-   "name": "Ochre Fulcrum Lens",
-   "kind": "activation",
-   "tier": "special",
-   "level": 11,
-   "result": "none",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike",
-    "objects"
    ]
   },
   {
@@ -813,20 +672,6 @@
    ]
   },
   {
-   "name": "Orb of Dragonkind",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "partial",
-   "main": "situational",
-   "work": "bonus to saving throws against",
-   "needs": [
-    "situational",
-    "mind",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Spellcutter",
    "kind": "activation",
    "tier": "special",
@@ -936,59 +781,6 @@
    ]
   },
   {
-   "name": "The Deck of Destiny",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Deck of Destiny",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "none",
-   "main": "dying",
-   "work": "death",
-   "needs": [
-    "dying",
-    "spells"
-   ]
-  },
-  {
-   "name": "The Whispering Reeds",
-   "kind": "activation",
-   "tier": "special",
-   "level": 10,
-   "result": "none",
-   "main": "dying",
-   "work": "death",
-   "needs": [
-    "dying",
-    "situational",
-    "information"
-   ]
-  },
-  {
-   "name": "The Whispering Reeds",
-   "kind": "activation",
-   "tier": "special",
-   "level": 10,
-   "result": "partial",
-   "main": "choice",
-   "work": "one of the following",
-   "needs": [
-    "choice"
-   ]
-  },
-  {
    "name": "The Trader",
    "kind": "activation",
    "tier": "special",
@@ -1086,33 +878,6 @@
    ]
   },
   {
-   "name": "Herald's Ring",
-   "kind": "activation",
-   "tier": "special",
-   "level": 13,
-   "activation": "Project Voice",
-   "result": "none",
-   "main": "speech",
-   "work": "voice",
-   "needs": [
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Herald's Ring",
-   "kind": "activation",
-   "tier": "special",
-   "level": 13,
-   "activation": "Reflect Sound",
-   "result": "partial",
-   "main": "out-of-combat",
-   "work": "rest",
-   "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Blessed Reformer",
    "kind": "activation",
    "tier": "general",
@@ -1151,40 +916,6 @@
     "creatures",
     "strike",
     "objects"
-   ]
-  },
-  {
-   "name": "Doomsday Door",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Attune Door",
-   "result": "none",
-   "main": "dying",
-   "work": "doomed",
-   "needs": [
-    "dying",
-    "spells",
-    "objects",
-    "information"
-   ]
-  },
-  {
-   "name": "Doomsday Door",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Open Door",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "dying",
-    "spells",
-    "objects",
-    "information",
-    "out-of-combat"
    ]
   },
   {
@@ -1264,19 +995,6 @@
    "needs": [
     "triggers",
     "mind"
-   ]
-  },
-  {
-   "name": "Soulheart (Angelic)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "activation": "Defy Charg",
-   "result": "none",
-   "main": "afflictions",
-   "work": "curse",
-   "needs": [
-    "afflictions"
    ]
   },
   {
@@ -1411,24 +1129,6 @@
    "needs": [
     "areas",
     "several"
-   ]
-  },
-  {
-   "name": "The Silent Hag",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "senses",
-   "work": "lifesense",
-   "needs": [
-    "senses",
-    "dying",
-    "lasting",
-    "choice",
-    "reader",
-    "speech",
-    "out-of-combat"
    ]
   },
   {
@@ -1883,24 +1583,15 @@
    "kind": "activation",
    "tier": "special",
    "level": 28,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you choose whether …",
+   "result": "gaps",
+   "main": "fortune",
+   "work": "misfortune",
    "needs": [
-    "triggers",
-    "strike",
-    "choice"
-   ]
-  },
-  {
-   "name": "Whisperer of Souls",
-   "kind": "activation",
-   "tier": "special",
-   "level": 28,
-   "result": "partial",
-   "main": "out-of-combat",
-   "work": "1 week",
-   "needs": [
+    "fortune",
+    "spells",
+    "mind",
+    "information",
+    "speech",
     "out-of-combat"
    ]
   },
@@ -1914,20 +1605,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "The Dance",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "fortune",
-   "work": "fortune effect",
-   "needs": [
-    "fortune",
-    "triggers",
-    "choice"
    ]
   },
   {
@@ -2065,33 +1742,6 @@
    ]
   },
   {
-   "name": "Soulcutter (Heroic)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Soulcutting Storm",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Soulcutter (Heroic)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Shame Demon",
-   "result": "note-only",
-   "main": "immunity",
-   "work": "immune",
-   "needs": [
-    "immunity",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Ring of Bestial Friendship",
    "kind": "activation",
    "tier": "special",
@@ -2105,31 +1755,6 @@
     "mind",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Miogimo's Mask",
-   "kind": "activation",
-   "tier": "special",
-   "level": 16,
-   "result": "none",
-   "main": "objects",
-   "work": "other form",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
-   "name": "Miogimo's Mask",
-   "kind": "activation",
-   "tier": "special",
-   "level": 16,
-   "result": "partial",
-   "main": "objects",
-   "work": "corpse",
-   "needs": [
-    "objects",
-    "speech"
    ]
   },
   {
