@@ -5071,6 +5071,31 @@ export const cases = {
         }
     },
 
+    // Bleeding Spines Snare: set off by the first creature to enter, it leaves a 1-minute area at its square (the ability module's zone.then)
+    // with the same basic Reflex save for creatures entering or ending their turns there.
+    async bleedingSpinesThen(scene) {
+        const { actor: setter, token: setterToken } = await creature(scene, "Spines Setter", { type: "character", x: 0, y: 3 });
+        const { token: walkerToken } = await creature(scene, "Spines Walker", { x: 4, y: 3, alliance: "opposition", hp: 200 });
+        const snare = await give(setter, "Bleeding Spines Snare");
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        try {
+            await snare.consume();
+            const named = (test) => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Bleeding Spines Snare/.test(region.name) && test(region.flags["pf2e-automatic-ability-resolution"].zone.zone));
+            await until(() => named((zone) => zone.once), "the snare's Region", { timeout: 8000 });
+            const shape = named((zone) => zone.once).shapes[0];
+            await walkerToken.update({ x: shape.x, y: shape.y });
+            await until(() => named((zone) => !zone.once && (zone.saves ?? []).some((save) => save.when.includes("end"))), "the spines' 1-minute Region", { timeout: 10000 });
+            const spines = named((zone) => !zone.once).flags["pf2e-automatic-ability-resolution"].zone.zone;
+            assert(spines.lasts?.value === 1 && spines.lasts?.unit === "minutes", `1 minute (${JSON.stringify(spines.lasts)})`);
+            return { when: spines.saves[0].when, lasts: spines.lasts };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            for (const region of scene.regions.filter((entry) => /Bleeding Spines Snare/.test(entry.name))) await region.delete().catch(() => null);
+        }
+    },
+
     // Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (its Perception at −30): Off-Guard.
     async cunningDodge(scene) {
         const { actor: wearer, token: wearerToken } = await creature(scene, "Dodging Wearer", { type: "character", x: 6, y: 1 });

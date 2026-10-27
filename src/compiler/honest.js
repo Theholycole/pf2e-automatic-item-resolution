@@ -154,7 +154,7 @@ export function withActionLimit(given) {
 const CONDITIONS = "frightened|sickened|stunned|slowed|prone|off-guard|dazzled|blinded|deafened|clumsy|enfeebled|drained|fatigued|immobilized|grabbed|restrained|quickened|fleeing|confused|paralyzed|petrified|stupefied|doomed|persistent|resistance|weakness";
 // (A wayfinder's resonant power, "The resonant power grants you a +1 circumstance bonus to initiative rolls", is the aeon stone's passive, not
 // its activation's.)
-const SKIP = /^(?:This|These|Activate|Frequency|Trigger|Requirements|Craft Requirements|Usage|Access|Saving Throw|Onset|Maximum Duration|Stage \d|Effect:|Hardness|The resonant power|Its resonant power)\b/;
+const SKIP = /^(?:This|These|Activate|Frequency|Trigger|Requirements|Craft Requirements|Usage|Access|Saving Throw|Onset|Maximum Duration|Stage \d|Effect:|Hardness|The resonant power|Its resonant power|For example)\b/;
 // (A condition as a rule — "becomes Frightened 1", "is also knocked Prone", "Slowed 1" — not a word of flavor, "barely restrained contempt";
 // persistent damage, a resistance or weakness with its number.)
 const CONDITION_RULE = new RegExp(String.raw`\b(?:becomes?|is|are|be|knocked|falls?|gains?|remains?|also)\s+(?:\w+\s+)?(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")})\b|\b(${CONDITIONS.replace(/\|persistent\|resistance\|weakness$/, "")}) \d\b`, "gi");
@@ -282,6 +282,28 @@ export function withUntracedRules(plan, text) {
     const rules = untraced.filter((sentence) => !CARD_LINE.test(sentence));
     if (!rules.length) return { ...plan, notes: [...(plan.notes ?? []), ...untraced] };
     return { ...plan, notes: [...(plan.notes ?? []), ...untraced], partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } };
+}
+
+// A zone's saves (a snare's, an area's) are plans of their own, which the check above, skipping builtins, never looked at (2026-10-27, an audit
+// of what readers dropped: Fire-Douse Snare's flat checks to clear the powder, Grease Snare's misfortune on Thievery, Rusting Snare's damage to
+// the item). Each save's plan checked so; its untraced sentences the zone's notes, the zone partial when any is — or when a save's own plan was
+// partial already, Tar Rocket Snare's.
+export function withZoneUntraced(plan, text) {
+    if (plan?.builtin !== "zone" || plan.partial || !(plan.zone?.saves ?? []).length) return plan;
+    const notes = [];
+    let partial = false;
+    // (Traced by the zone's own fields too — Spark Wafer's "a 10-foot-high column of sparks for 1 round" is its area and time, not the save's.)
+    const { saves: _, ...own } = plan.zone;
+    const saves = plan.zone.saves.map((save) => {
+        if (save.plan?.partial) partial = true;
+        const checked = withUntracedRules({ ...save.plan, zoneOwn: own }, text);
+        const added = (checked?.notes ?? []).filter((entry) => !(save.plan?.notes ?? []).includes(entry));
+        if (checked?.partial && added.length) partial = true;
+        for (const note of added) if (!notes.includes(note)) notes.push(note);
+        return added.length ? { ...save, plan: { ...save.plan, notes: [...(save.plan?.notes ?? []), ...added] } } : save;
+    });
+    if (!partial && !notes.length) return plan;
+    return { ...plan, zone: { ...plan.zone, saves, notes: [...(plan.zone.notes ?? []), ...notes] }, ...(partial ? { partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : {}) };
 }
 
 // A clause the text itself leaves to the GM's discretion (the user's answer to question 4, 2026-10-26): Dr. Ushernacht's Astonishing Ink's "At

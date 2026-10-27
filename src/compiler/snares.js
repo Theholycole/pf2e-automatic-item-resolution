@@ -4,6 +4,7 @@
 // plan }], once: true, … } } — its startZone plays it (asked of its session: once, and a used-up item). Pure.
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+import { plainText } from "./rows.js";
 
 const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
 
@@ -82,6 +83,11 @@ export function snareZone(item, read) {
     if (!isSnare(item) || read?.resolution?.kind !== "save" || read.resolution.check?.against?.dc !== "fixed") return null;
     if (!ROW_KEYS.some((degree) => read.resolution.outcomes?.[degree])) return null;
     const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null } };
+    // (Again for a while after it's set off, Bleeding Spines Snare's "After the initial trigger, the spines retract and protrude again repeatedly
+    // for 1 minute, forcing any creature that enters the space or ends its turn in the space to take damage from the spines (attempting the same
+    // basic Reflex save)": the area it leaves — zone.then — with the same save for that time, 2026-10-27.)
+    const again = /\bAfter the initial trigger, [^.]*?\brepeatedly for (\d+) (minutes?|rounds?), forcing any creature that enters the space or ends its turn in the space to take damage from the [\w ]+? \(attempting the same basic \w+ save\)\./i.exec(plainText(item.system?.description?.value));
+    const then = again ? { area: { type: "square", value: 5 }, lasts: { mode: "fixed", value: Number(again[1]), unit: /^min/i.test(again[2]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" }, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [{ when: ["enter", "end"], plan: { ...plan, targeting: { target: "a creature that enters the space or ends its turn there", range: null, area: null } } }], damage: [], effect: null, modifiers: [], notes: ["The spines strike again at any creature that enters the space or ends its turn there."] } : null;
     return {
         builtin: "zone",
         source: read.source,
@@ -101,8 +107,9 @@ export function snareZone(item, read) {
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: ["The first creature to enter the square sets it off; then it's spent.", ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
-            once: true
+            notes: [then ? "The first creature to enter the square sets it off; then the spines keep striking there." : "The first creature to enter the square sets it off; then it's spent.", ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
+            once: true,
+            ...(then ? { then } : {})
         }
     };
 }

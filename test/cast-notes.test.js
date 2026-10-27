@@ -81,3 +81,18 @@ test("a bonus beside the cast: Psyche Salts (Moderate)'s +2 item bonus to saves 
     const salts = compileItem(item("Psyche Salts (Moderate)"), options);
     assert.deepEqual([salts.attack, salts.castBonus.modifiers[0].selector, salts.castBonus.modifiers[0].value, salts.castBonus.modifiers[0].predicate, salts.partial], [17, "saving-throw", 2, ["item:trait:mental"], undefined]);
 });
+
+test("a zone's save checked for what it leaves (2026-10-27): Tar Rocket Snare's partial save makes the zone partial; Spark Wafer's column for a round is the zone's own", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    assert.equal(compileItem(item("Tar Rocket Snare"), options).partial, true);
+    assert.equal(compileItem(item("Spark Wafer"), options).partial, undefined);
+    // (An example isn't a rule: Trip Snare's "For example, three trip snares …".)
+    assert.equal(compileItem(item("Trip Snare"), options).partial, undefined);
+});
+
+test("a snare that strikes again for a while: Bleeding Spines Snare's area for 1 minute after it's set off, the same save on entering or ending a turn there", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const spines = compileItem(item("Bleeding Spines Snare"), options);
+    assert.deepEqual([spines.zone.once, spines.zone.then.lasts.value, spines.zone.then.lasts.unit, spines.zone.then.saves[0].when], [true, 1, "minutes", ["enter", "end"]]);
+    assert.equal(spines.zone.then.saves[0].plan.resolution.check.basic, true);
+});

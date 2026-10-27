@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1322,
+  "entries": 1333,
   "results": {
-   "partial": 398,
+   "partial": 409,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -11,7 +11,7 @@
   "main": {
    "cast-changes": 25,
    "speeds": 23,
-   "areas": 135,
+   "areas": 143,
    "counteract": 24,
    "afflictions": 61,
    "moving": 91,
@@ -24,7 +24,7 @@
    "out-of-combat": 36,
    "no-rules": 12,
    "actions": 31,
-   "immunity": 25,
+   "immunity": 27,
    "objects": 114,
    "creatures": 66,
    "mind": 6,
@@ -45,33 +45,33 @@
    "missing-number": 6,
    "fortune": 6,
    "linked-effect": 1,
-   "by-kind": 7
+   "by-kind": 8
   },
   "any": {
    "cast-changes": 25,
    "speeds": 29,
-   "areas": 198,
-   "immunity": 86,
+   "areas": 206,
+   "immunity": 88,
    "objects": 392,
    "speech": 130,
-   "out-of-combat": 439,
+   "out-of-combat": 440,
    "counteract": 105,
    "afflictions": 107,
    "lasting": 235,
    "moving": 119,
-   "triggers": 126,
+   "triggers": 127,
    "visibility": 50,
    "dying": 75,
    "choice": 111,
    "several": 106,
    "strike": 199,
-   "reader": 210,
+   "reader": 212,
    "spells": 76,
    "information": 199,
    "actions": 63,
    "from-events": 29,
    "no-rules": 12,
-   "situational": 85,
+   "situational": 86,
    "creatures": 66,
    "mind": 65,
    "illusions": 60,
@@ -85,7 +85,7 @@
    "retaliation": 3,
    "missing-number": 7,
    "linked-effect": 1,
-   "by-kind": 7
+   "by-kind": 8
   }
  },
  "entries": [
@@ -1502,6 +1502,16 @@
    "needs": [
     "spells",
     "information"
+   ]
+  },
+  {
+   "name": "Horn of Rust",
+   "kind": "activation",
+   "result": "partial",
+   "main": "immunity",
+   "work": "immune",
+   "needs": [
+    "immunity"
    ]
   },
   {
@@ -6126,6 +6136,16 @@
    ]
   },
   {
+   "name": "Frost Worm Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
+   ]
+  },
+  {
    "name": "Incense Bundle of Annual Blessings",
    "kind": "consumable",
    "result": "none",
@@ -6745,6 +6765,18 @@
    "needs": [
     "creatures",
     "strike"
+   ]
+  },
+  {
+   "name": "Arctic Worm Chitin Shield",
+   "kind": "activation",
+   "activation": "Misty Chill",
+   "result": "partial",
+   "main": "immunity",
+   "work": "resistance 5",
+   "needs": [
+    "immunity",
+    "reader"
    ]
   },
   {
@@ -10267,6 +10299,16 @@
    ]
   },
   {
+   "name": "Deadweight Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
+   ]
+  },
+  {
    "name": "Sinew-Song",
    "kind": "activation",
    "activation": "Cutting Cadenza",
@@ -11045,6 +11087,16 @@
    "work": "Trigger: the troop under …",
    "needs": [
     "triggers"
+   ]
+  },
+  {
+   "name": "Fire Box",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -12157,6 +12209,16 @@
    ]
   },
   {
+   "name": "Flame Drake Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
+   ]
+  },
+  {
    "name": "Beloved's Bracelets",
    "kind": "activation",
    "activation": "Grant Mythic Power",
@@ -12669,6 +12731,16 @@
     "creatures",
     "speeds",
     "moving"
+   ]
+  },
+  {
+   "name": "Puff Dragon",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -14933,6 +15005,18 @@
    ]
   },
   {
+   "name": "Sanctified Beans",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "by-kind",
+   "work": "only a fiend",
+   "needs": [
+    "by-kind",
+    "situational",
+    "reader"
+   ]
+  },
+  {
    "name": "Vambrace of Gorum",
    "kind": "activation",
    "activation": "Blade of Iron",
@@ -15111,6 +15195,16 @@
     "information",
     "speech",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Spirit Trap",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
    ]
   },
   {
@@ -15621,6 +15715,18 @@
    ]
   },
   {
+   "name": "Piercing Whistle Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas",
+    "triggers",
+    "out-of-combat"
+   ]
+  },
+  {
    "name": "Shatterpoint Ammunition (Major)",
    "kind": "activation",
    "result": "partial",
@@ -15708,6 +15814,16 @@
     "triggers",
     "spells",
     "counteract"
+   ]
+  },
+  {
+   "name": "Tar Rocket Snare",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "areas",
+   "work": "first creature to enter",
+   "needs": [
+    "areas"
    ]
   },
   {
