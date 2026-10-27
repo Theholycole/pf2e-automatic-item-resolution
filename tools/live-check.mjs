@@ -6290,6 +6290,23 @@ export const cases = {
         return { ok: true };
     },
 
+    // Pyrefeather Cloak's Deflect Flame: fire resistance 5 and +1 to saves against the triggering effect, and PF2e's flat check to end its
+    // user's persistent fire as the card is applied.
+    async pyrefeatherRecovery(scene) {
+        const { actor: wearer } = await creature(scene, "Pyrefeather Wearer", { x: 12, y: 18, level: 3 });
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await wearer.applyDamage({ damage: await new DamageRoll("1[persistent,fire]").evaluate(), token: wearer.getActiveTokens(true, true)[0] });
+        await until(() => wearer.itemTypes.condition.some((condition) => condition.slug === "persistent-damage"), "persistent fire to start", { timeout: 8000 });
+        const cloak = await give(wearer, "Pyrefeather Cloak");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(cloak.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        assert(/a flat check now to end persistent fire damage/.test(card.content), "the card's flat check");
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => (game.messages.get(card.id).getFlag(NS, "card").results ?? []).some((line) => /flat check \(DC \d+\)/.test(line)), `the flat check's line (${JSON.stringify(game.messages.get(card.id).getFlag(NS, "card").results)})`, { timeout: 10000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results, persistent: wearer.itemTypes.condition.filter((condition) => condition.slug === "persistent-damage").length };
+    },
+
     // Medusa's Scream's Petrify at the shield's 30 feet: a creature 40 feet off refused, one 25 feet off cast at.
     async medusaRange(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");

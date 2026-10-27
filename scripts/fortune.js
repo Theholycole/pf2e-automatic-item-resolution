@@ -6,7 +6,7 @@
 // triggered it goes after that: the attack or check at its creature, its creature's save, or the damage it takes.
 
 import { MODULE_KEY, createFortuneCard, fortuneCardHTML, fortuneEffectSource, isForTarget, readiedWords } from "../src/live/fortune-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, damageRollClass, entryOf, isActiveGM, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, damageRollClass, entryOf, isActiveGM, recover, startInitiative, stateOf } from "./foundry.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -43,6 +43,8 @@ export async function applyFortuneCard(message, { targets = [] } = {}) {
     const results = creatures.map(({ actor, name }) => `${name}: ${readiedWords(forExpert(state, actor).plan)}.`);
     // (Thrice-Fried Mudwings': the item's Speed Effect on its user lowered the first time, ended the second.)
     if (state.plan.bonus?.speedSteps) for (const { actor, name } of creatures) results.push(await stepSpeed(actor, name, state));
+    // (Pyrefeather Cloak's flat check to end its persistent fire at once: PF2e's recovery check.)
+    if (state.plan.bonus?.recovery) for (const { actor, name } of creatures) results.push(...await recover(actor, name, state.plan.bonus.recovery));
     if (state.plan.bonus?.breaks) results.push(await breakItem(state.item));
     const next = { ...state, status: "applied", results };
     return message.update({ content: fortuneCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

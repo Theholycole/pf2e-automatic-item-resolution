@@ -91,6 +91,8 @@ test("the reading: a bonus for a moment — the roll that triggered it, or the t
     assert.deepEqual([branch.builtin, routeOf(branch), branch.bonus.modifiers, branch.bonus.duration.expiry], ["readied-bonus", "fortune", [{ selector: "ac", type: "circumstance", value: 4 }], "turn-end"]);
     // ("If the attack misses, you have knocked it away": the state its other activation's trigger names — not a note.)
     assert.deepEqual([branch.notes, branch.partial], [[], undefined]);
+    // ("You can't use this ability to deflect unusually massive ranged projectiles": a line of the card, its trigger's — 2026-10-27.)
+    assert.match(branch.bonus.limits[0], /^You can't use this ability to deflect unusually massive ranged projectiles/);
     assert.equal(compileActivations(source("Dragon Turtle Plate"))[0].plan.bonus.modifiers[0].value, 1);
     // (Its miss now the attacker's Dazzled, bonus.onAttack.)
     assert.deepEqual(compileActivations(source("Bismuth Armor"))[0].plan.bonus.onAttack, { miss: { condition: { slug: "dazzled", value: null, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" } } } });
@@ -436,4 +438,10 @@ test("a Speed the reaction lowers, then ends: Thrice-Fried Mudwings' fly Speed 1
     const reaction = wings.ways[1].plan;
     assert.deepEqual([reaction.bonus.speedSteps.type, reaction.bonus.speedSteps.feet, reaction.bonus.speedSteps.secondEnds, reaction.partial], ["fly", 15, true, undefined]);
     assert.match(readiedWords(reaction), /its fly Speed 15 feet or half its Speed the first time, ended the second/);
+});
+
+test("a flat check to end a persistent damage at once beside the bonus: Pyrefeather Cloak's persistent fire — its sentence no longer dropped", () => {
+    const [cloak] = compileActivations(source("Pyrefeather Cloak"));
+    assert.deepEqual([cloak.plan.bonus.recovery, cloak.plan.bonus.resistance, cloak.plan.partial], [{ types: ["fire"] }, { type: "fire", value: 5 }, undefined]);
+    assert.match(readiedWords(cloak.plan), /a flat check now to end persistent fire damage/);
 });

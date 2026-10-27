@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1304,
+  "entries": 1307,
   "results": {
-   "partial": 380,
+   "partial": 383,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -25,9 +25,9 @@
    "no-rules": 10,
    "actions": 31,
    "immunity": 25,
+   "objects": 113,
    "creatures": 63,
    "mind": 6,
-   "objects": 110,
    "illusions": 50,
    "removed": 6,
    "cooldown": 9,
@@ -52,7 +52,7 @@
    "speeds": 29,
    "areas": 198,
    "immunity": 86,
-   "objects": 388,
+   "objects": 391,
    "speech": 130,
    "out-of-combat": 438,
    "counteract": 95,
@@ -421,6 +421,16 @@
     "situational",
     "lasting",
     "reader"
+   ]
+  },
+  {
+   "name": "Skitter Knot (Greater)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "objects",
+   "work": "hardness",
+   "needs": [
+    "objects"
    ]
   },
   {
@@ -5027,6 +5037,16 @@
    ]
   },
   {
+   "name": "Skitter Knot (Lesser)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "objects",
+   "work": "hardness",
+   "needs": [
+    "objects"
+   ]
+  },
+  {
    "name": "Fungal Walk Musk",
    "kind": "consumable",
    "result": "partial",
@@ -6972,6 +6992,16 @@
     "visibility",
     "information",
     "speech"
+   ]
+  },
+  {
+   "name": "Skitter Knot (Major)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "objects",
+   "work": "hardness",
+   "needs": [
+    "objects"
    ]
   },
   {

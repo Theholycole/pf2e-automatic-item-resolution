@@ -15,7 +15,7 @@
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, SOCKET, afflictionsOf, creatureOf, creaturesNear, damageRollClass, entryOf, healCreature as heal, isActiveGM, lowerCondition, mayApply, ownerDCsOf, ownerOf, presserUuid, removeAfflictions, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, afflictionsOf, CORE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -1123,34 +1123,6 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
 
 
 // The item's PF2e Effect on the creature: its grade, the spell's rank, the item's time.
-// The recovery check for each persistent damage of the item's types: PF2e's condition.rollRecovery, which deletes it on a
-// success (without waiting for that, so a moment is given for it). → lines for the card.
-async function recover(actor, name, recovery) {
-    const persistent = () => (actor?.itemTypes?.condition ?? []).filter((condition) => condition.slug === "persistent-damage" && recovery.types.includes(condition.system?.persistent?.damageType));
-    const found = persistent();
-    // (Ended outright, Hollow Robes': each deleted, no check.)
-    if (recovery.ends) {
-        if (!found.length) return [`${name} has no persistent damage to end.`];
-        await actor.deleteEmbeddedDocuments("Item", found.map((condition) => condition.id));
-        return found.map((condition) => `${name}: ${condition.name} ended`);
-    }
-    if (!found.length) return [`${name} has no persistent ${recoveryText(recovery).replace(/^.* persistent /, "")}: no flat check.`];
-    const lines = [];
-    for (const condition of found) {
-        // (Its name before a lower DC renames it: "Persistent Damage (1d6 fire)".)
-        const label = condition.name;
-        const usual = Number(condition.system.persistent.dc) || 15;
-        const dc = recovery.dc && recovery.dc < usual ? recovery.dc : usual;
-        if (dc !== usual) await condition.update({ "system.persistent.dc": dc });
-        await condition.rollRecovery();
-        const stays = () => persistent().some((entry) => entry.id === condition.id);
-        for (let wait = 0; wait < 20 && stays(); wait++) await new Promise((resolve) => setTimeout(resolve, 50));
-        if (stays() && dc !== usual) await condition.update({ "system.persistent.dc": usual });
-        lines.push(stays() ? `${name}: the flat check (DC ${dc}) didn't end ${label}` : `${name}: ${label} ended (flat check, DC ${dc})`);
-    }
-    return lines;
-}
-
 async function nativeEffect(actor, name, change, state) {
     if (!actor) return null;
     const template = await fromUuid(change.effect.uuid).catch(() => null);

@@ -44,11 +44,13 @@ export function bonusWords(bonus) {
     const shared = bonus.shieldShare ? "the shield taking the rest of the damage too" : null;
     // (Thrice-Fried Mudwings': its Speed lowered the first time, ended the second.)
     const steps = bonus.speedSteps ? `its ${bonus.speedSteps.type} Speed ${bonus.speedSteps.feet} feet or half its Speed the first time${bonus.speedSteps.secondEnds ? ", ended the second" : ""}` : null;
+    // (Pyrefeather Cloak's: a flat check to end its persistent fire at once.)
+    const recovery = bonus.recovery ? `a flat check now to end persistent ${bonus.recovery.types.join(" or ")} damage` : null;
     // (Boots of the Blight's: Quickened after a success, its extra action only to Stride.)
     const success = bonus.onSuccess ? `on a success, ${bonus.onSuccess.condition.slug} for ${bonus.onSuccess.condition.duration.value} ${bonus.onSuccess.condition.duration.value === 1 ? bonus.onSuccess.condition.duration.unit.replace(/s$/, "") : bonus.onSuccess.condition.duration.unit}${bonus.onSuccess.only ? ` (its extra action only to ${bonus.onSuccess.only})` : ""}` : null;
     // (Warrior's Training Ring's more for an expert: "+4 for an expert in any weapon".)
     const expert = first?.ifExpert ? ` (+${first.ifExpert} for an expert in any weapon)` : "";
-    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, degree, shared, success, steps].filter(Boolean).join(", ");
+    return [first ? `+${first.value} ${first.type} bonus to ${targets}${actions ? ` (${actions})` : ""}${against}${expert}` : null, resistance, immunity, degree, shared, success, steps, recovery].filter(Boolean).join(", ");
 }
 
 // What the card says it gives: "next initiative roll: roll twice, take the better" / "+2 status bonus to Stealth check, for that roll".
@@ -128,5 +130,7 @@ export function fortuneCardHTML(state, { canApply = false } = {}) {
     const whose = other ? `For the creature targeted${state.plan.targeting?.range ? ` (within ${state.plan.targeting.range})` : ""}: ` : `${state.user.name}'s `;
     // (The roll it's for, its user's own: Mesmerizing Opal's Feint — said, then.)
     const then = open && state.plan.then ? `<p class="aar-hint">Then: ${escape(state.plan.then)}.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${fortune ? "Fortune" : "Bonus"}</span></header><p class="aar-actions">${escape(whose)}${escape(readiedWords(state.plan))}.</p>${then}${notes}${results}${controls}</section>`;
+    // (When it can't be used, Deflecting Branch's: its user's to keep to.)
+    const limits = open && (state.plan.bonus?.limits ?? []).length ? `<p class="aar-hint">${state.plan.bonus.limits.map(escape).join(" ")}</p>` : "";
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${fortune ? "Fortune" : "Bonus"}</span></header><p class="aar-actions">${escape(whose)}${escape(readiedWords(state.plan))}.</p>${then}${limits}${notes}${results}${controls}</section>`;
 }

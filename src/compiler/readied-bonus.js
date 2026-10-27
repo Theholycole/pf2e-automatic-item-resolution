@@ -9,7 +9,9 @@
 
 // A sentence that says a rule (a note), not flavor ("This green fulu depicts venomous creatures and vermin").
 // (And what a miss does, Bismuth Armor's "If the attack misses, … who becomes Dazzled for 1 round".)
-const RULE_SENTENCE = /\b(?:checks?|saves?|saving throws?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points|critical (?:success|failure)|failure|success|instead|increases?|DC|misses|Dazzled|Blinded|Frightened|Off-Guard|Prone|Sickened|Stunned|Slowed)\b/i;
+// (And a move, a Hardness, a flat check, what ends it or can't be done — Skitter Knot's "The roots carry you up to 15 feet and have Hardness 10",
+// Thrice-Fried Mudwings' "After the second time, … ending the effect", 2026-10-27: dropped unread before.)
+const RULE_SENTENCE = /\b(?:checks?|saves?|saving throws?|bonus|penalty|damage|conditions?|Strikes?|actions?|resistance|Speeds?|Hit Points|critical (?:success|failure)|failure|success|instead|increases?|DC|misses|Dazzled|Blinded|Frightened|Off-Guard|Prone|Sickened|Stunned|Slowed|\d+ feet|Hardness|flat check|ending|ends?|can't|cannot|the (?:first|second) time)\b/i;
 
 // The text's trigger: to its Requirements or Effect, or (a talisman's, with no "Effect" after it) to its sentence's end.
 const triggerOf = (plain) => /\bTrigger\b(.*?)(?:\bRequirements?\b|\bEffect\b|\.(?=\s|$)|$)/s.exec(plain)?.[1] ?? null;
@@ -128,7 +130,7 @@ export function readReadiedBonus(text, { trigger = null } = {}) {
     if (both) {
         const [sentence, match] = both;
         const selectors = selectorsOf(match[5]);
-        if (selectors.length) return { modifiers: selectors.map((selector) => ({ selector, type: match[4].toLowerCase(), value: Number(match[3]) })), resistance: { type: match[2].toLowerCase(), value: Number(match[1]) }, duration: durationOf(sentence), spend: [], notes: [`Only against what triggered it: ${sentence}`] };
+        if (selectors.length) return { modifiers: selectors.map((selector) => ({ selector, type: match[4].toLowerCase(), value: Number(match[3]) })), resistance: { type: match[2].toLowerCase(), value: Number(match[1]) }, duration: durationOf(sentence), spend: [], notes: [`Only against what triggered it: ${sentence}`, ...sentences.filter((other) => other !== sentence && !/^(?:Activate|Trigger|Prerequisites?|Requirements?)\b/.test(other) && RULE_SENTENCE.test(other))] };
     }
     for (const [index, sentence] of sentences.entries()) {
         const other = triggered ? TARGET_GAIN.exec(sentence) : null;
@@ -330,6 +332,10 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // effect": bonus.speedSteps — the item's Speed Effect on its user changed, then ended, as the reaction is used (scripts/fortune.js).)
     const stepNote = (read_notes ?? []).map((note) => [note, /^The first time you use this Activation, your (fly|swim|climb|burrow) Speed becomes (\d+) feet, or half your Speed, whichever is lower, for the duration\.$/i.exec(String(note).trim())]).find(([, match]) => match);
     if (stepNote) bonus.speedSteps = { type: stepNote[1][1].toLowerCase(), feet: Number(stepNote[1][2]), first: `min(${stepNote[1][2]},floor(@actor.system.movement.speeds.land.value/2))`, secondEnds: /\bAfter the second time, [^.]*\bending the effect\./i.test(String(text ?? "")) };
+    // (A flat check to end a persistent damage at once, Pyrefeather Cloak's "If you are taking persistent fire damage, you can immediately attempt
+    // a flat check to end the persistent damage": bonus.recovery, PF2e's own recovery check as the card's applied — scripts/fortune.js.)
+    const recoveryNote = (read_notes ?? []).map((note) => [note, /^If you are taking persistent (\w+) damage, you can immediately attempt a flat check to end the persistent damage\.$/i.exec(String(note).trim())]).find(([, match]) => match);
+    if (recoveryNote) bonus.recovery = { types: [recoveryNote[1][1].toLowerCase()] };
     // (More for an expert, Warrior's Training Ring's "If you are an expert in any weapon, you instead gain a +4 circumstance bonus to the attack
     // roll": the modifier's ifExpert, its user's proficiencies looked at when the card's applied — scripts/fortune.js.)
     const expertNote = bonus.modifiers.length === 1 ? (read_notes ?? []).map((note) => [note, /^If you are an expert in any weapon, you instead gain an? \+(\d+) (circumstance|status|item) bonus to the attack roll\.$/i.exec(String(note).trim())]).find(([, match]) => match && match[2].toLowerCase() === bonus.modifiers[0].type) : null;
@@ -338,7 +344,7 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // what its user took — bonus.shieldShare, scripts/shield-share.js.)
     const shared = bonus.resistance && (base?.item?.type ?? base?.source?.type) === "shield" ? (read_notes ?? []).find((note) => /^You and the shield each take any remaining damage\.$/i.test(String(note).trim())) : null;
     if (shared) bonus.shieldShare = true;
-    const read_ = new Set([...Object.values(onAttack).map((entry) => entry.note), ...(critical ? [critical[0]] : []), ...(higher ? [higher[0]] : []), ...(shared ? [shared] : []), ...(expertNote ? [expertNote[0]] : []), ...(succeeded ? [succeeded[0]] : []), ...(stepNote ? [stepNote[0]] : [])]);
+    const read_ = new Set([...Object.values(onAttack).map((entry) => entry.note), ...(critical ? [critical[0]] : []), ...(higher ? [higher[0]] : []), ...(shared ? [shared] : []), ...(expertNote ? [expertNote[0]] : []), ...(succeeded ? [succeeded[0]] : []), ...(stepNote ? [stepNote[0]] : []), ...(recoveryNote ? [recoveryNote[0]] : [])]);
     // (The miss's own words, Deflecting Branch's "If the attack misses, you have knocked it away": the state its other activation's trigger
     // names, no rule here.)
     const notes = (read_notes ?? []).filter((note) => !/^If the attack misses, you have knocked it away\.$/i.test(String(note).trim()) && !read_.has(note) && !(only.length && /^\(This applies only to (?:any )?(?:the )?damage the (?:effect|attack) deals\.\)$/i.test(String(note).trim())) && (!ONLY.test(note) || /\bor an? \+\d|\bif\b|\bunless\b|\binstead\b/i.test(note.replace(ONLY, ""))));
@@ -361,7 +367,12 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // animal known to them.)
     const ANIMAL = /^Only against what triggered it: You gain an? \+(\d+) (item|circumstance|status) bonus to AC against the triggering attack, or an? \+(\d+) \2 bonus if the animal is the specific kind depicted by the pendant\.$/i;
     const animal = notes.map((note) => ANIMAL.exec(String(note).trim())).find(Boolean);
-    const kept = animal ? notes.filter((note) => !ANIMAL.test(String(note).trim())) : notes;
+    // (When it can't be used, Deflecting Branch's "You can't use this ability to deflect unusually massive ranged projectiles": its trigger's,
+    // a line of the card for its user to keep to — bonus.limits.)
+    const LIMIT = /^You can't use this (?:ability|activation|reaction|item)\b[^.]*\.$/i;
+    const limits = notes.filter((note) => LIMIT.test(String(note).trim()));
+    if (limits.length) bonus.limits = limits.map((note) => String(note).trim());
+    const kept = (animal ? notes.filter((note) => !ANIMAL.test(String(note).trim())) : notes).filter((note) => !limits.includes(note));
     const plan = { ...base, builtin: "readied-bonus", automation: { level: kept.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, ...(checkFor ? { then: `${checkFor.replace(/^When you activate it, a/i, "A").replace(/\.$/, "")} (PF2e's own, its degree improved)` } : {}), notes: kept, ...(kept.length ? { partial: true } : {}) };
     if (!animal || bonus.modifiers.length !== 1 || bonus.modifiers[0].selector !== "ac") return plan;
     const valued = (value) => ({ ...plan, bonus: { ...bonus, modifiers: [{ ...bonus.modifiers[0], value }] } });

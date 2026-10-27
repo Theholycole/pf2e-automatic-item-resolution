@@ -1,7 +1,7 @@
 // Foundry helpers the item module's cards share (scripts/live.js, scripts/bombs.js).
 
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
-import { rollFormula } from "../src/live/card.js";
+import { recoveryText, rollFormula } from "../src/live/card.js";
 
 export const MODULE_ID = "pf2e-automatic-item-resolution";
 export const CORE_ID = "pf2e-resolution-core";
@@ -171,4 +171,32 @@ export async function healCreature({ token, actor }, name, amount, state = {}) {
         if (revived) parts.push(dying.revivedNote(revived).replace(/\bthis spell\b/, "this item"));
     } else if (wasDying) parts.push("It was dying: end Dying and raise Wounded by hand.");
     return parts.join(". ");
+}
+
+// The recovery check for each persistent damage of the item's types: PF2e's condition.rollRecovery, which deletes it on a
+// success (without waiting for that, so a moment is given for it). → lines for the card.
+export async function recover(actor, name, recovery) {
+    const persistent = () => (actor?.itemTypes?.condition ?? []).filter((condition) => condition.slug === "persistent-damage" && recovery.types.includes(condition.system?.persistent?.damageType));
+    const found = persistent();
+    // (Ended outright, Hollow Robes': each deleted, no check.)
+    if (recovery.ends) {
+        if (!found.length) return [`${name} has no persistent damage to end.`];
+        await actor.deleteEmbeddedDocuments("Item", found.map((condition) => condition.id));
+        return found.map((condition) => `${name}: ${condition.name} ended`);
+    }
+    if (!found.length) return [`${name} has no persistent ${recoveryText(recovery).replace(/^.* persistent /, "")}: no flat check.`];
+    const lines = [];
+    for (const condition of found) {
+        // (Its name before a lower DC renames it: "Persistent Damage (1d6 fire)".)
+        const label = condition.name;
+        const usual = Number(condition.system.persistent.dc) || 15;
+        const dc = recovery.dc && recovery.dc < usual ? recovery.dc : usual;
+        if (dc !== usual) await condition.update({ "system.persistent.dc": dc });
+        await condition.rollRecovery();
+        const stays = () => persistent().some((entry) => entry.id === condition.id);
+        for (let wait = 0; wait < 20 && stays(); wait++) await new Promise((resolve) => setTimeout(resolve, 50));
+        if (stays() && dc !== usual) await condition.update({ "system.persistent.dc": usual });
+        lines.push(stays() ? `${name}: the flat check (DC ${dc}) didn't end ${label}` : `${name}: ${label} ended (flat check, DC ${dc})`);
+    }
+    return lines;
 }
