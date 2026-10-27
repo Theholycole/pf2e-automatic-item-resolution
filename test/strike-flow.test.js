@@ -152,7 +152,8 @@ test("the reading: what a Strike adds — extra dice, a bonus, a damage type —
     // Damage only under a condition ("If your last action was to Stride …, this does an additional 1d4 force damage"): not read — its Stride
     // the move card's (src/compiler/move.js), the Strike and the rest notes.
     const whirl = compileActivations(source("Chimera Flail")).find((entry) => entry.activation.name === "Pouncing Whirl").plan;
-    assert.deepEqual([whirl.builtin, whirl.teleport.speedTimes, whirl.teleport.move.verb, whirl.partial, whirl.strike], ["teleport", 0.5, "Stride", true, undefined]);
+    // (2026-10-27: the rest a one-off, src/compiler/one-offs.js — the teleport card's lines, no longer partial.)
+    assert.deepEqual([whirl.builtin, whirl.teleport.speedTimes, whirl.teleport.move.verb, Boolean(whirl.partial), whirl.decided, whirl.strike], ["teleport", 0.5, "Stride", false, "one-off", undefined]);
     assert.ok(whirl.notes.some((note) => /^Make a Strike\b/.test(note)) && whirl.notes.some((note) => /additional 1d4 force damage/.test(note)));
     // A trigger's hit with a save: the save at the creature struck, its critical failure its own ("(Stupefied 2 on a critical failure)").
     const sap = activation("Spore Sap").plan;

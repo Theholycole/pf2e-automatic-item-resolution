@@ -97,7 +97,11 @@ export const NOTES_CHECKED = new Map([
     ["Demolition Fulu (Lesser)", "the object it's fixed to loses Hardness equal to the fulu's level and takes 3d6 bludgeoning once its 5 minutes to 8 hours are up; a hazard to find (Perception DC 17) and disable (Thievery DC 17): a building's, the GM's"],
     ["Demolition Fulu (Moderate)", "the object it's fixed to loses Hardness equal to the fulu's level and takes 6d6 bludgeoning once its 5 minutes to 8 hours are up; a hazard to find (Perception DC 28) and disable (Thievery DC 28): a building's, the GM's"],
     ["Demolition Fulu (Greater)", "the object it's fixed to loses Hardness equal to the fulu's level and takes 10d6 bludgeoning once its 5 minutes to 8 hours are up; a hazard to find (Perception DC 37) and disable (Thievery DC 37): a building's, the GM's"],
-    ["Accolade Robe (Greater): Review", "an item drawn from the robe's storage, then a Recall Knowledge (once a minute as a free action): its user's own Interact and check"]
+    ["Accolade Robe (Greater): Review", "an item drawn from the robe's storage, then a Recall Knowledge (once a minute as a free action): its user's own Interact and check"],
+    // (2026-10-27, the small needs' group.)
+    ["Collar of the Eternal Bond: Eidolon's Freedom", "for 5 minutes its user and eidolon may be any distance apart, past 150 feet the eidolon unmanifesting as it ends: distances on the map, nothing for a card"],
+    ["Ghostly Portal Paint", "a 5-by-10-foot wall section passable to corporeal creatures and objects for 10 minutes, what's inside at its end (or an incorporeal creature in the wall) moved to the nearest exit: the map's walls"],
+    ["Ghost Ink", "writing that goes invisible, glowing red near heat (or another light its maker picks), found by a DC 25 Perception check to Seek and read on a critical success: a page's ink out of combat, the GM's"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

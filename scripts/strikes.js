@@ -16,7 +16,7 @@ import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
 import { USES, now } from "./activations.js";
 import { withoutUse } from "../src/live/activations-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, recover, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, recover, startInitiative, stateOf } from "./foundry.js";
 import { planFor, withoutAloftProne } from "../src/live/if-target.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -51,6 +51,12 @@ export async function applyStrikeCard(message, choices = {}) {
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
     const weaponId = state.plan.strike?.own ? itemIdOf(state.item.uuid) : null;
     const ammoId = state.plan.strike?.ammo ? itemIdOf(state.item.uuid) : null;
+    // (Resistance its damage ignores in part, Awakened Adamantine Shot's 20: the resolution core's flag on the shot, which the core stamps onto
+    // a Strike's damage roll with it loaded — src/compiler/small-needs.js, core 321af5b.)
+    if (state.plan.strike?.ignoreResistance && ammoId) {
+        const shot = actor.items?.get?.(ammoId) ?? null;
+        if (shot && !shot.getFlag?.(CORE_ID, "ignoreResistance")) await shot.setFlag(CORE_ID, "ignoreResistance", state.plan.strike.ignoreResistance);
+    }
     // (A bonus only against metal, Lodestone Pellet's: whether the creature targeted now is made of metal or wears metal armor.)
     let ready = state;
     if (state.plan.strike?.attack?.against === "metal") {
@@ -217,7 +223,7 @@ export async function strikeWithRider(message) {
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     // (A note for the creature hit counts: Magekiller Bullet's curse.)
-    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !rider.plan.strike?.recover?.[context.outcome] && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
+    if (!rider.plan.strike?.save && !(rider.plan.ifTarget ?? []).length && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !rider.plan.strike?.recover?.[context.outcome] && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}${drained ? `; ${escape(drained)}` : ""}.</p>` });
         return;
@@ -231,7 +237,12 @@ export async function strikeWithRider(message) {
     const target = entryOf(targetToken.object ?? targetToken, targetToken.actor);
     // (Its Prone only for a creature on the ground, Drake Shot's: src/live/if-target.js.)
     const elevation = Number(targetToken.document?.elevation ?? targetToken.elevation) || 0;
-    const lines = await applyRiders({ plan: withoutAloftProne(rider.plan, elevation), degree: context.outcome, user: rider.user, target, item: rider.item });
+    // (A rider of its own only for some creatures, Awakened Adamantine Shot's Off-Guard at a construct or one adamantine gets past: the target's
+    // own plan, src/live/if-target.js.)
+    // (Two of its kinds at once, a golem adamantine gets past: its Off-Guard once.)
+    const once = (plan) => ({ ...plan, resolution: { ...plan.resolution, outcomes: Object.fromEntries(Object.entries(plan.resolution?.outcomes ?? {}).map(([degree, row]) => [degree, row?.effects ? { ...row, effects: row.effects.filter((effect, index) => row.effects.findIndex((other) => JSON.stringify(other) === JSON.stringify(effect)) === index) } : row])) } });
+    const own = (rider.plan.ifTarget ?? []).length ? once(planFor(rider.plan, targetToken.actor) ?? rider.plan) : rider.plan;
+    const lines = await applyRiders({ plan: withoutAloftProne(own, elevation), degree: context.outcome, user: rider.user, target, item: rider.item });
     // (Its persistent damage of some types ended on this degree, Extinguishing Ball's: PF2e's conditions deleted — all of them, or one.)
     const recovery = rider.plan.strike?.recover?.[context.outcome];
     if (recovery) lines.push(...await recover(targetToken.actor, target.name, recovery));

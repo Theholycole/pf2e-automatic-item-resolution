@@ -488,7 +488,8 @@ test("Octopus Potion: its arms' Grapple at the potion's own Athletics modifier, 
     const potion = compileItem(item("Octopus Potion (Lesser)"), { basicActions });
     assert.deepEqual([potion.resolution.check.statistic, potion.resolution.check.modifier, potion.resolution.check.against.statistic, potion.ownCheck.modifier], ["athletics", 12, "fortitude", 12]);
     assert.ok(potion.resolution.outcomes.success.effects.some((effect) => effect.slug === "grabbed"));
-    assert.equal(potion.partial, true);
+    // (2026-10-27: its arms' other rules a one-off, src/compiler/one-offs.js — its card's lines, no longer partial.)
+    assert.deepEqual([Boolean(potion.partial), potion.decided], [false, "one-off"]);
 });
 
 test("Vaccine: +2 item bonus to saves against diseases for its time (a week read as 7 days, a year 365, permanent unlimited), the strain's immunity a note", () => {
