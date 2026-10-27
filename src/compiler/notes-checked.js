@@ -73,7 +73,14 @@ export const NOTES_CHECKED = new Map([
     ["Silent Bell: Ring in the Quiet", "a 20-foot cube no sound passes into or out of for 10 minutes, lips still read through it: sound and the map"],
     ["Twilight Tattoo: Fade", "the tattoo unseen and undetectable by magic for a day, Dismissed at will: an appearance"],
     ["Ally's Kerchief: Identify Allies", "a symbol glowing over its wearer that only matching kerchiefs' wearers see: recognition, no game numbers"],
-    ["Mirrorblade: Scryshield", "an hour unseen by scrying, and the scrying within 30 feet learned (detect scrying), ended by sheathing, dropping or attacking with the blade: information out of combat"]
+    ["Mirrorblade: Scryshield", "an hour unseen by scrying, and the scrying within 30 feet learned (detect scrying), ended by sheathing, dropping or attacking with the blade: information out of combat"],
+    // (2026-10-27, the afflictions group: a vision the GM shows — its poisoned grain only the text's example.)
+    ["Calamity Glass: Mirror, Mirror", "a vision of a likely tragedy within the next 48 hours, accurate but misleading, the mirror's choice (the GM's to show): information"],
+    // (2026-10-27: a corpse kept from decay — Raise Dead's window the GM's.)
+    ["Body Recovery Kit", "an hour's work on a corpse dead 3 days or less keeps it so that Raise Dead can return it up to a week after its death: the GM's, out of combat"],
+    // (2026-10-27: a building for an hour to store memories in, out of combat; its +2 to Recall Knowledge only on what the GM judges a stored
+    // memory's details — the GM's discretion, the text says.)
+    ["Memory Palace", "an hour as a building for imprinting memories (out of combat); its holder's +2 to Recall Knowledge only on details of a stored memory, the GM's to judge"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

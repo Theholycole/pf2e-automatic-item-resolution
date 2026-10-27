@@ -310,9 +310,14 @@ export function leftText(entry) {
 }
 
 // Its needs, the main one first; "no-rules" when its words show none (food, refills, ingredients: nothing for a card to do).
+// (What its user only learns isn't an affliction to play — Gaze of the Mantis's "you also know any afflictions, conditions, and spells affecting
+// them", Secret-Keeper's Mask's "You know whether the object is poison", Origin Unguent's "You can check if the two share an origin (… or if a
+// poison sample …)": information, 2026-10-27.)
+const KNOWING = /\b(?:you (?:also )?know (?:any|whether)|you can check if)\b[^.]*\./gi;
+const testOf = (need, text) => need.test.test(need.id === "afflictions" ? text.replace(KNOWING, " ") : text);
 export function needsOf(entry) {
     const text = leftText(entry);
-    const found = NEEDS.filter((need) => need.test.test(text)).map((need) => need.id);
+    const found = NEEDS.filter((need) => testOf(need, text)).map((need) => need.id);
     return found.length ? found : [entry?.cast ? "cast-changes" : "no-rules"];
 }
 

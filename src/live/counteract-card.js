@@ -29,6 +29,8 @@ export function counteracts(degree, ours, theirs) {
 // What the item can counteract on the creature: rows [{ id, name, kind, rank, dc, ticked }]. creature: { effects: [{ id, name,
 // traits, level, dc }], conditions: [{ id, slug, name, value, grantedBy }], afflictions: [{ id, name, traits, level, dc }] }.
 export function counteractCandidates(creature, counteract) {
+    // (A save against one instead, Affliction Suppressant (Major)'s and Mantle of Amazing Health's: its afflictions alone.)
+    if (counteract.save) return savedCandidates(creature, counteract);
     const rows = [];
     const grantsOf = (effect) => (creature.conditions ?? []).filter((condition) => condition.grantedBy === effect.id).map((condition) => condition.slug);
     const fits = (traits) => (counteract.traits ?? []).some((trait) => traits.includes(trait)) || (counteract.afflictions ?? []).some((kind) => traits.includes(kind));
@@ -60,6 +62,15 @@ export function counteractCandidates(creature, counteract) {
     return rows.map((row, index) => ({ ...row, ticked: counteract.pick === "each" || (counteract.pick === "highest" && index === highest) || (counteract.pick === "one" && rows.length === 1) }));
 }
 
+// (A save against one affliction rather than a counteract, src/compiler/affliction-saves.js: each curse, disease or poison of its kinds — of its
+// level or lower — with its DC and save, ticked when it's the only one.)
+function savedCandidates(creature, counteract) {
+    const most = counteract.save.maxLevel;
+    const rows = (creature.afflictions ?? []).filter((affliction) => (counteract.afflictions ?? []).some((kind) => (affliction.traits ?? []).includes(kind)) && !(Number.isFinite(most) && Number(affliction.level) > most))
+        .map((affliction) => ({ id: affliction.id, name: affliction.name, kind: "affliction", rank: null, dc: Number.isFinite(affliction.dc) ? affliction.dc : null, save: affliction.save ?? "fortitude" }));
+    return rows.map((row) => ({ ...row, ticked: rows.length === 1 }));
+}
+
 // One row's result: { degree, total, removed }.
 export function counteractResult({ total, natural, dc, ours, theirs }) {
     const degree = degreeOf({ total, dc, natural });
@@ -69,6 +80,18 @@ export function counteractResult({ total, natural, dc, ours, theirs }) {
 const list = (words) => (words.length > 1 ? `${words.slice(0, -1).join(", ")} or ${words.at(-1)}` : words[0] ?? "");
 // "Counteract +8, rank 2: each effect inflicting clumsy or enfeebled, or with the emotion trait".
 export function counteractText(counteract) {
+    // ("A save against one curse, disease or poison of level 14 or lower: on a success it's suppressed for 10 minutes" — Affliction Suppressant
+    // (Major)'s; Mantle of Amazing Health's "… on a success it ends, and it's immune to it for 24 hours".)
+    const held = counteract.suppress ? `it's ${counteract.suppress.words.replace(/[:,].*$/, "")} for ${timeWords(counteract.suppress)}` : "it ends";
+    const immune = counteract.immunity ? `, and it's immune to that one for ${timeWords(counteract.immunity)}` : "";
+    if (counteract.save) return `A save against one ${list(counteract.afflictions ?? [])}${Number.isFinite(counteract.save.maxLevel) ? ` of level ${counteract.save.maxLevel} or lower` : ""}: on a success ${held}${immune}`;
+    // (Held off rather than removed, Razmiri Wayfinder's: said after what it counteracts.)
+    if (counteract.suppress) return `${counteractOwnText(counteract)}; counteracted, ${held} rather than removed`;
+    return counteractOwnText(counteract);
+}
+const timeWords = ({ value, unit }) => `${value} ${value === 1 ? String(unit).replace(/s$/, "") : unit}`;
+
+function counteractOwnText(counteract) {
     // ("Counteract +22, rank 8: one spell or magical effect on you, or one condition, which ends outright" — Determination's.)
     if (counteract.endsConditions) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: one spell or magical effect on you, or one condition, which ends outright`;
     // ("Counteract +7, rank 2: one spell on a creature within 30 feet".)
@@ -105,20 +128,20 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
         body = canApply && state.drinkers.length > 1
             ? `<p class="aar-actions">On: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">On: ${escape(who.name)}</p>`;
-        button = "Find what it counteracts";
+        button = state.counteract.save ? "Find its afflictions" : "Find what it counteracts";
     } else if (open && state.step === "pick") {
         // (A free one's creature, when what it keeps that creature from is its own line — Devil's Trap's devil: picked here.)
         const whom = state.counteract.free && state.counteract.afterFree && canApply && state.drinkers.length > 1
             ? `<p class="aar-actions">The creature: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
             : "";
         body = whom + (state.rows.length
-            ? `${state.counteract.free ? `<p class="aar-actions">Its DC and rank${Number.isFinite(state.counteract.rank) ? "" : `, and the item's counteract rank <input type="number" data-air-ownrank value="${escape(state.ownRank ?? "")}" style="width:3em"${canApply ? "" : " disabled"}>`}:</p><ul class="aar-targets">` : `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">`}${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label>${row.ends ? " (ends outright)" : ` DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}>${state.counteract.outrightBelow && row.kind === "condition" ? ` <label><input type="checkbox" data-air-outright="${index}"${row.outright ? " checked" : ""}${canApply ? "" : " disabled"}> its source over ${state.counteract.outrightBelow.levels} levels below yours: countered outright</label>` : ""}`}</li>`).join("")}</ul>`
-            : `<p class="aar-hint">${escape(who.name)} has nothing this counteracts.</p>`);
-        button = state.rows.length ? "Counteract" : "";
+            ? `${state.counteract.free ? `<p class="aar-actions">Its DC and rank${Number.isFinite(state.counteract.rank) ? "" : `, and the item's counteract rank <input type="number" data-air-ownrank value="${escape(state.ownRank ?? "")}" style="width:3em"${canApply ? "" : " disabled"}>`}:</p><ul class="aar-targets">` : `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">`}${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label>${row.ends ? " (ends outright)" : ` DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> ${row.save ? `(its ${escape(row.save)} save)` : `rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}>`}${state.counteract.outrightBelow && row.kind === "condition" ? ` <label><input type="checkbox" data-air-outright="${index}"${row.outright ? " checked" : ""}${canApply ? "" : " disabled"}> its source over ${state.counteract.outrightBelow.levels} levels below yours: countered outright</label>` : ""}`}</li>`).join("")}</ul>`
+            : `<p class="aar-hint">${escape(who.name)} has ${state.counteract.save ? "no affliction this saves against" : "nothing this counteracts"}.</p>`);
+        button = state.rows.length ? (state.counteract.save ? "Roll the save" : "Counteract") : "";
     }
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const controls = open && canApply && button ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${escape(button)}</button></footer>` : open && button ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
-    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">counteract</span></header>${head}${notes}${body}${results}${controls}</section>`;
+    return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">${state.counteract.save ? "save" : "counteract"}</span></header>${head}${notes}${body}${results}${controls}</section>`;
 }
 
 export { DEGREE_WORDS };

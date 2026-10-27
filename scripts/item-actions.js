@@ -4,7 +4,7 @@
 // the ability module's row for that action and degree goes on the target (scripts/foundry.js applyRiders).
 
 import { actionCardHTML, actionText, chosenAction, createActionCard, outcomeText } from "../src/live/action-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, healCreature, recover, stateOf } from "./foundry.js";
 
 const sluggify = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -78,6 +78,12 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     if (!outcome) lines.push(`${actionText(action)}: no result (cancelled).`);
     else {
         lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}${outcome !== rolled ? ` (a ${outcomeText(rolled)} rolled, made ${outcomeText(outcome)} by ${state.item.name})` : ""}.`);
+        // (What its success does more for that variant, Crying Angel Pendant's, src/compiler/first-aid.js: its Hit Point healed while the target's
+        // still dying — the core's end of Dying wakes it — or its persistent bleed ended outright.)
+        const more = targetToken && ["success", "criticalSuccess"].includes(outcome) ? action.onSuccess?.[variant] ?? null : null;
+        const struck = targetToken ? { token: targetToken.object ?? targetToken, actor: targetToken.actor } : null;
+        if (more?.hp) lines.push(await healCreature(struck, targetToken.name ?? targetToken.actor.name, more.hp, {}));
+        if (more?.ends) lines.push(...await recover(targetToken.actor, targetToken.name ?? targetToken.actor.name, { types: more.ends, ends: true }));
         if (action.basic && targetToken) lines.push(...(await applyRiders({ plan: action.basic, degree: outcome, user: state.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), item: state.item })));
         // (Its own damage for that degree — Bracers of Strength's crush on a success, double on a critical one: the ability module's
         // card at the creature, which rolls and applies it.)

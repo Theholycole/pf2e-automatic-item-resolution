@@ -10,23 +10,48 @@ import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js
 import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
 export async function postCounteractCard({ message, plan, used, actor, token }) {
-    const given = plan.item?.counteract;
-    if (!given) return null;
+    const named = plan.item?.counteract;
+    if (!named) return null;
+    // (Its user's numbers only when they have what it names, Flame Navette's Determination, Contagion Metabolizer's chirurgeon with Powerful
+    // Alchemy for one made by Quick Alchemy — src/compiler/own-counteract.js.)
+    const given = named.fromUser?.needs && !hasNeeds(actor, named.fromUser.needs, used?.data) ? { ...named, fromUser: undefined } : named;
     // (Its user's numbers, The Theater's and The Locksmith's: half their level, rounded up, as its rank; their class DC − 10 as its modifier
     // — the best of their class DCs, else the GM's note.)
     const classMod = Math.max(...[actor?.classDC?.mod, ...Object.values(actor?.classDCs ?? {}).map((entry) => entry?.mod), Number(actor?.system?.attributes?.classDC?.value) - 10].map(Number).filter(Number.isFinite));
-    const counteract = given.fromUser ? {
+    const own = given.fromUser ? {
         ...given,
         ...(given.fromUser.rank === "half-level" ? { rank: Math.max(1, Math.ceil((Number(actor?.level) || 0) / 2)) } : {}),
         ...(given.fromUser.modifier === "class-dc" ? (Number.isFinite(classMod) ? { modifier: classMod } : { modifier: 0, notes: [...(given.notes ?? []), `${actor?.name ?? "Its user"} has no class DC: its modifier is their class DC − 10 (by hand).`] }) : {}),
         // (Its user's skill, Reflecting Shard's Athletics; or its attack modifier with the weapon it's on, Spellslasher's — its best Strike's.)
-        ...(given.fromUser.modifier && !["class-dc", "weapon-attack"].includes(given.fromUser.modifier) ? userModifier(given, `${given.fromUser.modifier.charAt(0).toUpperCase()}${given.fromUser.modifier.slice(1)}`, skillModifierOf(actor, given.fromUser.modifier), actor) : {}),
+        // (Its user's Will save, Determination's counteract check.)
+        ...(given.fromUser.modifier === "will" ? userModifier(given, "Will save modifier", Number(actor?.saves?.will?.mod), actor) : {}),
+        ...(given.fromUser.modifier && !["class-dc", "weapon-attack", "will"].includes(given.fromUser.modifier) ? userModifier(given, `${given.fromUser.modifier.charAt(0).toUpperCase()}${given.fromUser.modifier.slice(1)}`, skillModifierOf(actor, given.fromUser.modifier), actor) : {}),
         ...(given.fromUser.modifier === "weapon-attack" ? userModifier(given, "attack modifier with the weapon it's on", bestStrikeOf(actor), actor, "its best Strike's here: the GM may change it to the weapon's") : {})
     } : given;
+    // (And only where theirs is higher: the item's own numbers otherwise.)
+    const better = given.fromUser?.better ? betterOf(given, own, actor) : own;
+    // (What a spell at its rank counteracts, Razmiri Mask's Cleanse Affliction: its kinds by the rank its user's level gives.)
+    const counteract = better.afflictionsByRank ? { ...better, afflictions: better.afflictionsByRank.filter((entry) => Number(better.rank) >= entry.rank).at(-1)?.afflictions ?? [] } : better;
     // (A spell on a creature within some distance: every creature there, foe or friend, for the GM to pick.)
     // (Its user's own, Determination's: no one else to pick.)
     const state = createCounteractCard({ counteract, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor), drinkers: counteract.self ? [] : creaturesNear(token, counteract.within ?? 5) });
     return ChatMessage.create({ content: counteractCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
+}
+
+// (Its user's feats and features by slug, and the item's Quick Alchemy — PF2e's infused trait.)
+const slugOf = (entry) => entry?.system?.slug ?? entry?.slug ?? null;
+function hasNeeds(actor, needs, item) {
+    const owned = new Set([...(actor?.itemTypes?.feat ?? []), ...(actor?.items?.contents ?? [])].map(slugOf).filter(Boolean));
+    return (needs.features ?? []).every((slug) => owned.has(slug)) && (!needs.infused || (item?.system?.traits?.value ?? []).includes("infused"));
+}
+// (The higher of the item's numbers and its user's, each on its own — a line saying which are its user's.)
+function betterOf(given, own, actor) {
+    const rank = Math.max(...[given.rank, own.rank].map(Number).filter(Number.isFinite));
+    const modifier = Math.max(...[given.modifier, own.modifier].map(Number).filter(Number.isFinite));
+    const theirs = [rank > Number(given.rank) ? `rank ${rank}` : null, modifier > Number(given.modifier) ? `modifier +${modifier}` : null].filter(Boolean);
+    // (Not the line that its user lacks a number: the item's is used then.)
+    const notes = (own.notes ?? []).filter((note) => !/^.+ has no [\w ]+?: /.test(note));
+    return { ...own, rank: Number.isFinite(rank) ? rank : given.rank, modifier: Number.isFinite(modifier) ? modifier : given.modifier, notes: [...notes, ...(theirs.length ? [`${actor?.name ?? "Its user"}'s own ${theirs.join(" and ")}: higher than the item's.`] : [])] };
 }
 
 // (Its user's own modifier for it: a skill's, PF2e's statistic; its Strikes' best attack modifier.)
@@ -70,7 +95,8 @@ function snapshot(actor) {
         effects: (actor.itemTypes?.effect ?? []).filter((effect) => !effect.flags?.["pseudo-afflictions"]?.stages).map((effect) => ({ id: effect.id, name: effect.name, traits: effectTraits(effect), origin: effect.system?.context?.origin?.actor ?? null, level: Number(effect.system?.level?.value) || null, dc: originDC(effect), spell: /^Spell Effect:/i.test(effect.name) || /\.spell-effects\./.test(effect._stats?.compendiumSource ?? effect.flags?.core?.sourceId ?? "") || effect.system?.context?.origin?.item?.includes?.(".Item.") && /spell/i.test(String(effect.system?.context?.origin?.rollOptions ?? "")) })),
         conditions: (actor.itemTypes?.condition ?? []).map((condition) => ({ id: condition.id, slug: condition.slug, name: condition.name, value: Number.isFinite(condition.value) ? condition.value : null, grantedBy: condition.flags?.pf2e?.grantedBy?.id ?? null })),
         // (PF2e's affliction items, and the Effects Pseudo Afflictions tracks them with: scripts/foundry.js afflictionsOf.)
-        afflictions: afflictionsOf(actor).map(({ id, name, traits, level, dc }) => ({ id, name, traits, level: level || null, dc }))
+        // (And the save each is against, for a save rather than a counteract: Pseudo Afflictions' own, PF2e's affliction item's.)
+        afflictions: afflictionsOf(actor).map(({ id, name, traits, level, dc, document }) => ({ id, name, traits, level: level || null, dc, save: document?.flags?.["pseudo-afflictions"]?.save?.type ?? document?.system?.save?.type ?? null }))
     };
 }
 
@@ -111,16 +137,21 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
     if (state.counteract.pick !== "each" && ticked.length > 1) ticked = ticked.slice(0, 1);
     // (A condition that ends outright, Determination's, needs neither.)
     // (Nor one countered outright, its source far below its user's level: The Teamster's.)
-    const missing = ticked.filter((row) => !row.ends && !row.outright && (!Number.isFinite(row.dc) || !Number.isFinite(row.rank)));
+    const missing = ticked.filter((row) => !row.ends && !row.outright && (!Number.isFinite(row.dc) || (!row.save && !Number.isFinite(row.rank))));
     if (missing.length) throw new Error(`Give the DC and rank for ${missing.map((row) => row.name).join(", ")}.`);
     // (Its own rank when the text leaves it to its stored spell: the card's.)
     const ours = Number.isFinite(state.counteract.rank) ? state.counteract.rank : Number(ownRank);
-    if (!Number.isFinite(ours) || ownRank === "") throw new Error("Give the item's counteract rank (its stored spell's).");
+    if (!state.counteract.save && (!Number.isFinite(ours) || ownRank === "")) throw new Error("Give the item's counteract rank (its stored spell's).");
     const target = state.drinkers[state.drinker] ?? state.user;
     const { actor } = await creatureOf(target);
     if (!actor) throw new Error(`${target.name} isn't there any more.`);
     const lines = [];
     for (const row of ticked) {
+        // (A save against it, src/compiler/affliction-saves.js: the creature's own save at its DC, PF2e's roll; a success ends it or holds it off.)
+        if (row.save) {
+            lines.push(...await savedAgainst(actor, row, state, target));
+            continue;
+        }
         if (row.ends) {
             await actor.decreaseCondition(row.slug, { forceRemove: true });
             lines.push(`${row.name}: ended.`);
@@ -181,6 +212,9 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         } else if (row.kind === "condition") {
             await actor.decreaseCondition(row.slug, { forceRemove: true });
             lines.push(`${row.name}: ${outcome}, counteracted.`);
+        } else if (row.kind === "affliction" && state.counteract.suppress) {
+            // (Held off rather than removed, Razmiri Wayfinder's and Razmiri Mask's.)
+            lines.push(`${row.name}: ${outcome}, counteracted.`, ...await holdOff(actor, row, state, target));
         } else if (row.kind === "affliction") {
             await removeAfflictions(actor, [row.id]);
             lines.push(`${row.name}: ${outcome}, counteracted.`);
@@ -211,6 +245,51 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
     const next = { ...state, rows: chosen, status: "applied", results: lines };
     return message.update({ content: counteractCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
+
+// The creature's save against one affliction (src/compiler/affliction-saves.js), PF2e's roll at its DC: a success ends it — or holds it off — and
+// gives the immunity after it as a note Effect naming it. → the card's lines.
+async function savedAgainst(actor, row, state, target) {
+    const affliction = afflictionsOf(actor).find((one) => one.id === row.id);
+    const statistic = actor.saves?.[row.save];
+    if (!statistic) return [`${target.name}: roll the ${row.save} save against ${row.name} (DC ${row.dc}) by hand.`];
+    const roll = await statistic.roll({ dc: { value: row.dc }, skipDialog: true, ...(affliction?.document ? { item: affliction.document } : {}) });
+    const degree = roll?.degreeOfSuccess ?? null;
+    if (degree === null) return [`${target.name}: the save against ${row.name} wasn't rolled.`];
+    const outcome = `${roll.total} against DC ${row.dc}: ${DEGREE_WORDS[degree] ?? "no result"}`;
+    if (degree < 2) return [`${row.name}: ${outcome}, it stays.`];
+    if (state.counteract.suppress) return [`${row.name}: ${outcome}.`, ...await holdOff(actor, row, state, target)];
+    await removeAfflictions(actor, [row.id]);
+    const lines = [`${row.name}: ${outcome}, it ends.`];
+    const immunity = state.counteract.immunity;
+    if (immunity) {
+        const time = `${immunity.value} ${immunity.value === 1 ? immunity.unit.replace(/s$/, "") : immunity.unit}`;
+        await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: `immune to ${row.name}`, words: `Immune to ${row.name} for ${time}`, duration: { mode: "fixed", value: immunity.value, unit: immunity.unit, expiry: "turn-start" } }, noteContext(state))]);
+        lines.push(`${target.name} is immune to ${row.name} for ${time} (a note Effect).`);
+    }
+    return lines;
+}
+
+// Held off rather than removed: its stage lowered for now when the item says so (Pseudo Afflictions' badge, never below 1, which gives that
+// stage's conditions), and a note Effect on the creature for that time saying what's held off and what follows it. → the card's lines.
+async function holdOff(actor, row, state, target) {
+    const suppress = state.counteract.suppress;
+    const lines = [];
+    const affliction = afflictionsOf(actor).find((one) => one.id === row.id);
+    if (suppress.stageDown) {
+        const badge = affliction?.document?.system?.badge;
+        const stage = Number(badge?.value) || 0;
+        if (badge && stage > 1) {
+            const next = Math.max(1, stage - suppress.stageDown);
+            await affliction.document.update({ "system.badge.value": next });
+            lines.push(`${row.name} down to stage ${next} for now.`);
+        } else lines.push(badge ? `${row.name} is at stage 1 already.` : `${row.name}: lower its stage by ${suppress.stageDown} for now by hand.`);
+    }
+    const time = `${suppress.value} ${suppress.value === 1 ? suppress.unit.replace(/s$/, "") : suppress.unit}`;
+    await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: `${row.name} ${suppress.words.replace(/[:,].*$/, "")}`, words: `${row.name} ${suppress.words}`, duration: { mode: "fixed", value: suppress.value, unit: suppress.unit, expiry: "turn-start" } }, noteContext(state))]);
+    lines.push(`${target.name}: ${row.name} ${suppress.words.replace(/[:,].*$/, "")} for ${time} (a note Effect).`);
+    return lines;
+}
+const noteContext = (state) => ({ item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID });
 
 // The flat check, PF2e's own roll in the chat; on a failure the item is replaced on its owner by the one it becomes (its worn and invested
 // state kept). → the card's line.

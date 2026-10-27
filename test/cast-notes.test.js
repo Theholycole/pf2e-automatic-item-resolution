@@ -432,7 +432,8 @@ test("a condition its user avoids gaining once (2026-10-27): Immortal Bastion's 
     assert.deepEqual([entry.prevents, entry.duration.unit, bastion.partial], [["doomed", "wounded"], "rounds", undefined]);
     assert.deepEqual(ruleEffectSource(entry, { item: { name: "Immortal Bastion" } }).flags["pf2e-automatic-item-resolution"].prevents, ["doomed", "wounded"]);
     const urn = activations(item("Urn of Ashes"), options).find((one) => one.plan?.item?.ruleEffects)?.plan;
-    assert.deepEqual([urn.item.ruleEffects[0].prevents, urn.partial], [["doomed"], true]);
+    // (Since 2026-10-27 the urn's own doom is a note Effect on its user, done — src/compiler/sleep-notes.js, test/afflictions-2026-10-27.test.js.)
+    assert.deepEqual([urn.item.ruleEffects[0].prevents, urn.partial], [["doomed"], undefined]);
 });
 
 test("a cast said again in other words (2026-10-27): Talonstrike Blade's 'on the creature you just dealt damage to, with a DC of 34', Dazzling Shortbow's burst within 60 feet (its range, the burst's radius past it); Greater Brilliant's ignored resistances are PF2e's rune's", async () => {

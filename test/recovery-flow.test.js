@@ -113,7 +113,8 @@ test("Soothing Powder: the type picked on the card is the persistent damage its 
 
 test("Elixir of Rejuvenation: its drinker healed up to its maximum Hit Points and its afflictions of level 20 or lower removed; the dead creature brought back a note", async () => {
     const elixir = compileItem(source("Elixir of Rejuvenation"));
-    assert.deepEqual([routeOf(elixir), elixir.item.restore, elixir.partial, elixir.noteOnly], ["item", { hp: "max", afflictions: { level: 20 } }, true, undefined]);
+    // (Since 2026-10-27 the ways card — drunk, as here, or given to the dead, src/compiler/revive.js, test/afflictions-2026-10-27.test.js.)
+    assert.deepEqual([routeOf(elixir), routeOf(elixir.ways[0].plan), elixir.ways[0].plan.item.restore, elixir.partial, elixir.noteOnly], ["ways", "item", { hp: "max", afflictions: { level: 20 } }, undefined, undefined]);
     const drinker = foundry.makeActor({ id: "restore-drinker", name: "Rejuvenated", owners: ["player"], hp: 4, max: 50 });
     foundry.place(drinker, 1, 20000);
     await drinker.createEmbeddedDocuments("Item", [{ type: "affliction", name: "Ghoul Fever", system: { level: { value: 3 } } }, { type: "affliction", name: "Elder Curse", system: { level: { value: 22 } } }]);
@@ -124,7 +125,11 @@ test("Elixir of Rejuvenation: its drinker healed up to its maximum Hit Points an
     const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: item.uuid, sourceId: data._stats.compendiumSource, type: "consumable" } } }, speaker: { actor: drinker.id }, actor: drinker, token: drinker.token.document });
     await foundry.call("createChatMessage", message);
     await settle();
-    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    const ways = foundry.messages[foundry.messages.indexOf(message) + 1];
+    const posted = foundry.messages.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: ways.id, choice: 0, userId: "player" });
+    await settle();
+    const card = foundry.messages[posted];
     assert.match(card.content, /Heals up to its maximum Hit Points, and removes its afflictions of level 20 or lower/);
     await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
     await settle();

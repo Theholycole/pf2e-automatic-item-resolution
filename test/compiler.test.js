@@ -496,8 +496,10 @@ test("Vaccine: +2 item bonus to saves against diseases for its time (a week read
         const vaccine = compileItem(item(name));
         const [bonus] = vaccine.resolution.outcomes.success.modifiers;
         assert.deepEqual([bonus.selector, bonus.value, bonus.type, bonus.predicate], ["saving-throw", 2, "item", ["item:trait:disease"]], name);
-        assert.equal(vaccine.partial, true);
-        assert.match(vaccine.unread[0], /^Its immunity to the one strain of disease it was made for/);
+        // (Since 2026-10-27 the strain's immunity is a note Effect beside the bonus, done — src/compiler/vaccine.js,
+        // test/afflictions-2026-10-27.test.js.)
+        assert.equal(vaccine.partial, undefined);
+        assert.match(vaccine.resolution.outcomes.success.noteEffects.at(-1).text, /^Immune to the one strain of disease it was made for/);
         return bonus.duration ? `${bonus.duration.value} ${bonus.duration.unit}` : null;
     });
     assert.deepEqual(times, ["1 hours", "24 hours", "7 days", "365 days", null]);
@@ -1203,8 +1205,8 @@ test("a new save at its turns (src/compiler/save-ends.js, the ability's duration
     const [round] = compileActivations(item("Dreaming Round"));
     const outcomes = round.plan.resolution.outcomes;
     assert.deepEqual([saveEnds(outcomes.failure, "slowed")?.escalate, saveEnds(outcomes.criticalFailure, "slowed")?.alsoEnds, saveEnds(outcomes.success, "slowed")], [{ criticalFailure: 1, failure: 1, success: -1, criticalSuccess: -1 }, ["fatigued"], undefined]);
-    // (Its sleep at 0 actions, and waking: the GM's, a note.)
-    assert.deepEqual([round.plan.partial, round.plan.notes.length, /^If the target's actions are reduced to 0\b/.test(round.plan.notes[0])], [true, 1, true]);
+    // (Its sleep at 0 actions, and waking: since 2026-10-27 a note Effect on its failing rows, done — src/compiler/sleep-notes.js.)
+    assert.deepEqual([round.plan.partial, round.plan.notes, /\bUnconscious\b/.test(outcomes.failure.noteEffects[0].text)], [undefined, undefined, true]);
     // (A row's own save at its turns, with its DC, whatever the plan's check: Bewildering Spellgun's success.)
     const spellgun = compileItem(item("Bewildering Spellgun"));
     assert.deepEqual([saveEnds(spellgun.resolution.outcomes.success, "confused"), saveEnds(spellgun.resolution.outcomes.criticalSuccess, "confused"), spellgun.partial], [{ save: "will", dc: 25, mode: "end" }, undefined, undefined]);
