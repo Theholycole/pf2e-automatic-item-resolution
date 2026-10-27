@@ -145,6 +145,18 @@ test("a creature swallowed, then spat out to fall (2026-10-27): Worm Vial's Eat 
     assert.match(vial.notes.join(" "), /^Or Burrow instead: the worm tunnels up to 80 feet \(40 through solid stone\)/);
 });
 
+test("a snare's setter worse off than the others (2026-10-27): Piercing Whistle Snare — its own save card Deafened 1 minute on a failure, the burst within 10 feet for the others (othersOnly) 1 round", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const snare = compileItem(item("Piercing Whistle Snare"), options);
+    const deaf = (plan, degree) => plan.resolution.outcomes[degree].effects.find((effect) => effect.slug === "deafened").duration;
+    const own = snare.zone.saves[0].plan;
+    const burst = snare.zone.burst;
+    assert.deepEqual([snare.zone.saves.length, burst.othersOnly, burst.area, snare.partial], [1, true, { type: "emanation", value: 10 }, undefined]);
+    assert.deepEqual([deaf(own, "failure").unit, deaf(own, "criticalFailure").unit, deaf(burst.plan, "failure").unit, deaf(burst.plan, "criticalFailure").unit], ["minutes", "hours", "rounds", "hours"]);
+    // (Sanctified Beans' two save cards each play what the other leaves: no sentence left over.)
+    assert.equal(compileItem(item("Sanctified Beans"), options).partial, undefined);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

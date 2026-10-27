@@ -1200,6 +1200,48 @@ export const cases = {
         });
     },
 
+    // Piercing Whistle Snare (2026-10-27): set off, the creature 10 feet from the square gets the burst's card (Deafened 1 round on a failure) and
+    // the one that set it off a card of its own (Deafened 1 minute on a failure), not the burst's (zone.burst.othersOnly, ability a7db06e).
+    async piercingWhistleSetter(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Whistle Setter", { type: "character", x: 0, y: 3 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Whistle Walker", { x: 6, y: 3, alliance: "opposition", hp: 200, save: 5 });
+            const snare = await give(setter, "Piercing Whistle Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Piercing Whistle Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                const { actor: near, token: nearToken } = await creature(scene, "Whistle Near", { x: shape.x / 100 + 2, y: shape.y / 100, alliance: "opposition", hp: 200, save: 5 });
+                const since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const cards = () => game.messages.contents.filter((message) => message.timestamp >= since && abilitySaveCard(message));
+                await until(() => cards().length >= 2, `two save cards (${cards().length})`, { timeout: 10000 });
+                await wait(1000);
+                const targetsOf = (card) => (card.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).map((entry) => entry.tokenUuid ?? entry.actorUuid);
+                const own = cards().find((card) => targetsOf(card).includes(walkerToken.uuid));
+                const burst = cards().find((card) => targetsOf(card).includes(nearToken.uuid));
+                assert(cards().length === 2 && own && burst && own !== burst && !targetsOf(burst).includes(walkerToken.uuid), `the walker's own card and the near one's burst card (${cards().map((card) => JSON.stringify(targetsOf(card).map((uuid) => fromUuidSync(uuid)?.name ?? uuid))).join(" / ")})`);
+                // (A 10 on the die: 15 against DC 22, a failure for both.)
+                await withDie(10, () => rollAndApply(own));
+                await withDie(10, () => rollAndApply(burst));
+                const deafness = (actor) => actor.itemTypes.effect.find((effect) => /Deafened/i.test(effect.name))?.system?.duration ?? null;
+                await until(() => deafness(walker) && deafness(near), `both deafened (${JSON.stringify([deafness(walker), deafness(near)])})`, { timeout: 10000 });
+                assert(deafness(walker).value === 1 && /^minute/.test(deafness(walker).unit) && deafness(near).value === 1 && /^round/.test(deafness(near).unit), `1 minute for the walker, 1 round for the near one (${JSON.stringify([deafness(walker), deafness(near)])})`);
+                return { walker: deafness(walker), near: deafness(near) };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Piercing Whistle Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Scale of Igroon (2026-10-27): its +4 Stealth Effect ended by its user's next activation (the scale's other one), and again by a Shield
     // Block (PF2e's applyDamage with shieldBlockRequest).
     async scaleIgroonEnds(scene) {

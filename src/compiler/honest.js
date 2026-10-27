@@ -290,26 +290,36 @@ export function withUntracedRules(plan, text) {
 // the item). Each save's plan checked so; its untraced sentences the zone's notes, the zone partial when any is — or when a save's own plan was
 // partial already, Tar Rocket Snare's.
 export function withZoneUntraced(plan, text) {
-    if (plan?.builtin !== "zone" || plan.partial || !(plan.zone?.saves ?? []).length) return plan;
+    // (A snare's burst card too, with or without a save of its own — Shrapnel Snare's, Piercing Whistle Snare's, 2026-10-27.)
+    if (plan?.builtin !== "zone" || plan.partial || !((plan.zone?.saves ?? []).length || plan.zone?.burst?.plan)) return plan;
     const notes = [];
     let partial = false;
     // (Traced by the zone's own fields too — Spark Wafer's "a 10-foot-high column of sparks for 1 round" is its area and time, not the save's.)
-    const { saves: _, ...own } = plan.zone;
-    const saves = plan.zone.saves.map((save) => {
+    const { saves: _, burst: __, ...own } = plan.zone;
+    // (A sentence one of its cards traces isn't left by the others: Piercing Whistle Snare's longer deafness, its setter's card's, not its burst's.)
+    const entries = [...(plan.zone.saves ?? []), ...(plan.zone.burst?.plan ? [plan.zone.burst] : [])];
+    const checks = entries.map((save) => {
         if (save.plan?.partial) partial = true;
         const checked = withUntracedRules({ ...save.plan, zoneOwn: own }, text);
-        const added = (checked?.notes ?? []).filter((entry) => !(save.plan?.notes ?? []).includes(entry));
+        return { checked, added: (checked?.notes ?? []).filter((entry) => !(save.plan?.notes ?? []).includes(entry)) };
+    });
+    const untraced = (entry) => checks.every(({ added }) => added.includes(entry));
+    const traced = (save, at) => {
+        const { checked } = checks[at];
+        const added = checks[at].added.filter(untraced);
         if (checked?.partial && added.length) partial = true;
         for (const note of added) if (!notes.includes(note)) notes.push(note);
         return added.length ? { ...save, plan: { ...save.plan, notes: [...(save.plan?.notes ?? []), ...added] } } : save;
-    });
+    };
+    const saves = (plan.zone.saves ?? []).map(traced);
+    const burst = plan.zone.burst?.plan ? traced(plan.zone.burst, saves.length) : plan.zone.burst;
     // (And a rule with no number the check above traces by — Fire-Douse Snare's "can use an Interact action to attempt a flat check", Grease Snare's
     // "must roll twice and use the worse result whenever attempting a Thievery check", Rusting Snare's "this damage ignores the item's Hardness":
     // its sentence, unless the plan says it.)
     const json = JSON.stringify(plan).toLowerCase();
     const sentences = String(text ?? "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
     // (What its end-early card plays isn't left: src/compiler/end-early.js.)
-    const ended = plan.zone.saves.flatMap((save) => save.plan?.endEarly?.said ?? []);
+    const ended = [...plan.zone.saves, ...(plan.zone.burst?.plan ? [plan.zone.burst] : [])].flatMap((save) => save.plan?.endEarly?.said ?? []);
     const played = (one) => ended.some((words) => words.includes(one.slice(0, 40)) || one.includes(words.slice(0, 40)));
     for (const sentence of sentences.filter((one) => ZONE_RULE.test(one) && !SKIP.test(one) && !played(one) && !json.includes(one.toLowerCase().slice(0, 50)))) {
         if (notes.includes(sentence)) continue;
@@ -317,7 +327,7 @@ export function withZoneUntraced(plan, text) {
         partial = true;
     }
     if (!partial && !notes.length) return plan;
-    return { ...plan, zone: { ...plan.zone, saves, notes: [...(plan.zone.notes ?? []), ...notes] }, ...(partial ? { partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : {}) };
+    return { ...plan, zone: { ...plan.zone, saves, ...(burst ? { burst } : {}), notes: [...(plan.zone.notes ?? []), ...notes] }, ...(partial ? { partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : {}) };
 }
 const ZONE_RULE = /\bInteract actions?\b|\bflat check\b|\broll twice and use the worse\b|\bignores? the (?:item's|object's) Hardness\b|\bdeals? [^.]*\bdamage to the item\b/i;
 

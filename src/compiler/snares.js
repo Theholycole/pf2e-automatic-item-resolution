@@ -137,6 +137,11 @@ export function snareZone(item, read) {
     // "The target and all creatures in adjacent squares must attempt …": the ability module's zone.burst (ability 5e46e0e) — one card of the
     // save for the creature that set it off and every other creature the area reaches, its damage rolled once; no save of its own.)
     const burst = burstOf(whole);
+    // (The creature that set it off worse off than the others, Piercing Whistle Snare's "The triggering creature is deafened for 1 minute on a
+    // failure, or 1 hour on a critical failure": its own save card with those times — zone.saves — and the burst for the others alone
+    // (zone.burst.othersOnly, the ability module's), 2026-10-27.)
+    const setter = burst ? setterPlan(plan, whole) : null;
+    const shared = setter ? { ...plan, notes: setter.notes.length ? setter.notes : undefined, ...(plan.unread ? { unread: setter.unread.length ? setter.unread : undefined } : {}) } : plan;
     // (Again for a while after it's set off, Bleeding Spines Snare's "After the initial trigger, the spines retract and protrude again repeatedly
     // for 1 minute, forcing any creature that enters the space or ends its turn in the space to take damage from the spines (attempting the same
     // basic Reflex save)": the area it leaves — zone.then — with the same save for that time, 2026-10-27.)
@@ -156,13 +161,13 @@ export function snareZone(item, read) {
             terrain: [],
             others: false,
             hazard: null,
-            saves: burst ? [] : [{ when: ["enter"], plan, ...only }],
-            ...(burst ? { burst: { area: burst.area, ...(burst.from ? { from: burst.from } : {}), plan: { ...plan, targeting: { target: "every creature in the area", range: null, area: burst.area }, ...(burst.said ? { notes: (plan.notes ?? []).filter((note) => !String(note).includes(burst.said.replace(/^(?:in )?an? /i, "").slice(0, 30))) } : {}) }, ...only } } : {}),
+            saves: burst ? (setter ? [{ when: ["enter"], plan: setter.plan, ...only }] : []) : [{ when: ["enter"], plan, ...only }],
+            ...(burst ? { burst: { area: burst.area, ...(burst.from ? { from: burst.from } : {}), ...(setter ? { othersOnly: true } : {}), plan: { ...shared, targeting: { target: "every creature in the area", range: null, area: burst.area }, ...(burst.said ? { notes: (shared.notes ?? []).filter((note) => !String(note).includes(burst.said.replace(/^(?:in )?an? /i, "").slice(0, 30))) } : {}) }, ...only } } : {}),
             damage: [],
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate, cap)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate, cap)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save; then it's spent.` : then ? `${firstTo(gate, cap)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate, cap)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
+            notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate, cap)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate, cap)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save${setter ? ` (that creature on a card of its own, ${setter.slug} for longer)` : ""}; then it's spent.` : then ? `${firstTo(gate, cap)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate, cap)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
             once: true,
             ...(then ? { then } : {})
         }
@@ -208,7 +213,7 @@ export function alarmZone(item, base) {
 
 // The area a snare's save reaches when it's set off: { area, from? } or null.
 function burstOf(plain) {
-    const radius = /\bEveryone in an? (\d+)-foot radius of the snare's square must attempt\b/i.exec(plain);
+    const radius = /\bEveryone in an? (\d+)-foot radius of the snare's square must attempt\b/i.exec(plain) ?? /\bThe snare deals [^.;]*? damage \([^)]*\) to creatures within (\d+) feet\b/i.exec(plain);
     if (radius) return { area: { type: "emanation", value: Number(radius[1]) } };
     const emanation = /\bin an? (\d+)-foot emanation\. Those within the emanation when the snare is activated must attempt\b/i.exec(plain);
     if (emanation) return { area: { type: "emanation", value: Number(emanation[1]) } };
@@ -219,6 +224,30 @@ function burstOf(plain) {
     const aimed = /\b(?:in )?an? (\d+)-foot (cone|line)(?: of \w+)? in the direction from which the creature entered(?: the square)?\./i.exec(plain);
     if (aimed) return { area: { type: aimed[2].toLowerCase(), value: Number(aimed[1]) }, said: aimed[0] };
     return null;
+}
+
+// The save of the creature that set the snare off, its condition for longer than the others': "The triggering creature is deafened for 1 minute on
+// a failure, or 1 hour on a critical failure." (a sentence of its text, or already a note) → { plan, notes, unread, slug } (its rows with those
+// times, the plan's other notes) or null.
+const SETTER = /^The triggering creature is (\w+) for (\d+) (round|minute|hour)s? on a failure, or (\d+) (round|minute|hour)s? on a critical failure\.$/i;
+function setterPlan(plan, text) {
+    const sentences = String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
+    const found = [...(plan.notes ?? []), ...(plan.unread ?? []), ...sentences].map((note) => [note, SETTER.exec(String(note).trim())]).find(([, match]) => match);
+    const outcomes = plan.resolution?.outcomes;
+    if (!found || !outcomes) return null;
+    const [, slug, failValue, failUnit, critValue, critUnit] = found[1];
+    const times = { failure: [failValue, failUnit], criticalFailure: [critValue, critUnit] };
+    const condition = slug.toLowerCase();
+    if (!["failure", "criticalFailure"].every((degree) => (outcomes[degree]?.effects ?? []).some((effect) => effect.kind === "condition" && effect.slug === condition))) return null;
+    const rows = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => {
+        const time = times[degree];
+        if (!time) return [degree, row];
+        const effects = row.effects.map((effect) => (effect.kind === "condition" && effect.slug === condition ? { ...effect, duration: { ...effect.duration, mode: "fixed", value: Number(time[0]), unit: `${time[1].toLowerCase()}s` } } : effect));
+        return [degree, { ...row, effects }];
+    }));
+    const notes = (plan.notes ?? []).filter((note) => note !== found[0]);
+    const unread = (plan.unread ?? []).filter((note) => note !== found[0]);
+    return { plan: { ...plan, notes: notes.length ? notes : undefined, ...(plan.unread ? { unread: unread.length ? unread : undefined } : {}), resolution: { ...plan.resolution, outcomes: rows } }, notes, unread, slug: condition };
 }
 
 // What a snare leaves behind, Ice Slick Snare's "to create a slippery patch of ice on the ground": a note, the GM's.
