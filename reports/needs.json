@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1305,
+  "entries": 1300,
   "results": {
-   "partial": 407,
+   "partial": 402,
    "none": 530,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -29,11 +29,11 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "areas": 133,
+   "areas": 131,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
-   "triggers": 90,
+   "triggers": 87,
    "situational": 18,
    "dying": 29,
    "senses": 21,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 196,
+   "areas": 194,
    "immunity": 90,
    "objects": 390,
    "speech": 129,
@@ -59,17 +59,17 @@
    "afflictions": 109,
    "lasting": 233,
    "moving": 108,
-   "triggers": 121,
+   "triggers": 118,
    "visibility": 50,
    "dying": 75,
    "choice": 107,
-   "several": 104,
+   "several": 105,
    "strike": 194,
    "reader": 213,
    "spells": 75,
    "information": 197,
    "actions": 62,
-   "from-events": 29,
+   "from-events": 26,
    "no-rules": 17,
    "situational": 86,
    "creatures": 71,
@@ -9778,7 +9778,8 @@
    "main": "areas",
    "work": "first creature to enter",
    "needs": [
-    "areas"
+    "areas",
+    "several"
    ]
   },
   {
@@ -11118,17 +11119,6 @@
    "needs": [
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Crown of the Fire Eater",
-   "kind": "activation",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering attack",
-   "needs": [
-    "triggers",
-    "from-events"
    ]
   },
   {
@@ -12572,16 +12562,6 @@
    ]
   },
   {
-   "name": "Puff Dragon",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Bubbling Scale",
    "kind": "consumable",
    "result": "note-only",
@@ -13465,17 +13445,6 @@
     "triggers",
     "afflictions",
     "situational"
-   ]
-  },
-  {
-   "name": "Crown of the Fire Eater (Greater)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering attack",
-   "needs": [
-    "triggers",
-    "from-events"
    ]
   },
   {
@@ -14444,16 +14413,6 @@
    ]
   },
   {
-   "name": "Shrapnel Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Planar Tunnel",
    "kind": "activation",
    "result": "note-only",
@@ -14710,17 +14669,6 @@
    "needs": [
     "forms",
     "strike"
-   ]
-  },
-  {
-   "name": "Crown of the Fire Eater (Major)",
-   "kind": "activation",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering attack",
-   "needs": [
-    "triggers",
-    "from-events"
    ]
   },
   {

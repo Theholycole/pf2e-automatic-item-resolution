@@ -329,3 +329,24 @@ test("a snare's own area and trait (2026-10-27): Spirit Trap's 10-foot square, s
     assert.deepEqual([trap.zone.area, trap.zone.saves[0].only, trap.partial], [{ type: "square", value: 10 }, { traits: ["spirit"] }, undefined]);
     assert.deepEqual([zoneActions(trap.zone, "tokenEnter", { traits: ["humanoid"] }).length, zoneActions(trap.zone, "tokenEnter", { traits: ["spirit", "undead"] }).map((action) => action.kind)], [0, ["save"]]);
 });
+
+test("healing just after the triggering damage (2026-10-27): Crown of the Fire Eater's lower of 15 and the fire damage before resistance, beside its fire resistance 15", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { readiedWords } = await import("../src/live/fortune-card.js");
+    const { damageOfType } = await import("../scripts/heal-after.js");
+    const crown = activations(item("Crown of the Fire Eater"), options).find((entry) => entry.plan?.builtin === "readied-bonus").plan;
+    assert.deepEqual([crown.bonus.resistance.value, crown.bonus.healAfter, crown.partial], [15, { type: "fire", max: 15 }, undefined]);
+    assert.match(readiedWords(crown), /then it regains Hit Points equal to its fire damage before resistance, at most 15/);
+    assert.equal(damageOfType({ instances: [{ type: "fire", total: 9 }, { type: "slashing", total: 4 }, { type: "fire", total: 3 }] }, "fire"), 12);
+});
+
+test("a snare's save for everyone around its square (2026-10-27): Shrapnel Snare's and Puff Dragon's 10-foot emanation, Bomb Snare's around the creature — the ability module's zone.burst, no save of its own", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const shrapnel = compileItem(item("Shrapnel Snare"), options);
+    assert.deepEqual([shrapnel.zone.saves, shrapnel.zone.burst.area, shrapnel.zone.burst.plan.resolution.check.against.value, shrapnel.partial], [[], { type: "emanation", value: 10 }, 31, undefined]);
+    // (Its critical success's slip, "The creature in unaffected,", read as meant.)
+    assert.deepEqual(shrapnel.zone.burst.plan.resolution.outcomes.criticalSuccess.manualInstructions, undefined);
+    assert.deepEqual(compileItem(item("Puff Dragon"), options).zone.burst.area, { type: "emanation", value: 10 });
+    const bomb = compileItem(item("Bomb Snare"), options);
+    assert.deepEqual([bomb.zone.burst.area, bomb.zone.burst.from], [{ type: "emanation", value: 5 }, "creature"]);
+});

@@ -1121,6 +1121,63 @@ export const cases = {
         return { hp: [hp, wearer.system.attributes.hp.value] };
     },
 
+    // Crown of the Fire Eater (2026-10-27): readied, 20 fire damage leaves 5 past its resistance 15, then it regains 15 (the lower of 15 and the
+    // 20 before resistance): 60 → 55 → 70.
+    async crownFireEater(scene) {
+        const { actor: wearer } = await creature(scene, "Crown Wearer", { x: 16, y: 12, level: 12, hp: 100 });
+        await wearer.update({ "system.attributes.hp.value": 60 });
+        const crown = await give(wearer, "Crown of the Fire Eater");
+        await crown.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(crown.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the readied card" });
+        assert(/regains Hit Points equal to its fire damage before resistance, at most 15/.test(card.content), "the card's words");
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => wearer.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")?.healAfter), "the readied Effect", { timeout: 8000 });
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await wearer.applyDamage({ damage: await new DamageRoll("20[fire]").evaluate(), token: wearer.getActiveTokens(true, true)[0] });
+        await until(() => wearer.system.attributes.hp.value === 70, `healed 15 after 5 through (${wearer.system.attributes.hp.value})`, { timeout: 8000 });
+        await until(() => !wearer.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), "the Effect spent", { timeout: 8000 });
+        return { hp: wearer.system.attributes.hp.value };
+    },
+
+    // Shrapnel Snare (2026-10-27): set off by a creature, one save card for it and the creature 10 feet from the square (zone.burst), not the one
+    // 20 feet off.
+    async shrapnelBurst(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Shrapnel Setter", { type: "character", x: 0, y: 3 });
+            const { token: walkerToken } = await creature(scene, "Shrapnel Walker", { x: 6, y: 3, alliance: "opposition", hp: 200 });
+            const snare = await give(setter, "Shrapnel Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Shrapnel Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                // (On the grid: the stand-in placement leaves the square half a square off it, which a GM's placing doesn't.)
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                const { token: nearToken } = await creature(scene, "Shrapnel Near", { x: shape.x / 100 + 2, y: shape.y / 100, alliance: "opposition", hp: 200 });
+                const { token: farToken } = await creature(scene, "Shrapnel Far", { x: shape.x / 100 + 4, y: shape.y / 100, alliance: "opposition", hp: 200 });
+                const since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const card = await messageAfter(since, abilitySaveCard, { what: "the burst's save card" });
+                const targets = (card.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).map((entry) => entry.tokenUuid ?? entry.uuid ?? entry.actorUuid);
+                const has = (token) => targets.some((uuid) => uuid === token.uuid || uuid === token.actor?.uuid);
+                const named = targets.map((uuid) => fromUuidSync(uuid)?.name ?? uuid);
+                assert(has(walkerToken) && has(nearToken) && !has(farToken), `the walker and the near one, not the far one (${JSON.stringify(named)}; square ${shape.x},${shape.y} ${shape.width}; walker ${walkerToken.x},${walkerToken.y}; near ${nearToken.x},${nearToken.y}; far ${farToken.x},${farToken.y}; setter ${setterToken.x},${setterToken.y})`);
+                await until(() => !square(), "the snare spent", { timeout: 8000 });
+                return { targets: targets.length };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Shrapnel Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Potion of Resistance: the type picked on the card (fire, the fourth) — PF2e's Resistance 5 to fire for an hour.
     async resistTypePick(scene) {
         const { actor: drinker } = await creature(scene, "Resistance Drinker", { x: 16, y: 14 });

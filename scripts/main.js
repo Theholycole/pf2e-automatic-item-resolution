@@ -30,6 +30,7 @@ import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpEndEarly } from "./end-early.js";
 import { setUpPreventCondition } from "./prevent-condition.js";
 import { setUpHalfDamage } from "./half-damage.js";
+import { setUpHealAfter } from "./heal-after.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
 import { registerItemDCSettings } from "./item-dcs.js";
@@ -180,6 +181,7 @@ Hooks.once("ready", async () => {
     setUpPreventCondition();
     // (Half the triggering attack's damage, Laurel of the Empath's: scripts/half-damage.js.)
     setUpHalfDamage();
+    setUpHealAfter();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

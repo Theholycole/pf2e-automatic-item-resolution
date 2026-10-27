@@ -104,6 +104,11 @@ export function snareZone(item, read) {
     const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
     const only = gate || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};
+    // (A save for everyone around its square when it's set off, Shrapnel Snare's "Everyone in a 10-foot radius of the snare's square must
+    // attempt …", Puff Dragon's gas "in a 10-foot emanation. Those within the emanation when the snare is activated must attempt …", Bomb Snare's
+    // "The target and all creatures in adjacent squares must attempt …": the ability module's zone.burst (ability 5e46e0e) — one card of the
+    // save for the creature that set it off and every other creature the area reaches, its damage rolled once; no save of its own.)
+    const burst = burstOf(whole);
     // (Again for a while after it's set off, Bleeding Spines Snare's "After the initial trigger, the spines retract and protrude again repeatedly
     // for 1 minute, forcing any creature that enters the space or ends its turn in the space to take damage from the spines (attempting the same
     // basic Reflex save)": the area it leaves — zone.then — with the same save for that time, 2026-10-27.)
@@ -123,12 +128,13 @@ export function snareZone(item, read) {
             terrain: [],
             others: false,
             hazard: null,
-            saves: [{ when: ["enter"], plan, ...only }],
+            saves: burst ? [] : [{ when: ["enter"], plan, ...only }],
+            ...(burst ? { burst: { ...burst, plan: { ...plan, targeting: { target: "every creature in the area", range: null, area: burst.area } }, ...only } } : {}),
             damage: [],
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: [then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
+            notes: [burst ? `${firstTo(gate)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save; then it's spent.` : then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
             once: true,
             ...(then ? { then } : {})
         }
@@ -170,6 +176,16 @@ export function alarmZone(item, base) {
             once: true
         }
     };
+}
+
+// The area a snare's save reaches when it's set off: { area, from? } or null.
+function burstOf(plain) {
+    const radius = /\bEveryone in an? (\d+)-foot radius of the snare's square must attempt\b/i.exec(plain);
+    if (radius) return { area: { type: "emanation", value: Number(radius[1]) } };
+    const emanation = /\bin an? (\d+)-foot emanation\. Those within the emanation when the snare is activated must attempt\b/i.exec(plain);
+    if (emanation) return { area: { type: "emanation", value: Number(emanation[1]) } };
+    if (/\bThe target and all creatures in adjacent squares must attempt\b/i.test(plain)) return { area: { type: "emanation", value: 5 }, from: "creature" };
+    return null;
 }
 
 // What a snare leaves behind, Ice Slick Snare's "to create a slippery patch of ice on the ground": a note, the GM's.

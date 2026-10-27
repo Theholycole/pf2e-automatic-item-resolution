@@ -41,6 +41,8 @@ export const isBareFigurine = (item, html = item?.system?.description?.value) =>
 export function withItemData(html, item) {
     // (A save link written without its "dc:" — a third-party module's "@Check[will|23]": the DC it means.)
     let text = String(html ?? "").replace(/@Check\[(fortitude|reflex|will)\|(\d+)\]/gi, "@Check[$1|dc:$2]");
+    // (A row's slip, Shrapnel Snare's critical success "The creature in unaffected,": what it means, "The creature is unaffected.", 2026-10-27.)
+    text = text.replace(/(<strong>\s*Critical Success\s*<\/strong>\s*)The creature in unaffected,(\s*<\/p>)/g, "$1The creature is unaffected.$2");
     // (Its Craft Requirements paragraph right after result rows, how it's made, not what it does: off, or the ability compiler reads it into the
     // last row — Whirlwind Vial's critical failure "… knocked Prone. Craft Requirements Supply magical residue …", a line by hand. Only that
     // paragraph — what follows it is the item's, Dragonplate's table, Vaccine's Duration — and only after rows: elsewhere it's left as it was.)

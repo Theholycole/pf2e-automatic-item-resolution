@@ -271,7 +271,8 @@ test("moment bonuses in more words: Pyrefeather Cloak's type-first resistance, C
     assert.deepEqual([plan("Calamity's Bane Tattoo").bonus.modifiers[0].selector, plan("Calamity's Bane Tattoo").bonus.spend], ["check", ["check"]]);
     const crown = plan("Crown of the Fire Eater (Greater)");
     assert.deepEqual(crown.bonus.resistance, { type: "fire", value: 25 });
-    assert.ok(crown.notes.some((note) => /regain a number of Hit Points/.test(note)));
+    // (Its healing after the damage, read since 2026-10-27: bonus.healAfter, no longer a note.)
+    assert.deepEqual(crown.bonus.healAfter, { type: "fire", max: 25 });
 });
 
 test("a bonus for another creature (Resonant Guitar's Chord of Protection, +2 status to AC against the triggering attack): Apply gives the creature targeted the Effect, not the user; no target, refused", async () => {

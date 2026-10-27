@@ -377,6 +377,15 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // (And its user's longer move with a feat, Conrasu Coin (Bythos)'s "If you have the Nimble Roll feat and the attack misses, you can Stride up to
     // 20 feet instead": a line of the card, its own move, 2026-10-27.)
     const FEAT_MOVE = /^If you have the ([\w' -]+?) feat and the attack misses, you can Stride up to (\d+) feet instead\.$/i;
+    // (Healing just after the damage, Crown of the Fire Eater's "Just after taking any remaining fire damage, you regain a number of Hit Points equal
+    // to 15 or the fire damage dealt by the triggering attack before damage resistance, whichever is less": bonus.healAfter { type, max } —
+    // scripts/heal-after.js, from the damage as PF2e applies it, 2026-10-27.)
+    const HEAL_AFTER = /^Just after taking any remaining (\w+) damage, you regain a number of Hit Points equal to (\d+) or the \1 damage dealt by the triggering attack before damage resistance, whichever is less\.$/i;
+    const healAfter = notes.map((note) => [note, HEAL_AFTER.exec(String(note).trim())]).find(([, match]) => match);
+    if (healAfter && bonus.against) {
+        bonus.healAfter = { type: healAfter[1][1].toLowerCase(), max: Number(healAfter[1][2]) };
+        notes.splice(notes.indexOf(healAfter[0]), 1);
+    }
     const limits = notes.filter((note) => LIMIT.test(String(note).trim()) || FEAT_MOVE.test(String(note).trim()));
     if (limits.length) bonus.limits = limits.map((note) => String(note).trim()).map((note) => (FEAT_MOVE.test(note) ? note.replace(FEAT_MOVE, "With the $1 feat, if the attack misses, it can Stride up to $2 feet instead (its own move).") : note));
     const kept = (animal ? notes.filter((note) => !ANIMAL.test(String(note).trim())) : notes).filter((note) => !limits.includes(note));
