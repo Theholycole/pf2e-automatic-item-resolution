@@ -17,6 +17,14 @@ export async function reviveCreature(target, name, revive, state) {
     if (!isDead(actor)) return [`${name} isn't dead: nothing to bring back.`];
     const lines = [];
     const context = { item: state.item ?? {}, user: state.user ?? {}, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID };
+    // (Its full Hit Points, its spells and pools kept, and a boon for its days — The Deck of Destiny's Resurrect at a critical success:
+    // revive.hp "max", revive.keepPools, revive.boon { name, days, words, rules }, 2026-10-27.)
+    const hp = revive.hp === "max" ? Math.max(1, Number(actor.system?.attributes?.hp?.max) || 1) : revive.hp;
+    if (revive.boon) {
+        const boon = itemNoteSource({ name: revive.boon.name ?? "boon", words: revive.boon.words, duration: { mode: "fixed", value: revive.boon.days, unit: "days", expiry: "turn-start" }, img: "icons/svg/angel.svg" }, context);
+        await actor.createEmbeddedDocuments("Item", [{ ...boon, system: { ...boon.system, rules: revive.boon.rules ?? [] } }]);
+        lines.push(`${name}: ${revive.boon.words} for ${revive.boon.days} days.`);
+    }
     if (revive.debilitation) {
         const debilitated = itemNoteSource({ name: "debilitated", words: revive.debilitation.words, duration: { mode: "fixed", value: revive.debilitation.days, unit: "days", expiry: "turn-start" } }, context);
         await actor.createEmbeddedDocuments("Item", [{ ...debilitated, system: { ...debilitated.system, rules: revive.debilitation.rules ?? [] } }]);
@@ -25,8 +33,8 @@ export async function reviveCreature(target, name, revive, state) {
     if (actor.statuses?.has?.("dead")) await actor.toggleStatusEffect?.("dead", { active: false });
     for (const slug of ["dying", "unconscious"]) if (actor.hasCondition?.(slug)) await actor.decreaseCondition(slug, { forceRemove: true });
     const focus = actor.system?.resources?.focus;
-    await actor.update({ "system.attributes.hp.value": revive.hp, ...(Number(focus?.value) > 0 ? { "system.resources.focus.value": 0 } : {}) });
+    await actor.update({ "system.attributes.hp.value": hp, ...(Number(focus?.value) > 0 && !revive.keepPools ? { "system.resources.focus.value": 0 } : {}) });
     await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: "back from death", words: revive.words, duration: null }, context)]);
-    lines.unshift(`${name} returns to life with ${revive.hp} Hit Point${revive.hp === 1 ? "" : "s"}.`);
+    lines.unshift(`${name} returns to life with ${hp} Hit Point${hp === 1 ? "" : "s"}${revive.hp === "max" ? " (its full Hit Points)" : ""}.`);
     return lines;
 }

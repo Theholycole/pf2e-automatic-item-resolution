@@ -11,7 +11,9 @@ import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { isOwnSave, saveText } from "../src/live/poison-card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
-import { castPenaltySource } from "../src/live/card.js";
+import { castPenaltySource, checkGateMet, gateOption, gateText, previewLines } from "../src/live/card.js";
+import { sinVulnerabilityOf, sinVulnerable } from "../src/live/sin-vulnerability.js";
+import { periodOf } from "../src/live/activations-card.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
@@ -99,4 +101,38 @@ test("The Whispering Reeds: the +2 to Recall Knowledge about Nhimbaloth an Effec
     assert.deepEqual([done(bonus), routeOf(bonus), effect.rules[0].selector, effect.rules[0].value, effect.rules[0].predicate], [true, "item", "skill-check", 2, ["action:recall-knowledge"]]);
     assert.deepEqual([done(cast), cast.notes, cast.choices.map((choice) => [choice.spell.name, choice.targets])], [true, undefined, [["Wave of Despair", true], ["Fear", true], ["Paranoia", true], ["Phantasmal Killer", true]]]);
     assert.ok(cast.castLines.some((line) => /in place of its cone/.test(line)));
+});
+
+test("The Deck of Destiny's Resurrect: the ritual's DC 50 Occultism check, then each result's way at the dead creature, gated by that check", () => {
+    const resurrect = activations("The Deck of Destiny")[3];
+    assert.deepEqual([done(resurrect), routeOf(resurrect), resurrect.once, resurrect.trigger.frequency.per, resurrect.ways.length], [true, "ways", undefined, "year", 4]);
+    const [check, critical, success, failure] = resurrect.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(check), isOwnSave(check), saveText(check)], ["save", true, "DC 50 Occultism check"]);
+    assert.deepEqual([routeOf(critical), critical.item.recipient, critical.item.revive.hp, critical.item.revive.keepPools, critical.checkGate], ["item", "targets", "max", true, { statistic: "occultism", dc: 50, degree: "criticalSuccess" }]);
+    assert.deepEqual(critical.item.revive.boon.rules.map((rule) => [rule.selector, rule.type, rule.value]), [["attack-roll", "status", 1], ["perception", "status", 1], ["saving-throw", "status", 1], ["skill-check", "status", 1]]);
+    assert.deepEqual([success.item.revive.hp, success.item.revive.debilitation, success.checkGate.degree], [1, undefined, "success"]);
+    assert.deepEqual([routeOf(failure), failure.whisper.text.length > 0], ["whisper", true]);
+    // (The gate: a statistic's check at exactly its degree; an action's at least a success, as before.)
+    assert.equal(gateOption(critical.checkGate), "check:statistic:occultism");
+    assert.deepEqual([3, 2].map((degree) => checkGateMet(critical.checkGate, degree)), [true, false]);
+    assert.deepEqual([2, 1].map((degree) => checkGateMet({ action: "recall-knowledge", dc: 20 }, degree)), [true, false]);
+    assert.match(gateText(critical.checkGate), /a critical success at its user's DC 50 Occultism check/);
+    // (Once a year, counted in years of world time.)
+    assert.notEqual(periodOf({ max: 1, per: "year" }, { worldTime: 0 }), periodOf({ max: 1, per: "year" }, { worldTime: 31_536_000 }));
+    assert.equal(periodOf({ max: 1, per: "year" }, { worldTime: 0 }), periodOf({ max: 1, per: "year" }, { worldTime: 86_400 * 300 }));
+});
+
+test("Soulcutter (Heroic): Soulcutting Storm's spirit damage an Effect of PF2e's rules on its caster, Shame Demon a demon's sin vulnerability set off", () => {
+    const storm = activation("Soulcutter (Heroic)", "Soulcutting Storm");
+    assert.deepEqual([done(storm), routeOf(storm), storm.notes, storm.castCaster.rules[0].key, storm.castCaster.rules[0].value, storm.castCaster.rules[0].predicate], [true, "cast", undefined, "DamageAlteration", "spirit", ["item:slug:weapon-storm"]]);
+    const shame = activation("Soulcutter (Heroic)", "Shame Demon");
+    assert.deepEqual([done(shame), routeOf(shame), shame.noteOnly, shame.item.recipient, shame.item.sinVulnerability, shame.item.immunity.duration.value, shame.targeting.range], [true, "item", undefined, "targets", { only: ["demon"] }, 24, "30 feet"]);
+    assert.ok(previewLines({ plan: shame }).some((line) => /sin vulnerability of the demon targeted/.test(line)));
+    // (A demon's own, as the bestiaries give it: Monster Core's succubus.)
+    const bestiary = readDocuments(path.join(PACKS, "pathfinder-monster-core"));
+    const succubus = bestiary.find((doc) => doc.name === "Succubus");
+    const sin = sinVulnerabilityOf(succubus.items);
+    assert.deepEqual([sin.name, sin.formula], ["Rejection Vulnerability", "2d6[mental]"]);
+    assert.match(sin.text, /takes 2d6 mental damage/);
+    assert.deepEqual([sinVulnerable(["demon", "fiend"], ["demon"]), sinVulnerable(["devil"], ["demon"]), sinVulnerabilityOf([{ name: "Claw", type: "melee" }])], [true, false, null]);
 });

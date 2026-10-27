@@ -10,7 +10,7 @@ import { impulseNumbers } from "../src/compiler/cast-changes.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
 import { arrivalAfterMove } from "./cast-arrival.js";
-import { castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../src/live/card.js";
+import { castDegreeEffectSource, castPenaltySource, itemNoteSource, ruleEffectSource } from "../src/live/card.js";
 import { castNoteText } from "../src/compiler/cast-note.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
@@ -134,6 +134,12 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
                 }
             }
             if (!targetTokens.length) lines.push(`Target the creatures in its area to leave out the ${state.plan.castTraits.immune.join(" and ")}s and give the penalty.`);
+        }
+        // (PF2e's rules on its caster for the cast, before it — Soulcutter (Heroic)'s Soulcutting Storm, all its damage spirit: a DamageAlteration
+        // on that spell's damage, src/compiler/legend-readings.js, 2026-10-27; the spell module rolls spell damage through PF2e.)
+        if (state.plan.castCaster) {
+            await actor.createEmbeddedDocuments("Item", [ruleEffectSource(state.plan.castCaster, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${actor.name}: ${state.plan.castCaster.words}.`);
         }
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);

@@ -18,6 +18,7 @@
 
 import { sentencesOf } from "./lasting.js";
 import { conditionUuid } from "./row-readings.js";
+import { readItemImmunity } from "./immunity.js";
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const fixed = (value, unit) => ({ mode: "fixed", value, unit, expiry: "turn-start", anchor: "effect-start" });
@@ -226,6 +227,74 @@ const READINGS = [
                 choices: plan.choices.map((choice, index) => (index === 0 ? { ...choice, area: false, targets: true } : choice)),
                 castLines: ["Wave of Despair at one creature within 30 feet only, in place of its cone: target just that one.", "Each at the lowest rank it can be cast, Fear at 3rd."]
             };
+        }
+    },
+    {
+        // (A 10th-rank Resurrect once a year, its user the primary caster: the ways card — the ritual's own DC 50 Occultism check, then the
+        // dead creature targeted brought back as that check's result says, each way gated by it (plan.checkGate { statistic, degree }).)
+        name: "The Deck of Destiny",
+        sentences: [
+            /^You attempt to undo a creature's untimely death and return them to life\.$/,
+            /^The deck performs a 10th-rank Resurrect ritual\.$/,
+            /^This ritual doesn't have any cost and doesn't require any secondary casters\.$/,
+            /^Instead, you are the primary caster and must attempt a @Check\[occultism\|dc:(\d+)\] check to complete the ritual as you perform a Harrowing, perform that same harrowing in reverse in an attempt to pull back the threads of fate, and perform one final harrowing to .rewrite. the target's destiny\.$/
+        ],
+        card: ([, , , check], plan, { base, info }) => {
+            const dc = Number(check[1]);
+            const gate = (degree) => ({ statistic: "occultism", dc, degree });
+            const changed = "changed in some way by its time in the afterlife (a personality shift, a streak of white hair, a strange birthmark: the GM's)";
+            const back = (revive, degree) => ({ ...own({ notes: ["Target the dead creature, then Apply."] }), targeting: { target: "the dead creature", range: null, area: null }, checkGate: gate(degree), item: { recipient: "targets", revive } });
+            const STATUS = ["attack-roll", "perception", "saving-throw", "skill-check"].map((selector) => ({ key: "FlatModifier", selector, type: "status", value: 1, label: "Resurrected (inspired)" }));
+            return {
+                ...ways([
+                    { name: `The ritual's check (DC ${dc} Occultism)`, html: `<p>Its user, the primary caster, attempts the DC ${dc} Occultism check.</p>`, card: ownSave("occultism", dc, {}, { notes: [
+                        "Then pick the way for its result, the dead creature targeted.",
+                        "No cost and no secondary casters. A dead creature of up to 20th level, however long ago it died; its body needn't be there if its user knows its name and once touched part of it.",
+                        "If Pharasma has decided its time has come, or it doesn't wish to return, the ritual fails once the check is made: the GM's call."
+                    ] }) },
+                    { name: "Critical success: back with full Hit Points", html: "<p>It returns to life with full Hit Points.</p>", card: back({ hp: "max", keepPools: true, words: `Back from death by a 10th-rank Resurrect: its spells prepared and the points in its pools as when it died, any long-term debilitations still on it, ${changed}`, boon: { name: "inspired", days: 7, words: "+1 status bonus to attack rolls, Perception, saving throws and skill checks, inspired by an agent of its deity it met", rules: STATUS } }, "criticalSuccess") },
+                    { name: "Success: back with 1 Hit Point", html: "<p>It returns to life with 1 Hit Point.</p>", card: back({ hp: 1, words: `Back from death by a 10th-rank Resurrect: no spells prepared or points in any pools, any long-term debilitations still on it, ${changed}; at this rank no debilitation from the Boneyard` }, "success") },
+                    { name: "Critical failure: something else returns", html: "<p>Something goes horribly wrong.</p>", card: { builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text: "Something goes horribly wrong with the Resurrect: an evil spirit possesses the body, it rises as a special kind of undead, or a worse fate befalls it. The GM decides which." } } }
+                ], { base, info }),
+                once: undefined,
+                trigger: { event: "use", frequency: { max: 1, per: "year", raw: "once per year" } },
+                item: { activation: { frequency: { max: 1, per: "year", raw: "once per year" } } }
+            };
+        }
+    },
+    {
+        // (A 9th-rank Weapon Storm whose damage is all spirit: PF2e's DamageAlteration on its caster's damage of that spell, an Effect before the
+        // cast (plan.castCaster) — the spell module rolls spell damage through PF2e, so the caster's rules apply; who's possessed the GM's.)
+        name: "Soulcutter (Heroic): Soulcutting Storm",
+        sentences: [
+            /^Soulcutter casts a 9th-rank Weapon Storm to your specification, but all damage caused by the spell is spirit damage\.$/,
+            /^If used to damage a creature that's possessing another creature, this spell does no damage to the possessed creature\.$/
+        ],
+        card: (found, plan) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Weapon Storm" || plan.rank !== 9) return null;
+            return {
+                keep: true,
+                notes: undefined,
+                partial: undefined,
+                automation: { level: "automatic" },
+                castCaster: { name: "spirit Weapon Storm", words: "All the damage its Weapon Storm deals is spirit damage", rules: [{ key: "DamageAlteration", mode: "override", property: "damage-type", selectors: ["spell-damage"], value: "spirit", predicate: ["item:slug:weapon-storm"] }], duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start" } },
+                castLines: ["All its damage is spirit damage (an Effect on its caster till its next turn).", "A creature that's possessed takes none of its damage, only the one possessing it: who that is, the GM's call."]
+            };
+        }
+    },
+    {
+        // (A demon's sin vulnerability set off at 30 feet, then 24 hours' immunity: the item card at the demon targeted, its own damage rolled and
+        // its words whispered to its user (plan.item.sinVulnerability, scripts/sin-vulnerability.js).)
+        name: "Soulcutter (Heroic): Shame Demon",
+        sentences: [
+            /^Soulcutter targets a demon she can see or hear within (\d+) feet, causing the blade's green light to well up around the demon for a moment\.$/,
+            /^The demon suffers the effects of its sin vulnerability, if it has any, and is then temporarily immune to Shame Demon for 24 hours\.$/,
+            /^If Soulcutter's partner wasn't aware of the normal effects that trigger that demon's sin vulnerability, they learn it at this time\.$/
+        ],
+        card: ([target, immune]) => {
+            const immunity = readItemImmunity(immune.input, { name: "Soulcutter (Heroic)", activation: "Shame Demon" })?.immunity;
+            if (!immunity) return null;
+            return { ...own({ notes: ["Target the demon (one Soulcutter can see or hear), then Apply."] }), targeting: { target: "a demon", range: `${target[1]} feet`, area: null }, item: { recipient: "targets", sinVulnerability: { only: ["demon"] }, immunity } };
         }
     }
 ];

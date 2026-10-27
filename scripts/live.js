@@ -16,7 +16,7 @@ import { applyEndEarlyCard } from "./end-early.js";
 import { applyDropCard } from "./drop-held.js";
 import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
-import { armedMarkSource } from "../src/live/card.js";
+import { armedMarkSource, checkGateMet, gateOption, gateWords } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -38,6 +38,7 @@ import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { reviveCreature } from "./revive.js";
+import { setOffSinVulnerability } from "./sin-vulnerability.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
@@ -677,16 +678,17 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     }
     // (Only after its user's check succeeds, Diplomat's Badge's Recall Knowledge at DC 20: its latest one in the chat, its total against the DC —
     // refused, nothing applied, when there's none or it fell short. src/compiler/consumables.js checkGated.)
+    // (Or a statistic's check at a degree, The Deck of Destiny's Resurrect: src/live/card.js checkGateMet, 2026-10-27.)
     const gate = state.plan.checkGate;
     if (gate) {
-        const option = `action:${gate.action}`;
+        const option = gateOption(gate);
         const latest = (game.messages?.contents ?? []).slice(-40).reverse().find((entry) => (entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null)) === state.user.actorUuid && (entry.flags?.pf2e?.context?.options ?? []).includes(option) && entry.rolls?.[0]);
-        const words = gate.action.replace(/-/g, " ");
+        const words = gateWords(gate);
         if (!latest) throw new Error(`Roll ${state.user.name}'s ${words} first (DC ${gate.dc}), then press Apply.`);
         const roll = latest.rolls[0];
         const natural = roll.dice?.[0]?.total ?? null;
-        if (degreeOf(Number(roll.total), gate.dc, natural) < 2) {
-            const over = { ...state, status: "applied", results: [`${state.user.name}'s ${words} (${roll.total}) didn't reach DC ${gate.dc}: no Effect.`] };
+        if (!checkGateMet(gate, degreeOf(Number(roll.total), gate.dc, natural))) {
+            const over = { ...state, status: "applied", results: [gate.degree ? `${state.user.name}'s ${words} (${roll.total} against DC ${gate.dc}) isn't the result this is for: no Effect.` : `${state.user.name}'s ${words} (${roll.total}) didn't reach DC ${gate.dc}: no Effect.`] };
             return message.update({ content: cardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
         }
     }
@@ -1228,6 +1230,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     }
     // (Brought back to life, Elixir of Rejuvenation given to the dead and Gift of the Poisoned Heart: scripts/revive.js.)
     if (state.plan.item?.revive) lines.push(...await reviveCreature(target, recipient.name, state.plan.item.revive, state));
+    // (A demon's sin vulnerability set off, Soulcutter (Heroic)'s Shame Demon: scripts/sin-vulnerability.js, 2026-10-27.)
+    if (state.plan.item?.sinVulnerability) lines.push(...await setOffSinVulnerability(target, recipient.name, state.plan.item.sinVulnerability, state));
     // (The Tea Ceremony's removed conditions: Longnight Tea's fatigued.)
     if (state.ceremony) for (const slug of state.plan.item?.ceremony?.removes ?? []) {
         if (!target.actor?.hasCondition?.(slug)) continue;

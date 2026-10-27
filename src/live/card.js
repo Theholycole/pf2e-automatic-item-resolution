@@ -152,7 +152,7 @@ export function previewLines(state) {
     // (A condition until the end of the user's rage, src/compiler/rage-time.js.)
     if (plan?.item?.untilRage) lines.push(`${untilRageText(plan.item.untilRage)}, while raging`);
     // (Only after its user's check succeeds, Diplomat's Badge's Recall Knowledge: src/compiler/consumables.js checkGated.)
-    if (plan?.checkGate) lines.push(`Only after a successful ${plan.checkGate.action.replace(/-/g, " ")} (DC ${plan.checkGate.dc}, with the skill the GM says fits): roll it first, then Apply checks its latest one`);
+    if (plan?.checkGate) lines.push(gateText(plan.checkGate));
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
     if (plan?.item?.resist?.length) lines.push(resistanceText(plan.item.resist));
     // (A Speed of a new kind, src/compiler/rows.js: the card's own Effect.)
@@ -188,6 +188,8 @@ export function previewLines(state) {
     if (plan?.item?.reshape) lines.push(reshapeText(plan.item.reshape));
     // (Its maximum Hit Points and its afflictions, src/compiler/restore.js.)
     if (plan?.item?.restore) lines.push(restoreText(plan.item.restore));
+    // (A demon's sin vulnerability set off, src/live/sin-vulnerability.js: Soulcutter (Heroic)'s Shame Demon.)
+    if (plan?.item?.sinVulnerability) lines.push(`Sets off the sin vulnerability of the ${(plan.item.sinVulnerability.only ?? []).join(" or ") || "creature"} targeted (its own damage, rolled), and whispers to its user what sets it off`);
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
     if (plan?.item?.recovery) lines.push(recoveryText(plan.item.recovery));
     // (What a reduction alone leaves to the table: Cinnamon Nostalgia Bun's flat check.)
@@ -217,6 +219,19 @@ export function previewLines(state) {
     // (A reduction's own notes are above, as "Also: …".)
     if (!plan?.reduce) for (const note of plan?.notes ?? []) lines.push(note);
     return lines;
+}
+
+// A check its card needs first (plan.checkGate): a skill action at a DC, Diplomat's Badge's Recall Knowledge — or a statistic's check at a
+// degree, The Deck of Destiny's DC 50 Occultism for Resurrect's critical success (2026-10-27: { statistic, dc, degree }).
+const GATE_DEGREES = { criticalFailure: 0, failure: 1, success: 2, criticalSuccess: 3 };
+const GATE_WORDS = ["a critical failure", "a failure", "a success", "a critical success"];
+export const gateOption = (gate) => (gate.statistic ? `check:statistic:${gate.statistic}` : `action:${gate.action}`);
+export const gateWords = (gate) => (gate.statistic ? `${gate.statistic.charAt(0).toUpperCase()}${gate.statistic.slice(1)} check` : gate.action.replace(/-/g, " "));
+// (Its degree as the roll's: at least a success, or exactly the one it's for when it names one.)
+export const checkGateMet = (gate, degree) => (gate.degree ? degree === GATE_DEGREES[gate.degree] : degree >= 2);
+export function gateText(gate) {
+    if (gate.statistic) return `Only after ${GATE_WORDS[GATE_DEGREES[gate.degree ?? "success"]]} at its user's DC ${gate.dc} ${gateWords(gate)}: roll it first, then Apply checks its latest one`;
+    return `Only after a successful ${gateWords(gate)} (DC ${gate.dc}, with the skill the GM says fits): roll it first, then Apply checks its latest one`;
 }
 
 // The PF2e Effect to create from its compendium source: the grade the item is (PF2e's
