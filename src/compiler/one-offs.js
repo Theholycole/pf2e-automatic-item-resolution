@@ -9,6 +9,8 @@ export const ONE_OFFS = new Map([
     // (2026-10-27: Catch Rock as an Athletics check — no other item's; The Juggler's grab has no check and is an artifact's.)
     // (2026-10-27: the loaded mutagen drunk through the collar at half its time — Potion Patch's use through an item, but no other item halves it.)
     ["Collar of the Shifting Spider", { rule: "as initiative is rolled, 1 piercing damage to its wearer and the mutagen loaded in it takes effect as if drunk, its duration halved", build: "the item card's pick of its user's mutagens (as Potion Patch's potions), its own card with each Effect's time halved, the dose used up and the 1 damage dealt" }],
+    // (2026-10-27: a prepared spell kept by expending another — no other item trades prepared spells.)
+    ["Spellbook of Redundant Enchantment: Retain Incantation", { rule: "a prepared mental spell that had no effect (every target critically succeeded) is cast again later in place of another prepared spell of equal or higher rank, which is lost", build: "a card listing its user's expended prepared mental spells and unexpended ones of that rank or higher: the first's slot restored, the second's expended (PF2e's spellcasting entry slots)" }],
     ["Belt of Giant Strength", { rule: "an Athletics check against the thrower's Athletics DC (a hazard's DC, else DC 35) to catch the triggering rock: success no damage and the rock in hand, failure half damage, critical failure full damage; a free hand needed, Release as part of it", build: "the user's own check card at a fixed DC whose degree readies the immunity or the half damage against the triggering attack (src/compiler/readied-bonus.js halfDamage, immunity)" }]
 ]);
 

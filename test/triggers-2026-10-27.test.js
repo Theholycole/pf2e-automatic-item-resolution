@@ -320,3 +320,25 @@ test("consumables: Fulu of the Drunken Monkey's two ways, Emergency Eye's sight,
     const lodestone = consumable("Persistent Lodestone");
     assert.deepEqual([routeOf(lodestone), lodestone.objects, done(lodestone)], ["objects", { op: "reload", reload: "1", recalled: true }, true]);
 });
+
+test("a Strike of its own after the trigger: Bloodstride Blade's teleport beside the bleeding creature, then its Strike with it Off-Guard; Vine of Roses' Holy Light on its weapon attack roll", () => {
+    const blood = activation("Bloodstride Blade", "Call of the Bloodthirst");
+    assert.equal(routeOf(blood), "strike");
+    assert.deepEqual([blood.strike.offGuard, blood.strike.own, blood.item.move, blood.trigger.frequency.per, done(blood)], [true, true, { within: 5, speedTimes: null, from: "target" }, "hour", true]);
+    const vine = activation("Vine of Roses", 1);
+    assert.equal(routeOf(vine), "strike");
+    assert.deepEqual([vine.strike.cast.name, vine.strike.cast.rank, vine.strike.cast.attackFromHit, vine.strike.noDamage, vine.builtin, done(vine)], ["Holy Light", 3, true, true, undefined, true]);
+    assert.ok(strikeLines(vine).some((line) => /Holy Light \(rank 3\) cast at the target, the hit for its attack roll/.test(line)));
+});
+
+test("Storm Flash's Divert Lightning: immunity to the triggering electricity for the creature targeted, after its user's own attack roll; Suit of Armoire's two ways; Spellbook of Redundant Enchantment a one-off", () => {
+    const divert = activation("Storm Flash", "Divert Lightning");
+    assert.equal(routeOf(divert), "fortune");
+    assert.deepEqual([divert.bonus.immunity, divert.bonus.recipient, divert.bonus.against, divert.targeting.range, done(divert)], [{ type: "electricity" }, "target", true, "10 feet", true]);
+    assert.match(divert.bonus.limits[0], /^Roll first: its user's melee attack roll with Storm Flash against the electricity effect's DC/);
+    assert.deepEqual(activation("Storm Flash (Greater)", "Divert Lightning").bonus.immunity, { type: "electricity" });
+    const armoire = activation("Suit of Armoire", 1);
+    assert.deepEqual([routeOf(armoire), armoire.ways.map((way) => way.name), armoire.ways.every((way) => done(way.plan))], ["ways", ["An enemy's Strike hit it", "It failed a Reflex save"], true]);
+    const spellbook = activation("Spellbook of Redundant Enchantment", "Retain Incantation");
+    assert.deepEqual([spellbook.decided, done(spellbook)], ["one-off", true]);
+});

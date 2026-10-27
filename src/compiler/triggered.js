@@ -471,9 +471,105 @@ export function withEchoedCall(plan, { item, activation, index }) {
     return { ...base, builtin: "whisper", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, whisper: { text: `It learns where the creature that located it is and what it looks like (the GM says), and for the next hour, while they're within ${telepathy[1]} of each other, they can communicate telepathically.` }, decided: "information" };
 }
 
+// --- A Strike of its own after the trigger --------------------------------------------------------------------------------------------------------
+
+// The strike card's plan (src/compiler/strikes.js strikePlan's shape): its user's next Strike with the item, its riders on a hit.
+function strikeCard(base, { range = null, offGuard = false, cast = null, noDamage = false, lines = [] } = {}) {
+    const rows = Object.fromEntries(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [degree, { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] }]));
+    return {
+        ...base,
+        automation: { level: "automatic" },
+        targeting: { target: "the creature the Strike hits", range: null, area: null },
+        trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free", ...(base.trigger?.frequency ? { frequency: base.trigger.frequency } : {}) },
+        resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: rows },
+        strike: { range, save: null, own: true, damage: [], attack: null, alteration: null, ...(offGuard ? { offGuard: true } : {}), ...(cast ? { cast } : {}), ...(noDamage ? { noDamage: true } : {}), ...(lines.length ? { lines } : {}), unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: false, notes: [] }
+    };
+}
+// (Bloodstride Blade's Call of the Bloodthirst, "You cast translocate, appearing adjacent to the triggering creature, then Strike it with this weapon.
+// The creature is Off-Guard to the attack": the teleport card beside it (item.move, from the creature targeted, within 5 feet) and the strike card,
+// its target Off-Guard to it (PF2e's EphemeralEffect); the casting's traits a line.)
+const TRANSLOCATED = /^You cast translocate, appearing adjacent to the triggering creature, then Strike it with this weapon\.$/i;
+const OFF_GUARD_TO = /^The creature is Off-Guard to the attack\.$/i;
+export function withTranslocatedStrike(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (sentences.length !== 2 || !TRANSLOCATED.test(sentences[0]) || !OFF_GUARD_TO.test(sentences[1]) || item?.type !== "weapon") return plan;
+    const base = keptBase(plan, item, { activation, index });
+    const card = strikeCard({ ...base, item: { ...base.item, move: { within: 5, speedTimes: null, from: "target" } } }, { offGuard: true, lines: ["First it casts Translocate: the teleport card moves it to a space next to the bleeding creature (target that creature); then it Strikes that creature with the blade"] });
+    return { ...card, partial: undefined, notes: undefined };
+}
+// (Vine of Roses' "The vine of roses casts a 3rd-rank Holy Light spell with the triggering creature as the target. In place of a spell attack roll,
+// make a weapon attack roll with the vine of roses using the same multiple attack penalty as the triggering Strike": the strike card, its attack
+// roll the spell's — strike.cast with attackFromHit, the spell module's castFromItem at its degree (attackDegree) on a hit —, no weapon damage of
+// its own (strike.noDamage); its multiple attack penalty the user's PF2e button.)
+const SPELL_LINK = /@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{([^}]+)\}/;
+const UNLEASHED = /^The weapon unleashes its light in an attempt to destroy the target\.$/i;
+const CASTS_AT = /^The [\w' -]+? casts an? (\d+)(?:st|nd|rd|th)-rank ([A-Z][\w' -]+?) spell with the triggering creature as the target\.$/i;
+const WEAPON_ATTACK = /^In place of a spell attack roll, make a weapon attack roll with the [\w' -]+? using the same multiple attack penalty as the triggering Strike\.$/i;
+export function withWeaponCast(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const casts = sentences.map((sentence) => CASTS_AT.exec(sentence)).find(Boolean);
+    const link = SPELL_LINK.exec(String(activation.html ?? ""));
+    if (!casts || !link || link[2] !== casts[2] || !sentences.some((sentence) => WEAPON_ATTACK.test(sentence)) || !sentences.every((sentence) => CASTS_AT.test(sentence) || WEAPON_ATTACK.test(sentence) || UNLEASHED.test(sentence))) return plan;
+    const { builtin, spell, choices, castDuration, ...rest } = plan ?? {};
+    const base = keptBase(plan, item, { activation, index });
+    const card = strikeCard(base, { cast: { uuid: link[1], name: link[2], rank: Number(casts[1]), dc: null, attackFromHit: true }, noDamage: true, lines: ["Its attack roll is the spell's: at the creature that triggered it, with the same multiple attack penalty as that Strike (PF2e's button for it)"] });
+    return { ...card, partial: undefined, notes: undefined };
+}
+
+// --- Electricity drawn off a creature ------------------------------------------------------------------------------------------------------------
+
+// (Storm Flash's Divert Lightning, "Choose one eligible creature to protect and roll a melee attack roll against the DC of the electricity effect. If
+// you succeed, the chosen creature takes no electricity damage from the triggering effect": a readied Effect on the creature its presser targets —
+// within 10 feet, its user or another — immune to electricity damage against what triggered it (bonus.immunity, bonus.against, spent by that
+// damage); the melee attack roll against the effect's DC its user's own, rolled first, the card's line: Apply after a success.)
+const DIVERTS = /^You try to divert the electricity off course, to be absorbed by [\w' -]+?\.$/i;
+const PROTECTS = /^Choose one eligible creature to protect and roll a melee attack roll against the DC of the (\w+) effect\.$/i;
+const NONE_TAKEN = /^If you succeed, the chosen creature takes no (\w+) damage from the triggering effect\.$/i;
+export function withDivertedEnergy(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const protects = sentences.length === 3 && DIVERTS.test(sentences[0]) ? PROTECTS.exec(sentences[1]) : null;
+    const none_ = protects ? NONE_TAKEN.exec(sentences[2]) : null;
+    if (!none_ || none_[1].toLowerCase() !== protects[1].toLowerCase()) return plan;
+    const within = /\bwithin (\d+) feet of you\b/i.exec(String(activation.trigger ?? ""))?.[1] ?? null;
+    const type = none_[1].toLowerCase();
+    const base = keptBase(plan, item, { activation, index });
+    return {
+        ...base,
+        builtin: "readied-bonus",
+        automation: { level: "automatic" },
+        targeting: { target: "1 creature", range: within ? `${within} feet` : null, area: null },
+        bonus: { modifiers: [], resistance: null, immunity: { type }, against: true, recipient: "target", duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], limits: [`Roll first: its user's melee attack roll with ${item.name} against the ${type} effect's DC (its own roll); press Apply only if it succeeds.`, `Target the creature it protects (itself or one within ${within ?? "10"} feet).`] }
+    };
+}
+
+// --- An armor that falls apart to shield its wearer -----------------------------------------------------------------------------------------------
+
+// (Suit of Armoire's reaction, "The triggering attack is a failure, or you succeed at your Reflex save. The suit of armoire falls apart around you into
+// its constituent panels, leaving you unarmored": the ways card, by what triggered it — the hit a failure (no damage from it), or the save a success
+// — the GM's to apply in place of what was rolled, and the suit taken off, its user's own; lines of each way's card.)
+const COLLAPSES = /^You forgot a peg or bolt when you were assembling the [\w' -]+?, causing it to collapse to pieces around you, though this shields you from harm\.$/i;
+const EITHER = /^The triggering attack is a failure, or you succeed at your Reflex save\.$/i;
+const UNARMORED = /^The [\w' -]+? falls apart around you into its constituent panels, leaving you unarmored\.$/i;
+export function withCollapsedArmor(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html)).filter((sentence) => !/^Note\s*:\s*This item originates from\b/i.test(sentence));
+    if (sentences.length !== 3 || !COLLAPSES.test(sentences[0]) || !EITHER.test(sentences[1]) || !UNARMORED.test(sentences[2])) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    const off = `${item.name} falls apart into its panels: its user is unarmored (take it off).`;
+    return {
+        ...base,
+        builtin: "ways",
+        automation: { level: "automatic" },
+        ways: [
+            { name: "An enemy's Strike hit it", html: "", plan: ownCard(base, {}, ["The triggering Strike is a failure instead: no damage from it (the GM doesn't apply it).", off]) },
+            { name: "It failed a Reflex save", html: "", plan: ownCard(base, {}, ["Its Reflex save is a success instead (the GM applies the success's result in place of the failure's).", off]) }
+        ],
+        once: true
+    };
+}
+
 // --- The readers, in order --------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike, withNoteRule, withAvoidedDeath, withEchoedCall];
+const READERS = [withSuppressed, withSubstituteRoll, withRedirectedShot, withBleedWorse, withBeguiledAttacker, withAbsorbedSpell, withAlertWearers, withDrawnStrike, withNoteRule, withAvoidedDeath, withEchoedCall, withTranslocatedStrike, withWeaponCast, withDivertedEnergy, withCollapsedArmor];
 
 // The activation's plan → the plan its trigger's effect makes, or the same plan. entry: { activation, index } (compileEach's).
 export function withTriggered(plan, entry, item) {
