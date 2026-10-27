@@ -2489,6 +2489,46 @@ export const cases = {
         }
     },
 
+    // Nightmare's Lament's Fuming Cloak (2026-10-27): its wielder gets PF2e's Aura: Fuming Cloak and the zone around it; the foe beside it starting
+    // its turn there gets the DC 23 Fortitude save's card — failed, Sickened 2 and immune for a minute; its wielder's own turn start gives none,
+    // nor the foe's next (immune).
+    async nightmareFumingCloak(scene) {
+        await clearSquares(scene, [[12, 5], [13, 5]]);
+        const { actor: user, token: userToken } = await creature(scene, "Fuming Wielder", { type: "character", x: 12, y: 5 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Fuming Neighbour", { x: 13, y: 5, alliance: "opposition", hp: 100, save: -30 });
+        const lament = await give(user, "Nightmare's Lament");
+        await lament.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const combat = await Combat.create({ scene: scene.id, active: true, flags: { [NS]: { [FIXTURE]: true } } });
+        try {
+            await combat.createEmbeddedDocuments("Combatant", [{ tokenId: userToken.id, sceneId: scene.id, actorId: user.id, initiative: 20 }, { tokenId: foeToken.id, sceneId: scene.id, actorId: foe.id, initiative: 10 }]);
+            await combat.startCombat();
+            await wait(500);
+            await game.modules.get(NS).api.live.activate(lament.uuid, 0);
+            const zone = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Nightmare/.test(region.name));
+            await until(() => zone() && user.itemTypes.effect.some((effect) => effect.name === "Aura: Fuming Cloak"), `the zone and the aura Effect (${user.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+            const saveCards = (since) => game.messages.contents.filter((message) => message.timestamp >= since && abilitySaveCard(message));
+            let since = Date.now();
+            await combat.nextTurn();
+            const card = await messageAfter(since, abilitySaveCard, { what: "the foe's turn-start save card", timeout: 10000 });
+            await rollAndApply(card);
+            await until(() => foe.getCondition?.("sickened")?.value === 2, `Sickened 2 (${foe.getCondition?.("sickened")?.value})`, { timeout: 8000 });
+            await until(() => foe.itemTypes.effect.some((effect) => /^Immune/i.test(effect.name)), `the immunity Effect (${foe.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+            since = Date.now();
+            await combat.nextTurn();
+            await wait(2000);
+            assert(!saveCards(since).length, "no save card at its wielder's turn start");
+            since = Date.now();
+            await combat.nextTurn();
+            await wait(2000);
+            const again = saveCards(since).filter((message) => (message.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).length);
+            assert(!again.length, `no save card for the immune foe (${again.length})`);
+            return { sickened: foe.getCondition?.("sickened")?.value, immune: foe.itemTypes.effect.filter((effect) => /^Immune/i.test(effect.name)).map((effect) => effect.name) };
+        } finally {
+            await combat.delete().catch(() => null);
+            for (const region of scene.regions.filter((entry) => /Nightmare/.test(entry.name))) await region.delete().catch(() => null);
+        }
+    },
+
     // Coldstar Pistols' two Strikes on one roll: the readied Strike's attack rolled twice keeping the higher (PF2e's RollTwice), and on a hit
     // the second Strike's damage roll posted by itself.
     async coldstarTwin(scene) {

@@ -9,7 +9,13 @@
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { durationIn } from "./rows.js";
 
-const AURA = /(?:^|[.;]\s+|\band\s+|\bEffect\s+)((?:Any|Each|A|any|each|a)(?: breathing)? creature that (begins|starts|ends) its turn|Creatures that (begin|start|end) their turn) (?:within (?:@Template\[[^\]]*\]\{)?(\d+) feet\}? of you|(adjacent to you)|in the (?:aura|area))( or moves into the area)? ((?:must (?:succeed at|attempt|make) an? @Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save(?:@UUID\[[^\]]*\]\{[^}]*\}|[^.@])*|takes @Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})? damage \(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\)))\./;
+const AURA = /(?:^|[.;]\s+|\band\s+|\bEffect\s+)((?:Any|Each|A|any|each|a)(?: breathing)? creature that (begins|starts|ends) its turn|Creatures that (begin|start|end) their turn) (?:within (?:@Template\[[^\]]*\]\{)?(\d+) feet\}? of you|(adjacent to you)|in the (?:aura|area))( or moves into the area)? ((?:must (?:succeed at|attempt|make) an? @Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save(?:@UUID\[[^\]]*\]\{[^}]*\}|[^.@])*|takes @Damage\[(?:[^\[\]]|\[[^\]]*\])*\](?:\{[^}]*\})? damage \(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? save\)|becomes (?:@UUID\[[^\]]*\]\{[A-Z][a-z]+(?: \d)?\}|[A-Z][a-z]+(?: \d)?) \(@Check\[(?:fortitude|reflex|will)\b[^\]]*\](?:\{[^}]*\})? negates\)))(?: and is then temporarily immune\b[^.]*)?\./;
+const SEES_THROUGH = /^The wielder of the [\w' -]+? can see through this smoke\.$/i;
+const SPARED = /^The wielder of the [\w' -]+?\s*, any creature currently holding its breath \(or that does not need to breathe\), and any creature immune to poison are immune to the aura's (\w+) effect but not the concealment\./i;
+// (Its area an aura around its wielder, Nightmare's Lament's "creates concealment in a 15-foot aura around the gun's wielder": that radius.)
+const AROUND_WIELDER = /\bin an? (\d+)-foot aura around (?:you|the [\w' -]+? wielder)\b/i;
+// (Its condition a save negates, Nightmare's Lament's "becomes Sickened 2 (@Check[fortitude|dc:23] negates)": the save or that condition.)
+const NEGATES = /^becomes ((?:@UUID\[[^\]]*\]\{[^}]*\}|[A-Z][a-z]+(?: \d)?)) \((@Check\[[^\]]*\](?:\{[^}]*\})?) negates\)$/i;
 const THROWN = /\bYou throw the [\w' -]+? (\d+) feet away from you\b[^.]*\.\s*For (\d+ (?:rounds?|minutes?)), [^.]*?\bin an? (\d+)-foot (radius|burst|emanation)\b/i;
 
 // The activation's html → the zone builtin's { area, centre, range, lasts, saves, notes, … } or null.
@@ -21,7 +27,8 @@ export function readAuraZone(html, name = "Aura") {
     if (aura[6]) when.push("enter");
     const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
     const thrown = THROWN.exec(plain);
-    if (!aura[4] && !aura[5] && !thrown) return null;
+    const wielder = AROUND_WIELDER.exec(plain);
+    if (!aura[4] && !aura[5] && !thrown && !wielder) return null;
     // (Its time: "Until the beginning of your next turn", "For 1 minute", "These effects last for 1 minute", the thrown one's.)
     const untilNext = /\bUntil the (?:beginning|start) of your next turn\b/i.test(plain);
     const lasting = /\bThese effects last for (\d+|one|an?) (rounds?|minutes?)\b/i.exec(plain);
@@ -31,7 +38,7 @@ export function readAuraZone(html, name = "Aura") {
     if (!lasts) return null;
     // (The creature's own save: the sentence as the target's, the lantern's "The fascination ends at the end of the creature's turn"
     // its own turn's.)
-    let words = aura[7].replace(/^must (?:make|attempt) an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save or\b/i, "must succeed at a $1 save or");
+    let words = aura[7].replace(/^must (?:make|attempt) an? (@Check\[[^\]]*\](?:\{[^}]*\})?) save or\b/i, "must succeed at a $1 save or").replace(NEGATES, "must succeed at a $2 save or become $1");
     const ownTurn = /\bThe fascination ends at the end of the creature's turn\b/i.test(plain);
     words = `The target ${words.replace(/^must\b/, "must")}.`;
     let plan = null;
@@ -46,10 +53,18 @@ export function readAuraZone(html, name = "Aura") {
         plan = { ...plan, resolution: { ...plan.resolution, outcomes } };
     }
     plan = { ...plan, trigger: { event: "zone" }, targeting: { target: "a creature in the area", range: null, area: null } };
-    const radius = thrown ? Number(thrown[3]) : aura[5] ? 5 : Number(aura[4]);
+    const radius = thrown ? Number(thrown[3]) : aura[5] ? 5 : aura[4] ? Number(aura[4]) : Number(wielder[1]);
     const sentences = plain.replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
     const said = aura[0].replace(/<[^>]+>/g, " ").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\s+/g, " ").trim();
-    const notes = sentences.filter((sentence) => !sentence.includes(said.slice(0, 40)) && !said.includes(sentence.slice(0, 40)) && !/^(?:Activate|Frequency|Trigger|Requirements?)\b/.test(sentence) && !THROWN.test(sentence) && /\b(?:resistance|bonus|penalty|must|can't|breath|suffocat|move toward|action)\b/i.test(sentence));
+    // (Its wielder's own view and who it spares, Nightmare's Lament's: "The wielder … can see through this smoke" — words of the card, PF2e's
+    // concealment the same for everyone —; "The wielder …, any creature currently holding its breath (or that does not need to breathe), and any
+    // creature immune to poison are immune to the aura's sickened effect but not the concealment" — its wielder never in its saves, the others
+    // the GM's call. 2026-10-27.)
+    const sees = sentences.some((sentence) => SEES_THROUGH.test(sentence));
+    const spared = sentences.map((sentence) => SPARED.exec(sentence)).find(Boolean);
+    const notes = sentences.filter((sentence) => !sentence.includes(said.slice(0, 40)) && !said.includes(sentence.slice(0, 40)) && !/^(?:Activate|Frequency|Trigger|Requirements?)\b/.test(sentence) && !THROWN.test(sentence) && !SPARED.test(sentence) && /\b(?:resistance|bonus|penalty|must|can't|breath|suffocat|move toward|action)\b/i.test(sentence));
+    if (sees) notes.push("Its wielder sees through the smoke: the creatures in it aren't concealed from the wielder.");
+    if (spared) notes.push(`A creature holding its breath (or that doesn't need to breathe) or immune to poison isn't ${spared[1].toLowerCase()} by it, though still concealed; its wielder isn't either (the GM's call).`);
     // (What it gives its user beside the aura: Arctic Worm Chitin Shield's "you gain resistance 5 to cold", its own PF2e Effect.)
     const own = /\b(?:you gain|granting you) resistance (\d+) to (\w+)\b/i.exec(plain);
     const link = /@UUID\[(Compendium\.pf2e\.equipment-effects\.Item\.[A-Za-z0-9]+)\]\{(Effect: [^}]+)\}/.exec(text);

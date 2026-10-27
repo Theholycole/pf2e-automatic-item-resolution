@@ -556,7 +556,13 @@ function compileEach(item, options = {}) {
         plan = choiceAuraWays(plan, activation, base, { withWhile: (entry) => withWhilePersistent(entry, plainText(activation.html)) }) ?? plan;
         // (An aura that acts at a turn's start or end in it, for a while, src/compiler/aura-zones.js: Arctic Worm Chitin Shield, Alluring
         // Lantern, Sandstorm Top — over a save at the creatures targeted once.)
-        if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save") plan = auraZonePlan(activation.html, base, base.source?.name) ?? plan;
+        // (Or over PF2e's own aura Effect for its user, Nightmare's Lament's Aura: Fuming Cloak — that Effect the zone's for its user, beside the
+        // turn-start save it doesn't play, 2026-10-27.)
+        const nativeAura = plan?.resolution?.kind === "effect" && (plan.resolution.applications ?? []).length === 1 && /^Aura: /.test(plan.resolution.applications[0].label ?? "") && plan.resolution.applications[0].recipients === "self" ? plan.resolution.applications[0] : null;
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect" || plan.resolution?.kind === "save" || nativeAura) {
+            const zoned = auraZonePlan(activation.html, base, base.source?.name);
+            if (zoned) plan = nativeAura && !zoned.ownEffect ? { ...zoned, ownEffect: { uuid: nativeAura.uuid, label: nativeAura.label } } : zoned;
+        }
         // (Damage a successful save negates, src/compiler/direct-damage.js: Mycoweave Shield's spores.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = negatingSavePlan(plainText(activation.html), base) ?? plan;
         // (Damage of the energy its maker chose, the card's picker: Energy-Absorbing runes.)

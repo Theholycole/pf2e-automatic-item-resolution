@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1283,
+  "entries": 1282,
   "results": {
-   "partial": 386,
+   "partial": 385,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -29,7 +29,7 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "areas": 124,
+   "areas": 123,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
@@ -50,8 +50,8 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 186,
-   "immunity": 90,
+   "areas": 185,
+   "immunity": 89,
    "objects": 388,
    "speech": 129,
    "out-of-combat": 443,
@@ -65,7 +65,7 @@
    "choice": 107,
    "several": 105,
    "strike": 192,
-   "reader": 211,
+   "reader": 210,
    "spells": 75,
    "information": 197,
    "actions": 60,
@@ -2917,19 +2917,6 @@
     "strike",
     "immunity",
     "objects"
-   ]
-  },
-  {
-   "name": "Nightmare's Lament",
-   "kind": "activation",
-   "activation": "Fuming Cloak",
-   "result": "partial",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas",
-    "immunity",
-    "reader"
    ]
   },
   {

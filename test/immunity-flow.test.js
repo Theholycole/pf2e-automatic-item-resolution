@@ -56,10 +56,10 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     assert.deepEqual([coin.plan.builtin, coin.plan.item.immunity.slug], ["reroll", "fortunes-coin"]);
     const metabolizer = compileItem(source("Contagion Metabolizer (Lesser)"));
     assert.deepEqual([metabolizer.builtin, metabolizer.item.immunity.slug, metabolizer.item.immunity.duration], ["counteract", "contagion-metabolizer", { value: 1, unit: "hours" }]);
-    // (Nightmare's Lament's smoke: "a creature that begins its turn in the area" — not its card's own recipient; a note.)
+    // (Nightmare's Lament's smoke: "a creature that begins its turn in the area" — not its card's own recipient: since 2026-10-27 the zone's
+    // turn-start save, which holds to it — trigger.immunity, test/cast-notes.test.js.)
     const [cloak] = compileActivations(source("Nightmare's Lament"));
-    assert.deepEqual([cloak.plan.item?.immunity, cloak.plan.partial], [undefined, true]);
-    assert.ok(cloak.plan.notes.some((note) => /temporarily immune to the sickness from the smoke/.test(note)));
+    assert.deepEqual([cloak.plan.item?.immunity, cloak.plan.zone.saves[0].plan.trigger.immunity.duration, cloak.plan.partial], [undefined, { value: 1, unit: "minutes" }, undefined]);
     // (Starting once its effect ends: held to since 2026-10-26, test/options-flow.test.js.)
     assert.equal(compileItem(source("Starsong Nectar")).item.immunity.after, true);
     // (The same immunity said again in another degree's paragraph joins it: Pheromone Flare's critical success, and its failure's "After this,

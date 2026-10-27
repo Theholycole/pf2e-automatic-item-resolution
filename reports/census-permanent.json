@@ -8,7 +8,7 @@
   "results": {
    "resolves": 946,
    "builtin:cast-spell": 474,
-   "partial": 124,
+   "partial": 123,
    "none": 384,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
@@ -20,7 +20,7 @@
    "builtin:no-effect": 82,
    "builtin:ways": 32,
    "builtin:pf2e-rules": 24,
-   "builtin:zone": 26,
+   "builtin:zone": 27,
    "builtin:modes": 34,
    "builtin:objects": 31,
    "builtin:conjure": 13,
@@ -33,7 +33,7 @@
   "live": {
    "save": 437,
    "cast": 474,
-   "item": 644,
+   "item": 643,
    "none": 491,
    "focus": 47,
    "counteract": 32,
@@ -43,7 +43,7 @@
    "table": 7,
    "teleport": 28,
    "ways": 32,
-   "zone": 26,
+   "zone": 27,
    "toggle": 34,
    "objects": 31,
    "conjure": 13,
@@ -88,7 +88,7 @@
    "activations": 461,
    "results": {
     "resolves": 212,
-    "partial": 27,
+    "partial": 26,
     "none": 61,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
@@ -96,7 +96,7 @@
     "builtin:modes": 12,
     "note-only": 8,
     "builtin:item-action": 9,
-    "builtin:zone": 6,
+    "builtin:zone": 7,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 7,
     "builtin:no-effect": 8,
@@ -4988,9 +4988,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
-   "kind": "effect",
-   "live": "item"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Blade of Four Energies",

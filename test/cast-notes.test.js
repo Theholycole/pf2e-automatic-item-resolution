@@ -205,6 +205,14 @@ test("a new save against an affliction beside a flat check (2026-10-27): Quenchi
     assert.deepEqual([recoveryNotes(text), readRecovery(text).types], [[], ["acid", "fire", "poison", "void"]]);
 });
 
+test("an aura over PF2e's own aura Effect (2026-10-27): Nightmare's Lament's Fuming Cloak — the zone on its wielder with Aura: Fuming Cloak, the turn-start Sickened 2 save (negates) with its minute's immunity", async () => {
+    const [{ plan: cloak }] = compileActivations(item("Nightmare's Lament"), options);
+    const save = cloak.zone.saves[0];
+    assert.deepEqual([cloak.builtin, cloak.ownEffect.label, cloak.zone.area, save.when, save.plan.resolution.check.against.value, save.plan.trigger.immunity.duration, cloak.partial], ["zone", "Aura: Fuming Cloak", { type: "emanation", value: 15 }, ["start"], 23, { value: 1, unit: "minutes" }, undefined]);
+    assert.deepEqual(save.plan.resolution.outcomes.failure.effects.map((effect) => [effect.slug, effect.value]), [["sickened", 2]]);
+    assert.match(cloak.zone.notes.join(" "), /holding its breath .* \(the GM's call\)\.$/);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);
