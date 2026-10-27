@@ -211,8 +211,9 @@ export async function afflictionSaves(actor, name, { traits = [], noWorse = fals
 // One affliction of those traits lowered (src/compiler/permanent.js: Heartripper Blade's "reduce the stage of one toxin or disease you're
 // suffering by one stage (this can't reduce the stage below stage 1 …)"): the Pseudo Afflictions one at the highest stage above the minimum,
 // its badge lowered, never below it — Pseudo Afflictions gives that stage's conditions.
-export async function lowerAfflictionStage(actor, name, { traits = [], by = 1, min = 1 } = {}) {
-    const found = afflictionsOf(actor).filter((one) => one.document?.flags?.[PSEUDO_AFFLICTIONS]?.stages && traits.some((trait) => one.traits.includes(trait) || one.document.traits?.has?.(trait)));
+// (only: which of them it may lower, Artevil Suspension's ingested poison; the lines' lowered, whether one was — 2026-10-27.)
+export async function lowerAfflictionStage(actor, name, { traits = [], by = 1, min = 1, only = null } = {}) {
+    const found = afflictionsOf(actor).filter((one) => one.document?.flags?.[PSEUDO_AFFLICTIONS]?.stages && traits.some((trait) => one.traits.includes(trait) || one.document.traits?.has?.(trait)) && (!only || only(one)));
     const stageOf = (one) => Number(one.document.system?.badge?.value) || 1;
     const above = found.filter((one) => stageOf(one) > min).sort((a, b) => stageOf(b) - stageOf(a));
     if (!found.length) return [`${name} has no ${traits.join(" or ")} affliction to lower.`];
@@ -220,7 +221,7 @@ export async function lowerAfflictionStage(actor, name, { traits = [], by = 1, m
     const one = above[0];
     const next = Math.max(min, stageOf(one) - by);
     await one.document.update({ "system.badge.value": next });
-    return [`${name}: ${one.name} down to stage ${next}${above.length > 1 ? ` (the highest of ${above.length}; change another on the sheet if you'd rather)` : ""}`];
+    return Object.assign([`${name}: ${one.name} down to stage ${next}${above.length > 1 ? ` (the highest of ${above.length}; change another on the sheet if you'd rather)` : ""}`], { lowered: true });
 }
 
 export async function recover(actor, name, recovery) {

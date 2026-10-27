@@ -9,6 +9,9 @@ import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { NOTES_CHECKED } from "../src/compiler/notes-checked.js";
 import { ONE_OFFS } from "../src/compiler/one-offs.js";
+import { readItemAction } from "../src/compiler/item-actions.js";
+import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability-resolution/src/compiler/index.js";
+import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -85,4 +88,183 @@ test("an instrument pulled into its user's hands: Instrument Harness's Ready to 
     assert.deepEqual(ready.objects, { op: "hand" });
     assert.deepEqual(ready.notes, ["Drawing it this way doesn't trigger reactions."]);
     assert.deepEqual(ready.trigger.frequency, { max: 1, per: "day", raw: "once per day" });
+});
+
+// --- Used within its user's own action ---------------------------------------------------------------------------------------------------------
+
+const MODULE_ID = "pf2e-automatic-item-resolution";
+const SOCKET = `module.${MODULE_ID}`;
+const basicActions = compileBasicActions(readDocuments(path.join(PACKS, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+const html = (name) => equipment.find((entry) => entry.name === name).system.description.value;
+
+test("used within its user's own action, every sentence read: Lady's Blessing Oil, Yarrow-Root Bandage, Curled Cure Gel, Artevil Suspension", () => {
+    const oil = readItemAction(html("Lady's Blessing Oil"));
+    assert.deepEqual([oil.slug, oil.variant, oil.dc, oil.degree, oil.within], ["administer-first-aid", "stabilize", { less: 5 }, { failure: "criticalFailure" }, true]);
+    const bandage = readItemAction(html("Yarrow-Root Bandage"));
+    assert.deepEqual([bandage.slug, bandage.variant, bandage.both, bandage.dc], ["administer-first-aid", "stabilize", true, { more: 5 }]);
+    assert.match(bandage.after, /the GM may use 5 more than the bleed's DC instead/);
+    const gel = readItemAction(html("Curled Cure Gel"), item("Curled Cure Gel"));
+    assert.deepEqual([gel.slug, gel.reduce, gel.immunity.slug, gel.immunity.duration], ["treat-wounds", { choose: ["clumsy", "enfeebled", "stupefied"], by: 1 }, "curled-cure-gel", { value: 24, unit: "hours" }]);
+    const suspension = readItemAction(html("Artevil Suspension"));
+    assert.deepEqual([suspension.slug, suspension.stage], ["treat-poison", { by: 1, min: 1, vector: "ingested", then: { slug: "sickened", value: 2 } }]);
+    assert.match(suspension.after, /the GM's to say\.$/);
+    for (const name of ["Lady's Blessing Oil", "Yarrow-Root Bandage", "Curled Cure Gel", "Artevil Suspension"]) {
+        const plan = compileItem(item(name), { basicActions });
+        assert.ok(done(plan) && plan.builtin === "item-action", name);
+        assert.equal(plan.automation.level, "automatic", name);
+    }
+    // (First Aid's own rows with it: the ability module's stabilize.)
+    assert.ok(compileItem(item("Lady's Blessing Oil"), { basicActions }).action.basic);
+});
+
+const foundry = await fakeFoundry();
+const medic = foundry.makeActor({ id: "within-medic", name: "Medic", owners: ["player"] });
+foundry.place(medic, 0, 90000);
+async function usedOn(name, patient) {
+    const given = foundry.giveItem(medic, equipment.find((entry) => entry.name === name));
+    const data = given.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: given.uuid, sourceId: data._stats.compendiumSource, type: given.type } } }, speaker: { actor: medic.id }, actor: medic, token: medic.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    return async (outcome) => {
+        foundry.nextOutcome.value = outcome;
+        const uses = foundry.actionUses.length;
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [patient.token.uuid], userId: "player" });
+        await settle();
+        foundry.nextOutcome.value = "success";
+        return { card, use: foundry.actionUses.slice(uses)[0] };
+    };
+}
+// (PF2e's First Aid has two variants: the stand-in's actions have none.)
+async function withVariants(run) {
+    const get = game.pf2e.actions.get;
+    game.pf2e.actions.get = (slug) => ({ ...get(slug), variants: new Map([["stabilize", {}], ["stop-bleeding", {}]]) });
+    try {
+        return await run();
+    } finally {
+        game.pf2e.actions.get = get;
+    }
+}
+
+test("Lady's Blessing Oil live: First Aid's stabilize at the recovery roll DC (5 lower), a failure made a critical failure", async () => {
+    const dying = foundry.makeActor({ id: "within-dying", name: "Fallen", conditions: ["dying"], hp: 0 });
+    dying.system.attributes.dying = { value: 2, recoveryDC: 10 };
+    foundry.place(dying, 100, 90000);
+    const apply = await usedOn("Lady's Blessing Oil", dying);
+    const { card, use } = await withVariants(() => apply("failure"));
+    assert.deepEqual([use.slug, use.options.variant, use.options.difficultyClass], ["administer-first-aid", "stabilize", { value: 12 }]);
+    assert.match(card.flags[MODULE_ID].card.results.join(" "), /: a critical failure \(a failure rolled, made a critical failure by Lady's Blessing Oil\)/);
+    assert.ok(foundry.applied.some((entry) => entry.change.op === "condition" && entry.change.slug === "dying"), "the critical failure's dying raised");
+});
+
+test("Yarrow-Root Bandage live: one check at 5 more than the stabilize DC, then its bleed's assisted recovery (DC 10)", async () => {
+    const bleeding = foundry.makeActor({ id: "within-bleeding", name: "Bleeder", conditions: ["dying"], hp: 0 });
+    bleeding.system.attributes.dying = { value: 1, recoveryDC: 10 };
+    foundry.place(bleeding, 200, 90000);
+    const bleed = foundry.givePersistent(bleeding, { damageType: "bleed", dc: 15, nextRoll: 12, formula: "1d6" });
+    const apply = await usedOn("Yarrow-Root Bandage", bleeding);
+    const { card, use } = await withVariants(() => apply("success"));
+    assert.deepEqual([use.options.variant, use.options.difficultyClass], ["stabilize", { value: 21 }]);
+    assert.deepEqual(bleed.rolled, [10], "the flat check at DC 10");
+    assert.ok(!bleeding.persistent.includes(bleed), "the bleed ended");
+    assert.match(card.content, /ended \(flat check, DC 10\)/);
+});
+
+test("Curled Cure Gel live: Treat Wounds, then the highest of its conditions lowered; the creature treated immune for 24 hours", async () => {
+    const patient = foundry.makeActor({ id: "within-patient", name: "Patient", conditions: ["clumsy", "enfeebled"] });
+    patient.conditions.set("clumsy", 2);
+    foundry.place(patient, 300, 90000);
+    const apply = await usedOn("Curled Cure Gel", patient);
+    const { card, use } = await apply("success");
+    assert.equal(use.slug, "treat-wounds");
+    assert.deepEqual([patient.conditions.get("clumsy"), patient.conditions.get("enfeebled")], [1, 1]);
+    assert.match(card.content, /clumsy lowered by 1/);
+    const immune = patient.created.find((entry) => entry.flags?.[MODULE_ID]?.immunity === "curled-cure-gel");
+    assert.ok(immune, "its Immune: Effect");
+    assert.deepEqual([immune.system.duration.value, immune.system.duration.unit], [24, "hours"]);
+    // (Not on its user.)
+    assert.ok(!medic.created.some((entry) => entry.flags?.[MODULE_ID]?.immunity === "curled-cure-gel"));
+});
+
+test("Artevil Suspension live: Treat Poison, then its ingested poison a stage lower and Sickened 2; not one given another way", async () => {
+    const poisoned = foundry.makeActor({ id: "within-poisoned", name: "Poisoned" });
+    foundry.place(poisoned, 400, 90000);
+    const [ingested] = await poisoned.createEmbeddedDocuments("Item", [{ type: "effect", name: "Affliction Effect: Test Poison", system: { badge: { value: 3, max: 4 }, traits: { value: ["poison", "ingested"] } }, flags: { "pseudo-afflictions": { stages: [{}, {}, {}, {}], save: { type: "fortitude", value: 20 } } } }]);
+    const apply = await usedOn("Artevil Suspension", poisoned);
+    const applied = foundry.applied.length;
+    const { card, use } = await apply("success");
+    assert.equal(use.slug, "treat-poison");
+    assert.equal(ingested.system.badge.value, 2);
+    assert.ok(foundry.applied.slice(applied).some((entry) => entry.change.op === "condition" && entry.change.slug === "sickened" && entry.change.value === 2));
+    assert.match(card.content, /down to stage 2/);
+    const injured = foundry.makeActor({ id: "within-injured", name: "Injured" });
+    foundry.place(injured, 500, 90000);
+    const [injury] = await injured.createEmbeddedDocuments("Item", [{ type: "effect", name: "Affliction Effect: Blade Poison", system: { badge: { value: 3, max: 4 }, traits: { value: ["poison", "injury"] } }, flags: { "pseudo-afflictions": { stages: [{}, {}, {}, {}], save: { type: "fortitude", value: 20 } } } }]);
+    const again = await usedOn("Artevil Suspension", injured);
+    await again("success");
+    assert.equal(injury.system.badge.value, 3, "an injury poison isn't lowered");
+});
+
+// --- Actions with the item's own rules -----------------------------------------------------------------------------------------------------------
+
+test("Binding Coil: the grab's Escape DC is the coil's (20, 30 for the Greater), its user's move a line", () => {
+    for (const [name, dc] of [["Binding Coil", 20], ["Binding Coil (Greater)", 30]]) {
+        const coil = compileItem(item(name), { basicActions });
+        assert.ok(done(coil), name);
+        assert.deepEqual(coil.action.escape, { dc });
+        const effects = ["success", "criticalSuccess"].flatMap((degree) => coil.action.basic.resolution.outcomes[degree].effects);
+        assert.deepEqual(effects.map((effect) => [effect.slug, effect.duration.escape?.dc]), [["grabbed", dc], ["restrained", dc]]);
+        // (Its own Prone on a critical failure has none.)
+        assert.equal(coil.action.basic.resolution.outcomes.criticalFailure.effects[0].duration, null);
+        assert.match(coil.action.after, /the DC to Escape is \d+ and you can move/);
+    }
+});
+
+test("Binding Coil live: the creature hit Grabbed until it Escapes the coil's DC", async () => {
+    const caught = foundry.makeActor({ id: "within-caught", name: "Caught" });
+    foundry.place(caught, 600, 90000);
+    const apply = await usedOn("Binding Coil", caught);
+    const before = foundry.applied.length;
+    await apply("success");
+    const grab = foundry.applied.slice(before).find((entry) => entry.change.op === "condition" && entry.change.slug === "grabbed");
+    assert.equal(grab?.change.duration?.escape?.dc, 20);
+});
+
+test("Admonishing Band: Warning Shot's Demoralize, the immunity its user keeps a line", () => {
+    const band = compileItem(item("Admonishing Band"), { basicActions });
+    assert.ok(done(band));
+    assert.equal(band.action.slug, "demoralize");
+    assert.match(band.action.after, /Warning Shot feat, the target doesn't become/);
+});
+
+test("Venomed Tongue: Create a Diversion, Feint or Lie, picked on the card, and the 2d6 persistent poison at the one it succeeded against", () => {
+    const tongue = activation("Venomed Tongue");
+    const read = compileActivations(item("Venomed Tongue"), { basicActions })[0].plan;
+    assert.ok(done(read));
+    assert.equal(read.builtin, "item-action");
+    assert.deepEqual(read.action.slugs, ["create-a-diversion", "feint", "lie"]);
+    for (const degree of ["success", "criticalSuccess"]) assert.deepEqual(read.action.damage[degree].resolution.sharedDamage.components.map((entry) => [entry.formula, entry.type, entry.category]), [["2d6", "poison", "persistent"]]);
+    assert.deepEqual(read.trigger.frequency, { max: 1, per: "day", raw: "once per day" });
+    // (Without the ability module's actions, the same reading.)
+    assert.equal(tongue.builtin, "item-action");
+});
+
+test("Self-Emptying Pocket's Beguiling Presence: Create a Diversion's success row on its success, the entity's influence a line", () => {
+    const presence = compileActivations(item("Self-Emptying Pocket"), { basicActions }).find((entry) => entry.activation.name === "Beguiling Presence").plan;
+    assert.ok(done(presence));
+    for (const degree of ["success", "criticalSuccess"]) {
+        assert.deepEqual(presence.resolution.outcomes[degree].effects.map((effect) => [effect.slug, effect.scope?.against]), [["off-guard", "actor"]], degree);
+        assert.equal(presence.resolution.outcomes[degree].manualInstructions, undefined);
+    }
+    assert.deepEqual(presence.notes, ["The entity holding the contract may influence it: a +2 item bonus or a -2 item penalty to the Performance check (the GM's call)."]);
+});
+
+test("Battle Medic's Baton: Battle Medicine its user's own, the creature's immunity to it 1 hour on its note Effect", () => {
+    const baton = activation("Battle Medic's Baton");
+    assert.ok(done(baton));
+    assert.equal(baton.item.recipient, "targets");
+    assert.deepEqual(notes(baton).map((note) => [note.label, note.duration.value, note.duration.unit]), [["Immune to Battle Medicine", 1, "hours"]]);
+    assert.match(baton.notes[0], /^Its user uses Battle Medicine on the creature targeted/);
+    assert.deepEqual(baton.trigger.frequency, { max: 1, per: "hour", raw: "once per hour" });
 });

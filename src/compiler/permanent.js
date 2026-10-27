@@ -142,7 +142,7 @@ import { onOffPlan } from "./on-off.js";
 import { withEffectThenCard } from "./effect-then-card.js";
 import { withRuneSteps } from "./rune-steps.js";
 import { withTriggered } from "./triggered.js";
-import { withUserActions } from "./user-actions.js";
+import { withAsThough, withUserActions } from "./user-actions.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -629,6 +629,8 @@ function compileEach(item, options = {}) {
         plan = rageOver(plan, ragePlan(plainText(activation.html), base));
         // (A skill action taken with it, src/compiler/item-actions.js: Bronze Bull Pendant's Shove.)
         plan = itemActionOver(plan, itemActionPlan(activation.html, base, { ...options, item }));
+        // (A result as though by another action's, src/compiler/user-actions.js: Self-Emptying Pocket's Create a Diversion.)
+        plan = withAsThough(plan, activation.html, item, options);
         // (A check with the item's own modifier, src/compiler/own-checks.js: Tentacle Cannon's Grapple at +13.)
         plan = ownCheckOver(plan, ownCheckPlan(plainText(activation.html), base, options));
         // (Damage outright to the creature it names, src/compiler/direct-damage.js: Forge Warden's.)

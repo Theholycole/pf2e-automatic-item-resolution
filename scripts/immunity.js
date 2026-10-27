@@ -18,7 +18,8 @@ export const immuneNow = (actor, immunity) => Boolean(actor) && isImmune(unexpir
 // picked, else its user → [{ actor, token, name, uuid }].
 async function recipientsOf(state, choices) {
     const tokens = async (uuids) => (await Promise.all((uuids ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter((token) => token?.actor).map((token) => ({ actor: token.actor, token, name: token.name ?? token.actor.name, uuid: token.uuid }));
-    const forOthers = (state.kind === "item" && state.plan?.item?.recipient === "targets") || (state.kind === "cast" && (choices.targets ?? []).length) || (state.kind === "fortune" && state.plan?.bonus?.recipient === "target") || (state.kind === "reroll" && ["companion", "target"].includes(state.plan?.reroll?.who));
+    // (A skill action's at the creature targeted, Curled Cure Gel's on the creature treated: it, 2026-10-27.)
+    const forOthers = (state.kind === "item" && state.plan?.item?.recipient === "targets") || (state.kind === "item-action" && Boolean(state.plan?.action?.targeted)) || (state.kind === "cast" && (choices.targets ?? []).length) || (state.kind === "fortune" && state.plan?.bonus?.recipient === "target") || (state.kind === "reroll" && ["companion", "target"].includes(state.plan?.reroll?.who));
     if (forOthers) return tokens(choices.targets);
     const entry = state.kind === "item" || state.kind === "cast" ? (Number.isInteger(choices.drinker) && state.drinkers?.[choices.drinker] ? state.drinkers[choices.drinker] : recipientOf(state)) : state.user;
     const token = entry?.tokenUuid ? await fromUuid(entry.tokenUuid).catch(() => null) : null;
@@ -45,7 +46,8 @@ const timeWords = (duration) => (duration.unit === "unlimited" ? `until ${durati
 
 // Around a card's Apply (run: the card's own): the immune refused or left out, then the Effect on each creature it went to → run's result.
 export async function withImmunityGuard(message, state, choices, run) {
-    const immunity = state?.plan?.item?.immunity;
+    // (Or a skill action's own, Curled Cure Gel's: plan.action.immunity, src/compiler/item-actions.js.)
+    const immunity = state?.plan?.item?.immunity ?? (state?.kind === "item-action" ? state.plan?.action?.immunity : null);
     if (!immunity?.slug || !OWN_KINDS.has(state.kind)) return run(choices);
     const creatures = await recipientsOf(state, choices);
     const immune = creatures.filter((creature) => immuneNow(creature.actor, immunity));

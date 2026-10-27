@@ -4,7 +4,7 @@
 // the ability module's row for that action and degree goes on the target (scripts/foundry.js applyRiders).
 
 import { actionCardHTML, actionText, chosenAction, createActionCard, outcomeText } from "../src/live/action-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, entryOf, lowerAfflictionStage, recover, stateOf } from "./foundry.js";
 
 const sluggify = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -40,6 +40,56 @@ function degreeAgainst(total, dc, natural = null) {
     return DEGREES[degree];
 }
 
+// A condition on a creature from the card: the ability module's own (its timed or plain condition), else PF2e's.
+async function giveCondition(actor, token, { slug, value, duration = null }, state) {
+    const ability = game.modules.get(ABILITY_ID)?.api?.live;
+    const own = { plan: {}, ability: { name: state.item.name, uuid: state.item.uuid ?? null, slug: sluggify(state.item.name) }, source: { actorUuid: state.user.actorUuid ?? null, tokenUuid: state.user.tokenUuid ?? null, name: state.user.name }, targets: [{ id: "t0", actorUuid: actor.uuid, tokenUuid: token?.uuid ?? token?.document?.uuid ?? null, name: token?.name ?? actor.name }] };
+    const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug, value, target: "t0", duration }, own) : null;
+    if (line !== null || ability?.applyChange) return line ?? `${token?.name ?? actor.name} is ${slug} ${value}`;
+    await actor.increaseCondition?.(slug, { value });
+    return `${token?.name ?? actor.name} is ${slug} ${value}`;
+}
+
+// What the item does after its user's own action (src/compiler/item-actions.js readWithinActivity), by the outcome: Yarrow-Root Bandage's bleed as
+// PF2e's stop bleeding — a success's assisted recovery (the flat check at DC 10), a critical failure's bleed at once —; Curled Cure Gel's highest
+// of its conditions lowered; Artevil Suspension's poison a stage lower (Pseudo Afflictions' badge), then its Sickened 2. → lines for the card.
+const VECTORS = ["ingested", "inhaled", "contact", "injury"];
+async function withinResults(action, outcome, token, state) {
+    const actor = token?.actor;
+    if (!actor || !outcome) return [];
+    const name = token.name ?? actor.name;
+    const won = outcome === "success" || outcome === "criticalSuccess";
+    const lines = [];
+    if (action.both && won) lines.push(...(await recover(actor, name, { types: ["bleed"], dc: 10 })));
+    if (action.both && outcome === "criticalFailure") {
+        for (const condition of (actor.itemTypes?.condition ?? []).filter((entry) => entry.slug === "persistent-damage" && entry.system?.persistent?.damageType === "bleed")) {
+            const roll = await new Roll(String(condition.system.persistent.formula)).evaluate();
+            await actor.applyDamage({ damage: roll.total, token });
+            lines.push(`${name} takes its ${condition.system.persistent.formula} bleed at once: ${roll.total} damage`);
+        }
+    }
+    if (action.reduce && won) {
+        const present = action.reduce.choose.map((slug) => [slug, Number(actor.getCondition?.(slug)?.value) || 0]).filter(([, value]) => value > 0).sort((a, b) => b[1] - a[1]);
+        if (!present.length) lines.push(`${name} has none of ${action.reduce.choose.join(", ")}: nothing to lower`);
+        else {
+            for (let step = 0; step < action.reduce.by; step++) await actor.decreaseCondition(present[0][0]);
+            lines.push(`${name}'s ${present[0][0]} lowered by ${action.reduce.by}`);
+        }
+    }
+    if (action.stage && won) {
+        // (Its vector when its traits say one: only a poison given that way.)
+        const only = (one) => {
+            const traits = [...(one.traits ?? []), ...(one.document?.traits ? [...one.document.traits] : [])];
+            const vectors = VECTORS.filter((vector) => traits.includes(vector));
+            return !vectors.length || vectors.includes(action.stage.vector);
+        };
+        const lowered = await lowerAfflictionStage(actor, name, { traits: ["poison"], by: action.stage.by, min: action.stage.min, only });
+        lines.push(...lowered);
+        if (lowered.lowered && action.stage.then) lines.push(await giveCondition(actor, token, action.stage.then, state));
+    }
+    return lines.filter(Boolean);
+}
+
 // targets: the token uuids the presser had targeted.
 export async function applyActionCard(message, { targets = [], choice = null } = {}) {
     let state = stateOf(message);
@@ -67,9 +117,12 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     }
     // (No roll dialog on the GM's client: the GM is rolling the user's check.)
     const event = typeof KeyboardEvent === "function" ? new KeyboardEvent("keydown", { shiftKey: game.user.settings?.showCheckDialogs !== false }) : undefined;
-    const variant = variantFor(pf2eAction, targetToken?.actor ?? null);
-    // (PF2e's action-system First Aid has no stabilize DC of its own: the rule's, 5 + the target's recovery DC + its dying value.)
-    const difficultyClass = action.slug === "administer-first-aid" && variant === "stabilize" ? stabilizeDC(targetToken?.actor) : null;
+    // (The variant the item is for, Lady's Blessing Oil's stabilize, when PF2e's action has it.)
+    const variant = action.variant && [...(pf2eAction.variants?.keys?.() ?? [])].includes(action.variant) ? action.variant : variantFor(pf2eAction, targetToken?.actor ?? null);
+    // (PF2e's action-system First Aid has no stabilize DC of its own: the rule's, 5 + the target's recovery DC + its dying value — less or more as
+    // the item says, Lady's Blessing Oil's 5 lower, Yarrow-Root Bandage's 5 higher.)
+    const stabilize = action.slug === "administer-first-aid" && variant === "stabilize" ? stabilizeDC(targetToken?.actor) : null;
+    const difficultyClass = stabilize ? { value: stabilize.value - (Number(action.dc?.less) || 0) + (Number(action.dc?.more) || 0) } : null;
     const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(action.statistic ? { statistic: action.statistic } : {}), ...(variant ? { variant } : {}), ...(difficultyClass ? { difficultyClass } : {}), ...(event ? { event } : {}) });
     const rolled = results?.[0]?.outcome ?? null;
     // (A degree the item changes, Ensnaring Disk's critical failure made a failure: the outcome the card acts on, said.)
@@ -77,7 +130,7 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     const lines = [];
     if (!outcome) lines.push(`${actionText(action)}: no result (cancelled).`);
     else {
-        lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}${outcome !== rolled ? ` (a ${outcomeText(rolled)} rolled, made ${outcomeText(outcome)} by ${state.item.name})` : ""}.`);
+        lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}${outcome !== rolled ? ` (${outcomeText(rolled)} rolled, made ${outcomeText(outcome)} by ${state.item.name})` : ""}.`);
         if (action.basic && targetToken) lines.push(...(await applyRiders({ plan: action.basic, degree: outcome, user: state.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), item: state.item })));
         // (Its own damage for that degree — Bracers of Strength's crush on a success, double on a critical one: the ability module's
         // card at the creature, which rolls and applies it.)
@@ -114,6 +167,8 @@ export async function applyActionCard(message, { targets = [], choice = null } =
             if (action.basic) lines.push(...(await applyRiders({ plan: action.basic, degree, user: state.user, target: entryOf(other.object ?? other, other.actor), item: state.item })));
         }
     }
+    // (What the item does after its user's own action: withinResults.)
+    if (outcome && action.within) lines.push(...(await withinResults(action, outcome, targetToken, state)));
     // (A condition on its user after it, Jug of Fond Remembrance's Stupefied 1 for 3 rounds: the ability module's timed condition.)
     if (outcome && action.selfAfter) {
         const ability = game.modules.get(ABILITY_ID)?.api?.live;

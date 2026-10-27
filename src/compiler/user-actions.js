@@ -9,6 +9,10 @@
 //   bonus suppressed while it's red (AdjustModifier on the item's own FlatModifier, its slug the item's).
 // - A rule PF2e can't play, on a note Effect for its time (NOTE_RULES): Clockwork Shield's extra reaction for Shield Block; Vital Earth's air and
 //   water, its label "doesn't need to breathe" — what the environment module's breath tracker reads (scripts/foundry.js noBreath).
+// - Its user's own feat, the immunity after it changed (withFeatImmunity): Battle Medic's Baton's Battle Medicine, a line, and the creature's
+//   shorter immunity to it a note Effect on it.
+// - A result "as though by" another action's (withAsThough, in src/compiler/permanent.js beside the skill actions, with the ability module's compiled
+//   actions): Self-Emptying Pocket's Create a Diversion.
 // Pure.
 
 import { plainText } from "./rows.js";
@@ -60,9 +64,50 @@ function withNoteRule(plan, { item, activation, index }) {
     return note ? { ...ownCard(keptBase(plan, item, { activation, index }), { noteEffects: [note] }), noteOnly: undefined } : plan;
 }
 
+// --- Its user's own feat, the immunity after it changed ----------------------------------------------------------------------------------------
+
+// (Battle Medic's Baton's "You use Battle Medicine. The target is temporarily immune to your Battle Medicine for 1 hour instead of 1 day": the feat
+// its user's own, from its sheet — a line of the card —; the immunity a note Effect on the creature its user targets for that hour.)
+const USES_FEAT = /^You use (Battle Medicine)\.$/i;
+const FEAT_IMMUNE = /^The target is temporarily immune to your (Battle Medicine) for (\d+) (hours?|minutes?) instead of 1 day\.$/i;
+function withFeatImmunity(plan, { item, activation, index }) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!matches([USES_FEAT, FEAT_IMMUNE], sentences)) return plan;
+    const [, feat, value, unit] = FEAT_IMMUNE.exec(sentences[1]);
+    const base = keptBase(plan, item, { activation, index });
+    const duration = { mode: "fixed", value: Number(value), unit: `${unit.toLowerCase().replace(/s$/, "")}s`, expiry: "turn-start", anchor: "effect-start" };
+    const card = ownCard({ ...base, targeting: { target: "1 creature", range: null, area: null }, item: { ...base.item, recipient: "targets" } }, { noteEffects: [{ label: `Immune to ${feat}`, text: `Immune to the baton user's ${feat} for ${value} ${unit.toLowerCase()} (not a day).`, duration }] }, [`Its user uses ${feat} on the creature targeted: the feat's own action, from its sheet. This card gives the creature its shorter immunity.`]);
+    return { ...card, noteOnly: undefined };
+}
+
+// --- A result "as though by" another action's -----------------------------------------------------------------------------------------------
+
+// (Self-Emptying Pocket's Beguiling Presence, "On a success, the creature is affected as though by a successful Deception check to Create a
+// Diversion": that action's success row, the ability module's compiled one (options.basicActions), on its success and critical success; "The entity
+// that holds your contract can influence this performance as well" the GM's call on its check — the item's own +2 or −2 — a line of the card.)
+const AS_THOUGH = /^\{target\} \(success\): the creature is affected as though by a successful \w+ check to (?:\[\[\/act )?([a-z-]+)(?:\]\])?$/i;
+const INFLUENCE = /\bThe entity that holds your contract can influence this performance as well\./;
+const INFLUENCED = /\bIf they influence your performance favorably, you gain a \+(\d+) item bonus to your Performance check\. If they influence your performance unfavorably, you take a -(\d+) item penalty to your Performance check\./;
+export function withAsThough(plan, html, item, options = {}) {
+    const success = plan?.resolution?.outcomes?.success;
+    const line = (success?.manualInstructions ?? []).map((entry) => [entry, AS_THOUGH.exec(String(typeof entry === "string" ? entry : entry?.text ?? "").trim())]).find(([, match]) => match);
+    const basic = line ? options.basicActions?.[line[1][1]] : null;
+    const row = basic && !basic.builtin ? basic.resolution?.outcomes?.success : null;
+    if (!row) return plan;
+    const given = (own) => ({ ...own, effects: [...(own?.effects ?? []), ...structuredClone(row.effects ?? [])], ...(row.modifiers?.length ? { modifiers: [...(own?.modifiers ?? []), ...structuredClone(row.modifiers)] } : {}) });
+    const { manualInstructions, ...kept } = success;
+    const left = manualInstructions.filter((entry) => entry !== line[0]);
+    const outcomes = { ...plan.resolution.outcomes, success: given({ ...kept, ...(left.length ? { manualInstructions: left } : {}) }), criticalSuccess: given(plan.resolution.outcomes.criticalSuccess) };
+    const whole = plainText(item?.system?.description?.value);
+    const influenced = INFLUENCE.test(plainText(html)) ? INFLUENCED.exec(whole) : null;
+    const notes = [...(plan.notes ?? []), ...(influenced ? [`The entity holding the contract may influence it: a +${influenced[1]} item bonus or a -${influenced[2]} item penalty to the Performance check (the GM's call).`] : [])];
+    const rest = left.length || (plan.unread ?? []).length || (INFLUENCE.test(plainText(html)) && !influenced) || Object.entries(outcomes).some(([degree, entry]) => degree !== "success" && (entry?.manualInstructions ?? []).length);
+    return { ...plan, resolution: { ...plan.resolution, outcomes }, ...(notes.length ? { notes } : {}), ...(plan.partial && !rest ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {}) };
+}
+
 // --- The readers ---------------------------------------------------------------------------------------------------------------------------------
 
-const READERS = [withEntrenched, withNoteRule];
+const READERS = [withEntrenched, withNoteRule, withFeatImmunity];
 
 // An activation's plan → the plan its own sentences make, or the same plan. entry: { activation, index } (compileEach's).
 export function withUserActions(plan, entry, item) {
