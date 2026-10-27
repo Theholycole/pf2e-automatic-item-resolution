@@ -706,3 +706,23 @@ test("hiding in the open until it gives itself away (2026-10-27): Camouflage Dye
     assert.deepEqual([endingOn(actor, "hostile").length, endingOn(actor, "long-move").length, endingOn(actor, "other").length], [1, 1, 0]);
     assert.deepEqual(["attack-roll", "damage-roll", "skill-check"].map((type) => isHostileMessage({ flags: { pf2e: { context: { type } } } })), [true, true, false]);
 });
+
+test("a counteract check at the hit (2026-10-27): Awakened Silver Shot — polymorph Effects on the creature hit, a failure a success against devils and werecreatures, Change Shape's note, Enfeebled 1 instead without one; Awakened Cold Iron Shot — the effect it put on a creature named", async () => {
+    const { counteractCandidates, counteractText, createCounteractCard } = await import("../src/live/counteract-card.js");
+    const silver = first("Awakened Silver Shot");
+    assert.equal(silver.partial, undefined);
+    const { counteract, fallback } = silver.strike.counteract;
+    assert.deepEqual([counteract.rank, counteract.modifier, counteract.traits, counteract.at, counteract.failToSuccess.traits], [9, 27, ["polymorph"], "target", ["devil", "werecreature"]]);
+    assert.deepEqual([counteract.afterCounter.success, counteract.afterCounter.criticalSuccess], [{ value: 1, unit: "rounds" }, { value: 1, unit: "minutes" }]);
+    assert.deepEqual([fallback.slug, fallback.value, fallback.duration.value, fallback.duration.unit, fallback.unless], ["enfeebled", 1, 1, "minutes", "polymorph-on-it"]);
+    const iron = first("Awakened Cold Iron Shot");
+    assert.equal(iron.partial, undefined);
+    assert.deepEqual([iron.strike.counteract.counteract.at, iron.strike.counteract.counteract.origin, iron.strike.counteract.counteract.failToSuccess.traits, iron.strike.counteract.fallback.slug], ["named", "target", ["demon", "fey"], "stupefied"]);
+    // (Its Effects from the creature hit, whatever their traits; others not.)
+    const creature = { effects: [{ id: "a", name: "Spell Effect: Charm", traits: [], origin: "Actor.hag", level: 4 }, { id: "b", name: "Bless", traits: ["mental"], origin: "Actor.cleric", level: 1 }] };
+    assert.deepEqual(counteractCandidates(creature, { ...iron.strike.counteract.counteract, originActorUuid: "Actor.hag" }).map((row) => row.id), ["a"]);
+    assert.match(counteractText(iron.strike.counteract.counteract), /the effect the creature hit uses on this creature's mind \(a failure is a success against a demon or fey\)/);
+    // (Only the creatures given, not its user.)
+    const card = createCounteractCard({ counteract, item: { name: "Awakened Silver Shot" }, user: { actorUuid: "Actor.me", name: "Me" }, drinkers: [{ actorUuid: "Actor.were", name: "Were" }], only: true });
+    assert.deepEqual(card.drinkers.map((entry) => entry.name), ["Were"]);
+});

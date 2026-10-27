@@ -4,7 +4,8 @@
 // DC and rank the card shows (the GM's where PF2e didn't know), and removes what it counteracts.
 
 import { rememberCastDuration } from "./cast-duration.js";
-import { DEGREE_WORDS, counteractCandidates, counteractCardHTML, counteractResult, createCounteractCard } from "../src/live/counteract-card.js";
+import { DEGREE_WORDS, counteractCandidates, counteractCardHTML, counteractResult, counteracts, createCounteractCard } from "../src/live/counteract-card.js";
+import { itemNoteSource } from "../src/live/card.js";
 import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
 export async function postCounteractCard({ message, plan, used, actor, token }) {
@@ -24,6 +25,12 @@ export async function postCounteractCard({ message, plan, used, actor, token }) 
     return ChatMessage.create({ content: counteractCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
+// The counteract card a Strike's hit posts (src/compiler/strike-counteract.js): { counteract, item, user, drinkers } — only those creatures to pick.
+export async function postCounteractAt({ counteract, item, user, drinkers }) {
+    const state = createCounteractCard({ counteract, item, user, drinkers, only: true });
+    return ChatMessage.create({ content: counteractCardHTML(state, { canApply: true }), speaker: ChatMessage.getSpeaker(), flags: { [MODULE_ID]: { [FLAG]: state } } });
+}
+
 // An Effect's DC, as the spell module reads it: its origin's class or spell DC.
 function originDC(effect) {
     const uuid = effect.system?.context?.origin?.actor;
@@ -36,12 +43,19 @@ function originDC(effect) {
     return Number(origin?.attributes?.classOrSpellDC?.value ?? origin?.system?.attributes?.spellDC?.value) || null;
 }
 
+// An Effect's traits, and its spell's when PF2e left them off the Effect (a battle form's polymorph: Awakened Silver Shot's search).
+function effectTraits(effect) {
+    const own = effect.system?.traits?.value ?? [];
+    const origin = effect.system?.context?.origin?.item ? fromUuidSync?.(effect.system.context.origin.item) : null;
+    return [...new Set([...own, ...(origin?.system?.traits?.value ?? [])])];
+}
+
 // The creature as the card's search reads it.
 function snapshot(actor) {
     return {
         // (A spell's Effect: PF2e's "Spell Effect: …", from its spell-effects pack, or an Effect a spell put on it.)
         // (Not an affliction's: Pseudo Afflictions' Effects are afflictions, below.)
-        effects: (actor.itemTypes?.effect ?? []).filter((effect) => !effect.flags?.["pseudo-afflictions"]?.stages).map((effect) => ({ id: effect.id, name: effect.name, traits: effect.system?.traits?.value ?? [], level: Number(effect.system?.level?.value) || null, dc: originDC(effect), spell: /^Spell Effect:/i.test(effect.name) || /\.spell-effects\./.test(effect._stats?.compendiumSource ?? effect.flags?.core?.sourceId ?? "") || effect.system?.context?.origin?.item?.includes?.(".Item.") && /spell/i.test(String(effect.system?.context?.origin?.rollOptions ?? "")) })),
+        effects: (actor.itemTypes?.effect ?? []).filter((effect) => !effect.flags?.["pseudo-afflictions"]?.stages).map((effect) => ({ id: effect.id, name: effect.name, traits: effectTraits(effect), origin: effect.system?.context?.origin?.actor ?? null, level: Number(effect.system?.level?.value) || null, dc: originDC(effect), spell: /^Spell Effect:/i.test(effect.name) || /\.spell-effects\./.test(effect._stats?.compendiumSource ?? effect.flags?.core?.sourceId ?? "") || effect.system?.context?.origin?.item?.includes?.(".Item.") && /spell/i.test(String(effect.system?.context?.origin?.rollOptions ?? "")) })),
         conditions: (actor.itemTypes?.condition ?? []).map((condition) => ({ id: condition.id, slug: condition.slug, name: condition.name, value: Number.isFinite(condition.value) ? condition.value : null, grantedBy: condition.flags?.pf2e?.grantedBy?.id ?? null })),
         // (PF2e's affliction items, and the Effects Pseudo Afflictions tracks them with: scripts/foundry.js afflictionsOf.)
         afflictions: afflictionsOf(actor).map(({ id, name, traits, level, dc }) => ({ id, name, traits, level: level || null, dc }))
@@ -106,8 +120,12 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         const roll = await new Roll(`1d20 + ${state.counteract.modifier}`).evaluate();
         await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: counteract ${row.name} (DC ${row.dc}, rank ${row.rank})` });
         const natural = Number(roll.dice?.[0]?.total ?? NaN);
-        const { degree, removed } = counteractResult({ total: roll.total, natural: Number.isFinite(natural) ? natural : null, dc: row.dc, ours, theirs: row.rank });
-        const outcome = `${roll.total} against DC ${row.dc}: ${DEGREE_WORDS[degree] ?? "no result"}`;
+        let { degree, removed } = counteractResult({ total: roll.total, natural: Number.isFinite(natural) ? natural : null, dc: row.dc, ours, theirs: row.rank });
+        // (A failure that's a success against some creatures, Awakened Silver Shot's devils and werecreatures: the creature hit's traits.)
+        const upFor = state.counteract.failToSuccess?.traits ?? [];
+        const raised = degree === 1 && upFor.some((trait) => (state.counteract.struckTraits ?? []).includes(trait));
+        if (raised) ({ degree, removed } = { degree: 2, removed: counteracts(2, ours, row.rank) });
+        const outcome = `${roll.total} against DC ${row.dc}: ${DEGREE_WORDS[degree] ?? "no result"}${raised ? " (a failure, a success against it)" : ""}`;
         if (!removed) {
             lines.push(`${row.name}: ${outcome}, not counteracted.`);
             continue;
@@ -131,6 +149,13 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         } else {
             await actor.deleteEmbeddedDocuments("Item", [row.id]);
             lines.push(`${row.name}: ${outcome}, counteracted.`);
+            // (Change Shape counteracted, Awakened Silver Shot's: a note Effect on it for that time, a minute after a critical success.)
+            const after = state.counteract.afterCounter;
+            if (after && new RegExp(after.name, "i").test(row.name)) {
+                const time = degree === 3 ? after.criticalSuccess : after.success;
+                await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: `can't ${after.name}`, words: `${after.words} for ${time.value} ${time.unit === "minutes" ? (time.value === 1 ? "minute" : "minutes") : time.value === 1 ? "round" : "rounds"}`, duration: { mode: "fixed", value: time.value, unit: time.unit, expiry: "turn-start" } }, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+                lines.push(`${target.name} can't use ${after.name} for ${time.value} ${time.value === 1 ? time.unit.replace(/s$/, "") : time.unit}.`);
+            }
         }
     }
     // (A spell's effects on its user after it, Draconal Mask's Truesight for 1 minute: the spell module casts it, its Effects set to that time.)

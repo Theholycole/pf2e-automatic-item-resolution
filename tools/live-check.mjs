@@ -7044,6 +7044,45 @@ export const cases = {
         return { predicate: rule.predicate ?? null, bonus: bonus.modifier, ammoType };
     },
 
+    // Awakened Silver Shot (2026-10-27): a hit on a devil under a polymorph Effect named for its Change Shape — the counteract card at it, the
+    // Effect counteracted and its "can't Change Shape" note Effect; a hit on a devil with none — Enfeebled 1 for 1 minute instead.
+    async awakenedSilverShot(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Silver Archer", { type: "character", x: 8, y: 12 });
+        const { actor: shifted, token: shiftedToken } = await creature(scene, "Silver Devil Shifted", { x: 9, y: 12, ac: -20, hp: 200, alliance: "opposition" });
+        const { actor: plain, token: plainToken } = await creature(scene, "Silver Devil Plain", { x: 9, y: 13, ac: -20, hp: 200, alliance: "opposition" });
+        for (const devil of [shifted, plain]) await devil.update({ "system.traits.value": ["devil", "fiend"] });
+        await shifted.createEmbeddedDocuments("Item", [{ name: "Change Shape (Wolf)", type: "effect", system: { traits: { value: ["polymorph"] }, level: { value: 1 }, duration: { value: -1, unit: "unlimited" } } }]);
+        const bow = await give(archer, "Shortbow");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2 });
+        await archerToken.object?.control?.();
+        const shoot = async (token) => {
+            const shots = await give(archer, "Awakened Silver Shot");
+            await shots.update({ "system.baseItem": "arrows" });
+            await bow.update({ "system.selectedAmmoId": shots.id });
+            await target(token);
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(shots.uuid, 0);
+            const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+            await game.modules.get(NS).api.live.apply(card.id);
+            await wait(600);
+            since = Date.now();
+            await strike(archer, bow);
+            return since;
+        };
+        let since = await shoot(shiftedToken);
+        const counter = await messageAfter(since, itemCard("counteract"), { what: "the counteract card", timeout: 10000 });
+        assert(counter.getFlag(NS, "card").drinkers.length === 1, `only the creature hit to pick (${counter.getFlag(NS, "card").drinkers.map((entry) => entry.name)})`);
+        await game.modules.get(NS).api.live.apply(counter.id, { drinker: 0 });
+        await until(() => game.messages.get(counter.id).getFlag(NS, "card").rows?.length, `its polymorph Effect found (${JSON.stringify(game.messages.get(counter.id).getFlag(NS, "card").rows)})`, { timeout: 8000 });
+        await game.modules.get(NS).api.live.apply(counter.id, { rows: [{ ticked: true, dc: 5, rank: 1 }] });
+        await until(() => !shifted.itemTypes.effect.some((effect) => effect.name === "Change Shape (Wolf)"), "its polymorph counteracted", { timeout: 8000 });
+        await until(() => shifted.itemTypes.effect.some((effect) => /can't Change Shape/.test(effect.name)), `its can't Change Shape note (${shifted.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+        since = await shoot(plainToken);
+        await until(() => plain.hasCondition("enfeebled"), `Enfeebled 1 instead (${plain.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        const enfeebled = plain.itemTypes.effect.find((effect) => /Enfeebled/.test(effect.name));
+        return { counteract: game.messages.get(counter.id).getFlag(NS, "card").results, enfeebled: enfeebled ? `${enfeebled.system.duration.value} ${enfeebled.system.duration.unit}` : null };
+    },
+
     // Silencing Ammunition (2026-10-27): a hit, its DC 25 Will save failed — the spell module's Silence on the target (-2 to that save after a
     // critical hit, said on the hit's line); then the end-early card's tug, a DC 25 Will save (the target's Will raised to pass), and the Silence gone.
     async silencingTug(scene) {

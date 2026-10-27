@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1250,
+  "entries": 1248,
   "results": {
-   "partial": 356,
+   "partial": 354,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -17,7 +17,7 @@
    "visibility": 45,
    "lasting": 64,
    "choice": 30,
-   "strike": 93,
+   "strike": 92,
    "spells": 34,
    "information": 21,
    "out-of-combat": 35,
@@ -39,7 +39,7 @@
    "senses": 20,
    "speech": 14,
    "from-events": 4,
-   "forms": 26,
+   "forms": 25,
    "several": 23,
    "retaliation": 3,
    "missing-number": 6,
@@ -52,10 +52,10 @@
    "speeds": 28,
    "areas": 181,
    "immunity": 89,
-   "objects": 388,
+   "objects": 386,
    "speech": 120,
    "out-of-combat": 437,
-   "counteract": 103,
+   "counteract": 101,
    "afflictions": 105,
    "lasting": 227,
    "moving": 106,
@@ -64,8 +64,8 @@
    "dying": 75,
    "choice": 107,
    "several": 101,
-   "strike": 186,
-   "reader": 203,
+   "strike": 184,
+   "reader": 201,
    "spells": 73,
    "information": 195,
    "actions": 60,
@@ -80,7 +80,7 @@
    "cooldown": 12,
    "vehicles": 27,
    "senses": 27,
-   "forms": 27,
+   "forms": 26,
    "fortune": 9,
    "retaliation": 3,
    "missing-number": 7,
@@ -9447,20 +9447,6 @@
    ]
   },
   {
-   "name": "Awakened Silver Shot",
-   "kind": "activation",
-   "result": "partial",
-   "main": "forms",
-   "work": "polymorph",
-   "needs": [
-    "forms",
-    "strike",
-    "counteract",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Cooperative Waffles (Greater)",
    "kind": "consumable",
    "result": "none",
@@ -11744,19 +11730,6 @@
    "needs": [
     "several",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Awakened Cold Iron Shot",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "on a hit",
-   "needs": [
-    "strike",
-    "counteract",
-    "objects",
-    "reader"
    ]
   },
   {

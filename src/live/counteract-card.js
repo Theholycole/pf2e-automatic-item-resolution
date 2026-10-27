@@ -11,8 +11,9 @@ import { DEGREE_WORDS, degreeOf } from "./reroll-card.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
-export function createCounteractCard({ counteract, item, user, drinkers = [] }) {
-    const choices = [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)];
+export function createCounteractCard({ counteract, item, user, drinkers = [], only = false }) {
+    // (only: the creatures given and not its user, a Strike's hit's — Awakened Silver Shot's creature hit.)
+    const choices = only && drinkers.length ? drinkers : [user, ...drinkers.filter((entry) => entry.actorUuid !== user.actorUuid || entry.tokenUuid !== user.tokenUuid)];
     // (Not on a creature — the triggering spell, a magical fire: straight to its one row, its DC and rank the GM's.)
     if (counteract.free) return { kind: "counteract", status: "open", step: "pick", counteract, item, user, drinkers: choices, drinker: 0, rows: [{ id: "free", name: counteract.free.name, kind: "free", rank: null, dc: null, ticked: true }], results: [] };
     return { kind: "counteract", status: "open", step: "find", counteract, item, user, drinkers: choices, drinker: 0, rows: [], results: [] };
@@ -36,7 +37,11 @@ export function counteractCandidates(creature, counteract) {
         // (A spell's Effect, for an item that counteracts a spell: each one the creature has.)
         // (Or a magical one too, Determination's "spell or other magical effect": one with the magical trait or a tradition's.)
         const magical = counteract.magical && (effect.traits ?? []).some((trait) => ["magical", "arcane", "divine", "occult", "primal"].includes(trait));
-        if (counteract.spells ? !effect.spell && !magical : !fits(effect.traits ?? []) && !grants.some((slug) => (counteract.conditions ?? []).includes(slug))) continue;
+        // (Or what one creature put on it, Awakened Cold Iron Shot's "the spell or effect the target is using to manipulate that creature's mind":
+        // each Effect whose origin is that creature, the GM ticking the one.)
+        if (counteract.originActorUuid) {
+            if (effect.origin !== counteract.originActorUuid) continue;
+        } else if (counteract.spells ? !effect.spell && !magical : !fits(effect.traits ?? []) && !grants.some((slug) => (counteract.conditions ?? []).includes(slug))) continue;
         rows.push({ id: effect.id, name: effect.name, kind: "effect", rank: Number.isFinite(effect.level) ? effect.level : null, dc: Number.isFinite(effect.dc) ? effect.dc : null });
     }
     // (A condition no listed Effect grants: itself, the GM's numbers.)
@@ -70,13 +75,15 @@ export function counteractText(counteract) {
     if (counteract.spells) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: one spell on a creature${counteract.within ? ` within ${counteract.within} feet` : ""}`;
     // ("Counteract +26, rank 7: the triggering spell".)
     if (counteract.free) return `Counteract +${counteract.modifier}${Number.isFinite(counteract.rank) ? `, rank ${counteract.rank}` : ""}: ${counteract.free.name}`;
+    // ("Counteract +27, rank 9: the effect the creature hit uses on this creature's mind" — Awakened Cold Iron Shot's.)
+    if (counteract.origin === "target") return `Counteract +${counteract.modifier}, rank ${counteract.rank}: the effect the creature hit uses on this creature's mind${counteract.failToSuccess ? ` (a failure is a success against a ${list(counteract.failToSuccess.traits)})` : ""}`;
     const what = [
         counteract.conditions?.length ? `inflicting ${list(counteract.conditions)}` : null,
         counteract.traits?.length ? `with the ${list(counteract.traits)} trait` : null,
         counteract.afflictions?.length ? `a ${list(counteract.afflictions)}` : null
     ].filter(Boolean).join(", or ");
     const how = counteract.pick === "each" ? "each effect" : counteract.pick === "highest" ? "the highest-rank effect" : "one effect";
-    return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${how} ${what}`;
+    return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${how} ${what}${counteract.failToSuccess ? ` (a failure is a success against a ${list(counteract.failToSuccess.traits)})` : ""}`;
 }
 
 export function counteractCardHTML(state, { canApply = false } = {}) {

@@ -7,6 +7,8 @@
 // weapon for a Strike with it ("item:id:…").
 
 import { postEndEarlyAt } from "./end-early.js";
+import { postCounteractAt } from "./counteract.js";
+import { afterEndsEffectSource } from "../src/live/card.js";
 import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
@@ -187,7 +189,7 @@ export async function strikeWithRider(message) {
     // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     // (A note for the creature hit counts: Magekiller Bullet's curse.)
-    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
+    if (!rider.plan.strike?.save && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}.</p>` });
         return;
@@ -285,7 +287,40 @@ export async function strikeWithRider(message) {
             if (!result?.resisted && cast.endEarly) await postEndEarlyAt({ endEarly: cast.endEarly, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: sourceToken?.uuid ?? null, name: actor.name }, creatures: [{ actorUuid: targetToken.actor.uuid, tokenUuid: targetToken.uuid, name: target.name }] }).catch((error) => console.error(`${MODULE_ID} | end early`, error));
         }
     }
+    // (A counteract check at the hit, Awakened Silver and Cold Iron Shots': the counteract card, or the condition the creature hit gets instead —
+    // src/compiler/strike-counteract.js.)
+    const hitCounteract = rider.plan.strike?.counteract;
+    if (hitCounteract) lines.push(await counteractOnHit(hitCounteract, { rider, actor, targetToken, message }));
     await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(lines.join("; ") || "the Strike hit")}.</p>` });
+}
+
+// An Effect's traits, its spell's too (a battle form's polymorph).
+const traitsOf = (effect) => {
+    const origin = effect.system?.context?.origin?.item ? fromUuidSync?.(effect.system.context.origin.item) : null;
+    return [...(effect.system?.traits?.value ?? []), ...(origin?.system?.traits?.value ?? [])];
+};
+
+// { counteract, fallback } and the hit → the hit's line. The fallback first: the creature hit, of its traits, with nothing for the card to
+// counteract — no polymorph Effect on it (silver), no Effect of its on another creature on the scene (cold iron) — gets its condition instead.
+async function counteractOnHit({ counteract, fallback = null }, { rider, actor, targetToken, message }) {
+    const struck = targetToken.actor;
+    const traits = [...(struck.traits ?? new Set(struck.system?.traits?.value ?? []))];
+    const sourceToken = message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null);
+    const item = { name: rider.item.name, uuid: rider.item.uuid ?? null };
+    const user = { actorUuid: actor.uuid, tokenUuid: sourceToken?.uuid ?? null, name: actor.name };
+    const kind = fallback ? fallback.traits.find((trait) => traits.includes(trait)) : null;
+    if (kind) {
+        const others = () => (canvas.scene?.tokens ?? []).some((token) => token.actor && token.actor.uuid !== struck.uuid && (token.actor.itemTypes?.effect ?? []).some((effect) => effect.system?.context?.origin?.actor === struck.uuid));
+        const has = fallback.unless === "polymorph-on-it" ? (struck.itemTypes?.effect ?? []).some((effect) => traitsOf(effect).includes("polymorph")) : others();
+        if (!has) {
+            await struck.createEmbeddedDocuments("Item", [afterEndsEffectSource({ slug: fallback.slug, value: fallback.value, duration: fallback.duration }, { item, user, worldTime: game.time.worldTime, initiative: startInitiative(struck), moduleId: MODULE_ID })]);
+            return `${struck.name} is ${fallback.slug} ${fallback.value} for ${fallback.duration.value} ${fallback.duration.value === 1 ? fallback.duration.unit.replace(/s$/, "") : fallback.duration.unit} instead (a ${kind} ${fallback.unless === "polymorph-on-it" ? "with no polymorph effect on it" : "with no effect on another creature"})`;
+        }
+    }
+    const drinkers = counteract.at === "target" ? [entryOf(targetToken.object ?? targetToken, struck)] : creaturesNear(targetToken, 500).filter((entry) => entry.actorUuid !== struck.uuid);
+    if (!drinkers.length) return `${struck.name}: no creature to counteract on (by hand)`;
+    await postCounteractAt({ counteract: { ...counteract, struckTraits: traits, ...(counteract.origin === "target" ? { originActorUuid: struck.uuid } : {}) }, item, user, drinkers });
+    return `${struck.name}: its counteract card follows`;
 }
 
 // A volley's damage to its user for a Strike made (Caress of the Great Serpent's 1d6 piercing): rolled and taken.

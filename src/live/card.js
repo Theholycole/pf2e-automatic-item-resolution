@@ -446,6 +446,11 @@ export function weatherEffectSource(entry, { item = {}, user = {}, worldTime = 0
     return ownEffectSource({ name: "weather", img: "icons/svg/eye.svg", words: weatherLine(entry), rules: [], duration: entry.duration, flag: { weatherIgnores: true }, extraFlags: { [ENVIRONMENT_ID]: { weatherIgnores: flag } }, item, user, worldTime, initiative, moduleId });
 }
 
+// A note Effect of the item's on a creature: its words for a time (Awakened Silver Shot's "can't use Change Shape", scripts/counteract.js).
+export function itemNoteSource({ name, words, duration = null, img = "icons/svg/cancel.svg" }, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+    return ownEffectSource({ name, img, words, rules: [], duration, flag: { note: true }, item, user, worldTime, initiative, moduleId });
+}
+
 function ownEffectSource({ name, img, words, rules, duration, flag, extraFlags = {}, item, user, worldTime, initiative, moduleId }) {
     return {
         name: `${item.name}: ${name}`,
