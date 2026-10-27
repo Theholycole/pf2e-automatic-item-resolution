@@ -8,7 +8,7 @@
   "results": {
    "resolves": 951,
    "builtin:cast-spell": 474,
-   "partial": 118,
+   "partial": 116,
    "none": 384,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
@@ -18,7 +18,7 @@
    "builtin:table": 7,
    "builtin:teleport": 28,
    "builtin:no-effect": 82,
-   "builtin:ways": 32,
+   "builtin:ways": 34,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 27,
    "builtin:modes": 34,
@@ -31,7 +31,7 @@
    "builtin:take-condition": 1
   },
   "live": {
-   "save": 437,
+   "save": 435,
    "cast": 474,
    "item": 643,
    "none": 491,
@@ -42,7 +42,7 @@
    "strike": 116,
    "table": 7,
    "teleport": 28,
-   "ways": 32,
+   "ways": 34,
    "zone": 27,
    "toggle": 34,
    "objects": 31,
@@ -88,7 +88,7 @@
    "activations": 461,
    "results": {
     "resolves": 214,
-    "partial": 24,
+    "partial": 22,
     "none": 61,
     "builtin:cast-spell": 83,
     "builtin:reroll": 7,
@@ -103,7 +103,7 @@
     "builtin:objects": 3,
     "builtin:pf2e-rules": 2,
     "builtin:teleport": 8,
-    "builtin:ways": 3,
+    "builtin:ways": 5,
     "builtin:roll-twice": 2
    }
   },
@@ -25596,9 +25596,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Sun Dazzler",
@@ -26291,9 +26291,9 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
-   "kind": "save",
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Planar Tunnel",

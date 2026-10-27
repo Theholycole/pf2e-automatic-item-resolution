@@ -290,6 +290,13 @@ test("a higher rank on a condition its user knows (2026-10-27): Lion's Pelt's Co
     assert.equal(chain.choices.length, 2);
 });
 
+test("a Strike whose hit sets off one of several songs (2026-10-27): Singing Shortbow's Harmonic Shot — the ways card's two songs, each a Strike with its card around the creature hit", async () => {
+    const [{ plan: shot }] = compileActivations(item("Singing Shortbow"), options);
+    assert.deepEqual([shot.builtin, shot.ways.map((way) => way.name), shot.partial], ["ways", ["Song of Soothing", "Song of Suffering"], undefined]);
+    const [soothing, suffering] = shot.ways.map((way) => way.plan.strike.around[0]);
+    assert.deepEqual([soothing.radius, soothing.plan.resolution.outcomes.success.effects[0], soothing.plan.resolution.outcomes.success.nativeEffects[0].label, suffering.plan.resolution.check.statistic, suffering.plan.resolution.check.basic], [10, { kind: "heal", formula: "3d10" }, "Effect: Song of Soothing", "fortitude", true]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

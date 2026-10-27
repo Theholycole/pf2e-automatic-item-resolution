@@ -6823,6 +6823,36 @@ export const cases = {
         return { shared, taken: hp - foe.system.attributes.hp.value };
     },
 
+    // Singing Shortbow's Harmonic Shot (2026-10-27): its ways card's Song of Soothing, then the Strike card; the hit's card at the creatures within 10
+    // feet of the one hit — a hurt ally beside it healed 3d10 and given PF2e's Effect: Song of Soothing.
+    async singingShortbowSoothing(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Singing Archer", { type: "character", x: 2, y: 24, level: 14 });
+        const { token: foeToken } = await creature(scene, "Singing Target", { x: 3, y: 24, ac: -20, hp: 300, alliance: "opposition" });
+        const { actor: ally } = await creature(scene, "Singing Ally", { x: 4, y: 24, hp: 30 });
+        await ally.update({ "system.attributes.hp.max": 100, "system.attributes.hp.value": 30 });
+        const bow = await give(archer, "Singing Shortbow");
+        const arrows = await give(archer, "Arrows");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(bow.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the songs' ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 0 });
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Song of Soothing's Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        const hp = ally.system.attributes.hp.value;
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (${attack.flags.pf2e.context.outcome})`);
+        const song = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-ability-resolution"]?.card) && /Song of Soothing/.test(message.content), { what: "the song's card", timeout: 10000 });
+        await rollAndApply(song);
+        await until(() => ally.system.attributes.hp.value > hp && ally.itemTypes.effect.some((effect) => effect.name === "Effect: Song of Soothing"), `the ally healed and given the Effect (${hp} → ${ally.system.attributes.hp.value}; ${ally.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        return { healed: ally.system.attributes.hp.value - hp };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

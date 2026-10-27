@@ -55,6 +55,7 @@ import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
 import { auraZonePlan, choiceAuraWays } from "./aura-zones.js";
 import { withStrikeDamage } from "./strike-as.js";
+import { songWaysPlan } from "./songs.js";
 import { isBareFigurine, ownerDCs, withItemData } from "./item-data.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { playedBySpellModule, spellModuleShare } from "./index.js";
@@ -516,6 +517,8 @@ function compileEach(item, options = {}) {
         plan = strikeOver(plan, compileStrike(part, base, options));
         // (A wound that makes the creature hit give off an aura, src/compiler/hit-auras.js: Ghoul Stiletto's stench.)
         plan = hitAuraPlan(activation.html, base, part, options) ?? plan;
+        // (A Strike whose hit sets off one of several songs around the creature hit, src/compiler/songs.js: Singing Shortbow's Harmonic Shot.)
+        plan = songWaysPlan(activation.html, base, part, options) ?? plan;
         // (Saves for the creatures around the one it hits, src/compiler/hit-around.js: Dispersing Bullet, Singularity Ammunition.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = hitAroundPlan(activation.html, base, part, options) ?? plan;
         // (An item thrown as a Strike that PF2e can't roll, src/compiler/thrown.js: Lady's Chalice, Halcyon Heart's net, Rod of Razors.)
