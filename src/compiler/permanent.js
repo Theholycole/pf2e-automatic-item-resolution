@@ -175,8 +175,9 @@ const field = (block, name) => {
 };
 
 // "once per day", "once per hour", "once per 10 minutes", "three times per day" → { max, per, raw }.
+// (And a week, a month, a year — the Oculus of Abaddon's Binding Circle and its mass suggestion, 2026-10-27: src/live/activations-card.js counts them.)
 export function readFrequency(text) {
-    const match = /\b(once|twice|three times|(\d+) times) per (round|turn|minute|10 minutes|hour|day|encounter)\b/i.exec(String(text ?? ""));
+    const match = /\b(once|twice|three times|(\d+) times) per (round|turn|minute|10 minutes|hour|day|week|month|year|encounter)\b/i.exec(String(text ?? ""));
     if (!match) return text ? { raw: text } : null;
     const max = match[2] ? Number(match[2]) : { once: 1, twice: 2, "three times": 3 }[match[1].toLowerCase()];
     return { max, per: match[3].toLowerCase().replace(" ", "-"), raw: text };

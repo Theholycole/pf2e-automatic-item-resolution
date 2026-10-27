@@ -90,6 +90,16 @@
 // - A spell's travel within one place (withPlaceTravel): Rowan Rifle's Briarbough Brachiaport, "You hold aloft the Rowan Rifle and step into a
 //   tree in Briarbough, and you use Nature's Pathway to travel to another tree in Briarbough." → the spell module's cast on its user; only
 //   from one of that place's trees to another, a line (the map's).
+// - The Oculus of Abaddon's activations: its price, "if you aren't evil, each time you activate an oculus of Abaddon, you must succeed at a DC
+//   36 Will save or become affected by a subconscious suggestion (heightened to 8th level) to perform an evil act …, as determined by the GM" →
+//   plan.alsoUserSave on each of them: the ability module's save card at its user as it's used, a note Effect of the suggestion on a failure,
+//   none for a creature with the evil or unholy trait (scripts/live.js). Its Binding Circle (withRitualCast): the spell module's cast at the
+//   rank the text gives, "only neutral evil creatures" a line, and "If you already know the planar binding ritual, you gain a +3 item bonus on
+//   the primary check" — plan.castBonus to its primary check's skills (PF2e's ritual data) for the ritual's day, only for a caster who has
+//   the ritual (castBonus.ifKnows, scripts/casts.js). Its sight through a companion (withCompanionSenses): a note Effect on its user while it
+//   Sustains it, its no other actions said. Its mass suggestion (withMassSuggestion): the spell module's Suggestion at DC 36 at every creature
+//   its user targets within a mile, those below 7th level failing it outright (plan.castDegree.belowLevel: PF2e's AdjustDegreeOfSuccess on
+//   them first), its end on one ending it on all and its aim (a tragic fate) lines; Vordakai's Varnhold, lore.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -478,15 +488,92 @@ function withPlaceTravel(plan, { activation, index }, item) {
     return { builtin: "cast-spell", source: base.source, spell: { uuid: spell[1], name: said[3] }, rank: null, dc: null, attack: null, tradition: null, self: true, targets: false, trigger: base.trigger, item: base.item, automation: { level: "automatic" }, castLines: [`Only within ${said[2]}: from one of its ${said[1]}s to another (the map's).`] };
 }
 
+// --- The Oculus of Abaddon's activations ------------------------------------------------------------------------------------------------------
+
+const PRICE = /\bif you aren't (evil), each time you activate an? [\w' -]+?, you must succeed at an? @Check\[(will)\|dc:(\d+)\] save or become affected by an? (subconscious suggestion) \(heightened to (\d+)(?:st|nd|rd|th) level\) to perform an evil act the next time an opportunity to do so arises, as determined by the GM\./i;
+const nothing = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] });
+// Its user's save on each use, from the item's own text: { plan, unlessTraits } or null.
+function priceOf(item) {
+    const said = PRICE.exec(String(item?.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+    if (!said) return null;
+    const affected = { ...nothing(), noteEffects: [{ label: "Subconscious suggestion", text: `A subconscious suggestion (rank ${said[5]}) from ${item.name}: the next time it has the chance, it commits an evil act — the GM picks the act and the moment.`, duration: null }] };
+    const plan = {
+        source: { name: `${item.name}: its price` },
+        automation: { level: "automatic" },
+        targeting: { target: "the user", range: null, area: null },
+        trigger: { event: "use" },
+        traits: ["mental"],
+        resolution: { kind: "save", check: { roll: "save", statistic: said[2].toLowerCase(), basic: false, against: { dc: "fixed", value: Number(said[3]) } }, outcomes: { criticalSuccess: nothing(), success: nothing(), failure: affected, criticalFailure: affected } }
+    };
+    return { plan, unlessTraits: ["evil", "unholy"], words: `Unless its user is evil, a DC ${said[3]} Will save as it's used, or a subconscious suggestion to commit an evil act (the GM's)` };
+}
+
+const PRIMARY = { "binding circle": ["arcana", "occultism"] };
+const RITUAL_CAST = [/^You use the [\w' -]+? to cast an? ([A-Z][\w' -]+?) ritual, heightened to (\d+)(?:st|nd|rd|th) level\.$/, /^You can only conjure ([a-z]+ [a-z]+) creatures with this casting of [a-z ]+\.$/, /^If you already know the ([a-z ]+) ritual, you gain a \+(\d+) item bonus on the primary check when casting [a-z ]+\.$/];
+function withRitualCast(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(RITUAL_CAST, sentences)) return plan;
+    const said = RITUAL_CAST.map((pattern, at) => pattern.exec(sentences[at]));
+    const spell = new RegExp(String.raw`@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{${said[0][1]}\}`).exec(String(activation.html ?? ""));
+    if (!spell) return plan;
+    // (Its primary check's skills, PF2e's ritual data for Binding Circle: "Arcana (master) or Occultism (master)" — the spells' index keeps no
+    // ritual checks, so its own here.)
+    const skills = PRIMARY[said[0][1].toLowerCase()];
+    if (!skills) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    const day = { mode: "fixed", value: 24, unit: "hours", expiry: "turn-start", anchor: "effect-start" };
+    return {
+        builtin: "cast-spell", source: base.source, spell: { uuid: spell[1], name: said[0][1] }, rank: Number(said[0][2]), dc: null, attack: null, tradition: null, self: true, targets: false, trigger: base.trigger, item: base.item, automation: { level: "automatic" },
+        castLines: [`It can conjure only ${said[1][1]} creatures.`],
+        castBonus: { modifiers: skills.map((skill) => ({ selector: skill, type: "item", value: Number(said[2][2]), duration: day })), said: `with a +${said[2][2]} item bonus to its primary check (${skills.join(" or ")}) for the ritual's day, for a caster who already knows ${said[0][1]}`, ifKnows: said[0][1] }
+    };
+}
+
+const COMPANION_SENSES = [/^You can see and hear through your (familiar or animal companion)'s eyes and ears, provided you are on the same plane\.$/, /^This effect can be sustained, but as long as you do so you can take no other actions\.$/];
+function withCompanionSenses(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(COMPANION_SENSES, sentences) || !/\bfamiliar or animal companion\b/i.test(String(activation.requirements ?? ""))) return plan;
+    const text = "It sees and hears through its familiar's or animal companion's eyes and ears (on the same plane). It lasts while it Sustains this, and while it does it can take no other actions: remove this Effect when it stops.";
+    return { ...ownCard(keptBase(plan, item, { activation, index }), { noteEffects: [{ label: "Through its companion's senses", text, duration: null }] }), noteOnly: undefined };
+}
+
+const MASS_SUGGESTION = [
+    /^You manipulate the minds of a huge number of targets, provided that the end goal of the manipulation is a tragic or otherwise horrific fate for those being manipulated\.$/,
+    /^This functions as ([A-Z][\w' -]+?), but with a range of (\d+) miles?\.$/,
+    /^All creatures within this area are affected, with the same suggestion implanted in their minds\.$/,
+    /^Creatures hear the telepathic suggestion in their native language, and creatures that are (\d+)(?:st|nd|rd|th) level or higher can attempt a @Check\[(will)\|dc:(\d+)\|traits:[\w,]+\] save to resist the effect\.$/,
+    /^This power was used by [A-Z]\w+ to cause the vanishing of [A-Z]\w+, suggesting to its inhabitants to leave their homes and travel south to his tomb\.$/,
+    /^If this effect is counteracted or removed on one victim, it ends for all victims\.$/
+];
+function withMassSuggestion(plan, { activation, index }, item) {
+    const plain = sentencesOf(/\bEffect\b\s*(.*)$/s.exec(String(activation.html ?? "").replace(/<[^>]+>/g, " ").replace(/@UUID\[[^\]]+\]\{([^}]*)\}/g, "$1").replace(/\s+/g, " "))?.[1]?.trim() ?? "");
+    if (!unread(plan) || !matches(MASS_SUGGESTION, plain)) return plan;
+    const said = MASS_SUGGESTION.map((pattern, at) => pattern.exec(plain[at]));
+    const spell = new RegExp(String.raw`@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{${said[1][1]}\}`).exec(String(activation.html ?? ""));
+    if (!spell) return plan;
+    const level = Number(said[3][1]);
+    const save = said[3][2].toLowerCase();
+    const base = keptBase(plan, item, { activation, index });
+    return {
+        builtin: "cast-spell", source: base.source, spell: { uuid: spell[1], name: said[1][1] }, rank: null, dc: Number(said[3][3]), attack: null, tradition: null, self: false, trigger: base.trigger, item: base.item, automation: { level: "automatic" },
+        castRange: { feet: Number(said[1][2]) * 5280, said: `a range of ${said[1][2]} mile` },
+        castDegree: { belowLevel: level, traits: [], selector: save, adjustment: { criticalSuccess: "to-failure", success: "to-failure" }, words: `It can't resist: its next ${save.replace(/^./, (letter) => letter.toUpperCase())} save is a failure`, said: plain[3] },
+        castLines: [`Every creature within ${said[1][2]} mile${Number(said[1][2]) === 1 ? "" : "s"} gets the same suggestion, heard telepathically in its own language: target them all.`, `Only those of level ${level} or higher may save; the rest fail (their saves set to failures first).`, "Its aim must be a tragic or horrific fate for them.", "Counteracted or removed on one of them, it ends on all of them: end the others' Effects then."]
+    };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
+// (And its price on each use, the Oculus of Abaddon's save: on every activation's plan that plays.)
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel]) {
-        const next = reader(plan, entry, item);
-        if (next !== plan) return next;
+    let next = plan;
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel, withRitualCast, withCompanionSenses, withMassSuggestion]) {
+        next = reader(plan, entry, item);
+        if (next !== plan) break;
     }
-    return plan;
+    const price = priceOf(item);
+    return price && next && !unread(next) ? { ...next, alsoUserSave: price } : next;
 }

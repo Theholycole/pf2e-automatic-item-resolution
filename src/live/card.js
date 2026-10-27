@@ -485,7 +485,8 @@ export function castPenaltySource(penalty, spellName, { item = {}, user = {}, wo
 // on that save, gone with the first one (scripts/first-degree.js), a minute at most.
 export function castDegreeEffectSource(castDegree, spellName, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const save = castDegree.selector === "saving-throw" ? "save" : `${castDegree.selector.charAt(0).toUpperCase()}${castDegree.selector.slice(1)} save`;
-    return ownEffectSource({ name: `worse ${save}`, img: "icons/svg/downgrade.svg", words: `Its next ${save}${spellName ? ` (against ${spellName})` : ""} is one degree of success worse`, rules: [{ key: "AdjustDegreeOfSuccess", selector: castDegree.selector, adjustment: castDegree.adjustment, ...(item.name ? { label: item.name } : {}) }], duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { firstDegree: { selector: castDegree.selector, adjustment: castDegree.adjustment } }, item, user, worldTime, initiative, moduleId });
+    // (Its own words, the Oculus of Abaddon's save made a failure: castDegree.words.)
+    return ownEffectSource({ name: castDegree.words ? `no ${save}` : `worse ${save}`, img: "icons/svg/downgrade.svg", words: castDegree.words ? `${castDegree.words}${spellName ? ` (against ${spellName})` : ""}` : `Its next ${save}${spellName ? ` (against ${spellName})` : ""} is one degree of success worse`, rules: [{ key: "AdjustDegreeOfSuccess", selector: castDegree.selector, adjustment: castDegree.adjustment, ...(item.name ? { label: item.name } : {}) }], duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { firstDegree: { selector: castDegree.selector, adjustment: castDegree.adjustment } }, item, user, worldTime, initiative, moduleId });
 }
 
 // A note Effect of the item's on a creature: its words for a time (Awakened Silver Shot's "can't use Change Shape", scripts/counteract.js).

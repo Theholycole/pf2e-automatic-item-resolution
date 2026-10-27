@@ -319,6 +319,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)
     if (plan?.alsoRetaliation && route !== "later") await postExposureCard({ message, plan: { ...plan.alsoRetaliation, item: plan.item, spend: undefined }, used, actor, token, later: true }).catch((error) => console.error(`${MODULE_ID} | retaliation card`, error));
+    // (A save its user makes as it's used, the Oculus of Abaddon's price: the ability module's card at its user, unless it's evil — src/compiler/unique-rules.js, 2026-10-27.)
+    if (plan?.alsoUserSave && actor) await postUserSave(plan.alsoUserSave, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user save`, error));
     // (A readied bonus beside the rest, Forgefather's Seal's blow absorbed beside its Earthquake: the readied card too — src/compiler/unique-rules.js, 2026-10-27.)
     if (plan?.alsoReadied && route !== "fortune") await postFortuneCard({ message, plan: { ...plan.alsoReadied, source: plan.source, item: plan.item, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | readied card`, error));
     // (Its user's move beside the rest, Phase Spike's Stride with its resistance: the teleport card's as a move, src/compiler/move.js.)
@@ -1360,4 +1362,18 @@ async function putOut(state, actor) {
         if (marked.length) lines.push(`${[...new Set(marked.map(({ other }) => other.name))].join(", ")}: ${marked.length === 1 ? "its" : "their"} limning lasts ${lingers.duration.value} more ${lingers.duration.unit.replace(/s$/, "")}`);
     }
     return lines;
+}
+
+// Its user's own save as it's used (plan.alsoUserSave, the Oculus of Abaddon's): the ability module's save card at its user's token — none for
+// a creature with one of its unlessTraits (evil, unholy).
+async function postUserSave(price, { actor, token, used }) {
+    const traits = new Set([...(actor.traits ?? []), ...(actor.system?.traits?.value ?? [])].map((trait) => String(trait).toLowerCase()));
+    if ((price.unlessTraits ?? []).some((trait) => traits.has(trait))) return;
+    const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+    const placeable = token?.object ?? token ?? actor.getActiveTokens?.(true)?.[0] ?? null;
+    if (!postCard || !placeable) {
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(price.words)} — roll it by hand.</p>` });
+        return;
+    }
+    await postCard({ plan: price.plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, sourceActor: actor, sourceToken: placeable.document ?? placeable, tokens: [placeable] });
 }

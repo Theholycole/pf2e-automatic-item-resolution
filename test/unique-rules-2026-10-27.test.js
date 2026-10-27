@@ -232,3 +232,21 @@ test("Rowan Rifle's Briarbough Brachiaport: the spell module's Nature's Pathway 
     assert.deepEqual([travel.builtin, travel.spell.name, travel.self, travel.trigger.frequency.per, routeOf(travel)], ["cast-spell", "Nature's Pathway", true, "10-minutes", "cast"]);
     assert.match(travel.castLines[0], /within Briarbough/);
 });
+
+test("Oculus of Abaddon: its Will save on every use unless its user is evil; Binding Circle at rank 7 with +3 for a caster who knows it; its companion's senses; its mile-wide Suggestion", async () => {
+    const { castDegreeEffectSource } = await import("../src/live/card.js");
+    const [scry, circle, senses, mass] = plans("Oculus of Abaddon");
+    for (const plan of [scry, circle, senses, mass]) {
+        assert.deepEqual([plan.alsoUserSave.plan.resolution.check.statistic, plan.alsoUserSave.plan.resolution.check.against.value, plan.alsoUserSave.unlessTraits], ["will", 36, ["evil", "unholy"]]);
+        assert.match(plan.alsoUserSave.plan.resolution.outcomes.failure.noteEffects[0].text, /subconscious suggestion \(rank 8\)/);
+        assert.equal(plan.partial, undefined);
+    }
+    assert.deepEqual([circle.spell.name, circle.rank, circle.trigger.frequency, circle.castBonus.ifKnows, circle.castBonus.modifiers.map((entry) => entry.selector)], ["Binding Circle", 7, { max: 1, per: "week", raw: "once per week" }, "Binding Circle", ["arcana", "occultism"]]);
+    assert.match(circle.castLines[0], /neutral evil/);
+    assert.equal(routeOf(senses), "item");
+    assert.match(success(senses).noteEffects[0].text, /no other actions/);
+    assert.deepEqual([mass.spell.name, mass.dc, mass.castRange.feet, mass.castDegree.belowLevel, mass.trigger.frequency.per], ["Suggestion", 36, 5280, 7, "year"]);
+    const failing = castDegreeEffectSource(mass.castDegree, "Suggestion", { item: { name: "Oculus of Abaddon" } });
+    assert.deepEqual(failing.system.rules[0].adjustment, { criticalSuccess: "to-failure", success: "to-failure" });
+    assert.match(failing.system.description.value, /next Will save is a failure/);
+});

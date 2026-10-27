@@ -42,7 +42,9 @@ export function beyondRange(castRange, casterToken, actor, targets) {
 // The cast's bonus beside the spell (src/compiler/cast-riders.js castBonus) on each creature it's cast on: PF2e's FlatModifier rules for its
 // time. → the card's lines.
 export async function giveCastBonus(state, actors) {
-    const { modifiers, said } = state.plan.castBonus;
+    const { modifiers, said, ifKnows } = state.plan.castBonus;
+    // (Only for a caster who already has that spell or ritual, the Oculus of Abaddon's Binding Circle: none otherwise — 2026-10-27.)
+    if (ifKnows && !actors.some((actor) => (actor.itemTypes?.spell ?? []).some((spell) => spell.name.toLowerCase() === ifKnows.toLowerCase()))) return [`No ${said.replace(/^(?:and|with) /i, "")}: its caster doesn't know ${ifKnows}.`];
     const time = modifiers[0].duration;
     const words = said.replace(/^(?:and|with) /i, "");
     const lines = [];
@@ -125,11 +127,14 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const arrival = state.plan.castArrival ? arrivalAfterMove(state.plan.castArrival, { actor, token, item: state.item }) : null;
         // (A worse save for targets of a kind, Radiant Spark's celestials: PF2e's AdjustDegreeOfSuccess on each before the cast, till its save.)
         if (state.plan.castDegree) {
+            const degree = state.plan.castDegree;
             for (const target of targetTokens) {
                 const traits = [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
-                if (!target.actor || !state.plan.castDegree.traits.some((trait) => traits.includes(trait))) continue;
-                await target.actor.createEmbeddedDocuments("Item", [castDegreeEffectSource(state.plan.castDegree, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-                lines.push(`${target.name}, a ${state.plan.castDegree.traits.join(" or ")}: its save is one degree worse.`);
+                // (Or below a level, the Oculus of Abaddon's mass suggestion: those under 7th level can't save, their save a failure — 2026-10-27.)
+                const fits = degree.belowLevel ? Number(target.actor?.level) < degree.belowLevel : (degree.traits ?? []).some((trait) => traits.includes(trait));
+                if (!target.actor || !fits) continue;
+                await target.actor.createEmbeddedDocuments("Item", [castDegreeEffectSource(degree, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+                lines.push(degree.belowLevel ? `${target.name}, below level ${degree.belowLevel}: it can't resist, its save a failure.` : `${target.name}, a ${degree.traits.join(" or ")}: its save is one degree worse.`);
             }
         }
         // (Creatures of a kind immune and others worse off, Castrovel's Beacon's elves and demons: the immune targeted left out of the cast, the
