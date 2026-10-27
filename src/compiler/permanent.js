@@ -296,7 +296,7 @@ function creaturesOf(item, entry, plan) {
     const name = `${item.name}${entry.activation?.name ? `: ${entry.activation.name}` : ""}`;
     if (!hasCreatureReading(name)) return plan;
     const { base, info, frequency } = activationBase(item, entry);
-    return withCreatureReading(plan, { name: base.source.name, words: effectWords(entry.activation?.html, "activation"), html: entry.activation?.html, base, info, frequency });
+    return withCreatureReading(plan, { name: base.source.name, words: effectWords(entry.activation?.html, "activation"), html: entry.activation?.html, item: plainText(item.system?.description?.value), base, info, frequency });
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of

@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
-import { compileItem } from "../src/compiler/index.js";
+import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { conjuredChanges, pickCandidates, pickedPlan } from "../src/live/conjured.js";
@@ -22,6 +22,8 @@ const item = (name) => {
 };
 const activations = (name) => compileActivations(item(name)).map((entry) => entry.plan);
 const activation = (name, which) => compileActivations(item(name)).find((entry) => entry.activation.name === which).plan;
+// (The spells, for casts read by the spell's name: Cozy Cabin.)
+const spells = { spells: spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items")) };
 const done = (plan) => Boolean(plan) && !plan.partial && !plan.noteOnly && plan.builtin !== "no-effect";
 
 test("its companion's senses while Sustained: Collar of Empathy's Empathic Link, a note Effect on its user for 10 minutes at most", () => {
@@ -127,4 +129,21 @@ test("one-offs, their card's lines: Barding Saddle's heavy barding, Familiar Mor
     const saddle = activation("Barding Saddle", "Ready for Battle");
     const morsel = compileItem(item("Familiar Morsel"));
     for (const plan of [saddle, morsel]) assert.deepEqual([plan.decided, done(plan), plan.notes.length], ["one-off", true, 1]);
+});
+
+test("a tattoo with a summon spell's parameters: Bound Guardian's Tattoo Guardian, Fauna Guardian's animal its user picks (level 4 or lower), each summoned for a minute at most", () => {
+    const bound = activations("Bound Guardian")[0];
+    assert.deepEqual([done(bound), routeOf(bound), bound.creatures[0].from, bound.creatures[0].traits, bound.lasts.value, bound.vanishAtZero, bound.trigger.frequency.per], [true, "conjure", { name: "Tattoo Guardian" }, ["summoned", "minion"], 1, true, "day"]);
+    const fauna = activations("Fauna Guardian")[0];
+    assert.deepEqual([done(fauna), routeOf(fauna), fauna.pick, fauna.creatures[0].traits, fauna.lasts.value], [true, "conjure", { any: ["animal"], maxLevel: 4 }, ["summoned", "minion"], 1]);
+});
+
+test("a cast whose changes are its card's lines: Busine of Divine Reinforcements' celestial, Sow a Tooth's visible skeleton, the anchor's sunken ship; Reef Heart, Guardian Shield and Bleachguard Doll one-offs", () => {
+    const [stun, summon] = activations("Busine of Divine Reinforcements");
+    assert.deepEqual([stun.resolution.kind, summon.builtin, done(summon), summon.spell.name, summon.rank, summon.notes.length], ["save", "cast-spell", true, "Summon Celestial", 6, 4]);
+    const tooth = activation("Sack of Hydra's Teeth", "Sow a Tooth");
+    assert.deepEqual([tooth.builtin, done(tooth), tooth.spell.name, tooth.notes.length], ["cast-spell", true, "Phantasmal Minion", 1]);
+    const anchor = compileActivations(item("Anchor of Aquatic Exploration"), spells)[0].plan;
+    assert.deepEqual([anchor.builtin, done(anchor), anchor.spell.name], ["cast-spell", true, "Cozy Cabin"]);
+    for (const plan of [activations("Reef Heart")[0], activations("Reef Heart (Greater)")[0], activations("Guardian Shield")[0], ...activations("Bleachguard Doll")]) assert.deepEqual([plan.decided, done(plan)], ["one-off", true]);
 });

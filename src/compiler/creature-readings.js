@@ -20,6 +20,9 @@ const hours = (time) => (time.unit === "hours" ? [`It lasts ${time.value} hour${
 // (The link its text gives a creature, by its label: "Compendium.pf2e.pathfinder-monster-core.Actor.…".)
 const linkOf = (html, label) => new RegExp(String.raw`@UUID\[(Compendium\.[\w.-]+\.Actor\.[A-Za-z0-9]{16})\]\{${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\}`, "i").exec(String(html ?? ""))?.[1] ?? null;
 const MINION = "A minion: it acts when its user commands it (1 action for 2 of its own).";
+// (A summon spell's time, sustained: a minute at most.)
+const SUMMON_TIME = timeOf(1, "minutes");
+const SUMMONED = (spell) => `${spell}'s parameters: summoned, it acts when its user Sustains the activation (2 actions); it goes if they stop, after a minute at most.`;
 // (A Sustain with no time of its own lasts 10 minutes at most, PF2e's rule for Sustain.)
 const SUSTAIN_MOST = timeOf(10, "minutes");
 
@@ -260,6 +263,93 @@ const READINGS = [
         }
     },
     {
+        // (A tattoo guardian with a summon spell's parameters: PF2e's Tattoo Guardian, summoned and a minion, Sustained up to a minute; at 0 Hit
+        // Points it's gone, a tattoo again.)
+        name: "Bound Guardian",
+        sentences: [
+            /^You animate your tattoo guardian, otherwise using the duration and other parameters of a (\d+)(?:st|nd|rd|th)-rank Summon Construct spell\.$/,
+            /^You can have the guardian Fly Free as part of Activating your tattoo\.$/,
+            /^If your tattoo guardian drops to 0 HP, the activation ends, and the inanimate tattoo returns to your skin\.$/
+        ],
+        card: ([summon]) => conjure({
+            creatures: [creature({ name: "Tattoo Guardian", from: { name: "Tattoo Guardian" }, traits: ["summoned", "minion"] })],
+            lasts: SUMMON_TIME,
+            notes: [
+                SUMMONED(`Summon Construct (rank ${summon[1]})`),
+                "Its user can have it Fly Free as part of the activation.",
+                "At 0 Hit Points the activation ends and it's a tattoo on its user's skin again."
+            ]
+        })
+    },
+    {
+        // (The tattoo's animal, picked by its user — a common animal of level 4 or lower, chosen when tattooed —, with a summon spell's
+        // parameters: summoned and a minion beside its user, Sustained up to a minute; at 0 Hit Points it's a tattoo again.)
+        name: "Fauna Guardian",
+        sentences: [
+            /^You animate your tattoo using the duration and other parameters of a (\d+)(?:st|nd|rd|th)-rank Summon Animal spell\.$/,
+            /^It appears in a space adjacent to you\.$/,
+            /^If your tattoo animal drops to 0 HP, the activation ends, and the inanimate tattoo returns to your skin\.$/
+        ],
+        card: ([summon], plan, { item }) => {
+            const tattooed = /\bcan be any common animal of (\d+)(?:st|nd|rd|th) level or lower\b/i.exec(item ?? "");
+            if (!tattooed) return null;
+            return conjure({
+                creatures: [creature({ name: "Tattoo animal", traits: ["summoned", "minion"] })],
+                pick: { any: ["animal"], maxLevel: Number(tattooed[1]) },
+                lasts: SUMMON_TIME,
+                notes: [
+                    `Its user picks the animal its tattoo shows: chosen when it was tattooed, a common animal of level ${tattooed[1]} or lower (others if the GM allows).`,
+                    SUMMONED(`Summon Animal (rank ${summon[1]})`),
+                    "It appears in a space adjacent to its user.",
+                    "At 0 Hit Points the activation ends and it's a tattoo on its user's skin again."
+                ]
+            });
+        }
+    },
+    {
+        // (A summon cast with no limits of alignment, whose celestial fights only evil creatures: the cast's lines its card's, a behaviour beside
+        // the cast.)
+        name: "Busine of Divine Reinforcements",
+        over: true,
+        sentences: [
+            /^You blow into the busine and conjure a celestial with the effects of a 6th-rank Summon Celestial spell, but there are no alignment restrictions to define which celestials you can call\.$/,
+            /^The celestial will fight only evil creatures and leaves after all present evil creatures have been defeated or the spell's duration ends, whichever comes first\.$/,
+            /^You can Sustain the Activation to extend the spell's duration, as normal\.$/,
+            /^If you have a deity and the conjured celestial's alignment is one of your deity's preferred alignments, the effect functions as a normal 6th-rank summon celestial spell instead, meaning the celestial will fight any creature, not just evil creatures, and will perform other tasks as you command\.$/
+        ],
+        card: (found, plan) => (plan?.builtin === "cast-spell" ? {
+            keep: true,
+            partial: undefined,
+            automation: { ...(plan.automation ?? {}), level: "automatic" },
+            notes: [
+                "Any celestial can be called: no alignment limits it.",
+                "It fights only evil creatures, and leaves once every evil creature present is defeated or the spell ends, whichever is first.",
+                "Its user Sustains the activation to keep the spell going, as normal.",
+                "If its user has a deity whose preferred alignments include the celestial's, it's an ordinary summon: it fights any creature and does other tasks it's told."
+            ]
+        } : null)
+    },
+    {
+        // (Phantasmal Minion as a visible skeleton: the cast's line, its look.)
+        name: "Sack of Hydra's Teeth: Sow a Tooth",
+        over: true,
+        sentences: [
+            /^You cast forth a tooth from the bag, and where it lands, a skeleton springs up from the ground\.$/,
+            /^This has the effect of Phantasmal Minion, except the minion appears as a visible skeleton\.$/
+        ],
+        card: (found, plan) => (plan?.builtin === "cast-spell" ? { keep: true, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" }, notes: ["The minion looks like a visible skeleton, springing up where the tooth lands: not Invisible."] } : null)
+    },
+    {
+        // (Cozy Cabin as a sunken ship full of air, under water: the cast's lines, its look and the air inside — out of combat.)
+        name: "Anchor of Aquatic Exploration",
+        over: true,
+        sentences: [
+            /^You spend one minute digging the anchor into the seabed, after which the anchor casts a Cozy Cabin spell, summoning a sunken ship instead of a cabin\.$/,
+            /^The sunken ship is filled with breathable air\.$/
+        ],
+        card: (found, plan) => (plan?.builtin === "cast-spell" ? { keep: true, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" }, notes: ["Dug into the seabed for its minute, it casts Cozy Cabin: the shelter is a sunken ship, filled with air its occupants can breathe."] } : null)
+    },
+    {
         // (An Animated Broom with no Strike, for menial tasks out of combat, for an hour (8 for the greater key).)
         name: /^Cordelia's (?:Greater )?Construct Key$/,
         sentences: [
@@ -297,14 +387,23 @@ function matched(reading, sentences) {
 }
 
 // The plan (null, note-only or the GM's no-effect — or any, for a reading over it) and its effect's words → the reading's card, or the same
-// plan. name: its source name; base, info, frequency: its own (an activation's, or a consumable's basePlan and itemInfo); html: its text.
-export function withCreatureReading(plan, { name, words, html = "", base, info, frequency = null }) {
+// plan. name: its source name; base, info, frequency: its own (an activation's, or a consumable's basePlan and itemInfo); html: its text,
+// item: the whole item's plain text.
+// (A card with keep: true goes over the plan read before — a cast's — its fields changed, undefined ones gone.)
+export function withCreatureReading(plan, { name, words, html = "", item = "", base, info, frequency = null }) {
     const readings = READINGS.filter((reading) => named(reading, name) && (reading.over || !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { html, base, info }) : null;
+        const card = found ? reading.card(found, plan, { html, base, info, item }) : null;
         if (!card) continue;
+        // (Over the plan read before, its own parts kept: a cast's lines its card's, Busine of Divine Reinforcements'.)
+        if (card.keep) {
+            const { keep, ...changes } = card;
+            const next = { ...plan, ...changes };
+            for (const key of Object.keys(changes)) if (changes[key] === undefined) delete next[key];
+            return next;
+        }
         const { item: own, ...rest } = card;
         return {
             ...base,
