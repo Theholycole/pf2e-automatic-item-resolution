@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1309,
+  "entries": 1307,
   "results": {
-   "partial": 411,
+   "partial": 409,
    "none": 530,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -13,7 +13,7 @@
    "speeds": 22,
    "counteract": 24,
    "afflictions": 60,
-   "moving": 84,
+   "moving": 82,
    "visibility": 48,
    "lasting": 65,
    "choice": 30,
@@ -50,22 +50,22 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 198,
+   "areas": 197,
    "immunity": 90,
    "objects": 390,
    "speech": 129,
-   "out-of-combat": 445,
+   "out-of-combat": 444,
    "counteract": 105,
    "afflictions": 109,
    "lasting": 234,
-   "moving": 111,
+   "moving": 109,
    "triggers": 121,
    "visibility": 50,
    "dying": 75,
    "choice": 107,
    "several": 104,
    "strike": 194,
-   "reader": 215,
+   "reader": 214,
    "spells": 75,
    "information": 197,
    "actions": 62,
@@ -4190,16 +4190,6 @@
    "result": "none",
    "main": "moving",
    "work": "plane other than",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
-   "name": "Conrasu Coin (Bythos)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "can stride",
    "needs": [
     "moving"
    ]
@@ -13427,19 +13417,6 @@
     "visibility",
     "senses",
     "situational",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Sure-Step Potion",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "moving",
-   "work": "can step",
-   "needs": [
-    "moving",
-    "areas",
-    "reader",
     "out-of-combat"
    ]
   },

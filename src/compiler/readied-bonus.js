@@ -374,8 +374,11 @@ export function readiedBonusPlan(text, base, { trigger = null } = {}) {
     // (When it can't be used, Deflecting Branch's "You can't use this ability to deflect unusually massive ranged projectiles": its trigger's,
     // a line of the card for its user to keep to — bonus.limits.)
     const LIMIT = /^You can't use this (?:ability|activation|reaction|item)\b[^.]*\.$/i;
-    const limits = notes.filter((note) => LIMIT.test(String(note).trim()));
-    if (limits.length) bonus.limits = limits.map((note) => String(note).trim());
+    // (And its user's longer move with a feat, Conrasu Coin (Bythos)'s "If you have the Nimble Roll feat and the attack misses, you can Stride up to
+    // 20 feet instead": a line of the card, its own move, 2026-10-27.)
+    const FEAT_MOVE = /^If you have the ([\w' -]+?) feat and the attack misses, you can Stride up to (\d+) feet instead\.$/i;
+    const limits = notes.filter((note) => LIMIT.test(String(note).trim()) || FEAT_MOVE.test(String(note).trim()));
+    if (limits.length) bonus.limits = limits.map((note) => String(note).trim()).map((note) => (FEAT_MOVE.test(note) ? note.replace(FEAT_MOVE, "With the $1 feat, if the attack misses, it can Stride up to $2 feet instead (its own move).") : note));
     const kept = (animal ? notes.filter((note) => !ANIMAL.test(String(note).trim())) : notes).filter((note) => !limits.includes(note));
     const plan = { ...base, builtin: "readied-bonus", automation: { level: kept.length ? "guided" : "automatic" }, targeting, trigger: { event: "use" }, bonus, ...(checkFor ? { then: `${checkFor.replace(/^When you activate it, a/i, "A").replace(/\.$/, "")} (PF2e's own, its degree improved)` } : {}), notes: kept, ...(kept.length ? { partial: true } : {}) };
     if (!animal || bonus.modifiers.length !== 1 || bonus.modifiers[0].selector !== "ac") return plan;

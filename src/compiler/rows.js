@@ -918,6 +918,14 @@ function ruleEffectsOf(sentences, duration, used = new Set()) {
             found.push({ name: "water breathing", words: "Can breathe underwater", rules: [], duration: breathe[1] ? durationIn(`for ${breathe[1]}`, duration) : duration });
             continue;
         }
+        // (Sure footing, which no PF2e rule plays either: Sure-Step Potion's "In addition, you can Step into difficult terrain, and you aren't
+        // Off-Guard on uneven ground" — its user's to keep to, on its Effect in words for the item's time, 2026-10-27.)
+        const footing = /^In addition, you can Step into difficult terrain, and you aren't Off-Guard on uneven ground\.$/i.exec(sentence.trim());
+        if (footing) {
+            used.add(index);
+            found.push({ name: "sure footing", words: "Can Step into difficult terrain, and isn't Off-Guard on uneven ground", rules: [], duration });
+            continue;
+        }
         // (Difficult terrain ignored, 2026-10-25 — Winterstep Elixir's "You ignore the uneven ground and difficult terrain caused by ice, and the
         // difficult terrain caused by snow", Underbrush Cloak's "you ignore any difficult terrain caused by plants and fungi", Frostwalker
         // Pattern's "Until the end of your next turn, you ignore difficult terrain and greater difficult terrain from ice and snow": PF2e's own

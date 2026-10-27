@@ -310,3 +310,11 @@ test("the same spell on another creature from a level on (2026-10-27): The Winge
     const html = castCardHTML({ status: "open", plan: serpent, item: { name: "The Winged Serpent" }, user: { name: "Oracle" }, drinker: null, drinkers: [], choice: 0, results: [] }, { canApply: true });
     assert.match(html, /Foresight on another creature by touch \(from level 17\)/);
 });
+
+test("its user's own doing as lines and words (2026-10-27): Conrasu Coin (Bythos)'s longer Stride with Nimble Roll, a line of its card; Sure-Step Potion's sure footing, words on its Effect for the hour", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const coin = compileItem(item("Conrasu Coin (Bythos)"), options);
+    assert.deepEqual([coin.partial, coin.bonus.limits], [undefined, ["With the Nimble Roll feat, if the attack misses, it can Stride up to 20 feet instead (its own move)."]]);
+    const potion = compileItem(item("Sure-Step Potion"), options);
+    assert.deepEqual([potion.partial, potion.item.ruleEffects[0].name, potion.item.ruleEffects[0].duration.unit], [undefined, "sure footing", "hours"]);
+});
