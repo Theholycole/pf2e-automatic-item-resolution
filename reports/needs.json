@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1240,
+  "entries": 1239,
   "results": {
-   "partial": 346,
+   "partial": 345,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -29,7 +29,7 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "areas": 119,
+   "areas": 118,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 17,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 21,
    "speeds": 28,
-   "areas": 178,
+   "areas": 177,
    "immunity": 89,
    "objects": 386,
    "speech": 120,
@@ -12550,16 +12550,6 @@
    "needs": [
     "afflictions",
     "counteract"
-   ]
-  },
-  {
-   "name": "Pit Illusion Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas"
    ]
   },
   {

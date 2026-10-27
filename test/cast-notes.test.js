@@ -804,3 +804,12 @@ test("a persistent bleed that grows with each failure (2026-10-27): Bloodgorger 
     assert.deepEqual([grown("1", 1, 3), grown("2", 1, 3), grown("3", 1, 3), grown("1d6", 1, 3)], ["2", "3", "3", null]);
     assert.deepEqual(growingOf({ itemTypes: { effect: [{ system: { rules: row.noteEffects[0].rules } }] } }).map(({ type, by, max }) => [type, by, max]), [["bleed", 1, 3]]);
 });
+
+test("terrain for that creature alone (2026-10-27): Pit Illusion Snare's success — a note Effect until the end of its turn, the squares around the snare difficult terrain for it", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const snare = compileItem(item("Pit Illusion Snare"), options);
+    assert.equal(snare.partial, undefined);
+    const { success, failure } = snare.zone.saves[0].plan.resolution.outcomes;
+    assert.deepEqual([success.noteEffects[0].label, success.noteEffects[0].duration.anchor, success.manualInstructions], ["Cautious", "target-turn", undefined]);
+    assert.deepEqual(failure.effects.map((effect) => effect.slug), ["prone"]);
+});

@@ -222,6 +222,25 @@ function staticRows(read, html) {
     return { read: { ...read, resolution: { ...read.resolution, outcomes: rows } } };
 }
 
+// (Terrain for that creature alone, Pit Illusion Snare's success: "The creature is cautious moving forward, treating the snare's square and all
+// adjacent squares as difficult terrain until the end of its turn." No rule makes terrain difficult for one creature: words on its Effect until
+// the end of its turn, the row's line gone. 2026-10-27.)
+const CAUTIOUS = /^\{target\} \((critical success|success|failure|critical failure)\): The creature is cautious moving forward, treating the snare's square and all adjacent squares as difficult terrain until the end of its turn\.$/i;
+function cautiousRows(read) {
+    const outcomes = read?.resolution?.outcomes;
+    if (!outcomes) return read;
+    let changed = false;
+    const next = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => {
+        const line = (row?.manualInstructions ?? []).find((entry) => CAUTIOUS.test(String(entry?.text ?? entry).trim()));
+        if (!line) return [degree, row];
+        changed = true;
+        const { manualInstructions, ...rest } = row;
+        const kept = manualInstructions.filter((entry) => entry !== line);
+        return [degree, { ...rest, ...(kept.length ? { manualInstructions: kept } : {}), noteEffects: [...(rest.noteEffects ?? []), { label: "Cautious", text: "The snare's square and every square next to it are difficult terrain for it (an illusion of a pit).", duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } }] }];
+    }));
+    return changed ? { ...read, resolution: { ...read.resolution, outcomes: next } } : read;
+}
+
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
 export function snareZone(item, read) {
     // (Not a square stepped into: Fire Box's "Anyone who opens the box triggers …" — its save card at those its cone reaches, src/compiler/opened.js.)
@@ -250,7 +269,7 @@ export function snareZone(item, read) {
     const raw = String(item.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
     const staked = barbs || greased ? null : stakedRows(read, raw);
     const charged = barbs || greased || staked ? null : staticRows(read, raw);
-    const plan = { ...markedRows(barbs?.read ?? greased?.read ?? staked?.read ?? charged?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(staked ? { endEarly: staked.endEarly } : endEarly ?? barbs?.endEarly ? { endEarly: greased?.byDegree && endEarly ? { ...endEarly, byDegree: { ...(endEarly.byDegree ?? {}), ...greased.byDegree } } : endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
+    const plan = { ...markedRows(cautiousRows(barbs?.read ?? greased?.read ?? staked?.read ?? charged?.read ?? read), whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(staked ? { endEarly: staked.endEarly } : endEarly ?? barbs?.endEarly ? { endEarly: greased?.byDegree && endEarly ? { ...endEarly, byDegree: { ...(endEarly.byDegree ?? {}), ...greased.byDegree } } : endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
     const cap = sizeCap(plainText(item.system?.description?.value));
     const only = gate || cap || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(cap ? { maxSize: cap } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};
