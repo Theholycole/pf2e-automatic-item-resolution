@@ -15,8 +15,12 @@ const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
 const SIZES = { small: "sm", medium: "med", large: "lg", huge: "huge", gargantuan: "grg" };
 const SIZE_GATE = /\b(?:When an?|triggers only when an?) (Small|Medium|Large|Huge|Gargantuan) or larger creature enters (?:the|its) square\b/i;
 export const sizeGate = (plain) => SIZES[SIZE_GATE.exec(String(plain ?? ""))?.[1]?.toLowerCase()] ?? null;
-const SIZE_WORDS = { sm: "Small", med: "Medium", lg: "Large", huge: "Huge", grg: "Gargantuan" };
-const firstTo = (gate) => (gate ? `The first ${SIZE_WORDS[gate]} or larger creature` : "The first creature");
+// (Or that size or smaller, Trip Snare's "A Medium or smaller creature that enters this snare's square": only.maxSize, ability 4461e8f.)
+const SIZE_CAP = /\bAn? (Tiny|Small|Medium|Large|Huge) or smaller creature (?:that )?enters\b/i;
+const SMALLER = { ...SIZES, tiny: "tiny" };
+export const sizeCap = (plain) => SMALLER[SIZE_CAP.exec(String(plain ?? ""))?.[1]?.toLowerCase()] ?? null;
+const SIZE_WORDS = { tiny: "Tiny", sm: "Small", med: "Medium", lg: "Large", huge: "Huge", grg: "Gargantuan" };
+const firstTo = (gate, cap = null) => (gate ? `The first ${SIZE_WORDS[gate]} or larger creature` : cap ? `The first ${SIZE_WORDS[cap]} or smaller creature` : "The first creature");
 
 export const isSnare = (item) => item?.type === "consumable" && (item.system?.category === "snare" || (item.system?.traits?.value ?? []).includes("snare") || /\bsnare\b/i.test(item.name ?? ""));
 
@@ -103,7 +107,8 @@ export function snareZone(item, read) {
     const traitGate = /\bThe first creature with the ([a-z]+) trait that steps into the area\b/i.exec(whole)?.[1]?.toLowerCase() ?? null;
     const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
-    const only = gate || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};
+    const cap = sizeCap(plainText(item.system?.description?.value));
+    const only = gate || cap || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(cap ? { maxSize: cap } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};
     // (A save for everyone around its square when it's set off, Shrapnel Snare's "Everyone in a 10-foot radius of the snare's square must
     // attempt …", Puff Dragon's gas "in a 10-foot emanation. Those within the emanation when the snare is activated must attempt …", Bomb Snare's
     // "The target and all creatures in adjacent squares must attempt …": the ability module's zone.burst (ability 5e46e0e) — one card of the
@@ -134,7 +139,7 @@ export function snareZone(item, read) {
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save; then it's spent.` : then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
+            notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate, cap)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate, cap)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save; then it's spent.` : then ? `${firstTo(gate, cap)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate, cap)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
             once: true,
             ...(then ? { then } : {})
         }

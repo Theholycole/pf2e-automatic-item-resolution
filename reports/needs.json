@@ -13003,7 +13003,7 @@
    "kind": "consumable",
    "result": "partial",
    "main": "areas",
-   "work": "first creature to enter",
+   "work": "difficult terrain",
    "needs": [
     "areas"
    ]

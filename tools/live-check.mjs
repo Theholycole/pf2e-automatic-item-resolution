@@ -5519,6 +5519,44 @@ export const cases = {
         return { held: 1, after: value(), doomed: false };
     },
 
+    // Trip Snare (2026-10-27): a Large creature stepping in doesn't set it off (only.maxSize "med"); a Medium one gets its Reflex save's card.
+    async tripSnareSize(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Trip Setter", { type: "character", x: 0, y: 18 });
+            const { actor: ogre, token: ogreToken } = await creature(scene, "Trip Ogre", { x: 6, y: 17, alliance: "opposition" });
+            await ogre.update({ "system.traits.size.value": "lg" });
+            const { token: walkerToken } = await creature(scene, "Trip Walker", { x: 8, y: 18, alliance: "opposition" });
+            const snare = await give(setter, "Trip Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Trip Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                let since = Date.now();
+                // (Its space over the square: a 2-square token a square up and the square under its lower half, else on it.)
+                const up = (ogreToken.height ?? 1) > 1 ? 100 : 0;
+                await ogreToken.update({ x: shape.x, y: shape.y - up }, { animate: false });
+                await until(() => ogreToken.x === shape.x, "the ogre over the square", { timeout: 8000 });
+                await wait(2500);
+                assert(square() && !game.messages.contents.some((message) => message.timestamp >= since && abilitySaveCard(message)), "still set after the Large ogre");
+                since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                await messageAfter(since, abilitySaveCard, { what: "the snare's save card" });
+                await until(() => !square(), "the snare spent", { timeout: 8000 });
+                return { large: "kept", medium: "set off" };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Trip Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Spirit Trap (2026-10-27): its 10-foot square left set by a creature without the spirit trait; one with it gets the Fortitude save's card.
     async spiritTrapTrait(scene) {
         return unpaused(async () => {

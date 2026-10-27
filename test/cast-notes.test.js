@@ -142,8 +142,11 @@ test("a square that only makes a noise when set off (2026-10-27): Alarm Snare's 
     assert.deepEqual([snare.builtin, snare.zone.once, snare.partial, snare.zone.saves[0].only], ["zone", true, undefined, { minSize: "sm" }]);
     assert.match(snare.zone.saves[0].note, /\(100 to 500 feet\)/);
     assert.deepEqual([zoneActions(snare.zone, "tokenEnter", { size: "tiny" }).length, zoneActions(snare.zone, "tokenEnter", { size: "sm" }).map((action) => action.kind)], [0, ["note"]]);
-    // (Hoof Stakes Snare's Large or larger.)
+    // (Hoof Stakes Snare's Large or larger; Trip Snare's Medium or smaller, only.maxSize, ability 4461e8f.)
     assert.deepEqual(compileItem(item("Hoof Stakes Snare"), options).zone.saves[0].only, { minSize: "lg" });
+    const trip = compileItem(item("Trip Snare"), options);
+    assert.deepEqual(trip.zone.saves[0].only, { maxSize: "med" });
+    assert.deepEqual([zoneActions(trip.zone, "tokenEnter", { size: "lg" }).length, zoneActions(trip.zone, "tokenEnter", { size: "med" }).map((action) => action.kind)], [0, ["save"]]);
     const popdust = compileItem(item("Popdust"), options);
     const actions = zoneActions(popdust.zone, "tokenEnter", {});
     assert.deepEqual([actions.map((action) => action.kind), zoneSetOff(popdust.zone, actions), popdust.partial], [["note"], true, undefined]);

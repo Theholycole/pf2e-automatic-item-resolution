@@ -56,7 +56,7 @@ What to build, biggest first: each need with the PF2e entries whose main need it
 
 | Need | Entries | Done by it alone | Modules' items | Where | Its biggest groups |
 |---|---:|---:|---:|---|---|
-| [Light, darkness, smoke, terrain and walls](#areas) | 128 | 20 | 15 | ability module + item live play | "wall" 21, "radius" 15, "difficult terrain" 13, "cube" 10 |
+| [Light, darkness, smoke, terrain and walls](#areas) | 128 | 20 | 15 | ability module + item live play | "wall" 21, "radius" 15, "difficult terrain" 14, "cube" 10 |
 | [Objects and the item itself](#objects) | 114 | 58 | 2 | item live play | "objects" 14, "hardness" 10, "extradimensional" 8, "door" 6 |
 | [Changes to a Strike](#strike) | 100 | 11 | 19 | item reader + item live play | "attack roll" 14, "strike" 12, "on a hit" 9, "make a strike" 6 |
 | [Triggers](#triggers) | 87 | 10 | 1 | item live play | "Trigger: you hit a …" 4, "triggering creature" 4, "Trigger: the triggering strike …" 3, "Trigger: you gain an …" 3 |
@@ -933,7 +933,7 @@ A lasting area that changes the map: light or darkness, smoke or fog that concea
 - Wintershot (Heroic) (Signal Flare): nothing read; also changes to a strike, counteracting and ending effects
 - Wintershot (Signal Flare): nothing read; also changes to a strike, counteracting and ending effects, choices on the card
 
-**"difficult terrain"**: 13 (2 only this need)
+**"difficult terrain"**: 14 (3 only this need)
 
 - Ancestral Embrace: partial; also afflictions and persistent damage, plain results the reader doesn't parse yet
 - Boots of the Blight (Fungal Stride): note only; also immunities and resistances by situation
@@ -941,6 +941,7 @@ A lasting area that changes the map: light or darkness, smoke or fog that concea
 - Doomsweeper (Clear the Way): the GM's; also counteracting and ending effects, objects and the item itself, information
 - Fleshgem (Earthspeaker): the GM's; also plain results the reader doesn't parse yet
 - Jar of Shifting Sands (Spill Sand): note only; *only this need*
+- Pit Illusion Snare: partial; *only this need*
 - Sidestepping (Phase Through): nothing read; also plain results the reader doesn't parse yet
 - Slithermaw's Bane (Heroic) (Terrain Adaptation): partial; also bonuses only in some situations, out of combat and the environment
 - Slithermaw's Bane (Terrain Adaptation): partial; also bonuses only in some situations, out of combat and the environment
@@ -962,18 +963,6 @@ A lasting area that changes the map: light or darkness, smoke or fog that concea
 - Rusting Ammunition (Moderate): partial; also afflictions and persistent damage, objects and the item itself, out of combat and the environment
 - Shoony Shovel: nothing read; also information
 
-**"first creature to enter"**: 9 (4 only this need)
-
-- Biting Snare: partial; also out of combat and the environment
-- Bomb Snare: partial; also several creatures at once
-- Deadweight Snare: partial; *only this need*
-- Fire Box: partial; *only this need*
-- Marking Snare: partial; *only this need*
-- Piercing Whistle Snare: partial; also triggers, out of combat and the environment
-- Pit Illusion Snare: partial; *only this need*
-- Poison Barbs Snare: partial; also afflictions and persistent damage, sustained, repeating and later effects, several creatures at once, plain results the reader doesn't parse yet
-- Rusting Snare: partial; also afflictions and persistent damage, objects and the item itself, plain results the reader doesn't parse yet
-
 **"smoke"**: 9 (3 only this need)
 
 - Blink Blade: partial; *only this need*
@@ -985,6 +974,17 @@ A lasting area that changes the map: light or darkness, smoke or fog that concea
 - Pipe of Dancing Smoke: nothing read; also choices on the card, information, out of combat and the environment
 - Preserving Shot: nothing read; also out of combat and the environment
 - Stage Magician's Cloak (...Now You Don't): partial; also objects and the item itself
+
+**"first creature to enter"**: 8 (3 only this need)
+
+- Biting Snare: partial; also out of combat and the environment
+- Bomb Snare: partial; also several creatures at once
+- Deadweight Snare: partial; *only this need*
+- Fire Box: partial; *only this need*
+- Marking Snare: partial; *only this need*
+- Piercing Whistle Snare: partial; also triggers, out of combat and the environment
+- Poison Barbs Snare: partial; also afflictions and persistent damage, sustained, repeating and later effects, several creatures at once, plain results the reader doesn't parse yet
+- Rusting Snare: partial; also afflictions and persistent damage, objects and the item itself, plain results the reader doesn't parse yet
 
 **"bright light"**: 7 (1 only this need)
 
