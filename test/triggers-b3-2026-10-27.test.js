@@ -9,6 +9,7 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
+import { gateMet } from "../src/compiler/strike-gate.js";
 import { breathes, planFor, sunlightVulnerable } from "../src/live/if-target.js";
 import { raisedResult, rerollText, triggeringRoll } from "../src/live/reroll-card.js";
 import { routeOf } from "../src/live/route.js";
@@ -109,6 +110,32 @@ test("Pyrefeather Token: its 5 temporary Hit Points, and the reroll card's recov
     assert.deepEqual(raisedResult({ oldTotal: 10, oldNatural: 10, dc: 11, raise: token.reroll.raise }), { degree: 2, total: 10, before: 1, dc: 10 });
     // (Its search: the latest flat check, not a later skill check.)
     assert.equal(triggeringRoll([{ id: "r", type: "flat-check", actorUuid: "Actor.x" }, { id: "s", type: "skill-check", actorUuid: "Actor.x" }], token.reroll, { actorUuid: "Actor.x" }), "r");
+});
+
+test("numbers from another roll: Cindergrass Poultice's typed fire damage, Grisly Scythe's void critical hit, Deflecting Branch's reflected shot", () => {
+    const poultice = consumable("Cindergrass Poultice");
+    assert.ok(done(poultice));
+    assert.deepEqual(poultice.item.levelTemp, [{ from: "amount", of: "the fire damage it took within the last minute", multiplier: 1, max: 10, heal: true, duration: null }]);
+    assert.deepEqual(poultice.resolution.outcomes.success.effects, [{ kind: "heal", formula: "2d12" }]);
+    assert.deepEqual(poultice.temperature.counts, { "severe-heat": "mild-heat" });
+    assert.deepEqual(reminders(poultice), []);
+    const scythe = activation("Grisly Scythe");
+    assert.ok(done(scythe));
+    assert.equal(routeOf(scythe), "strike");
+    assert.deepEqual([scythe.strike.hit, scythe.strike.own, scythe.strike.alteration], [true, true, "void"]);
+    assert.match(scythe.strike.lines[0], /half the void damage/);
+    assert.deepEqual(scythe.drain, { fraction: 0.5, type: "void", duration: null, heal: true, immediate: true });
+    assert.deepEqual(scythe.resolution.outcomes.criticalSuccess.effects, [{ kind: "condition", slug: "sickened", value: 1, duration: null }]);
+    assert.deepEqual(scythe.gate, { strike: { critical: true, maneuvers: [] } });
+    // (Its gate: a critical hit with it as its user's last roll — a plain hit isn't one.)
+    const roll = (outcome) => [{ actorUuid: "Actor.u", type: "attack-roll", outcome, itemUuid: "Item.s", targetUuid: "Token.t" }];
+    assert.deepEqual(gateMet(scythe.gate, roll("criticalSuccess"), { actorUuid: "Actor.u", itemUuid: "Item.s" }), { ok: true, struck: "Token.t" });
+    assert.match(gateMet(scythe.gate, roll("success"), { actorUuid: "Actor.u", itemUuid: "Item.s" }).why, /^a critical hit Strike/);
+    const branch = activation("Deflecting Branch", 1);
+    assert.ok(done(branch));
+    assert.equal(routeOf(branch), "save");
+    assert.deepEqual([branch.ownCheck, branch.targeting.range, branch.strikeDamage.from], [{ kind: "attack", modifier: null, choose: ["proficiency"] }, "60 feet", "triggering-miss"]);
+    assert.equal(activation("Deflecting Branch", 0).builtin, "readied-bonus", "its first activation as it was");
 });
 
 // --- Live: the reroll cards, against the stand-in for Foundry. ----------------------------------------------------------------------------------

@@ -117,11 +117,18 @@ function attackChoices(actor, kinds, { atLeast = null } = {}) {
     const str = Number(actor?.system?.abilities?.str?.mod ?? NaN);
     const melee = Number.isFinite(rank) && Number.isFinite(str) ? str + (rank > 0 ? Number(actor.level ?? 0) + 2 * rank : 0) : NaN;
     const meleeStrike = best((actor?.system?.actions ?? []).filter((action) => action?.item?.isMelee === true || (action?.item && action.item.isRanged === false)).map((action) => action.totalModifier));
+    // (Its best ranged weapon proficiency, Deflecting Branch's reflected shot — src/compiler/trigger-readings.js, 2026-10-27: its Dexterity modifier
+    // and its best rank among simple, martial and advanced weapons; a creature with no proficiencies, its best ranged Strike.)
+    const ranks = ["simple", "martial", "advanced"].map((group) => Number(actor?.system?.proficiencies?.attacks?.[group]?.rank ?? NaN)).filter(Number.isFinite);
+    const bestRank = ranks.length ? Math.max(...ranks) : NaN;
+    const proficient = Number.isFinite(bestRank) && Number.isFinite(dex) ? dex + (bestRank > 0 ? Number(actor.level ?? 0) + 2 * bestRank : 0) : NaN;
     const choices = [
         ...(kinds.includes("melee") && Number.isFinite(melee) ? [{ kind: "melee", label: `Melee (simple weapon) ${sign(melee)}`, modifier: melee }] : []),
         ...(kinds.includes("melee") && !Number.isFinite(melee) && Number.isFinite(meleeStrike) ? [{ kind: "melee", label: `Melee attack ${sign(meleeStrike)}`, modifier: meleeStrike }] : []),
         ...(kinds.includes("thrown") && Number.isFinite(thrown) ? [{ kind: "thrown", label: `Thrown (simple weapon) ${sign(thrown)}`, modifier: thrown }] : []),
         ...(kinds.includes("thrown") && !Number.isFinite(thrown) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
+        ...(kinds.includes("proficiency") && Number.isFinite(proficient) ? [{ kind: "proficiency", label: `Ranged attack (best weapon proficiency) ${sign(proficient)}`, modifier: proficient }] : []),
+        ...(kinds.includes("proficiency") && !Number.isFinite(proficient) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
         ...(kinds.includes("spell") && Number.isFinite(spell) ? [{ kind: "spell", label: `Spell attack ${sign(spell)}`, modifier: spell }] : []),
         ...(kinds.includes("firearm") && Number.isFinite(firearm) ? [{ kind: "firearm", label: `Firearm attack ${sign(firearm)}`, modifier: firearm }] : []),
         ...(kinds.includes("ranged") && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : [])
@@ -139,7 +146,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     if (Number.isInteger(checkChoice) && state.plan?.checkChoices?.[checkChoice]) state = { ...state, checkChoice };
     // (A spellgun's attack, as picked; with none its user has, the GM rolls it.)
     if (Number.isInteger(attackChoice) && state.attackChoices?.[attackChoice]) state = { ...state, attackChoice };
-    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("thrown") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
+    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("thrown") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("proficiency") ? "ranged weapon proficiency or ranged Strike" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
     // (The damage picked: Necklace of Fireballs' bead.)
     if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
     // (Its damage's amount, typed: Twisting Gale's Strike damage, Conflagration Club's charges.)

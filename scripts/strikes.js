@@ -66,8 +66,25 @@ export async function applyStrikeCard(message, choices = {}) {
     }
     const uses = targets && !volley.oneRoll ? targets.length : null;
     await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: uses ?? 1, targets } : {}) })]);
-    const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses })}${old.length ? " (The one readied before is gone.)" : ""}`] };
+    // (A Strike that already hit: its riders on the creature struck now, Grisly Scythe's Sickened 1 — 2026-10-27.)
+    const struck = state.plan.strike?.hit ? await hitRiders(ready, actor, weaponId) : null;
+    const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses })}${old.length ? " (The one readied before is gone.)" : ""}`, ...(struck ? [struck] : [])] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// Its riders for an attack already rolled (src/compiler/trigger-readings.js, Grisly Scythe's critical hit): its user's latest attack roll with
+// the weapon in the recent chat, a hit, that degree's row on its target (scripts/foundry.js applyRiders) — a line of what was applied, or why not.
+async function hitRiders(state, actor, weaponId) {
+    const rows = state.plan.resolution?.outcomes ?? {};
+    if (!Object.values(rows).some((row) => (row?.effects ?? []).length || (row?.noteEffects ?? []).length)) return null;
+    const latest = (game.messages?.contents ?? []).slice(-12).reverse().find((entry) => entry.actor?.uuid === actor.uuid && entry.flags?.pf2e?.context?.type === "attack-roll" && (!weaponId || (entry.flags.pf2e.context.options ?? []).includes(`item:id:${weaponId}`)));
+    const context = latest?.flags?.pf2e?.context;
+    if (!context || !["success", "criticalSuccess"].includes(context.outcome)) return "No hit with it in the recent chat: apply its riders by hand.";
+    const targetUuid = context.target?.token ?? latest.flags.pf2e.target?.token ?? null;
+    const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
+    if (!targetToken?.actor) return "Its hit had no target: apply its riders by hand.";
+    const lines = await applyRiders({ plan: state.plan, degree: context.outcome, user: state.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), item: state.item });
+    return (lines ?? []).filter(Boolean).join("; ") || null;
 }
 
 // (A readied Strike never made, Flashblade's Prepare Flash: its Effect gone with its time, the activation's use given back — on the active GM's

@@ -10,7 +10,15 @@
 //   source … can also reroll their saving throw and use the better result" (reroll.who "allies": each ally the presser targets, its latest
 //   failed Reflex save — scripts/rerolls.js); Silvanshee Collar's reroll of the failed check, its result its user's pick (the higher of
 //   the two, its user's sensible pick); Pyrefeather Token's "you reduce the triggering recovery check's DC by 1" (reroll.raise.dc, the reroll
-//   card beside its item card's temporary Hit Points — scripts/live.js). Pure.
+//   card beside its item card's temporary Hit Points — scripts/live.js).
+// - A number from another roll: Cindergrass Poultice's "additional Hit Points equal to the amount of fire damage the creature took within the
+//   last minute (maximum +10)", typed on its card (plan.item.levelTemp from "amount"); Grisly Scythe's critical hit, "Instead of inflicting
+//   slashing damage …, you inflict void damage. You regain a number of hit points equal to half the void damage inflicted" — its Strike that
+//   already hit (strike.hit, its damage roll void by PF2e's DamageAlteration), half the void damage the creature takes healing its user
+//   (plan.drain immediate, scripts/drain.js), its Sickened 1 at the creature struck as the card is applied (scripts/strikes.js), and the card
+//   only after a critical hit with it (plan.gate.strike.critical); Deflecting Branch's reflected shot, "Make a ranged attack against the
+//   creature using your highest proficiency with a ranged weapon" — its user's attack at that proficiency (ownCheck.choose "proficiency"),
+//   the knocked-away attack's damage (plan.strikeDamage from the triggering miss). Pure.
 
 import { sentencesOf } from "./lasting.js";
 
@@ -142,6 +150,65 @@ const READINGS = [
             resolution: { ...plan.resolution, outcomes: withoutReminder(plan.resolution.outcomes) },
             reroll: { what: "check", keep: "new", who: "self", recovery: true, raise: { dc: -Number(lower[1]) } },
             notes: ["Usable even while Unconscious: its reroll card changes the recovery check just rolled."]
+        })
+    },
+    // --- A number from another roll.
+    {
+        // (The fire damage it took in the last minute, typed on the card: that many more Hit Points, 10 at most.)
+        name: "Cindergrass Poultice",
+        over: (plan) => Boolean(plan?.temperature) && (plan.resolution?.outcomes?.success?.effects ?? []).some((effect) => effect?.kind === "heal"),
+        sentences: [
+            /^This thick, waxy gel erases the effects of flame\.$/,
+            /^It restores \d+d\d+ Hit Points to a creature when applied to their body\.$/,
+            /^If the creature has taken (fire) damage within the last minute, it restores additional Hit Points equal to the amount of fire damage the creature took within the last minute \(maximum \+(\d+)\)\.$/,
+            /^Finally, the creature becomes immune to the effects of severe heat for \d+ hours?\.$/
+        ],
+        card: ([, , extra], plan) => ({
+            keep: true,
+            partial: undefined,
+            unread: undefined,
+            automation: { ...(plan.automation ?? {}), level: "automatic" },
+            resolution: { ...plan.resolution, outcomes: withoutReminder(plan.resolution.outcomes) },
+            item: { ...plan.item, levelTemp: [...(plan.item?.levelTemp ?? []), { from: "amount", of: `the ${extra[1]} damage it took within the last minute`, multiplier: 1, max: Number(extra[2]), heal: true, duration: null }] }
+        })
+    },
+    {
+        // (Its critical hit's damage void instead, half of what the creature takes healing its user, the creature struck Sickened 1.)
+        name: "Grisly Scythe",
+        over: (plan) => !plan || Boolean(plan.partial),
+        sentences: [
+            /^Instead of inflicting (\w+) damage with the [\w' -]+?, you inflict (\w+) damage\.$/,
+            /^You regain a number of hit points equal to half the (\w+) damage inflicted, and the creature struck becomes Sickened (\d+) from the agony\.$/
+        ],
+        card: ([instead, regain], plan, { info, frequency }) => {
+            if (instead[2].toLowerCase() !== regain[1].toLowerCase()) return null;
+            const type = instead[2].toLowerCase();
+            const rows = Object.fromEntries(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [degree, none()]));
+            rows.criticalSuccess = { ...none(), effects: [condition("sickened", regain[2])] };
+            return {
+                targeting: { target: "the creature the Strike hits", range: null, area: null },
+                trigger: { event: "strike", on: ["criticalSuccess"], cost: "free", ...(frequency ? { frequency } : {}) },
+                resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: rows },
+                strike: { range: null, save: null, own: true, damage: [], attack: null, alteration: type, unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: true, lines: [`Its user regains Hit Points equal to half the ${type} damage the creature struck takes (after its resistances)`], notes: [] },
+                drain: { fraction: 0.5, type, duration: null, heal: true, immediate: true },
+                gate: { strike: { critical: true, maneuvers: [] } },
+                item: info
+            };
+        }
+    },
+    {
+        // (The knocked-away shot sent at a creature within 60 feet: its user's attack at its best ranged weapon proficiency, the shot's damage.)
+        name: "Deflecting Branch",
+        sentences: [
+            /^You swing the club and reflect the oncoming attack\.$/,
+            /^The attack is redirected toward a creature within (\d+) feet\.$/,
+            /^Make a ranged attack against the creature using your highest proficiency with a ranged weapon\.$/
+        ],
+        card: ([, within]) => ({
+            ownCheck: { kind: "attack", modifier: null, choose: ["proficiency"] },
+            targeting: { target: "1 creature", range: `${within[1]} feet`, area: null },
+            resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: null }, outcomes: Object.fromEntries(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => [degree, none()])) },
+            strikeDamage: { as: null, from: "triggering-miss", rows: { success: 1, criticalSuccess: 2 } }
         })
     }
 ];
