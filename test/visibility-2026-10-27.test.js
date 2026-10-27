@@ -227,6 +227,6 @@ test("Octopus Bottle: a DC 24 Fortitude save card at the creature grasped, moved
     assert.deepEqual([bottle.resolution.kind, bottle.resolution.check.statistic, bottle.resolution.check.against.value, bottle.targeting.range, routeOf(bottle, "")], ["save", "fortitude", 24, "15 feet", "save"]);
     assert.deepEqual(bottle.placed.rows, { failure: { within: 30 }, criticalFailure: { within: 30 } });
     assert.equal(bottle.placed.nearSource, 15);
-    assert.ok(bottle.notes.some((line) => /Undetected and can't use their sense of smell/.test(line)));
+    assert.ok(bottle.notes.some((line) => /Undetected and can't smell/.test(line)));
     assert.ok(done(bottle));
 });

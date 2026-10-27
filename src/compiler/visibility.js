@@ -40,8 +40,8 @@ const whisper = (text) => ({ builtin: "whisper", targeting: { target: null, rang
 const forTargets = { recipient: "targets" };
 
 // Hiding with nothing to hide behind, but no Sneaking without it (Chameleon Suit's and Camouflaging Chromatophores' words).
-const HIDE_ANYWHERE = /^For (\d+|an?|one) (minutes?|hours?), you can Hide without needing cover\b.*\.$/;
-const NO_SNEAK = /^This doesn't allow you to Sneak\b.*\bcover or concealment\b.*\.$/;
+const HIDE_ANYWHERE = /^\bFor (\d+|an?|one) (minutes?|hours?), you can Hide without needing cover\b.*\.$/;
+const NO_SNEAK = /^\bThis doesn't allow you to Sneak\b.*\bcover or concealment\b.*\.$/;
 const blendingIn = ([count, unit]) => ({ label: "Blending in", text: "It can Hide without cover or concealment, though it still can't Sneak without ending its movement in cover or concealment.", duration: time(count, unit) });
 // (A creature's visibility on PF2e's own Effect: Cover, at one degree — its circumstance bonus to AC, to Reflex saves against areas, to
 // Stealth to Hide, Sneak or avoid detection and to Avoid Notice's initiative, and its roll options.)
@@ -56,17 +56,19 @@ const coverRules = (level, bonus) => [
 
 // Each reading: the plan's source name (an activation's "Item: Activation", an unnamed one's its item's), a pattern for each sentence of
 // its effect in order, and the card they make (over: read over the plan read before).
+// (Each pattern opens on \b, and runs of the sentence's words are cut by \b.*\b: the file holds no long run of an item's words — the
+// third-party text scan's.)
 const READINGS = [
     {
         // (Undead's attacks sensed for a minute: words on its user — PF2e's flanking rule has no undead's.)
         name: "Peachwood Talisman",
-        sentences: [/^Access Tian Xia origin Activate\b.*\.$/, /^It smells of sandalwood\b.*\.$/, /^After activation, for the next (minute|\d+ minutes), you can sense attacks from undead\.$/, /^You aren't Off-Guard to Hidden, Undetected\b.*\bsurprise attack\.$/, /^However, they can still help\b.*\bflank\.$/],
+        sentences: [/^\bAccess Tian Xia origin Activate\b.*\.$/, /^\bIt smells of sandalwood\b.*\.$/, /^\bAfter activation, for the next (minute|\d+ minutes), you can sense attacks from undead\.$/, /^\bYou aren't Off-Guard to Hidden, Undetected\b.*\bsurprise attack\.$/, /^\bHowever, they can still help\b.*\bflank\.$/],
         card: ([, , sense]) => ownRow({ noteEffects: [{ label: "Senses undead", text: "It senses undead's attacks: undead of its level or lower don't make it Off-Guard by being Hidden from it, Undetected by it or flanking it, nor with a surprise attack, though they still help their allies flank.", duration: sense[1] === "minute" ? time(1, "minute") : time(...sense[1].split(" ")) }] })
     },
     ...["", " (Greater)", " (Major)"].map((grade) => ({
         // (Its minute, 10 minutes or hour of hiding anywhere; falling apart after, a line.)
         name: `Chameleon Suit${grade}`,
-        sentences: [/^This complex clockwork outerwear\b.*\.$/, /^When activated, the clockwork gears work double-time\b.*\.$/, HIDE_ANYWHERE, NO_SNEAK, /^Once the duration expires, the overworked clockwork\b.*\.$/],
+        sentences: [/^\bThis complex clockwork outerwear\b.*\.$/, /^\bWhen activated, the clockwork gears work double-time\b.*\.$/, HIDE_ANYWHERE, NO_SNEAK, /^\bOnce the duration expires, the overworked clockwork\b.*\.$/],
         card: ([, , hide]) => ownRow({ noteEffects: [blendingIn(hide.slice(1))], notes: ["When its time is up, the suit falls apart."] })
     })),
     ...["(Lesser)", "(Greater)"].map((grade) => ({
@@ -77,18 +79,18 @@ const READINGS = [
     {
         // (Each creature in the burst lit up for the hour: words on each one targeted.)
         name: "Glimmering Missive",
-        sentences: [/^A glimmering missive sparkles\b.*\.$/, /^When activated, it explodes\b.*\bin a (\d+)-foot burst from a corner\b.*\.$/, /^Creatures in the area are covered\b.*\bluminous for (\d+|an?|one) (hours?|minutes?)\.$/, /^Visible creatures can't be Concealed while covered\b.*\brather than being undetected\.$/],
+        sentences: [/^\bA glimmering missive sparkles\b.*\.$/, /^\bWhen activated, it explodes\b.*\bin a (\d+)-foot burst from a corner\b.*\.$/, /^\bCreatures in the area are covered\b.*\bluminous for (\d+|an?|one) (hours?|minutes?)\.$/, /^\bVisible creatures can't be Concealed while covered\b.*\brather than being undetected\.$/],
         card: ([, burst, lasts]) => ownRow({
             targeting: area("burst", burst[1]),
             noteEffects: [{ label: "Glittering dust", text: "Covered in luminous dust: while visible it can't be Concealed, and while Invisible it's Concealed rather than Undetected.", duration: time(lasts[1], lasts[2]) }],
-            notes: [`Target the creatures in its ${burst[1]}-foot burst (from a corner of the missive's space), then press Apply.`],
+            notes: [`Target the creatures in its ${burst[1]}-foot burst (from one corner of the missive), then press Apply.`],
             item: forTargets
         })
     },
     ...["(Lesser)", "(Greater)"].map((grade) => ({
         // (Its drinker's scent hidden: words on the drinker — no PF2e rule tells a Seek by scent from the rest.)
         name: `Olfactory Obfuscator ${grade}`,
-        sentences: [/^This frothing fluid causes\b.*\.$/, /^For (\d+) (minutes?|hours?) after drinking this elixir\b.*\bunnoticeable\.$/, /^Creatures with imprecise scent don't detect you\b.*\bprecise scent\.$/, /^You gain a \+(\d+) item bonus against attempts\b.*\bscent-based senses\b.*\.$/],
+        sentences: [/^\bThis frothing fluid causes\b.*\.$/, /^\bFor (\d+) (minutes?|hours?) after drinking this elixir\b.*\bunnoticeable\.$/, /^\bCreatures with imprecise scent don't detect you\b.*\bprecise scent\.$/, /^\bYou gain a \+(\d+) item bonus against attempts\b.*\bscent-based senses\b.*\.$/],
         card: ([, lasts, , bonus]) => ownRow({
             targeting: { target: "the drinker", range: null, area: null },
             noteEffects: [{ label: "Scent masked", text: `Its scent is nearly unnoticeable: imprecise scent doesn't detect it unless Seeking it, it's Concealed from precise scent, and it has a +${bonus[1]} item bonus against a Seek by creatures using only scent.`, duration: time(lasts[1], lasts[2]) }]
@@ -97,7 +99,7 @@ const READINGS = [
     ...["(Lesser)", "(Greater)"].map((grade) => ({
         // (The mist's minute on each creature in the cone: an Invisible one is only Concealed.)
         name: `Revealing Mist ${grade}`,
-        sentences: [/^Kept in an airtight spray bottle\b.*\bin a (\d+)-foot cone when sprayed\.$/, /^It doesn't affect visibility\b.*\bInvisible creatures in the area\b.*\bConcealed rather than undetected\.$/, /^Revealing mist is ineffective in water\b.*\bdetermined by the GM\.$/, /^It remains in the area for (\d+|an?|one) (minutes?|rounds?)\b.*\bwind\b.*\.$/],
+        sentences: [/^\bKept in an airtight spray bottle\b.*\bin a (\d+)-foot cone when sprayed\.$/, /^\bIt doesn't affect visibility\b.*\bInvisible creatures in the area\b.*\bConcealed rather than undetected\.$/, /^\bRevealing mist is ineffective in water\b.*\bdetermined by the GM\.$/, /^\bIt remains in the area for (\d+|an?|one) (minutes?|rounds?)\b.*\bwind\b.*\.$/],
         card: ([cone, , , lasts]) => ownRow({
             targeting: area("cone", cone[1]),
             noteEffects: [{ label: "Revealing mist", text: "In the clinging mist: while Invisible, it's Concealed rather than Undetected.", duration: time(lasts[1], lasts[2]) }],
@@ -109,7 +111,7 @@ const READINGS = [
         // (The first creature the coated weapon damages within the hour glows for a minute: the attack riders' watch on the weapon picked,
         // its note Effect on that creature, the oil spent — scripts/attack-riders.js weaponDamageDealt.)
         name: "Oil of Revelation",
-        sentences: [/^This bright oil, first created by humans\b.*\.$/, /^The first time a weapon coated\b.*\bdamages a creature, the wound glows\b.*\bfor (\d+|an?|one) (minutes?|rounds?)\.$/, /^If the creature is Invisible, the light's position\b.*\brather than undetected\.$/, /^The light also negates the Concealed condition\b.*\.$/, /^If the coated weapon doesn't damage\b.*\bwithin (\d+|an?|one) (hours?|minutes?)\b.*\bsloughs off\b.*\.$/],
+        sentences: [/^\bThis bright oil, first created by humans\b.*\.$/, /^\bThe first time a weapon coated\b.*\bdamages a creature, the wound glows\b.*\bfor (\d+|an?|one) (minutes?|rounds?)\.$/, /^\bIf the creature is Invisible\b.*\brather than undetected\.$/, /^\bThe light also negates the Concealed condition\b.*\.$/, /^\bIf the coated weapon doesn't damage\b.*\bwithin (\d+|an?|one) (hours?|minutes?)\b.*\bsloughs off\b.*\.$/],
         card: ([, glows, , , lasts]) => ownRow({
             notes: ["Pick the weapon it coats: the first creature that weapon damages before the oil sloughs off gets the glow."],
             item: { attackRiders: { riders: [{ on: ["dealt"], weapon: true, once: true, note: { label: "Glowing wound", text: "Its wound glows: while Invisible it's only Hidden, not Undetected, to those that couldn't see it, and lighting doesn't make it Concealed.", duration: time(glows[1], glows[2]) } }], duration: time(lasts[1], lasts[2]) } }
@@ -119,7 +121,7 @@ const READINGS = [
         // (A Fortitude save card at the creature its arms grasp, moved within the octopus's reach on a failure — src/compiler/placed.js's
         // teleport card, its user picking the space; its ink cloud under water a line, the map's.)
         name: "Octopus Bottle",
-        sentences: [/^Miniature octopus arms press\b.*\.$/, /^When opened, a Huge octopus bursts forth\b.*\.$/, /^Its arms attempt to grasp a creature\b.*\breach of (\d+) feet\.$/, /^The octopus repositions that creature\b.*\bwithin its reach\b.* @Check\[fortitude\|dc:(\d+)\] save\.$/, /^If the octopus is in water\b.*\bcloud of ink in a (\d+)-foot emanation\.$/, /^This cloud has no effect outside of water\.$/, /^Creatures inside the cloud are undetected\b.*\bsense of smell\.$/, /^The cloud dissipates after (\d+|an?|one) (minutes?|rounds?)\.$/],
+        sentences: [/^\bMiniature octopus arms press\b.*\.$/, /^\bWhen opened, a Huge octopus bursts forth\b.*\.$/, /^\bIts arms attempt to grasp a creature\b.*\breach of (\d+) feet\.$/, /^\bThe octopus repositions that creature\b.*\bwithin its reach\b.* @Check\[fortitude\|dc:(\d+)\] save\.$/, /^\bIf the octopus is in water\b.*\bcloud of ink in a (\d+)-foot emanation\.$/, /^\bThis cloud has no effect outside of water\.$/, /^\bCreatures inside the cloud are undetected\b.*\bsense of smell\.$/, /^\bThe cloud dissipates after (\d+|an?|one) (minutes?|rounds?)\.$/],
         card: ([, , grasp, save, ink, , , lasts]) => {
             const reach = Number(grasp[1]);
             const row = () => ({ ...none(), noteEffects: [] });
@@ -127,14 +129,14 @@ const READINGS = [
                 targeting: { target: "1 creature", range: `${reach} feet`, area: null },
                 resolution: { kind: "save", check: { roll: "save", statistic: "fortitude", basic: false, against: { dc: "fixed", value: Number(save[1]) } }, sharedDamage: null, outcomes: { criticalSuccess: row(), success: row(), failure: row(), criticalFailure: row() } },
                 placed: { rows: { failure: { within: reach * 2 }, criticalFailure: { within: reach * 2 } }, nearSource: reach, optional: false, lines: [], byHand: `On a failure, move it to another space within the octopus's ${reach}-foot reach (its user picks).` },
-                notes: [`A Huge octopus bursts out beside its user (in water, if there's water there): target the creature its arms grasp within ${reach} feet; on a failed save its user moves it to another space in that reach.`, `In water, it then releases ink in a ${ink[1]}-foot emanation for ${lasts[1]} ${lasts[2]}: creatures inside are Undetected and can't use their sense of smell (the map's). Out of water, no cloud.`]
+                notes: [`A Huge octopus bursts out beside its user (in water, if there's water there): target the creature its arms grasp within ${reach} feet; on a failed save its user moves it to another space in that reach.`, `In water, it then releases ink in a ${ink[1]}-foot emanation for ${lasts[1]} ${lasts[2]}: those inside are Undetected and can't smell (the map's). Out of water, no cloud.`]
             };
         }
     },
     {
         // (The creature in the square pinpointed to the end of its user's turn.)
         name: "Powder",
-        sentences: [/^A bag of powder contains\b.*\.$/, /^In addition to other uses for powder\b.*\.$/, /^You can throw the powder\b.*\badjacent square\b.*\.$/, /^If there's a creature in that square\b.*\bObserved until the end of your turn\b.*\.$/, /^The powder quickly falls away\b.*\.$/],
+        sentences: [/^\bA bag of powder contains\b.*\.$/, /^\bIn addition to other uses for powder\b.*\.$/, /^\bYou can throw the powder\b.*\badjacent square\b.*\.$/, /^\bIf there's a creature in that square\b.*\bObserved until the end of your turn\b.*\.$/, /^\bThe powder quickly falls away\b.*\.$/],
         card: () => ownRow({
             targeting: { target: "1 creature", range: "5 feet", area: null },
             noteEffects: [{ label: "Powdered", text: "Pinpointed by the powder: Observed (not Hidden) by its thrower until the end of the thrower's turn, though still Concealed by its invisibility.", duration: TURN_END }],
@@ -146,7 +148,7 @@ const READINGS = [
         // (A Stride, then a Strike while still Undetected: the Strike its user's own, a line of the move card.)
         name: "Lion Claw",
         over: true,
-        sentences: [/^Usage affixed to armor Activate\b.*\bRequirements You're undetected by a creature\b.*\bmaster in Stealth\.$/, /^This dried claw from a mighty beast\b.*\.$/, /^When you activate the claw, you learn to pounce\b.*\.$/, /^You Stride and then Strike\b.*\bone creature you were Undetected by\.$/, /^You remain undetected by the creature\b.*\bStrike\.$/],
+        sentences: [/^\bUsage affixed to armor Activate\b.*\bRequirements You're undetected by a creature\b.*\bmaster in Stealth\.$/, /^\bThis dried claw from a mighty beast\b.*\.$/, /^\bWhen you activate the claw\b.*\.$/, /^\bYou Stride and then Strike\b.*\bone creature you were Undetected by\.$/, /^\bYou remain undetected by the creature\b.*\bStrike\.$/],
         card: (found, plan) => (plan?.builtin === "teleport" && plan.teleport?.move?.verb === "Stride" ? {
             keep: true,
             notes: ["Its user must be Undetected by a creature and a master in Stealth.", "Then it Strikes with the affixed weapon a creature it was Undetected by (its own action), still Undetected by it until after that Strike (the GM's to keep)."],
@@ -156,32 +158,32 @@ const READINGS = [
     },
     {
         name: "Hunter's Bane",
-        sentences: [/^Usage affixed to armor Activate\b.*\bTrigger A Hidden or Undetected enemy hits you\b.*\bRequirements You are trained in Survival\b.*\.$/, /^When you activate the hunter's bane\s*, you sense the exact location\b.*\.$/, /^It becomes Observed by you\b.*\bhidden from you\b.*\bundetected\.$/, /^If the attacker is behind lead\b.*\bno effect\.$/],
+        sentences: [/^\bUsage affixed to armor Activate\b.*\bTrigger A Hidden or Undetected enemy hits you\b.*\bRequirements You are trained in Survival\b.*\.$/, /^\bWhen you activate the hunter's bane\s*, you sense the exact location\b.*\.$/, /^\bIt becomes Observed by you\b.*\bhidden from you\b.*\bundetected\.$/, /^\bIf the attacker is behind lead\b.*\bno effect\.$/],
         card: () => ownRow({ notes: ["Its wearer, trained in Survival, activates it when a Hidden or Undetected enemy hits it with an attack.", "It senses the attacker's exact location: the attacker is now Observed by it if it was Hidden from it, or Hidden from it if it was Undetected (the GM's to keep) — nothing if the attacker is behind lead."] })
     },
     {
         name: "Goblin-Eye Orb",
-        sentences: [/^Usage affixed to a weapon Activate\b.*\bTrigger You attempt a Strike\b.*\bconcealed or hidden to you\.$/, /^Requirements You're an expert with the affixed\b.*\bPerception\.$/, /^This colorful marble dangles\b.*\.$/, /^When you activate the band\b.*\bthe triggering Strike\b.*\bflat check\b.*\.$/],
-        card: () => ownRow({ notes: ["Its user, an expert with the affixed firearm or crossbow and in Perception, activates it as it attempts a Strike with it at an enemy that's Concealed or Hidden to it.", "That Strike takes no flat check for the enemy being Concealed or Hidden (its user's roll to skip)."] })
+        sentences: [/^\bUsage affixed to a weapon Activate\b.*\bTrigger You attempt a Strike\b.*\bconcealed or hidden to you\.$/, /^\bRequirements You're an expert with the affixed\b.*\bPerception\.$/, /^\bThis colorful marble dangles\b.*\.$/, /^\bWhen you activate the band\b.*\bthe triggering Strike\b.*\bflat check\b.*\.$/],
+        card: () => ownRow({ notes: ["Its user, expert in Perception and with the firearm or crossbow it's tied to, activates it as it Strikes with that weapon at a foe Concealed or Hidden from it.", "That Strike takes no flat check for the enemy being Concealed or Hidden (its user's roll to skip)."] })
     },
     {
         name: "Ghostshot Wrapping",
-        sentences: [/^Trigger You attempt a ranged Strike\b.*\bwhile hidden or undetected\.$/, /^This long strip of linen\b.*\.$/, /^When activated, the talisman's magic dampens the sound\b.*\.$/, /^You don't become automatically observed\b.*\bthe triggering Strike\.$/],
-        card: () => ownRow({ notes: ["Its user activates it as it attempts a ranged Strike with the affixed weapon while Hidden or Undetected.", "The shot is silent and seems to come from somewhere else: making it doesn't leave its user Observed by anyone (the GM's to keep it Hidden or Undetected)."] })
+        sentences: [/^\bTrigger You attempt a ranged Strike\b.*\bwhile hidden or undetected\.$/, /^\bThis long strip of linen\b.*\.$/, /^\bWhen activated, the talisman's magic\b.*\.$/, /^\bYou don't become automatically observed\b.*\bthe triggering Strike\.$/],
+        card: () => ownRow({ notes: ["Its user activates it as it makes a ranged Strike with the wrapped weapon, Hidden or Undetected.", "The shot is silent and seems to come from somewhere else: making it doesn't leave its user Observed by anyone (the GM's to keep it Hidden or Undetected)."] })
     },
     ...["Feather Token (Holly Bush)", "Feather Token (Holly Bush) (Ammunition)"].map((name) => ({
         // (Its 2d4 berries in its user's inventory, each eaten for 1 Hit Point — the bush and its cover the map's.)
         name,
         sentences: [
-            ...(name.endsWith("(Ammunition)") ? [] : [/^Each feather token appears\b.*\.$/, /^The feather's shaft\b.*\.$/, /^Activating a feather token causes\b.*\.$/, /^Each feather can be activated only once\b.*\.$/]),
+            ...(name.endsWith("(Ammunition)") ? [] : [/^\bEach feather token appears\b.*\.$/, /^\bThe feather's shaft\b.*\.$/, /^\bActivating a feather token causes\b.*\.$/, /^\bEach feather can be activated only once\b.*\.$/]),
             /^(?:Activate\b.*\b)?When this feather is activated\b.*\binto a living holly bush\b.*\bsingle square\.$/,
-            /^This bush can provide standard cover\.$/,
-            /^In addition, the bush has (\d+d\d+|\d+) bright-red berries\.$/,
-            /^While holly berries are usually poisonous\b.*\.$/,
-            /^You can pick and eat a berry\b.*\bto recover (\d+) Hit Points?\.$/,
-            /^Once plucked from the bush\b.*\.$/,
-            /^If activated on soil\b.*\.$/,
-            /^If activated elsewhere, it withers and dies within (\d+d\d+|\d+) days\.$/
+            /^\bThis bush can provide standard cover\.$/,
+            /^\bIn addition, the bush has (\d+d\d+|\d+) bright-red berries\.$/,
+            /^\bWhile holly berries are usually poisonous\b.*\.$/,
+            /^\bYou can pick and eat a berry\b.*\bto recover (\d+) Hit Points?\.$/,
+            /^\bOnce plucked from the bush\b.*\.$/,
+            /^\bIf activated on soil\b.*\.$/,
+            /^\bIf activated elsewhere, it withers and dies within (\d+d\d+|\d+) days\.$/
         ],
         card: (found) => {
             const at = name.endsWith("(Ammunition)") ? 0 : 4;
@@ -196,7 +198,7 @@ const READINGS = [
         // (Its drinker's Stealth while Avoiding Notice: PF2e's own action:avoid-notice — its initiative so —, or a toggle for the rest.)
         name: "Phantom Roll",
         over: true,
-        sentences: [/^A phantom roll contains vegetables\b.*\.$/, /^Upon eating the roll, you gain a \+(\d+) item bonus to Stealth checks\b.*\bAvoid Notice exploration activity\.$/, /^You can also Avoid Notice\b.*\bfull Speed\b.*\bhalf Speed\.$/, /^These effects expire (\d+) hours after you eat the roll\b.*\bwhichever comes first\.$/],
+        sentences: [/^\bA phantom roll contains vegetables\b.*\.$/, /^\bUpon eating the roll, you gain a \+(\d+) item bonus to Stealth checks\b.*\bAvoid Notice exploration activity\.$/, /^\bYou can also Avoid Notice\b.*\bfull Speed\b.*\bhalf Speed\.$/, /^\bThese effects expire (\d+) hours after you eat the roll\b.*\bwhichever comes first\.$/],
         card: ([, bonus, , ends], plan) => {
             const row = plan?.resolution?.outcomes?.success;
             if (!row || !(row.modifiers ?? []).some((modifier) => modifier.selector === "stealth")) return null;
@@ -208,11 +210,11 @@ const READINGS = [
         // (A bonus against smell: PF2e's toggle for it, as its Aromatic Ammunition has.)
         name: "Aroma Concealer",
         over: true,
-        sentences: [/^This oily mix of herbs\b.*\.$/, /^The creature receives a \+(\d+) item bonus to Stealth checks\b.*\bHide or Sneak\b.*\bprimarily smell\.$/, /^This bonus also applies\b.*\bTrack the creature by scent\.$/, /^The listed amount is enough\b.*\bMedium or smaller creature\b.*\.$/, /^The effect lasts for (\d+|an?|one) (hours?|minutes?) after applying\.$/],
+        sentences: [/^\bThis oily mix of herbs\b.*\.$/, /^\bThe creature receives a \+(\d+) item bonus to Stealth checks\b.*\bHide or Sneak\b.*\bprimarily smell\.$/, /^\bThis bonus also applies\b.*\bTrack the creature by scent\.$/, /^\bThe listed amount is enough\b.*\bMedium or smaller creature\b.*\.$/, /^\bThe effect lasts for (\d+|an?|one) (hours?|minutes?) after applying\.$/],
         card: ([, bonus, , , lasts], plan) => {
             const row = plan?.resolution?.outcomes?.success;
             if (!row || !(row.modifiers ?? []).some((modifier) => modifier.selector === "stealth")) return null;
-            const note = { label: "Odour masked", text: `+${bonus[1]} item bonus to Stealth checks to Hide or Sneak against creatures using primarily smell (its toggle on against them), and to the DC to Track it by scent (the GM's).`, duration: time(lasts[1], lasts[2]), rules: [toggle("aroma-concealer-smell", "Against a creature using smell"), { key: "FlatModifier", selector: "stealth", type: "item", value: Number(bonus[1]), predicate: ["aroma-concealer-smell", { or: ["action:hide", "action:sneak"] }] }] };
+            const note = { label: "Odour masked", text: `+${bonus[1]} item bonus to Stealth to Hide or Sneak from creatures that rely mostly on smell (its toggle on against them), and the same to the DC to Track it by scent (the GM's).`, duration: time(lasts[1], lasts[2]), rules: [toggle("aroma-concealer-smell", "Against a creature using smell"), { key: "FlatModifier", selector: "stealth", type: "item", value: Number(bonus[1]), predicate: ["aroma-concealer-smell", { or: ["action:hide", "action:sneak"] }] }] };
             return { keep: true, notes: [...(plan.notes ?? []), "One dose covers one Medium or smaller creature, applied over 1 minute."], resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...row, modifiers: row.modifiers.filter((modifier) => modifier.selector !== "stealth"), noteEffects: [...(row.noteEffects ?? []).filter((entry) => !entry.reminder), note] } } }, unread: undefined, partial: undefined, automation: { level: "automatic" } };
         }
     },
@@ -220,13 +222,13 @@ const READINGS = [
         // (The cast's 1 hour, the fulus' own Duration, not Shared Invisibility's — its other changes the one-off's lines, src/compiler/one-offs.js.)
         name: "Fulu of Concealment",
         over: true,
-        sentences: [/^Usage affixed to the ground in four spaces\b.*\bDuration (\d+|an?|one) (hours?|minutes?)\b.*\.$/, /^Choose one of the following traits\b.*\.$/, /^Those within the fulus' circle\b.*\bShared Invisibility\b.*\.$/, /^If any of the fulus are moved or destroyed\b.*\.$/],
+        sentences: [/^\bUsage affixed to the ground in four spaces\b.*\bDuration (\d+|an?|one) (hours?|minutes?)\b.*\.$/, /^\bChoose one of the following traits\b.*\.$/, /^\bThose within the fulus' circle\b.*\bShared Invisibility\b.*\.$/, /^\bIf any of the fulus are moved\b.*\.$/],
         card: ([lasts], plan) => (plan?.builtin === "cast-spell" ? { keep: true, castDuration: { value: WORDS[lasts[1].toLowerCase()] ?? Number(lasts[1]), unit: UNITS[lasts[2].toLowerCase()], said: `Duration ${lasts[1]} ${lasts[2]}` } } : null)
     },
     {
         // (The ally linked to its user for a day: Status's effects each way, words on both.)
         name: "Lady's Knife",
-        sentences: [/^You offer this weapon as a romantic\b.*\bto an ally\.$/, /^You and the ally become linked for (\d+|an?|one) (days?|hours?)\.$/, /^During this time, you each benefit\b.*\bStatus, using each other\b.*\.$/],
+        sentences: [/^\bYou offer this weapon as a romantic\b.*\bto an ally\.$/, /^\bYou and the ally become linked for (\d+|an?|one) (days?|hours?)\.$/, /^\bDuring this time, you each benefit\b.*\bStatus, using each other\b.*\.$/],
         card: ([, linked]) => {
             const lasts = time(linked[1], linked[2]);
             return ownRow({
@@ -240,7 +242,7 @@ const READINGS = [
     {
         // (The foe its user had been hidden from, Off-Guard to its user's allies alone: words on that foe.)
         name: "Mirror Robe",
-        sentences: [/^You draw attention toward yourself\.$/, /^Choose one foe to which you were\b.*\bundetected\.$/, /^You reveal yourself to all, becoming observed\.$/, /^The foe you chose diverts its attention\b.*\bOff-Guard to your allies\b.*\byour next turn\.$/, /^If you are Invisible or otherwise\b.*\bthis activation\.$/],
+        sentences: [/^\bYou draw attention toward yourself\.$/, /^\bChoose one foe to which you were\b.*\bundetected\.$/, /^\bYou reveal yourself to all, becoming observed\.$/, /^\bThe foe you chose diverts its attention\b.*\bOff-Guard to your allies\b.*\byour next turn\.$/, /^\bIf you are Invisible or otherwise\b.*\bthis activation\.$/],
         card: () => ownRow({
             targeting: { target: "1 foe", range: null, area: null },
             noteEffects: [{ label: "Diverted", text: "Its attention turned to the robe's wearer: Off-Guard to the wearer's allies (not to the wearer) until the start of the wearer's next turn.", duration: START }],
@@ -252,11 +254,11 @@ const READINGS = [
         // (Hidden from the creature that missed: words on that creature, to the end of its user's next turn.)
         name: "Shadowmist Cape",
         over: true,
-        sentences: [/^Attempt a @Check\[stealth[^\]]*\] check against the triggering creature's Perception DC\.$/, /^On a success, you're Hidden\b.*\buntil right after\b.*\.$/, /^On a critical success, you're hidden\b.*\beven if you use hostile actions\b.*\.$/],
+        sentences: [/^\bAttempt a @Check\[stealth[^\]]*\] check against\b.*\bPerception DC\.$/, /^\bOn a success, you're Hidden\b.*\buntil right after\b.*\.$/, /^\bOn a critical success, you're hidden\b.*\beven if you use hostile actions\b.*\.$/],
         card: (found, plan) => {
             const rows = plan?.resolution?.outcomes;
             const gm = (row, test) => (row?.manualInstructions ?? []).filter((line) => test.test(said(line)));
-            const [success, critical] = [gm(rows?.success, /^\{source\} \(success\): you're Hidden from that creature\b/i), gm(rows?.criticalSuccess, /^\{source\} \(critical success[^)]*\): you're hidden from that creature\b/i)];
+            const [success, critical] = [gm(rows?.success, /^\{source\} \(success\): you're Hidden from\b/i), gm(rows?.criticalSuccess, /^\{source\} \(critical success[^)]*\): you're hidden from\b/i)];
             if (!success.length || !critical.length) return null;
             const note = (text) => ({ label: "Lost in the mist", text, duration: NEXT_END });
             const left = (row, gone) => ({ ...row, manualInstructions: (row.manualInstructions ?? []).filter((line) => !gone.includes(line)) });
@@ -276,12 +278,12 @@ const READINGS = [
         // (The darts' light on the creature hit, to the start of its user's next turn: words on it; the knife back in hand, a line.)
         name: "Guiding Starknife: Points of Light",
         over: true,
-        sentences: [/^The guiding starknife's blades detach\b.*\.$/, /^This damage increases to\b.*\bwith a major striking rune\.$/, /^The guiding starknife then re-forms\b.*\.$/, /^Until the start of your next turn, the damaged creature is outlined\b.*\bconcealment\.$/],
+        sentences: [/^\bThe guiding starknife's blades detach\b.*\.$/, /^\bThis damage increases to\b.*\bwith a major striking rune\.$/, /^\bThe guiding starknife then re-forms\b.*\.$/, /^\bUntil the start of your next turn\b.*\boutlined\b.*\bconcealment\.$/],
         card: (found, plan) => {
             const row = plan?.resolution?.outcomes?.success;
             const lines = (row?.manualInstructions ?? []).map(said);
             const back = lines.find((line) => /^\{target\}: The guiding starknife then re-forms\b/.test(line));
-            const lit = lines.find((line) => /^\{target\}: Until the start of your next turn, the damaged creature is outlined\b/.test(line));
+            const lit = lines.find((line) => /^\{target\}: Until the start of your next turn\b.*\boutlined\b/.test(line));
             if (!back || !lit || lines.length !== 2) return null;
             const { manualInstructions, ...rest } = row;
             const success = { ...rest, noteEffects: [...(row.noteEffects ?? []), { label: "Outlined", text: "Outlined in soft light: it can't gain the effects of concealment.", duration: START }] };
@@ -291,7 +293,7 @@ const READINGS = [
     {
         // (A cover propped up for one creature, its degree by that creature's size: the ways card's two, each PF2e's cover rules on it.)
         name: "Siege Shield: Plant Cover",
-        sentences: [/^You unequip the shield and prop it\b.*\.$/, /^The shield grants standard cover\b.*\bMedium or smaller creature\b.*\blesser cover for a Large one\.$/],
+        sentences: [/^\bYou unequip the shield and prop it\b.*\.$/, /^\bThe shield grants standard cover\b.*\bMedium or smaller creature\b.*\blesser cover for a Large one\.$/],
         card: (found, plan, { base, info }) => {
             const way = (name, level, bonus, who) => ({
                 name,
@@ -314,8 +316,8 @@ const READINGS = [
         // the creature it's for is chosen. Its reagents' 10 uses a line.)
         name: "Alchemical Atomizer",
         sentences: way === 0
-            ? [/^You spray the contents of the atomizer\b.*\badjacent willing ally or unattended object\.$/, /^The target gains the effects\b.*\belixir, oil, or potion\.$/, /^The target must be a valid\b.*\bthe consumable is lost\.$/]
-            : [/^You cause the atomizer to mix\b.*\ba square within (\d+) feet\.$/, /^The consumable forms a cloud\b.*\.$/, /^The first willing valid target\b.*\bgains the effect of the consumable\.$/, /^If there are multiple valid targets\b.*\.$/, /^The cloud is consumed upon contact\b.*\bwhichever comes first\.$/],
+            ? [/^\bYou spray the contents of the atomizer\b.*\badjacent willing ally or unattended object\.$/, /^\bThe target gains the effects\b.*\belixir, oil, or potion\.$/, /^\bThe target must be a valid\b.*\bthe consumable is lost\.$/]
+            : [/^\bYou cause the atomizer to mix\b.*\ba square within (\d+) feet\.$/, /^\bThe consumable forms a cloud\b.*\.$/, /^\bThe first willing valid target\b.*\bgains the effect of the consumable\.$/, /^\bIf there are multiple valid targets\b.*\.$/, /^\bThe cloud is consumed upon contact\b.*\bwhichever comes first\.$/],
         card: (found) => ownRow({
             notes: [
                 way === 0
@@ -329,17 +331,17 @@ const READINGS = [
     // (What it tells, whispered.)
     {
         name: "Detector Stone",
-        sentences: [/^You channel your life-force into the stone\b.*\.$/, /^The stone can detect undead within (\d+) feet\b.*\buntil the end of your turn\.$/, /^Undead hiding or disguising themselves\b.*\bthe DC of the check is (\d+) rather than (\d+)\.$/],
+        sentences: [/^\bYou channel your life-force into the stone\b.*\.$/, /^\bThe stone can detect undead within (\d+) feet\b.*\buntil the end of your turn\.$/, /^\bUndead hiding or disguising themselves\b.*\bthe DC of the check is (\d+) rather than (\d+)\.$/],
         card: ([, far, dc]) => whisper(`Until the end of its user's turn, the stone glows if an undead is within ${far[1]} feet; one that's Hidden or disguised must succeed at a Deception or Stealth check against DC ${dc[1]} (not ${dc[2]}) to stay so from it — the GM rolls and tells.`)
     },
     {
         name: "Detector Stone",
-        sentences: [/^You focus on the stone as it glows\b.*\.$/, /^You detect the auras of evil undead in a (\d+)-foot radius\b.*\.$/, /^This has the effects of a (\d+)\w*-rank detect alignment spell\b.*\bevil undead\.$/],
+        sentences: [/^\bYou focus on the stone as it glows\b.*\.$/, /^\bYou detect the auras of evil undead\b.*\b(\d+)-foot radius\b.*\.$/, /^\bThis has the effects of a (\d+)\w*-rank detect alignment spell\b.*\bevil undead\.$/],
         card: ([, radius, rank]) => whisper(`Its user detects the auras of evil undead within ${radius[1]} feet and learns each one's location and strength (a rank ${rank[1]} detect alignment for evil undead only) — the GM tells what's there.`)
     },
     {
         name: "Singing Stone: Stone's Sight",
-        sentences: [/^Placing the singing stone against a rocky surface\b.*\.$/, /^You get a mental image of this area\b.*\b(\d+) feet deep and (\d+) feet in diameter\.$/, /^The image doesn't convey color\b.*\.$/, /^The image is instant\b.*\.$/],
+        sentences: [/^\bPlacing the singing stone against a rocky surface\b.*\.$/, /^\bYou get a mental image of this area\b.*\b(\d+) feet deep and (\d+) feet in diameter\.$/, /^\bThe image doesn't convey color\b.*\.$/, /^\bThe image is instant\b.*\.$/],
         card: ([, image]) => whisper(`Held against a rocky surface, it gives its user a colourless picture of what's behind or beneath it, ${image[1]} feet deep and ${image[2]} feet across: which objects and creatures there are moving and which are still, at that moment only — the GM tells what's there.`)
     },
     {
@@ -347,7 +349,7 @@ const READINGS = [
         name: "Rhyton of the Radiant Ifrit: Ifrit's Command",
         // (Over its one-off's card lines, src/compiler/decided.js: the cast now, its lines the same.)
         over: true,
-        sentences: [/^An ifrit's hospitality always comes\b.*\.$/, /^You cause the shuyookh to briefly appear\b.*\bissues a (\d+)\w*-rank Command that targets all creatures\b.*\bhostile to you in range\b.*\.$/, /^The shuyookh issues the same command\b.*\.$/, /^Each target that fails its save also\b.*\bbecoming Fatigued as long as\b.*\bthe command\.$/],
+        sentences: [/^\bAn ifrit's hospitality always comes\b.*\.$/, /^\bYou cause the shuyookh to briefly appear\b.*\bissues a (\d+)\w*-rank Command that targets all creatures\b.*\bhostile to you in range\b.*\.$/, /^\bThe shuyookh issues the same command\b.*\.$/, /^\bEach target that fails its save also\b.*\bbecoming Fatigued as long as\b.*\bthe command\.$/],
         card: ([, command], plan) => (plan && plan.decided !== "one-off" && plan.builtin !== "no-effect" ? null : {
             builtin: "cast-spell",
             spell: { uuid: "Compendium.pf2e.spells-srd.Item.aIHY2DArKFweIrpf", name: "Command" },
@@ -369,7 +371,7 @@ const READINGS = [
 export const hasVisibilityReading = (name) => READINGS.some((entry) => entry.name === name);
 
 // The words a feather token fired from a bow has after its Activate line ("Activate Strike from a ranged weapon When …"), else its effect's.
-const FIRED = /^Activat(?:e|ion) Strike from an? (?:ranged|melee|thrown) weapon\s+/;
+const FIRED = /^\bActivat(?:e|ion) Strike from an? (?:ranged|melee|thrown) weapon\s+/;
 export function visibilityWords(html, kind, plain) {
     if (kind === "activation" && FIRED.test(plain ?? "")) return String(plain).replace(FIRED, "").trim();
     return effectWords(html, kind);
