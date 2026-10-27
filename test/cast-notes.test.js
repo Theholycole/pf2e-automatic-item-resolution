@@ -19,10 +19,10 @@ const item = (name) => {
 };
 const first = (name) => compileActivations(item(name), options)[0].plan;
 
-test("a cast's note adding a rule makes it partial — The Winged Serpent's Foresight for only 10 minutes", () => {
-    const serpent = first("The Winged Serpent");
-    assert.equal(serpent.builtin, "cast-spell");
-    assert.equal(serpent.partial, true);
+test("a cast's note adding a rule makes it partial — The Courtesan's Impersonate one degree better against lower-level creatures (The Winged Serpent's 10 minutes, its example once, played since)", () => {
+    const courtesan = first("The Courtesan");
+    assert.equal(courtesan.builtin, "cast-spell");
+    assert.equal(courtesan.partial, true);
 });
 
 test("a note only restating the spell doesn't — Satchel of Numberless Seeds' Protector Tree within its own 30 feet", () => {
@@ -301,4 +301,12 @@ test("harrow cards' rank and DC in other words (2026-10-27): The Winged Serpent'
     assert.deepEqual([joke.castTargets.max, joke.castDC.from, joke.partial], [10, "class", undefined]);
     const html = castCardHTML({ status: "open", plan: joke, item: { name: "The Joke" }, user: { name: "Bard" }, drinker: null, drinkers: [], choice: 0, results: [] });
     assert.match(html, /DC its caster&#39;s class DC, up to 10 targets/);
+});
+
+test("the same spell on another creature from a level on (2026-10-27): The Winged Serpent's Foresight on its user, or by touch on another from 17th level", async () => {
+    const { castCardHTML } = await import("../src/live/cast-card.js");
+    const serpent = first("The Winged Serpent");
+    assert.deepEqual([serpent.choices.map((choice) => [choice.self, choice.minLevel ?? null, Boolean(choice.touch)]), serpent.partial], [[[true, null, false], [false, 17, true]], undefined]);
+    const html = castCardHTML({ status: "open", plan: serpent, item: { name: "The Winged Serpent" }, user: { name: "Oracle" }, drinker: null, drinkers: [], choice: 0, results: [] }, { canApply: true });
+    assert.match(html, /Foresight on another creature by touch \(from level 17\)/);
 });

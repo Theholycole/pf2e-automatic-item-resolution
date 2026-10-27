@@ -3673,6 +3673,26 @@ export const cases = {
         return { rank, dc, targets: targets.length };
     },
 
+    // The Winged Serpent (2026-10-27): at level 17, Foresight by touch on an adjacent ally (the choice from 17th), at rank 9 (half its level,
+    // at least 9th).
+    async serpentTouch(scene) {
+        const { actor: reader, token: readerToken } = await creature(scene, "Serpent Reader", { x: 8, y: 16, level: 17 });
+        const { token: allyToken } = await creature(scene, "Serpent Friend", { x: 9, y: 16 });
+        const card = await give(reader, "The Winged Serpent");
+        await readerToken.object?.control?.();
+        await target(allyToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const castCard = await messageAfter(since, itemCard("cast"), { what: "the cast card" });
+        assert(/Foresight on another creature by touch \(from level 17\)/.test(castCard.content), "the picker's touch choice");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(castCard.id, { targets: [allyToken.uuid], choice: 1 });
+        const cast = await messageAfter(since, (message) => message.flags?.["pf2e-automatic-resolution"]?.castFromItem, { what: "the spell module's cast", timeout: 15000 });
+        const { rank, targets } = cast.flags["pf2e-automatic-resolution"].castFromItem;
+        assert(rank === 9 && targets.length === 1 && targets[0] === allyToken.uuid, `rank 9 on the ally (${rank}, ${JSON.stringify(targets)})`);
+        return { rank, targets };
+    },
+
     // An etched rune's activation from its weapon (a Vorpal longsword): the button on the weapon's row, not on a runestone's;
     // pressed, the Fortitude save card at DC 37 with death on a failure.
     async etchedRune(scene) {

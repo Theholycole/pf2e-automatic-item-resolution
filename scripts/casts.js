@@ -83,7 +83,8 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (needsTargets(state.plan, chosenSpell(state)) && !targetTokens.length) throw new Error("Target the creatures first.");
         // (Up to so many targets, The Joke's 10: refused beyond that.)
         if (state.plan.castTargets && targetTokens.length > state.plan.castTargets.max) throw new Error(`Target up to ${state.plan.castTargets.max} creatures.`);
-        const far = beyondRange(state.plan.castRange, token, actor, selfOf(state) ? [] : targetTokens);
+        // (By touch, The Winged Serpent's Foresight on another creature: within its caster's reach.)
+        const far = beyondRange(chosenSpell(state).touch ? { reach: true } : state.plan.castRange, token, actor, selfOf(state) ? [] : targetTokens);
         if (far.length) throw new Error(`${far.join(", ")} ${far.length === 1 ? "is" : "are"} beyond ${state.item.name}'s range.`);
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: targetTokens, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${targetTokens.length && !selfOf(state) ? ` at ${targetTokens.map((target) => target.name).join(", ")}` : ""}.`);

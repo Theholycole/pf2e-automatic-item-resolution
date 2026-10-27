@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1311,
+  "entries": 1310,
   "results": {
-   "partial": 412,
+   "partial": 411,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -20,7 +20,7 @@
    "strike": 100,
    "spells": 36,
    "information": 23,
-   "out-of-combat": 36,
+   "out-of-combat": 35,
    "no-rules": 17,
    "actions": 31,
    "immunity": 27,
@@ -54,7 +54,7 @@
    "immunity": 90,
    "objects": 390,
    "speech": 129,
-   "out-of-combat": 446,
+   "out-of-combat": 445,
    "counteract": 105,
    "afflictions": 109,
    "lasting": 234,
@@ -2661,16 +2661,6 @@
     "reader",
     "mind",
     "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Winged Serpent",
-   "kind": "activation",
-   "result": "partial",
-   "main": "out-of-combat",
-   "work": "1 hour",
-   "needs": [
     "out-of-combat"
    ]
   },

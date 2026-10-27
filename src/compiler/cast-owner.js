@@ -38,9 +38,17 @@ export function withCastOwner(plan) {
 }
 
 // The plan and PF2e's spells by name (cast-words.js spellIndex) → the plan with a choice from a level on, or the same plan.
+// (Or the same spell on another creature from a level on, The Winged Serpent's "If you're at least 17th level, the duration extends to 1 hour and
+// you can cast foresight on another creature by touch": a choice not on its user, from that level.)
+const OTHER_FROM = /^If you're at least (\d+)(?:st|nd|rd|th) level, [^.]*?\b(and you can cast ([a-z][\w' -]+?) on another creature by touch)\.$/i;
 export function withLevelChoice(plan, spells = {}) {
     if (plan?.builtin !== "cast-spell" || !plan.spell?.uuid) return plan;
     const notes = (plan.notes ?? []).map((entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim());
+    const other = plan.self ? notes.map((note) => OTHER_FROM.exec(note)).find((match) => match && match[3].toLowerCase() === String(plan.spell.name).toLowerCase()) : null;
+    if (other) {
+        const own = plan.choices?.length ? plan.choices : [{ spell: plan.spell, rank: plan.rank ?? null, self: true }];
+        return { ...plan, choices: [...own, { spell: plan.spell, rank: plan.rank ?? null, self: false, targets: true, minLevel: Number(other[1]), touch: true }], levelChoice: { said: other[2] } };
+    }
     const found = notes.map((note) => FROM_LEVEL.exec(note)).find(Boolean);
     const spell = found ? spells[found[2].toLowerCase()] : null;
     if (!spell) return plan;
