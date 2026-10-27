@@ -114,6 +114,11 @@ function ammoStrike(text) {
     // weapon is a +1 striking weapon …" — its runes for that Strike's attack and damage, src/compiler/strike-damage.js.)
     // (Or its own attack's cover, Golden-Cased Bullet's "once the bullet has been fired, allowing you to ignore the bonus to AC granted to a target
     // in lesser cover": that Strike's attack roll, src/compiler/strike-damage.js ignoresCover.)
+    // (Or a bonus against metal, Lodestone Pellet's "When activated, lodestone pellets provide a +1 circumstance bonus to ranged Strikes made
+    // against creatures made of metal or wearing metal armor": that Strike's attack, only against those — attack.against "metal", the card's
+    // check of its target when it's readied, src/live/strike-card.js. 2026-10-27.)
+    const metal = /\bWhen activated, [\w' -]+? provides? an? \+(\d+) (circumstance|status|item) bonus to ranged Strikes made against creatures made of metal or wearing metal armor\./i.exec(text);
+    if (metal) return { range: "ranged", unarmed: false, after: "", sentence: null, next: false, missKeeps: false, uses: 1, hit: false, ammo: true, metalBonus: { value: Number(metal[1]), type: metal[2].toLowerCase(), against: "metal" } };
     const firing = /\bFor the Strike with which you consume the ammunition, |\ballowing you to ignore the bonus to AC granted to a target in\b/i.exec(text);
     if (firing) return { range: "ranged", unarmed: false, after: text.slice(firing.index), sentence: null, next: false, missKeeps: false, uses: 1, hit: false, ammo: true };
     let after = text;
@@ -270,6 +275,7 @@ export function compileStrike(item, base, options = {}) {
     // (The cast's own sentence isn't a note.)
     if (cast) read.notes = read.notes.filter((note) => !note.includes(cast.name) && !(cast.attackFromHit && /^As with the spell\b/i.test(note)));
     let extras = strike.ammo && pf2eDamage(item) ? { ...read, dice: [], read: Boolean(read.attack || read.alteration || read.runes) } : read;
+    if (strike.metalBonus) extras = { ...extras, attack: strike.metalBonus, read: true, notes: extras.notes.filter((note) => String(note).trim()) };
     // (What a hit does that isn't a condition, a note Effect on the creature hit — its save's, or the hit's own with its time,
     // src/compiler/hit-notes.js: Blister Ammunition, Magekiller Bullet. Only when nothing else is read.)
     // (Not a Strike its trigger names, another creature's: Cauthooj Bagpipes' "Trigger A creature … attempts a melee Strike".)

@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1253,
+  "entries": 1252,
   "results": {
    "partial": 356,
-   "none": 529,
+   "none": 528,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -34,7 +34,7 @@
    "vehicles": 21,
    "reader": 17,
    "triggers": 85,
-   "situational": 16,
+   "situational": 15,
    "dying": 29,
    "senses": 20,
    "speech": 14,
@@ -71,7 +71,7 @@
    "actions": 60,
    "from-events": 26,
    "no-rules": 14,
-   "situational": 82,
+   "situational": 81,
    "creatures": 71,
    "mind": 61,
    "illusions": 60,
@@ -14162,16 +14162,6 @@
     "choice",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Lodestone Pellet",
-   "kind": "activation",
-   "result": "none",
-   "main": "situational",
-   "work": "bonus to ranged strikes made against",
-   "needs": [
-    "situational"
    ]
   },
   {

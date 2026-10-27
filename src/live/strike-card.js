@@ -12,6 +12,18 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 export const MODULE_KEY = "strikeRider";
 export const isStrikeItem = (plan) => Boolean(plan?.strike) && plan.trigger?.event === "strike" && plan.resolution?.check?.roll === "attack";
 
+// Whether a creature is made of metal or wears metal armor (Lodestone Pellet's bonus): the metal trait, or worn armor of a metal group —
+// chain, plate, composite, not of leather, wood or ceramic — or of a metal material.
+const METALS = new Set(["adamantine", "cold-iron", "dawnsilver", "djezet", "inubrix", "noqual", "orichalcum", "siccatite", "silver", "sovereign-steel", "abysium", "keep-stone", "steel", "iron"]);
+export function isMetalTarget(actor) {
+    const traits = actor?.traits ?? new Set(actor?.system?.traits?.value ?? []);
+    if (traits.has?.("metal") || (Array.isArray(traits) && traits.includes("metal"))) return true;
+    const armor = actor?.wornArmor ?? (actor?.itemTypes?.armor ?? []).find((item) => item.isEquipped && item.system?.category !== "shield");
+    if (!armor) return false;
+    const base = String(armor.system?.baseItem ?? "");
+    return METALS.has(armor.system?.material?.type) || (["chain", "plate", "composite"].includes(String(armor.system?.group ?? armor.group ?? "")) && !/ceramic|leather|wood/.test(base));
+}
+
 export function createStrikeCard({ plan, item, user }) {
     return { kind: "strike", status: "open", plan, item, user, results: [] };
 }
@@ -46,7 +58,7 @@ export function strikeLines(plan) {
         // (A line of its own beside the Strike, Void Sickle's lights put out.)
         ...(strike.lines ?? []),
         // (A volley's penalty is its own line.)
-        strike.attack && !(strike.volley?.penalty && strike.attack.value === strike.volley.penalty) ? (strike.attack.value < 0 ? `${strike.attack.value} ${strike.attack.type === "untyped" ? "" : `${strike.attack.type} `}penalty to the attack roll` : `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll`) : null,
+        strike.attack && !(strike.volley?.penalty && strike.attack.value === strike.volley.penalty) ? (strike.attack.value < 0 ? `${strike.attack.value} ${strike.attack.type === "untyped" ? "" : `${strike.attack.type} `}penalty to the attack roll` : `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll${strike.attack.against === "metal" ? ` against a creature made of metal or wearing metal armor${strike.attack.metalTarget === true ? " (its target is)" : strike.attack.metalTarget === false ? " (its target isn't: only against a metal creature)" : ""}` : ""}`) : null,
         strike.alteration ? `All its damage is ${strike.alteration}` : null,
         strike.withoutRune ? `No ${strike.withoutRune} rune damage on it, nor that rune's critical effect, from a weapon with one${strike.runeDC ? ` (its save is DC ${strike.runeDC.dc} then)` : ""}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
@@ -170,7 +182,10 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     if (strike.featDie) rules.push({ key: "DamageDice", selector: damageSelector, slug: `${slug}-${strike.featDie.slug}`, ...(label ? { label } : {}), diceNumber: strike.featDie.diceNumber, predicate: [`feat:${strike.featDie.slug}`] });
     // (Two Strikes on one roll, Coldstar Pistols': the attack rolled twice, the higher kept.)
     if (strike.volley?.twin) rules.push({ key: "RollTwice", selector: attackSelector, keep: "higher", removeAfterRoll: true });
-    if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
+    // (Only against metal, Lodestone Pellet's: its target, seen when it was readied, made of metal or in metal armor — else PF2e's
+    // "target:trait:metal" alone, as its armor isn't a roll option of PF2e's.)
+    const metalOnly = strike.attack?.against === "metal" && strike.attack.metalTarget !== true ? ["target:trait:metal"] : [];
+    if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`, ...metalOnly] } : metalOnly.length ? { predicate: metalOnly } : {}) });
     if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
     // (A property rune it doesn't benefit from, Storm Arrow's shock: that rune's dice — PF2e slugs them by the rune — none.)
     if (strike.withoutRune) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "dice-number", value: 0, slug: strike.withoutRune });

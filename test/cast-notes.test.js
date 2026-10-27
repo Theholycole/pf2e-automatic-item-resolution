@@ -677,3 +677,19 @@ test("while its persistent damage lasts (2026-10-27): Static Snare — PF2e's Ef
     assert.equal(success.nativeEffects, undefined);
     assert.equal([failure, criticalFailure].some((row) => row.manualInstructions), false);
 });
+
+test("a bonus only against metal (2026-10-27): Lodestone Pellet — its Strike's +1 circumstance attack against metal; readied at a target in metal armor, the bonus whole, else only with PF2e's target:trait:metal", async () => {
+    const { isMetalTarget, strikeRules, strikeLines } = await import("../src/live/strike-card.js");
+    const plan = first("Lodestone Pellet");
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual(plan.strike.attack, { value: 1, type: "circumstance", against: "metal" });
+    const armored = { traits: new Set(["humanoid"]), wornArmor: { system: { group: "plate", baseItem: "full-plate" } } };
+    const leather = { traits: new Set(["humanoid"]), wornArmor: { system: { group: "leather", baseItem: "leather-armor" } } };
+    const golem = { traits: new Set(["construct", "metal"]) };
+    assert.deepEqual([armored, leather, golem, {}].map(isMetalTarget), [true, false, true, false]);
+    const at = (metalTarget) => strikeRules({ ...plan, strike: { ...plan.strike, attack: { ...plan.strike.attack, metalTarget } } }, { ammoId: "abc" }).find((rule) => rule.key === "FlatModifier");
+    assert.equal((at(true).predicate ?? []).includes("target:trait:metal"), false);
+    assert.equal(at(false).predicate.includes("target:trait:metal"), true);
+    assert.equal(at(null).predicate.includes("target:trait:metal"), true);
+    assert.ok(strikeLines(plan).some((line) => /against a creature made of metal or wearing metal armor/.test(line)));
+});

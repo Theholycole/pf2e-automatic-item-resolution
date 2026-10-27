@@ -7,7 +7,7 @@
 // weapon for a Strike with it ("item:id:…").
 
 import { postEndEarlyAt } from "./end-early.js";
-import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
+import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
@@ -46,8 +46,15 @@ export async function applyStrikeCard(message, choices = {}) {
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
     const weaponId = state.plan.strike?.own ? itemIdOf(state.item.uuid) : null;
     const ammoId = state.plan.strike?.ammo ? itemIdOf(state.item.uuid) : null;
-    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: targets.length, targets } : {}) })]);
-    const next = { ...state, status: "applied", results: [`${strikeHint(state.plan, state.user.name, { uses: targets ? targets.length : null })}${old.length ? " (The one readied before is gone.)" : ""}`] };
+    // (A bonus only against metal, Lodestone Pellet's: whether the creature targeted now is made of metal or wears metal armor.)
+    let ready = state;
+    if (state.plan.strike?.attack?.against === "metal") {
+        const aimed = choices.targets?.length ? await Promise.all(choices.targets.map((uuid) => fromUuid(uuid).catch(() => null))) : [...(game.user.targets ?? [])].map((token) => token.document ?? token);
+        const actors = aimed.map((token) => token?.actor ?? null).filter(Boolean);
+        ready = { ...state, plan: { ...state.plan, strike: { ...state.plan.strike, attack: { ...state.plan.strike.attack, metalTarget: actors.length ? actors.every(isMetalTarget) : null } } } };
+    }
+    await actor.createEmbeddedDocuments("Item", [strikeEffectSource({ state: ready, img: state.item.img, worldTime: game.time.worldTime, initiative: startInitiative(actor), moduleId: MODULE_ID, weaponId, ammoId, ...(targets ? { uses: targets.length, targets } : {}) })]);
+    const next = { ...ready, status: "applied", results: [`${strikeHint(ready.plan, state.user.name, { uses: targets ? targets.length : null })}${old.length ? " (The one readied before is gone.)" : ""}`] };
     return message.update({ content: strikeCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 

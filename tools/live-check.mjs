@@ -6982,6 +6982,38 @@ export const cases = {
         return { degree, athletics: [athletics, foe.skills.athletics.mod], effects: foe.itemTypes.effect.map((effect) => `${effect.name} ${effect.system.duration.value} ${effect.system.duration.unit}`) };
     },
 
+    // Lodestone Pellet (2026-10-27): readied at a creature in full plate, its +1 circumstance to the Strike with it whole (no
+    // target:trait:metal predicate), and the attack roll has it.
+    async lodestonePelletMetal(scene) {
+        const { actor: shooter, token: shooterToken } = await creature(scene, "Lodestone Shooter", { type: "character", x: 8, y: 6 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Lodestone Knight", { x: 9, y: 6, hp: 200, alliance: "opposition" });
+        const plate = await give(foe, "Full Plate");
+        await plate.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true });
+        // (Fired from a shortbow as its arrows: PF2e 8.6 loads an air repeater only with a magazine — the readied Strike's bonus is what's
+        // checked.)
+        const repeater = await give(shooter, "Shortbow");
+        const pellets = await give(shooter, "Lodestone Pellet");
+        const ammoType = "arrows";
+        await pellets.update({ "system.baseItem": ammoType });
+        await repeater.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": pellets.id });
+        await shooterToken.object?.control?.();
+        await target(foeToken);
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(pellets.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        const readied = () => shooter.itemTypes.effect.find((effect) => /Lodestone Pellet/.test(effect.name));
+        await until(() => readied(), "the readied Strike's Effect", { timeout: 8000 });
+        const rule = (readied().system.rules ?? []).find((entry) => entry.key === "FlatModifier");
+        assert(rule && !(rule.predicate ?? []).includes("target:trait:metal"), `its bonus whole against plate (${JSON.stringify(rule)})`);
+        since = Date.now();
+        const { attack } = await strike(shooter, repeater);
+        const modifiers = attack.flags?.pf2e?.modifiers ?? [];
+        const bonus = modifiers.find((modifier) => /Lodestone Pellet/.test(modifier.label ?? "") && modifier.enabled !== false);
+        assert(bonus?.modifier === 1, `the attack's +1 (${JSON.stringify(modifiers.map((modifier) => [modifier.label, modifier.modifier, modifier.enabled]))})`);
+        return { predicate: rule.predicate ?? null, bonus: bonus.modifier, ammoType };
+    },
+
     // Silencing Ammunition (2026-10-27): a hit, its DC 25 Will save failed — the spell module's Silence on the target (-2 to that save after a
     // critical hit, said on the hit's line); then the end-early card's tug, a DC 25 Will save (the target's Will raised to pass), and the Silence gone.
     async silencingTug(scene) {
