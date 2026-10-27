@@ -15,6 +15,8 @@ export async function reviveCreature(target, name, revive, state) {
     const actor = target?.actor;
     if (!actor) return [];
     if (!isDead(actor)) return [`${name} isn't dead: nothing to bring back.`];
+    // (Destroyed by a sphere of annihilation, scripts/sphere.js: only a deity's direct intervention brings it back.)
+    if (actor.getFlag?.(MODULE_ID, "annihilated")?.deity) return [`${name} was destroyed by a sphere of annihilation: only a deity's direct intervention can bring it back.`];
     const lines = [];
     const context = { item: state.item ?? {}, user: state.user ?? {}, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID };
     if (revive.debilitation) {

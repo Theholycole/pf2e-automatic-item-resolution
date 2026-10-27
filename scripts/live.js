@@ -39,6 +39,7 @@ import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { reviveCreature } from "./revive.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
+import { postSphereCard } from "./sphere.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
@@ -330,6 +331,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "toggle") return postToggleCard({ message, plan, used, actor, token });
     if (route === "ways") return postWaysCard({ message, plan, used, actor, token });
     if (route === "teleport") return postTeleportCard({ message, plan, used, actor, token });
+    if (route === "sphere") return postSphereCard({ message, plan, used, actor, token });
     if (route === "whisper") return postWhisper({ plan, used, actor, token });
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });

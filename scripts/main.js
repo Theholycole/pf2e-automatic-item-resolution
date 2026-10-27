@@ -53,6 +53,7 @@ import { setUpFelled } from "./felled.js";
 import { setUpImplosion } from "./implosion.js";
 import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
+import { setUpSphere, sphereTouched } from "./sphere.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -174,6 +175,8 @@ Hooks.once("ready", async () => {
     setUpOwnSplash();
     // (A readied Strike never made, Flashblade's: its activation's use given back, scripts/strikes.js.)
     setUpReadiedRefund();
+    // (A sphere its user controls and what it touches destroyed, Sphere of Annihilation's: scripts/sphere.js.)
+    setUpSphere();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
@@ -227,5 +230,5 @@ Hooks.once("ready", async () => {
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
     // (temperatureProtections: what its items protect a creature from in heat and cold, for the environment module — synchronous,
     // scripts/temperature.js.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, sphereTouched, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
 });
