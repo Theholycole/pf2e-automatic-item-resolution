@@ -10,6 +10,7 @@ import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { readItemImmunity } from "../src/compiler/immunity.js";
+import { compileBomb } from "../src/compiler/bombs.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -73,9 +74,17 @@ test("where a plan holds to it: a save's trigger.immunity (the ability module's 
     assert.deepEqual([command.plan.trigger.immunity, command.plan.partial], [undefined, true]);
     assert.ok(command.plan.notes.some((note) => /^Another character can attempt a @Check\[diplomacy\|dc:32\b/.test(note)), command.plan.notes.join(" / "));
     // (Nor one to only part of it: Poison Fizz's "temporarily immune to being blinded by poison fizz for 1 hour" — as the whole item's, a creature
-    // that only succeeded would get no card for the next fizz — taken off, a note.)
+    // that only succeeded would get no card for the next fizz — taken off. Since 2026-10-27 not a note but the ability module's
+    // trigger.partImmunity: the blinded part only, on a critical failure, from any poison fizz — every grade's key "poison-fizz".)
     const pop = compileItem(source("Poison Fizz (Lesser)")).ways.find((way) => /secondary/i.test(way.name)).plan;
-    assert.deepEqual([pop.trigger.immunity, pop.partial, pop.notes.some((note) => /\bimmune to being blinded by poison fizz\b/.test(note))], [undefined, true, true]);
+    assert.deepEqual([pop.trigger.immunity, pop.partial, (pop.notes ?? []).length], [undefined, undefined, 0]);
+    assert.deepEqual(pop.trigger.partImmunity.map(({ condition, duration, slug, against, degrees }) => ({ condition, duration, slug, against, degrees })), [{ condition: "blinded", duration: { value: 1, unit: "hours" }, slug: "poison-fizz", against: "all", degrees: ["criticalFailure"] }]);
+    const greater = compileItem(source("Poison Fizz (Greater)"));
+    assert.deepEqual([greater.partial, greater.ways.find((way) => /secondary/i.test(way.name)).plan.trigger.partImmunity[0].slug], [undefined, "poison-fizz"]);
+    // (A bomb's save the same: Durian Bomb's "immune to the sickened condition caused by other durian bombs for 1 minute", from any result that
+    // sickens it.)
+    const durian = compileBomb(source("Durian Bomb (Lesser)")).item.save.plan;
+    assert.deepEqual(durian.trigger.partImmunity.map(({ condition, duration, slug, against, degrees }) => ({ condition, duration, slug, against, degrees })), [{ condition: "sickened", duration: { value: 1, unit: "minutes" }, slug: "durian-bomb", against: "all", degrees: undefined }]);
 });
 
 async function use(holder, name) {

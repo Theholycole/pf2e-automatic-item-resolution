@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1100,
+  "entries": 1097,
   "results": {
-   "partial": 332,
+   "partial": 329,
    "none": 446,
    "note-only": 224,
    "builtin:no-effect": 98
@@ -12,7 +12,7 @@
    "cast-changes": 21,
    "speeds": 22,
    "counteract": 21,
-   "afflictions": 57,
+   "afflictions": 54,
    "moving": 77,
    "visibility": 45,
    "lasting": 63,
@@ -50,12 +50,12 @@
    "cast-changes": 21,
    "speeds": 28,
    "areas": 177,
-   "immunity": 88,
+   "immunity": 85,
    "objects": 298,
    "speech": 99,
-   "out-of-combat": 363,
+   "out-of-combat": 360,
    "counteract": 100,
-   "afflictions": 104,
+   "afflictions": 101,
    "lasting": 226,
    "moving": 104,
    "triggers": 114,
@@ -64,7 +64,7 @@
    "choice": 107,
    "several": 101,
    "strike": 184,
-   "reader": 201,
+   "reader": 198,
    "spells": 73,
    "actions": 59,
    "from-events": 26,
@@ -3604,21 +3604,6 @@
    ]
   },
   {
-   "name": "Poison Fizz (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 15,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Animated",
    "kind": "activation",
    "tier": "general",
@@ -4342,21 +4327,6 @@
     "actions",
     "choice",
     "objects"
-   ]
-  },
-  {
-   "name": "Poison Fizz (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 12,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "reader",
-    "out-of-combat"
    ]
   },
   {
@@ -8848,21 +8818,6 @@
     "objects",
     "information",
     "speech"
-   ]
-  },
-  {
-   "name": "Poison Fizz (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "reader",
-    "out-of-combat"
    ]
   },
   {

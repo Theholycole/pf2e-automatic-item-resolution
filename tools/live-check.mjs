@@ -507,6 +507,39 @@ export const cases = {
         return { sickened: user.getCondition("sickened")?.value };
     },
 
+    // Poison Fizz (Lesser)'s secondary effect twice at a creature that critically fails (2026-10-27, trigger.partImmunity — ability 8ee1e7e):
+    // the first spray blinds it and gives it the "Immune:" Effect for being blinded by poison fizz; the second, from another fizz, still deals
+    // its damage but doesn't blind it.
+    async poisonFizzBlindOnce(scene) {
+        const { actor: user } = await creature(scene, "Fizz Biter", { type: "character", x: 14, y: 20 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Fizz Target", { x: 15, y: 20, hp: 300, alliance: "opposition", save: -30 });
+        const spray = async () => {
+            const fizz = await give(user, "Poison Fizz (Lesser)");
+            let since = Date.now();
+            await fizz.consume();
+            const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(ways.id, { choice: 1 });
+            const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")) && message.id !== ways.id, { what: "the spray's card" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+            const save = await messageAfter(since, abilitySaveCard, { what: "the spray's save card" });
+            const hp = foe.system.attributes.hp.value;
+            await withDie(10, () => rollAndApply(save));
+            await until(() => foe.system.attributes.hp.value < hp, `its poison damage (${foe.system.attributes.hp.value})`, { timeout: 10000 });
+            return save;
+        };
+        const immune = () => foe.itemTypes.effect.filter((effect) => /^Immune: Blinded\b/i.test(effect.name));
+        await spray();
+        await until(() => foe.hasCondition("blinded") && immune().length, `blinded and immune (${foe.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        await foe.decreaseCondition("blinded", { forceRemove: true });
+        const hp = foe.system.attributes.hp.value;
+        const second = await spray();
+        await wait(1500);
+        assert(!foe.hasCondition("blinded"), "not blinded by the second fizz");
+        return { immune: immune().map((effect) => effect.name), hpAfterSecond: foe.system.attributes.hp.value, hpBefore: hp, second: second.id };
+    },
+
     // Crackling Bubble Gum (Lesser)'s pop (2026-10-27): a failed Fortitude save, the gum's -10-foot Speed penalty; the end-early card's try, 3
     // Interact actions (it or creatures helping), and the gum gone.
     async bubbleGumUnstick(scene) {

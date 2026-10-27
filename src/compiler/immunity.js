@@ -5,7 +5,8 @@
 // degree (and, once it filters, leave out a creature already immune); the item module's other cards give the same Effect themselves and
 // refuse a creature that has it (scripts/immunity.js). slug: the key both modules check — the item's name without its grade, so every grade
 // shares it ("all aetheric irritants"), and an activation's own name for "this activation" or an ability it names.
-// What isn't one whole-item immunity stays a note: immunity to one part ("immune to being blinded by poison fizz"), a time with no clock
+// Immunity to one part ("immune to being blinded by poison fizz"): the ability module's trigger.partImmunity on the saves giving it (2026-10-27).
+// What isn't an immunity this module can hold to stays a note: a time with no clock
 // ("until the next lunar new year", "until it wakes up", "once its effects end", "1d4 days"). Not an immunity to the item at all: severe
 // cold, a condition from other creatures, PF2e's own Demoralize or Battle Medicine immunities. Pure.
 
@@ -24,6 +25,7 @@ const NOT_OURS = /\b(?:doesn't|does not|don't|isn't|aren't|won't|never) become\b
 // (Only one part of it: "immune to being blinded by poison fizz", "immune to the sickened condition caused by other durian bombs" — unless
 // that condition is all its save gives, Magnolia's "immune to being fascinated by any magnolia bewitching bloom": only, that slug.)
 const ONE_PART = /\bimmune to (?:being \w+|the \w+ condition)\b/i;
+const PART = /\bimmune to (?:being (\w+)|the (\w+) condition)\b/i;
 const onePart = (sentence, only = null) => ONE_PART.test(sentence) && !(only && new RegExp(String.raw`\bimmune to (?:being ${only}|the ${only} condition)\b`, "i").test(sentence));
 // (A time with no clock it can be held to.)
 const NO_CLOCK = /\buntil (?:the next lunar new year|it wakes up|the next time it wakes|you eat|your next|it next|you get a full night's rest)\b|\bonce its effects end\b|\bwhen the effect ends\b|\bwhen the \d+ (?:rounds|minutes|hours) are up\b|\bentirely\b|\b\d+d\d+\b/i;
@@ -178,7 +180,7 @@ function leftIn(node, seen = new Set()) {
 // A save's immunity from the ability compiler's own reading that isn't one to the item (Mindrender Baton's "temporarily immune to that
 // character's attempts to remove the effect", read so before ability 9bc3db1): taken off, its sentence the reading's note.
 // (Nor one to only part of it, Poison Fizz's "immune to being blinded by poison fizz for 1 hour": as the whole item's, a creature that only
-// succeeded would get no card for the next fizz's damage. A note, ONE_PART.)
+// succeeded would get no card for the next fizz's damage. Its trigger.partImmunity instead, ONE_PART — withImmunity.)
 function withoutMisread(plan, only = null) {
     for (const save of savesIn(plan).filter((entry) => entry.trigger?.immunity?.raw && (ATTEMPTS.test(entry.trigger.immunity.raw) || NOT_OURS.test(entry.trigger.immunity.raw) || onePart(entry.trigger.immunity.raw, only)))) {
         const { immunity, ...trigger } = save.trigger;
@@ -230,6 +232,23 @@ export function withImmunity(given, html, names = {}) {
         else if (saves.length) for (const save of saves) save.trigger = { ...(save.trigger ?? { event: "use" }), immunity };
         else if (ALL_DEGREES(immunity.degrees) && !others) next = { ...next, item: { ...(next.item ?? {}), immunity } };
         else unread.push(immunity.raw);
+    }
+    // (An immunity to one part of it — Poison Fizz's "is then temporarily immune to being blinded by poison fizz for 1 hour", Durian Bomb's "immune
+    // to the sickened condition caused by other durian bombs for 1 minute" — 2026-10-27: trigger.partImmunity on each save that gives that
+    // condition, the ability module's (8ee1e7e): a creature already immune gets its row without it, one given it becomes immune for the time —
+    // from any of the item's grades ("all": the item's own name, every grade sharing it).)
+    for (const sentence of [...unread]) {
+        const part = PART.exec(sentence);
+        const duration = part && onePart(sentence, only) && !NO_CLOCK.test(sentence) ? durationOf(sentence) : null;
+        if (!duration || duration.daily) continue;
+        const condition = (part[1] ?? part[2]).toLowerCase();
+        const gives = (save) => Object.values(save.resolution?.outcomes ?? {}).some((row) => (row?.effects ?? []).some((effect) => (effect?.kind === "condition" || !effect?.kind) && effect?.slug === condition));
+        if (!savesIn(next).some(gives)) continue;
+        next = withoutSentence(next, sentence);
+        const degrees = degreesOf(sentence, degreeParagraphs(html));
+        const held = { condition, duration: { value: duration.value, unit: duration.unit }, slug: familySlug(names.name ?? next.source?.name), against: "all", raw: sentence, ...(degrees.length < ALL.length ? { degrees } : {}) };
+        for (const save of savesIn(next).filter(gives)) save.trigger = { ...(save.trigger ?? { event: "use" }), partImmunity: [...[save.trigger?.partImmunity ?? []].flat().filter((entry) => entry.raw !== held.raw), held] };
+        unread.splice(unread.indexOf(sentence), 1);
     }
     // (Nor one a row's note Effect says already, Truth Potion's question: its own words on the creature's note — 2026-10-26.)
     const onNotes = Object.values(next.resolution?.outcomes ?? {}).flatMap((row) => (row?.noteEffects ?? []).map((note) => String(note?.text ?? "")));

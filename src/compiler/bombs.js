@@ -22,6 +22,7 @@ import { plainText } from "./rows.js";
 import { withWhilePersistent } from "./primed.js";
 import { asAbility } from "./ability-shape.js";
 import { asRowCopies, guardValues } from "./guards.js";
+import { withImmunity } from "./immunity.js";
 
 export const isBomb = (item) => item?.type === "weapon" && item.system?.group === "bomb";
 
@@ -195,9 +196,11 @@ export function bombSave(item, { scope: given = null } = {}) {
         ? { check: read.resolution.check, outcomes: read.resolution.outcomes, ...(read.resolution.afflictionHandoff ? { afflictionHandoff: read.resolution.afflictionHandoff } : {}), ...(read.resolution.sharedDamage && Object.values(read.resolution.outcomes ?? {}).some((row) => row?.damage?.mode === "shared" && (row.damage.sourceComponentIds ?? []).length) ? { sharedDamage: read.resolution.sharedDamage } : {}) }
         : plainSave(html, text);
     if (!resolution) return null;
+    // (Its temporary immunity held to on the save, as the other items' are — Sulfur Bomb's "temporarily immune to the effects of the bomb for 1
+    // minute", Durian Bomb's to the sickened condition from other durian bombs, trigger.partImmunity — src/compiler/immunity.js, 2026-10-27.)
     return {
         ...scope,
-        plan: {
+        plan: withImmunity({
             modelVersion: MODEL_VERSION,
             source: { name: item.name, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type },
             rank: 1,
@@ -208,7 +211,7 @@ export function bombSave(item, { scope: given = null } = {}) {
             trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
             resolution: { kind: "save", ...resolution },
             ...(flatChecks ? { castFlatCheck: flatChecks } : {})
-        }
+        }, html, { name: item.name })
     };
 }
 
