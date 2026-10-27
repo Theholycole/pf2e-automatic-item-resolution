@@ -301,3 +301,40 @@ test("dying: Banner of the Rising Star's Rise Up its card's lines beside its hea
     const reaper = compileItem(item("Reaper's Spellgun"));
     assert.deepEqual([reaper.decided, done(reaper), reaper.notes.length], ["one-off", true, 3]);
 });
+
+test("brought back to life: Elixir of Rejuvenation's ways (drunk, its restore; on a dead creature, 1 Hit Point and none of its daily resources), Gift of the Poisoned Heart's Resurrect with its week's debilitation and its curse; Sun Orchid Elixir's restore", () => {
+    const elixir = compileItem(item("Elixir of Rejuvenation"));
+    assert.ok(done(elixir));
+    const [drink, dead] = elixir.ways;
+    assert.deepEqual([elixir.builtin, drink.plan.item.restore, drink.plan.notes, dead.plan.item.restore, dead.plan.item.revive.hp, dead.plan.item.recipient], ["ways", { hp: "max", afflictions: { level: 20 } }, undefined, undefined, 1, "drinker"]);
+    const gift = compileItem(item("Gift of the Poisoned Heart"));
+    assert.ok(done(gift));
+    assert.deepEqual([gift.item.revive.hp, gift.item.revive.debilitation.days, gift.item.revive.debilitation.rules.map((rule) => rule.alterations[0].value), gift.resolution.outcomes.success.noteEffects[0].duration, gift.notes.length], [1, 7, [1, 1, 1], null, 2]);
+    const orchid = compileItem(item("Sun Orchid Elixir"));
+    assert.ok(done(orchid));
+    assert.deepEqual([orchid.item.restore, orchid.notes.length], [{ hp: "max", afflictions: { level: 20 } }, 2]);
+});
+
+test("live: Gift of the Poisoned Heart on a dead creature next to its user — back with 1 Hit Point, its dead status off, debilitated for the week, the curse a note Effect", async () => {
+    const giver = foundry.makeActor({ id: "b2-giver", name: "Giver", owners: ["player"] });
+    const corpse = foundry.makeActor({ id: "b2-corpse", name: "Corpse", hp: 0 });
+    corpse.statuses = new Set(["dead"]);
+    corpse.toggleStatusEffect = async (slug, { active }) => (active ? corpse.statuses.add(slug) : corpse.statuses.delete(slug));
+    foundry.place(giver, 0, 67300 + 1000 * spot++);
+    foundry.place(corpse, 100, 67300 + 1000 * (spot - 1));
+    const used = foundry.giveItem(giver, source("Gift of the Poisoned Heart"));
+    const data = used.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: used.uuid, sourceId: data._stats.compendiumSource, type: used.type } } }, speaker: { actor: giver.id }, actor: giver, token: giver.token.document });
+    await foundry.call("createChatMessage", message);
+    await settle();
+    const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+    const at = card.flags[MODULE_ID].card.drinkers.findIndex((entry) => entry.name === "Corpse");
+    assert.ok(at > 0, "the corpse beside its user is offered");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, drinker: at, userId: "player" });
+    await settle();
+    assert.deepEqual([corpse.system.attributes.hp.value, corpse.statuses.has("dead")], [1, false]);
+    const names = corpse.created.map((entry) => entry.name);
+    assert.ok(names.some((name) => /debilitated$/.test(name)) && names.some((name) => /back from death$/.test(name)), names.join(", "));
+    assert.equal(corpse.created.find((entry) => /debilitated$/.test(entry.name)).system.rules.length, 3);
+    assert.match(card.content, /Corpse returns to life with 1 Hit Point/);
+});

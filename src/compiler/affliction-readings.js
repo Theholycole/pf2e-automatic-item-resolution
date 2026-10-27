@@ -15,15 +15,17 @@ import { withTripod } from "./tripod.js";
 import { withFirstAidMore } from "./first-aid.js";
 import { withDyingLift } from "./dying-lift.js";
 import { withSleepNotes } from "./sleep-notes.js";
+import { withRevival } from "./revive.js";
 
-// A consumable's plan, its item, and how to compile the item again with other html → the plan as these read it.
+// A consumable's plan, its item, how to compile the item again with other html, and its base plan (for one nothing read) → the plan as these
+// read it.
 // (A poison's range of stages alike, Unending Itch's "Stages 1–5", written out a stage each and compiled again: src/compiler/poison-reading.js.)
-export function withAfflictionReadings(plan, item, recompile = null) {
+export function withAfflictionReadings(plan, item, recompile = null, base = null) {
     // (Compiled again, it's been through these already.)
     const expanded = plan?.noteOnly && recompile ? expandStageRange(item?.system?.description?.value) : null;
     if (expanded) return recompile(expanded) ?? plan;
     const html = item?.system?.description?.value;
-    return withFirstAidMore(withTripod(withVaccineStrain(withHiddenSymptom(withPoisonLines(withOwnCounteract(withSaveAgainstOne(withAddictionSuppressed(plan, html), html), html), html), html)), html));
+    return withRevival(withFirstAidMore(withTripod(withVaccineStrain(withHiddenSymptom(withPoisonLines(withOwnCounteract(withSaveAgainstOne(withAddictionSuppressed(plan, html), html), html), html), html)), html)), html, base ? base() : null);
 }
 
 // An activation's plan, its item and its entry ({ activation: { name, html } }) → the plan as these read it.
