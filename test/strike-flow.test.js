@@ -355,8 +355,8 @@ test("Weapon Shot: the weapon that fires it is a +2 striking weapon for that Str
     const rules = strikeRules(shot.plan, { ammoId: "shot1", label: "Weapon Shot (Moderate)" });
     assert.deepEqual(rules.map((rule) => [rule.key, rule.property, rule.value, rule.predicate]), [["ItemAlteration", "runes-potency", 2, ["item:ammo:id:shot1"]], ["ItemAlteration", "runes-striking", 1, ["item:ammo:id:shot1"]]]);
     assert.deepEqual(compileActivations(source("Weapon Shot (Major)"))[0].plan.strike.runes, { potency: 3, striking: 2 });
-    // Its ghostly weapon of force: not read (no weapon of the user's fires it).
-    assert.equal(ghostly.plan, null);
+    // Its ghostly weapon of force: not read (no weapon of the user's fires it) — a one-off since 2026-10-27, src/compiler/one-offs.js: its card's line.
+    assert.deepEqual([ghostly.plan.decided, ghostly.plan.resolution.outcomes.success.effects], ["one-off", []]);
 });
 
 test("a spell cast at the creature hit: Stone Bullet's Petrify at rank 6 and DC 34, the spell module's; not one with a save of its own first", async () => {

@@ -177,3 +177,34 @@ test("Serpent Oil (Moderate)'s Small or Medium object, the ways card's Sea Snake
     const [palanquin] = activations("Palanquin of Night");
     assert.deepEqual([done(palanquin), routeOf(palanquin), palanquin.creatures[0].count, palanquin.creatures[0].from.uuid, palanquin.lasts, palanquin.notes.length], [true, "conjure", 4, "Compendium.pf2e.pathfinder-bestiary.Actor.j7NNPfZwD19BwSEZ", null, 5]);
 });
+
+test("a performance contest, a lost body found, shared waffles: Bargainer's Instrument's +2 to Performance (a note Effect of PF2e's rule) and its contest's lines, Mourner's Dawnlight Fulu whispered, Cooperative Waffles' 24-hour note Effect on both", () => {
+    const instrument = compileItem(item("Bargainer's Instrument"));
+    const contest = instrument.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([done(instrument), routeOf(instrument), contest.rules, contest.duration, instrument.notes.length], [true, "item", [{ key: "FlatModifier", selector: "performance", type: "item", value: 2 }], null, 4]);
+    const fulu = compileItem(item("Mourner's Dawnlight Fulu"));
+    assert.deepEqual([done(fulu), routeOf(fulu)], [true, "whisper"]);
+    assert.match(fulu.whisper.text, /within 500 feet/);
+    for (const [name, aid] of [["Cooperative Waffles", false], ["Cooperative Waffles (Greater)", true]]) {
+        const waffles = compileItem(item(name));
+        const note = waffles.resolution.outcomes.success.noteEffects[0];
+        assert.deepEqual([done(waffles), routeOf(waffles), waffles.item.recipient, note.duration.value, note.duration.unit, /Aids/.test(note.text)], [true, "item", "targets", 24, "hours", aid], name);
+    }
+});
+
+test("Harrow Spellcards' card or 1d6, the table card: each row its next check of a kind rolled twice until the next daily preparations", () => {
+    const [harrow] = activations("Harrow Spellcards");
+    assert.deepEqual([done(harrow), routeOf(harrow), harrow.table.die, harrow.table.rows.map((row) => row.plan.rollTwice.selector)], [true, "table", "1d6", ["athletics", "acrobatics", "survival", "skill-check", "religion", "diplomacy"]]);
+    const books = harrow.table.rows[3].plan;
+    assert.deepEqual([routeOf(books), books.rollTwice.predicate, books.rollTwice.keep, books.rollTwice.duration.unit], ["fortune", ["action:recall-knowledge"], "higher", "days"]);
+});
+
+test("Doctrine of Blissful Eternity's healing for its undead minion, a way per slot rank each spending that slot; Weapon Shots' ghostly weapon a one-off, their first activation still the Strike card", () => {
+    const [doctrine] = activations("Doctrine of Blissful Eternity");
+    const third = doctrine.ways[2].plan;
+    assert.deepEqual([done(doctrine), routeOf(doctrine), doctrine.ways.length, third.resolution.outcomes.success.effects, third.spend, routeOf(third), doctrine.trigger.frequency.per], [true, "ways", 10, [{ kind: "heal", formula: "3d8" }], { spellSlot: { rank: 3 } }, "save", "day"]);
+    for (const grade of ["Lesser", "Moderate", "Greater", "Major"]) {
+        const [strike, ghost] = activations(`Weapon Shot (${grade})`);
+        assert.deepEqual([routeOf(strike), ghost.decided, done(ghost)], ["strike", "one-off", true], grade);
+    }
+});

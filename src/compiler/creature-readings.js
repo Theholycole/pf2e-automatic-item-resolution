@@ -407,6 +407,113 @@ const READINGS = [
         }
     },
     {
+        // (A performance contest with a talent the ritual conjures, out of combat: the +2 item bonus to its user's Performance checks a note Effect
+        // of PF2e's rule until it's over, the contest its card's lines — the talent the GM's.)
+        name: "Bargainer's Instrument",
+        sentences: [
+            /^A bargainer's instrument is a musical implement\.$/,
+            /^The most typical version is a violin made from maple and spruce, its body stained so deep a purple it appears almost black\.$/,
+            /^When activated, the instrument casts a Binding Circle ritual to conjure a willing extraplanar talent to compete with you in performance\.$/,
+            /^The contest could be a musical battle, a dance-off, an oratorical debate - the two of you could even use entirely different types of performance\.$/,
+            /^The loser of the bout is magically bound to perform a task of the winner's choice within (\d+) weeks?\.$/,
+            /^The contest consists of taking turns to Perform, starting with your opponent\.$/,
+            /^The Performance check's DC is the higher of the opponent's Perception DC or Will DC, though the two parties can mutually agree to use an impartial judge instead\.$/,
+            /^The first to reach (four|\d+) successes wins, with each critical successes counting as two successes\.$/,
+            /^If you play the bargainer's instrument as part of your performance, it grants you a \+(\d+) item bonus to the Performance checks\.$/,
+            /^After the contest, the conjured creature can choose to return to where it came from or remain where you conjured it\.$/,
+            /^The loser must endeavor to complete the task by all reasonable means within \d+ weeks?\.$/,
+            /^Failing to complete it is shameful but has no further consequences\.$/,
+            /^The instrument loses its magic and remains a non-magical virtuoso instrument\.$/
+        ],
+        card: ([, , , , bound, , , first, bonus]) => ownRow({
+            noteEffects: [{ label: "Performance contest", text: `+${bonus[1]} item bonus to its Performance checks played on the instrument in the contest: remove this Effect once it's over.`, rules: [{ key: "FlatModifier", selector: "performance", type: "item", value: Number(bonus[1]) }], duration: null }],
+            notes: [
+                "Its Binding Circle conjures a willing extraplanar talent (the GM's) to compete in performance — music, dance, oration, even different kinds.",
+                `They take turns to Perform, the talent first, against the higher of the other's Perception DC and Will DC (or an impartial judge both agree on); the first to ${first[1]} successes wins, a critical success counting two.`,
+                `The loser is magically bound to do a task of the winner's choice within ${bound[1]} week${bound[1] === "1" ? "" : "s"}, by all reasonable means; failing it is shameful, with no other consequence. After, the talent leaves or stays, as it chooses.`,
+                "The instrument is a non-magical virtuoso instrument after."
+            ]
+        })
+    },
+    {
+        // (A lost object or body found within 500 feet: what it shows, whispered to the GM and its user.)
+        name: "Mourner's Dawnlight Fulu",
+        sentences: [
+            /^A mourner's dawnlight fulu is a stack of pages that resembles joss paper, used to locate the remains of the lost\.$/,
+            /^When you Activate the fulu, you envision a specific object or deceased creature you're familiar with and want to find\.$/,
+            /^You then rip the fulu into pieces and let them drift in the wind\.$/,
+            /^If the item or creature you seek is within (\d+) feet, the pieces flutter through the air and land on the target, or on the surface closest to a buried or otherwise obscured target\.$/,
+            /^If the torn fulu lands or fails to locate the desired target, its magic ends\.$/
+        ],
+        card: ([, , , within]) => ({ builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text: `Its user pictures an object or a dead creature it knows and tears the fulu up: if that's within ${within[1]} feet, the pieces drift to it and land on it, or on the surface nearest it if it's buried or hidden — the GM shows where. Else, or once they land, its magic ends.` } })
+    },
+    ...["Cooperative Waffles", "Cooperative Waffles (Greater)"].map((name) => ({
+        // (A bonus 1 higher between two who shared them, for Follow the Expert (and Aid, the greater's), for 24 hours: a note Effect on each,
+        // PF2e's Follow the Expert telling no one whom it follows.)
+        name,
+        sentences: [
+            /^Flash-cooked on a waffle iron and drizzled with alchemical syrups and compound butter, cooperative waffles bolster the supportive spirit of those who share the batch\.$/,
+            /^You can split the waffles with one other creature\.$/,
+            /^After you both eat half of the waffles to Activate them, when one of you uses Follow the Expert to follow the other, the circumstance bonus granted is 1 higher\.$/,
+            ...(name.endsWith("(Greater)") ? [/^The benefit of the waffles also applies when one of you successfully Aids a skill check the other attempts\.$/] : []),
+            /^The waffles' bonus lasts (\d+) hours or until you next make your daily preparations, whichever comes first\.$/,
+            /^You can only be linked to one creature in this way at a time; if either of you eats cooperative waffles again, the effect of your previous waffles ends\.$/
+        ],
+        card: (found) => {
+            const aids = name.endsWith("(Greater)");
+            const lasts = found.at(-2);
+            return {
+                ...ownRow({
+                    target: "its user and the creature it shares them with",
+                    noteEffects: [{ label: "Linked by waffles", text: `When one of the two who shared them uses Follow the Expert to follow the other, its circumstance bonus is 1 higher${aids ? ", as is the bonus when one successfully Aids the other's skill check" : ""}. Until the next daily preparations, ${lasts[1]} hours at most; eating cooperative waffles again ends this link.`, duration: timeOf(lasts[1], "hours") }],
+                    notes: ["Target both who share them: its user and the other creature."]
+                }),
+                item: COMPANION
+            };
+        }
+    })),
+    {
+        // (A harrow card or 1d6 for the next check of a kind rolled twice, until the next daily preparations: the table card, each row the
+        // fortune card's roll twice.)
+        name: "Harrow Spellcards",
+        sentences: [
+            /^You draw forth a card to gain insight into future challenges you'll face\.$/,
+            /^Draw a card from a harrow deck or roll 1d6: 1 = hammers \(Athletics\) 2 = keys \(Acrobatics\) 3 = shields \(Survival\) 4 = books \(any Recall Knowledge\) 5 = stars \(Religion\) 6 = crowns \(Diplomacy\)\.$/,
+            /^The next time you attempt a check of the same type as your result, roll twice and take the better result, as the spirits of the harrow guide your actions\.$/,
+            /^If not used by your next daily preparations, this benefit disappears\.$/
+        ],
+        card: (found, plan, { base }) => {
+            const until = { value: 1, unit: "days", expiry: "turn-start" };
+            const row = (low, suit, words, roll) => ({ low, high: low, text: `${suit}: ${words}, rolled twice (the better kept).`, plan: { ...base, builtin: "roll-twice", automation: { level: "automatic" }, targeting: { target: "the user", range: null, area: null }, trigger: { event: "use" }, rollTwice: { ...roll, keep: "higher", duration: until }, notes: ["Until its next daily preparations (a day) if it's not used."] } });
+            return {
+                builtin: "table",
+                targeting: { target: null, range: null, area: null },
+                table: { die: "1d6", rows: [row(1, "Hammers", "its next Athletics check", { selector: "athletics" }), row(2, "Keys", "its next Acrobatics check", { selector: "acrobatics" }), row(3, "Shields", "its next Survival check", { selector: "survival" }), row(4, "Books", "its next Recall Knowledge check", { selector: "skill-check", predicate: ["action:recall-knowledge"] }), row(5, "Stars", "its next Religion check", { selector: "religion" }), row(6, "Crowns", "its next Diplomacy check", { selector: "diplomacy" })] },
+                notes: ["A harrow card drawn in place of the roll: its suit's row (hammers 1, keys 2, shields 3, books 4, stars 5, crowns 6)."]
+            };
+        }
+    },
+    {
+        // (Healing for its undead minion before the damage that would destroy it, 1d8 per rank of the slot with Harm its user expends: the ways
+        // card, a way per rank, each spending that slot — src/compiler/slot-cost.js's spellSlot { rank }.)
+        name: "Doctrine of Blissful Eternity",
+        sentences: [
+            /^You call out and demand the undead to remain, reaching out with tendrils of void energy that preserves your minion so it might continue to serve you\.$/,
+            /^Expend a spell slot in which you've prepared a Harm spell to restore (\d+)d(\d+) Hit Points to your undead minion per level of the expended spell slot, before applying the damage\.$/,
+            /^If this prevents the minion from being reduced to 0 Hit Points, it isn't destroyed\.$/
+        ],
+        card: ([, restore], plan, context) => ways(Array.from({ length: 10 }, (unused, index) => index + 1).map((rank) => ({
+            name: `A rank ${rank} slot`,
+            html: `<p>${Number(restore[1]) * rank}d${restore[2]} Hit Points.</p>`,
+            plan: wayPlan({
+                targeting: { target: "your undead minion", range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), effects: [{ kind: "heal", formula: `${Number(restore[1]) * rank}d${restore[2]}` }] } } },
+                spend: { spellSlot: { rank } },
+                notes: ["A slot it prepared Harm in: the card spends one of that rank.", "Before the triggering damage: heal first, then apply it; kept above 0 Hit Points, the minion isn't destroyed."]
+            }, context)
+        })))
+    },
+    {
         // (An Animated Broom with no Strike, for menial tasks out of combat, for an hour (8 for the greater key).)
         name: /^Cordelia's (?:Greater )?Construct Key$/,
         sentences: [
