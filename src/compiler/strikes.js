@@ -14,7 +14,7 @@ import { itemActionPlan } from "./item-actions.js";
 import { directDamagePlan } from "./direct-damage.js";
 import { hitNotes } from "./hit-notes.js";
 import { EACH_IN, UP_TO, countOf, readVolley } from "./volley.js";
-import { readPullFree, readRowEndEarly } from "./end-early.js";
+import { readPullFree, readRowEndEarly, readTugFree } from "./end-early.js";
 
 // "make a melee Strike", "make a weapon or unarmed attack Strike", "make a ranged or melee Strike", "attempt a Strike" (not
 // a creature's own, "makes a beak Strike with a +8 modifier").
@@ -155,12 +155,16 @@ export function castOnHit(html) {
     const dc = /\bspell DC of (\d+)|@Check\[\w+\|dc:(\d+)|\(DC (\d+)\)/i.exec(match[4]);
     const unless = /\bunless it succeeds at an? @Check\[(fortitude|reflex|will)\|dc:(\d+)|\bThe target can resist the effects[^.]*? with a successful @Check\[(fortitude|reflex|will)\|dc:(\d+)/i.exec(match[4]);
     const requiring = /\brequiring an? @Check\[(?:fortitude|reflex|will)\|dc:\d+/i.test(match[4]);
+    const penalty = /\bthough it takes a [-–−](\d+) (circumstance|status) penalty if the Strike was a critical hit\b/i.exec(match[4]);
+    const criticalPenalty = penalty ? { value: -Number(penalty[1]), type: penalty[2].toLowerCase() } : null;
     return {
         uuid: match[2],
         name: match[3],
         rank: match[1] ? Number(match[1]) : null,
         dc: unless ? null : dc ? Number(dc[1] ?? dc[2] ?? dc[3]) : null,
-        ...(unless ? { saveFirst: { statistic: (unless[1] ?? unless[3]).toLowerCase(), dc: Number(unless[2] ?? unless[4]) } } : {}),
+        // (Its save worse after a critical hit, Silencing Ammunition's "though it takes a -2 circumstance penalty if the Strike was a critical hit":
+        // saveFirst.criticalPenalty, an Effect on the creature for that save — scripts/strikes.js, 2026-10-27.)
+        ...(unless ? { saveFirst: { statistic: (unless[1] ?? unless[3]).toLowerCase(), dc: Number(unless[2] ?? unless[4]), ...(criticalPenalty ? { criticalPenalty } : {}) } } : {}),
         ...(requiring ? { attackFromHit: true } : {})
     };
 }
@@ -399,6 +403,14 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
     // flavor, "On a hit, bone antlers extend to pin it down", no rule.)
     const held = save ? Object.entries(save.plan.resolution?.outcomes ?? {}).filter(([, row]) => (row?.effects ?? []).some((effect) => effect.slug === "immobilized")).map(([degree]) => degree) : [];
     const pulled = save && !wipe ? readPullFree(extras.notes, held) : null;
+    // (A cast spell's effect ended early by a save, Silencing Ammunition's "While the effect is active, the target can use an Interact action to
+    // try to tug out the arrow or bolt and end the effect early; this requires a successful @Check[will|dc:25]": the cast's endEarly — the
+    // end-early card once it's cast, its Will save, PF2e's Spell Effect for the spell gone. src/compiler/end-early.js.)
+    const tug = cast ? extras.notes.map((note) => [note, readTugFree(String(note), cast.name)]).find(([, read]) => read) : null;
+    if (tug) {
+        extras.notes = extras.notes.filter((note) => note !== tug[0]);
+        cast = { ...cast, endEarly: tug[1] };
+    }
     if (pulled) extras.notes = extras.notes.filter((note) => !pulled.said.includes(String(note).trim()) && !/^On a hit, [\w ]+? extend to pin it down\.$/i.test(String(note).trim()));
     const extra = extras.read
         ? {

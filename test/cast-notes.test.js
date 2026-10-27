@@ -239,6 +239,14 @@ test("a row's modifier ended by actions others can help with (2026-10-27): Crack
     assert.equal(tryWords(pop.endEarly, { step: 0, degree: "failure" }), "3 Interact actions spent (by it or creatures helping, not all at once)");
 });
 
+test("a cast spell ended early by a save, and its first save worse after a critical hit (2026-10-27): Silencing Ammunition — cast.endEarly, DC 25 Will to tug it out; saveFirst.criticalPenalty -2", async () => {
+    const { tryWords } = await import("../src/live/end-early-card.js");
+    const [{ plan: arrow }] = compileActivations(item("Silencing Ammunition"), options);
+    const cast = arrow.strike.cast;
+    assert.deepEqual([cast.saveFirst.criticalPenalty, cast.endEarly.how, cast.endEarly.effects, arrow.strike.notes, arrow.partial], [{ value: -2, type: "circumstance" }, { kind: "check", save: "will", dc: 25 }, ["Spell Effect: Silence"], [], undefined]);
+    assert.equal(tryWords(cast.endEarly, { step: 0 }), "an Interact action: a DC 25 Will save");
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

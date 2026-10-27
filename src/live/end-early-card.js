@@ -18,7 +18,11 @@ export function tryWords(given, entry, critical = false) {
     // (Or an action of a trait, Blindpepper Bolt's manipulate action.)
     if (endEarly.how.kind === "actions") return `${endEarly.how.count} ${endEarly.how.trait ? `${endEarly.how.trait} ` : "Interact "}action${endEarly.how.count === 1 ? "" : "s"} spent${endEarly.how.helped ? " (by it or creatures helping, not all at once)" : ""}`;
     // (Or a skill check to pull free, Antler Arrow's Athletics: its DC, the harder one when the card's tick says so.)
-    if (endEarly.how.kind === "check") return `an Interact action: a DC ${checkDC(endEarly, critical)} ${endEarly.how.skill.charAt(0).toUpperCase()}${endEarly.how.skill.slice(1)} check`;
+    // (Or a save, Silencing Ammunition's Will save to tug the arrow out.)
+    if (endEarly.how.kind === "check") {
+        const what = endEarly.how.save ?? endEarly.how.skill;
+        return `an Interact action: a DC ${checkDC(endEarly, critical)} ${what.charAt(0).toUpperCase()}${what.slice(1)} ${endEarly.how.save ? "save" : "check"}`;
+    }
     const step = endEarly.how.steps[entry.step] ?? endEarly.how.steps.at(-1);
     return step === "auto" ? "an Interact action: it ends outright" : `an Interact action: a DC ${step} flat check`;
 }

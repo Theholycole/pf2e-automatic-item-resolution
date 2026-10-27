@@ -15,8 +15,10 @@ export function setUpEndEarly() {
 
 // The item's Effects on the creature this ends: named for the item ("<item>: <Condition>"), the conditions it names when it names some.
 // (And PF2e's own Effects for the item its row gave, "Effect: Crackling Bubble Gum (Failure)": its name without its grade or way.)
-const endedBy = (actor, itemName, conditions) => (actor?.itemTypes?.effect ?? []).filter((effect) => {
+// (Or a spell's PF2e Effect by its name, Silencing Ammunition's "Spell Effect: Silence": endEarly.effects.)
+const endedBy = (actor, itemName, conditions, named = []) => (actor?.itemTypes?.effect ?? []).filter((effect) => {
     const name = String(effect.name ?? "");
+    if (named.includes(name)) return true;
     // (Its grade and its way gone too: "Crackling Bubble Gum (Lesser) (Its secondary effect)".)
     const base = String(itemName).replace(/(?:\s*\([^)]*\))+$/, "");
     if (!name.startsWith(`${itemName}:`) && !name.startsWith(`${itemName} `) && !name.startsWith(`Effect: ${base}`)) return false;
@@ -33,11 +35,19 @@ export async function postEndEarly({ state, targets }) {
         if (endEarly.degrees?.length && !endEarly.degrees.includes(target.degree)) continue;
         const actor = target.actorUuid ? await fromUuid(target.actorUuid).catch(() => null) : null;
         // (Or the condition itself when the card gave it with no time, Antler Arrow's Immobilized.)
-        if (!actor || !(endedBy(actor, itemName, endEarly.conditions).length || (endEarly.conditions ?? []).some((slug) => actor.hasCondition?.(slug)))) continue;
+        if (!actor || !(endedBy(actor, itemName, endEarly.conditions, endEarly.effects).length || (endEarly.conditions ?? []).some((slug) => actor.hasCondition?.(slug)))) continue;
         creatures.push({ actorUuid: actor.uuid, tokenUuid: target.tokenUuid ?? null, name: target.name ?? actor.name, ...(target.degree ? { degree: target.degree } : {}) });
     }
     if (!creatures.length) return null;
     const card = createEndEarlyCard({ endEarly, item: { name: itemName, uuid: state.ability?.uuid ?? null }, user: { actorUuid: state.source?.actorUuid ?? null, tokenUuid: state.source?.tokenUuid ?? null, name: state.source?.name ?? itemName }, creatures });
+    return ChatMessage.create({ content: endEarlyCardHTML(card, { canApply: true }), flags: { [MODULE_ID]: { [FLAG]: card } } });
+}
+
+// The end-early card for creatures something else affected (a spell the spell module cast, Silencing Ammunition's Silence): { endEarly, item,
+// user, creatures: [{ actorUuid, tokenUuid, name }] }.
+export async function postEndEarlyAt({ endEarly, item, user, creatures }) {
+    if (!endEarly || !creatures?.length) return null;
+    const card = createEndEarlyCard({ endEarly, item, user, creatures });
     return ChatMessage.create({ content: endEarlyCardHTML(card, { canApply: true }), flags: { [MODULE_ID]: { [FLAG]: card } } });
 }
 
@@ -59,11 +69,11 @@ export async function applyEndEarlyCard(message, { entry = null, critical = null
     // (A skill check to pull free, Antler Arrow's Athletics: PF2e's own check of the creature at that DC.)
     if (endEarly.how.kind === "check") {
         const dc = checkDC(endEarly, harder);
-        const statistic = actor.skills?.[endEarly.how.skill];
-        if (!statistic) throw new Error(`${one.name} has no ${endEarly.how.skill}.`);
+        const statistic = endEarly.how.save ? actor.saves?.[endEarly.how.save] : actor.skills?.[endEarly.how.skill];
+        if (!statistic) throw new Error(`${one.name} has no ${endEarly.how.save ?? endEarly.how.skill}.`);
         const roll = await statistic.roll({ dc: { value: dc }, skipDialog: true, extraRollOptions: ["action:interact"] });
         ends = (roll?.degreeOfSuccess ?? 0) >= 2;
-        if (!ends) lines.push(`${one.name}: ${roll?.total ?? "?"} on the DC ${dc} ${endEarly.how.skill} check, still stuck.`);
+        if (!ends) lines.push(`${one.name}: ${roll?.total ?? "?"} on the DC ${dc} ${endEarly.how.save ?? endEarly.how.skill} ${endEarly.how.save ? "save" : "check"}, not ended.`);
     }
     if (endEarly.how.kind === "flat") {
         const dc = endEarly.how.steps[one.step] ?? endEarly.how.steps.at(-1);
@@ -77,10 +87,10 @@ export async function applyEndEarlyCard(message, { entry = null, critical = null
         }
     }
     if (ends) {
-        const effects = endedBy(actor, state.item.name, endEarly.conditions);
+        const effects = endedBy(actor, state.item.name, endEarly.conditions, endEarly.effects);
         if (effects.length) await actor.deleteEmbeddedDocuments("Item", effects.map((effect) => effect.id));
         else for (const slug of endEarly.conditions ?? []) if (actor.hasCondition?.(slug)) await actor.decreaseCondition(slug, { forceRemove: true });
-        lines.push(`${one.name}: ${endEarly.conditions?.length ? endEarly.conditions.join(" and ") : "its effects"} from ${state.item.name} ended${endEarly.how.kind === "actions" ? ` (${tryWords(endEarly, one)})` : endEarly.how.kind === "check" ? ` (a DC ${checkDC(endEarly, harder)} ${endEarly.how.skill} check)` : ""}.`);
+        lines.push(`${one.name}: ${endEarly.conditions?.length ? endEarly.conditions.join(" and ") : "its effects"} from ${state.item.name} ended${endEarly.how.kind === "actions" ? ` (${tryWords(endEarly, one)})` : endEarly.how.kind === "check" ? ` (a DC ${checkDC(endEarly, harder)} ${endEarly.how.save ?? endEarly.how.skill} ${endEarly.how.save ? "save" : "check"})` : ""}.`);
     }
     const entries = state.entries.map((other, at) => (at === index ? { ...other, step, done: ends } : other));
     const next = { ...state, entries, ...(endEarly.how.criticalDC ? { critical: harder } : {}), status: entries.every((other) => other.done) ? "applied" : "open", results: [...state.results, ...lines].slice(-8) };

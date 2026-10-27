@@ -6,6 +6,7 @@
 // spends it. A melee one waits for a melee Strike (PF2e's "item:melee" / "item:ranged" roll options), the item's own
 // weapon for a Strike with it ("item:id:…").
 
+import { postEndEarlyAt } from "./end-early.js";
 import { MODULE_KEY, createStrikeCard, dieText, insteadDamagePlan, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
@@ -266,8 +267,13 @@ export async function strikeWithRider(message) {
         if (!castFromItem) lines.push(`${byHand} (PF2e Automatic Spell Resolution isn't active)`);
         else if (needs.some((need) => !options.includes(need))) lines.push(`${byHand} (this version of the spell module can't yet)`);
         else {
+            // (Its save worse after a critical hit, Silencing Ammunition's -2 circumstance: an Effect on the creature for that save, gone after.)
+            const penalty = cast.saveFirst?.criticalPenalty && context.outcome === "criticalSuccess" && targetToken.actor ? (await targetToken.actor.createEmbeddedDocuments("Item", [{ name: `${rider.item.name}: ${cast.saveFirst.criticalPenalty.value} to this save`, type: "effect", img: "icons/svg/downgrade.svg", system: { rules: [{ key: "FlatModifier", selector: cast.saveFirst.statistic, type: cast.saveFirst.criticalPenalty.type, value: cast.saveFirst.criticalPenalty.value, label: rider.item.name }], duration: { value: 1, unit: "rounds", expiry: "turn-start", sustained: false } }, flags: { [MODULE_ID]: { criticalSavePenalty: true } } }]).catch(() => []))[0] : null;
             const result = await castFromItem({ actor, token: sourceToken ?? undefined, spell: cast.uuid, rank: cast.rank ?? undefined, dc: cast.dc ?? undefined, targets: [targetToken.object ?? targetToken], item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, ...(cast.saveFirst ? { saveFirst: cast.saveFirst } : {}), ...(cast.attackFromHit ? { attackDegree: context.outcome } : {}) });
-            lines.push(result?.resisted ? `${target.name} resists ${cast.name} (its ${cast.saveFirst?.statistic ?? ""} save)` : `${target.name}: ${cast.name} cast at it`);
+            if (penalty) await penalty.delete().catch(() => null);
+            lines.push(result?.resisted ? `${target.name} resists ${cast.name} (its ${cast.saveFirst?.statistic ?? ""} save${penalty ? `, ${cast.saveFirst.criticalPenalty.value} after the critical hit` : ""})` : `${target.name}: ${cast.name} cast at it${penalty ? ` (its save ${cast.saveFirst.criticalPenalty.value} after the critical hit)` : ""}`);
+            // (Ended early by its creature, Silencing Ammunition's tug: the end-early card, scripts/end-early.js.)
+            if (!result?.resisted && cast.endEarly) await postEndEarlyAt({ endEarly: cast.endEarly, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: sourceToken?.uuid ?? null, name: actor.name }, creatures: [{ actorUuid: targetToken.actor.uuid, tokenUuid: targetToken.uuid, name: target.name }] }).catch((error) => console.error(`${MODULE_ID} | end early`, error));
         }
     }
     await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: ${escape(lines.join("; ") || "the Strike hit")}.</p>` });

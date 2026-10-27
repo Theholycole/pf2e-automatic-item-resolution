@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1280,
+  "entries": 1279,
   "results": {
-   "partial": 383,
+   "partial": 382,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -11,7 +11,7 @@
   "main": {
    "cast-changes": 22,
    "speeds": 22,
-   "counteract": 23,
+   "counteract": 22,
    "afflictions": 59,
    "moving": 79,
    "visibility": 47,
@@ -55,9 +55,9 @@
    "objects": 388,
    "speech": 129,
    "out-of-combat": 443,
-   "counteract": 104,
+   "counteract": 103,
    "afflictions": 108,
-   "lasting": 231,
+   "lasting": 230,
    "moving": 106,
    "triggers": 117,
    "visibility": 49,
@@ -11965,17 +11965,6 @@
     "mind",
     "information",
     "speech"
-   ]
-  },
-  {
-   "name": "Silencing Ammunition",
-   "kind": "activation",
-   "result": "partial",
-   "main": "counteract",
-   "work": "end the effect",
-   "needs": [
-    "counteract",
-    "lasting"
    ]
   },
   {

@@ -92,3 +92,13 @@ export function withRowWays(plan) {
     const ways = readRowWays(plan.resolution.outcomes);
     return ways ? { ...plan, endEarly: ways } : plan;
 }
+
+// (Or a save to end a spell's effect, Silencing Ammunition's "While the effect is active, the target can use an Interact action to try to tug out
+// the arrow or bolt and end the effect early; this requires a successful @Check[will|dc:25]": how { kind: "check", save, dc }, its spell's PF2e
+// Effect the one ended — effects ["Spell Effect: <spell>"].)
+const TUG = /^While the effect is active, the target can use an Interact action to try to tug out the [\w ]+? and end the effect early; this requires a successful @Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\]\.$/i;
+export function readTugFree(note, spell) {
+    const tug = TUG.exec(String(note ?? "").trim());
+    if (!tug) return null;
+    return { how: { kind: "check", save: tug[1].toLowerCase(), dc: Number(tug[2]) }, conditions: [], effects: [`Spell Effect: ${spell}`], said: [tug[0]] };
+}

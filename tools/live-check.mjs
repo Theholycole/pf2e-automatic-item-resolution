@@ -6652,6 +6652,60 @@ export const cases = {
         return { critical, results: game.messages.get(ending.id).getFlag(NS, "card").results };
     },
 
+    // Silencing Ammunition (2026-10-27): a hit, its DC 25 Will save failed — the spell module's Silence on the target (-2 to that save after a
+    // critical hit, said on the hit's line); then the end-early card's tug, a DC 25 Will save (the target's Will raised to pass), and the Silence gone.
+    async silencingTug(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Silencing Archer", { type: "character", x: 8, y: 20 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Silenced Target", { x: 9, y: 20, ac: -20, hp: 200, alliance: "opposition", save: -30 });
+        const bow = await give(archer, "Shortbow");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const arrows = await give(archer, "Silencing Ammunition");
+        await arrows.update({ "system.baseItem": "arrows" });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        since = Date.now();
+        const { attack } = await strike(archer, bow);
+        // (The spell module's own card for the cast, its native Effect resolved by its button, as the GM does.)
+        const spellCard = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's Silence card", timeout: 15000 });
+        let resolve = null;
+        for (const stop = Date.now() + 5000; Date.now() < stop && !resolve; ) {
+            resolve = [...(document.querySelectorAll(`[data-message-id="${spellCard.id}"] button`) ?? [])].find((button) => /Resolve Native Effect/i.test(button.textContent));
+            if (!resolve) await wait(200);
+        }
+        assert(resolve, "the spell card's Resolve Native Effect button");
+        resolve.click();
+        // (Its confirmation, "Apply Spell Effect: Silence to …?": the GM's Apply Effect.)
+        let ok = null;
+        for (const stop = Date.now() + 8000; Date.now() < stop && !ok; ) {
+            const dialog = [...document.querySelectorAll("dialog.application, .application.dialog")].find((entry) => /Silence — Apply Effect/.test(entry.textContent));
+            ok = dialog?.querySelector("button[data-action='ok']") ?? null;
+            if (!ok) await wait(200);
+        }
+        assert(ok, "the Apply Effect dialog");
+        ok.click();
+        const silence = () => foe.itemTypes.effect.find((effect) => effect.name === "Spell Effect: Silence");
+        await until(() => silence(), `the Silence on it (${foe.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 15000 });
+        const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+        assert(/DC 25 Will save/.test(ending.content), `its try (${ending.content.replace(/<[^>]+>/g, " ").slice(0, 300)})`);
+        const critical = attack.flags.pf2e.context.outcome === "criticalSuccess";
+        const hitLine = game.messages.contents.filter((message) => message.timestamp >= since).map((message) => message.content).find((content) => /Silence cast at it/.test(content)) ?? "";
+        assert(/after the critical hit/.test(hitLine) === critical, `the critical hit's -2 said only after one (${critical}: ${hitLine.replace(/<[^>]+>/g, " ")})`);
+        assert(!foe.itemTypes.effect.some((effect) => effect.flags?.[NS]?.criticalSavePenalty), "the -2 Effect gone after the save");
+        await foe.update({ "system.saves.will.value": 30 });
+        // (A natural 1 fails even at +30: a few tries.)
+        for (let tries = 0; tries < 4 && game.messages.get(ending.id).getFlag(NS, "card").status === "open"; tries++) {
+            await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+            await wait(800);
+        }
+        await until(() => !silence(), `the Silence ended (${JSON.stringify(game.messages.get(ending.id).getFlag(NS, "card").results)})`, { timeout: 8000 });
+        return { critical, results: game.messages.get(ending.id).getFlag(NS, "card").results };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

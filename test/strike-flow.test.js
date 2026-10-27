@@ -413,7 +413,8 @@ test("Silencing Shot: castFromItem's saveFirst when the spell module offers it; 
 test("cast on hit in other words: Fairy Bullet's \"casts Revealing Light (DC 23)\", Silencing Ammunition's Silence the target resists with its own save", () => {
     const cast = (name) => compileActivations(source(name))[0].plan.strike.cast;
     assert.deepEqual([cast("Fairy Bullet").name, cast("Fairy Bullet").dc], ["Revealing Light", 23]);
-    assert.deepEqual([cast("Silencing Ammunition").name, cast("Silencing Ammunition").rank, cast("Silencing Ammunition").saveFirst], ["Silence", 2, { statistic: "will", dc: 25 }]);
+    // (Its -2 after a critical hit too, since 2026-10-27: saveFirst.criticalPenalty.)
+    assert.deepEqual([cast("Silencing Ammunition").name, cast("Silencing Ammunition").rank, cast("Silencing Ammunition").saveFirst], ["Silence", 2, { statistic: "will", dc: 25, criticalPenalty: { value: -2, type: "circumstance" } }]);
 });
 
 test("Roc-Shaft Arrow: ammunition only in its words — its user's next ranged Strike, whose hit is a Fortitude save or a space its attacker picks", async () => {
