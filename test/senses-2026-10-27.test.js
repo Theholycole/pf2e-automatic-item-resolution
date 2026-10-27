@@ -190,3 +190,50 @@ test("Appetizing Flavor Snare's DC 15 Reflex save, its failures doused for the h
     const lamp = activation("Aquarium Lamp");
     assert.deepEqual([lamp.noteOnly, lamp.item.placedLight.bright, lamp.item.placedLight.dim, lamp.item.placedLight.duration.value], [undefined, 60, 120, 10]);
 });
+
+test("forms: Cloak of the False Foe's Humanoid Form, a Medium cryptid's rank 3 for an hour or a Large one's rank 5 for 10 minutes; Fanged's animal shape in words until dismissed; Bestiary of Metamorphosis's new form for half the time left", async () => {
+    const { halvedDuration, reshapeCandidates, reshapedSource } = await import("../src/live/reshape.js");
+    const cloak = activation("Cloak of the False Foe", "Cryptid Shape");
+    assert.deepEqual([cloak.builtin, cloak.partial, cloak.noteOnly], ["cast-spell", undefined, undefined]);
+    assert.deepEqual(cloak.choices.map((choice) => [choice.spell.name, choice.rank, choice.castDuration.value, choice.castDuration.unit]), [["Humanoid Form", 3, 1, "hours"], ["Humanoid Form", 5, 10, "minutes"]]);
+    assert.ok(cloak.notes.some((note) => /DC 30 Medicine/.test(note)));
+    const fanged = activation("Fanged");
+    assert.deepEqual([fanged.resolution.outcomes.success.noteEffects[0].label, fanged.resolution.outcomes.success.noteEffects[0].duration], ["Animal form", null]);
+    const bestiary = activation("Bestiary of Metamorphosis", "Shifting Form");
+    assert.deepEqual([bestiary.item.reshape, bestiary.trigger.frequency.per], [{ halve: true }, "day"]);
+    // (Its polymorph found by its ChoiceSet beside a BattleForm; made again with the pick cleared, half the 10 minutes left.)
+    const form = { name: "Spell Effect: Some Form", traits: [], rules: [{ key: "ChoiceSet", flag: "form", selection: "bear" }, { key: "BattleForm" }] };
+    assert.deepEqual(reshapeCandidates([{ name: "Other", rules: [{ key: "ChoiceSet" }] }, form]).map((entry) => entry.name), ["Spell Effect: Some Form"]);
+    assert.deepEqual(halvedDuration(600), { value: 50, unit: "rounds" });
+    const made = reshapedSource({ _id: "x", name: "Spell Effect: Some Form", flags: { pf2e: { rulesSelections: { form: "bear" } } }, system: { rules: form.rules, duration: { value: 10, unit: "minutes", expiry: "turn-start" } } }, { seconds: 600, worldTime: 12 });
+    assert.deepEqual([made._id, made.system.rules[0].selection, made.flags.pf2e.rulesSelections, made.system.duration.value, made.system.duration.unit, made.system.start.value], [undefined, undefined, undefined, 50, "rounds", 12]);
+});
+
+test("Rebirth Potion's Clumsy, Enfeebled and Stupefied 2 for its 8 hours' rest (granted by its note Effect); Enigma-Sight Potion's Truesight with its checks' numbers and a critical failure's Stupefied and Stunned on a note beside it", async () => {
+    const { castNoteText } = await import("../src/compiler/cast-note.js");
+    const rebirth = consumable("Rebirth Potion");
+    const [change] = rebirth.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([rebirth.partial, change.duration.value, change.duration.unit, change.rules.map((rule) => rule.alterations[0].value)], [undefined, 8, "hours", [2, 2, 2]]);
+    const { spellEffectIndex } = await import("../src/compiler/index.js");
+    // (Its cast only once PF2e's Spell Effects are known, as the module compiles it: Truesight has none.)
+    const enigma = compileItem(item("Enigma-Sight Potion"), { ...options, spellEffects: spellEffectIndex(documents("spell-effects")) });
+    assert.deepEqual([enigma.builtin, enigma.partial, enigma.notes, enigma.castNote.duration.value], ["cast-spell", undefined, undefined, 10]);
+    assert.equal(castNoteText(enigma.castNote, { perception: 21, level: 11 }), "Truesight's secret counteract checks use its Perception modifier (+21) and half its level, rounded up, as their rank (6). A critical failure fills its mind with false, nightmarish sights: Stupefied 1 for 1d4 rounds and Stunned 1.");
+});
+
+test("the Bloodhammer Reserves: Animal Form's battle forms as PF2e's Spell Effects — the Reserve's rolled (a d9, its 10 rerolled), the Select's and Black Label's picked, their temporary Hit Points 10 and 20 on each rank's BattleForm", async () => {
+    const { spellEffectIndex } = await import("../src/compiler/index.js");
+    const { effectSource } = await import("../src/live/card.js");
+    const withEffects = { ...options, spellEffects: spellEffectIndex(documents("spell-effects")) };
+    const brew = (name) => compileItem(item(name), withEffects);
+    const reserve = brew("Bloodhammer Reserve");
+    assert.deepEqual([reserve.builtin, reserve.partial, reserve.table.die, reserve.table.rows.length, reserve.table.rows[3].text], ["table", undefined, "1d9", 9, "Canine battle form"]);
+    assert.equal(reserve.table.rows[3].plan.resolution.applications[0].label, "Spell Effect: Animal Form (Canine)");
+    const select = brew("Bloodhammer Reserve Select");
+    const label = brew("Bloodhammer Reserve Black Label");
+    assert.deepEqual([select.builtin, select.once, select.ways[0].plan.resolution.applications[0].level, select.ways[0].plan.resolution.applications[0].battleTempHP], ["ways", true, 2, 10]);
+    assert.deepEqual([label.ways[0].plan.resolution.applications[0].level, label.ways[0].plan.resolution.applications[0].battleTempHP], [4, 20]);
+    const template = documents("spell-effects").find((doc) => doc.name === "Spell Effect: Animal Form (Bull)");
+    const made = effectSource(template, { item: { slug: "bloodhammer-reserve-select" }, user: {}, worldTime: 0, initiative: null, application: label.ways[0].plan.resolution.applications[0] });
+    assert.ok(made.system.rules.find((rule) => rule.key === "BattleForm").brackets.every((bracket) => bracket.value.tempHP === 20));
+});

@@ -6,6 +6,7 @@
 // the ability module's classes.
 
 import { rangeWords } from "../compiler/cast-range.js";
+import { castNoteText } from "../compiler/cast-note.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -82,7 +83,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
     // (Its rank and DC from its caster, The Inquisitor's: in words until it's cast.)
     const numbers = [chosen.rank ? `rank ${chosen.rank}` : plan.castRank ? `rank half its caster's level, rounded ${plan.castRank.round} (at least ${plan.castRank.min})` : null, plan.dc ? `DC ${plan.dc}` : plan.castDC ? (plan.castDC.from === "class-spell" ? "DC its caster's class DC or spell DC, the higher" : `DC its caster's ${plan.castDC.from} DC`) : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange), plan.castTargets ? `up to ${plan.castTargets.max} targets` : null].filter(Boolean).join(", ");
     // (A condition on its user with the cast, Locket of Sealed Nightmares': a line of its own, with several spells too.)
-    const self = `${plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : ""}${open && plan.darkLight ? `<p class="aar-actions">${escape(darkLightWords(plan))}</p>` : ""}${open && plan.castArrival ? `<p class="aar-actions">${escape(`Where it leaves and where it arrives: ${plan.castArrival.words} (its card follows the move).`)}</p>` : ""}`;
+    const self = `${plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : ""}${open && plan.darkLight ? `<p class="aar-actions">${escape(darkLightWords(plan))}</p>` : ""}${open && plan.castArrival ? `<p class="aar-actions">${escape(`Where it leaves and where it arrives: ${plan.castArrival.words} (its card follows the move).`)}</p>` : ""}${open && plan.castNote ? `<p class="aar-actions">${escape(`With it, a note on its caster: ${castNoteText(plan.castNote)}`)}</p>` : ""}`;
     const caster = casterOf(state);
     // (Several spells to choose from: a picker while it's open.)
     const pick = plan.choices?.length > 1 && open && canApply

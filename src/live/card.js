@@ -5,6 +5,7 @@
 
 import { skillPickRules } from "../compiler/skill-pick.js";
 import { firstDegreeRules } from "../compiler/first-degree.js";
+import { reshapeText } from "./reshape.js";
 import { restoreText } from "../compiler/restore.js";
 import { attackRidersText } from "../compiler/attack-riders.js";
 import { ENVIRONMENT_ID, temperatureFlag, temperatureText } from "../compiler/temperature.js";
@@ -180,6 +181,8 @@ export function previewLines(state) {
     for (const entry of plan?.item?.suppress ?? []) lines.push(suppressText(entry));
     if (plan?.item?.skillPick) lines.push(skillPickText(plan.item.skillPick));
     if (plan?.item?.firstDegree) lines.push(firstDegreeText(plan.item.firstDegree));
+    // (Another form of its user's polymorph, Bestiary of Metamorphosis's: src/compiler/reshape.js.)
+    if (plan?.item?.reshape) lines.push(reshapeText(plan.item.reshape));
     // (Its maximum Hit Points and its afflictions, src/compiler/restore.js.)
     if (plan?.item?.restore) lines.push(restoreText(plan.item.restore));
     // (Its flat check to end persistent damage, src/compiler/recovery.js.)
@@ -192,7 +195,7 @@ export function previewLines(state) {
         lines.push(state.rolled?.kind === "healing" && Number.isFinite(state.rolled.total) ? `Heals ${state.rolled.total} Hit Points (PF2e's roll of ${formula})` : `Heals ${formula} Hit Points`);
     }
     for (const application of plan?.resolution?.applications ?? []) {
-        const extra = [application.level ? `rank ${application.level}` : null, application.duration ? timeText(application.duration) : null, Number(application.tempHP) ? `${application.tempHP} more temporary Hit Points` : null].filter(Boolean).join(", ");
+        const extra = [application.level ? `rank ${application.level}` : null, application.duration ? timeText(application.duration) : null, Number(application.tempHP) ? `${application.tempHP} more temporary Hit Points` : null, Number(application.battleTempHP) ? `${application.battleTempHP} temporary Hit Points` : null].filter(Boolean).join(", ");
         lines.push(`${application.label ?? "Effect"}${extra ? ` (${extra})` : ""}`);
     }
     // The item's own row (an automatic check): what the drinker gets.
@@ -239,6 +242,13 @@ export function effectSource(template, { application = null, item = {}, user = {
     if (application?.duration) source.system.duration = { ...(source.system.duration ?? {}), value: application.duration.value, unit: application.duration.unit, expiry: source.system.duration?.expiry ?? "turn-start", sustained: false };
     // ("gain 10 additional temporary Hit Points from your Rage": its TempHP rule raised by that much, src/compiler/rage.js.)
     if (Number(application?.tempHP)) for (const rule of source.system.rules ?? []) if (rule?.key === "TempHP") rule.value = `(${rule.value ?? 0}) + ${Number(application.tempHP)}`;
+    // (A battle form's own temporary Hit Points set, the Bloodhammer Reserves' "increase to 10": its BattleForm's, each rank's bracket — src/compiler/animal-brew.js.)
+    if (Number(application?.battleTempHP)) for (const rule of source.system.rules ?? []) {
+        if (rule?.key !== "BattleForm") continue;
+        // (PF2e's BattleForm keeps its numbers by rank in brackets on the rule, else in overrides.)
+        for (const bracket of rule.brackets ?? rule.value?.brackets ?? []) if (bracket?.value && typeof bracket.value === "object") bracket.value.tempHP = Number(application.battleTempHP);
+        if (!(rule.brackets ?? rule.value?.brackets) && rule.overrides && typeof rule.overrides === "object") rule.overrides.tempHP = Number(application.battleTempHP);
+    }
     source.system.start = { value: worldTime, initiative };
     source.system.context = { ...(source.system.context ?? {}), origin: { ...(source.system.context?.origin ?? {}), actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } };
     source.flags = { ...(source.flags ?? {}), ...flags };

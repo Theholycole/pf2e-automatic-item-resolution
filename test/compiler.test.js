@@ -139,7 +139,8 @@ test("an item granting a spell's effects gets PF2e's Spell Effect at its rank an
     assert.deepEqual([compileItem(item("Elemental Gem")).spell.name, compileItem(item("Elemental Gem")).rank], ["Summon Elemental", 5]);
     const enigma = compileItem(item("Enigma-Sight Potion"));
     assert.equal(enigma.builtin, "cast-spell");
-    assert.match(enigma.notes[0], /except that you use your Perception modifier/);
+    // (2026-10-27: its "except that you use your Perception modifier" is its note Effect beside the cast now, src/compiler/cast-note.js.)
+    assert.match(enigma.castNote.text, /use its Perception modifier/);
     // A talisman that casts a spell on its user: the same, at its rank (Snarling Badger's Heroism) or for its time (Stormfeather's Fly).
     assert.deepEqual(compileItem(item("Snarling Badger (Moderate)")).resolution.applications.map((entry) => [entry.label, entry.level, entry.recipients]), [["Spell Effect: Heroism", 6, "self"]]);
     assert.deepEqual(compileItem(item("Stormfeather")).resolution.applications.map((entry) => [entry.label, entry.duration]), [["Spell Effect: Fly", { value: 1, unit: "minutes" }]]);

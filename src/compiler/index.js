@@ -27,8 +27,11 @@ import { alarmZone, isSnare, snareChoices, snareThen, snareZone } from "./snares
 import { sentryPlan } from "./sentry.js";
 import { dousedRead } from "./doused.js";
 import { scoutPlan } from "./scout.js";
+import { rebirthPlan } from "./rebirth.js";
+import { animalBrewPlan } from "./animal-brew.js";
 import { withAloft } from "./aloft.js";
 import { withRuleWords } from "./rule-words.js";
+import { withCastNote } from "./cast-note.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { belchedCloudPlan, bubbleCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -275,7 +278,7 @@ export function compileItem(given, options = {}) {
     // ends a row's modifier early, src/compiler/end-early.js: Crackling Bubble Gum's gum.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
     // (A recovery's own damage first and its lower-level case a second button, src/compiler/recovery.js: Searing Suture.)
-    return decide(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withRuleWords(withAloft(withOnceBetter(instead ?? compileOne(given, options), text), text), text)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), given, options);
+    return decide(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withCastNote(withRuleWords(withAloft(withOnceBetter(instead ?? compileOne(given, options), text), text), text), given?.system?.description?.value, options.spells ?? {})), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
@@ -386,6 +389,12 @@ function compileOne(given, options = {}) {
     // (An object that comes back with what it saw, src/compiler/scout.js: Shortbread Spy — information, whispered.)
     const scout = scoutPlan(item, base);
     if (scout) return { ...scout, item: itemInfo(item) };
+    // (A change of ancestry over a rest, src/compiler/rebirth.js: Rebirth Potion — its conditions for the 8 hours.)
+    const rebirth = rebirthPlan(item, base);
+    if (rebirth) return { ...rebirth, item: itemInfo(item) };
+    // (A brew that turns its drinker into one of Animal Form's animals, src/compiler/animal-brew.js: the Bloodhammer Reserves.)
+    const brew = animalBrewPlan(item, base, options);
+    if (brew) return { ...brew, item: itemInfo(item) };
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
     // (A snare whose save the ability compiler doesn't read, src/compiler/doused.js: Appetizing Flavor Snare's dousing.)
     const snare = snareZone(item, dousedRead(item, base) ?? read);

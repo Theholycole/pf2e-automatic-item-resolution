@@ -9,7 +9,8 @@ import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
 import { arrivalAfterMove } from "./cast-arrival.js";
-import { castDegreeEffectSource, castPenaltySource } from "../src/live/card.js";
+import { castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../src/live/card.js";
+import { castNoteText } from "../src/compiler/cast-note.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -122,13 +123,21 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
-        const lasts = state.plan.castDuration ? await rememberCastDuration(cast, state.plan.castDuration, { actor, targets: targetTokens }) : null;
+        // (Or the chosen spell's own, Cloak of the False Foe's Medium cryptid's hour and Large cryptid's 10 minutes.)
+        const duration = chosenSpell(state).castDuration ?? state.plan.castDuration;
+        const lasts = duration ? await rememberCastDuration(cast, duration, { actor, targets: targetTokens }) : null;
         if (lasts) lines.push(lasts);
         // (Healing at the end of each of its user's turns for the item's time: scripts/turn-heal.js.)
         const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
         if (heals) lines.push(heals);
         if (smoke) lines.push(smoke);
         if (arrival) lines.push(arrival);
+        // (A note Effect beside the spell with its user's numbers, Enigma-Sight Potion's Truesight checks: src/compiler/cast-note.js.)
+        if (state.plan.castNote) {
+            const words = castNoteText(state.plan.castNote, { perception: Number(actor.perception?.mod ?? actor.system?.perception?.mod), level: Number(actor.level) });
+            await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: state.plan.castNote.label, words, duration: state.plan.castNote.duration, img: "icons/svg/eye.svg" }, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${actor.name}: ${words}`);
+        }
         // (A light spell against darkness, Dawnlight's: its counteract card, the spell's rank and 1 more — src/live/cast-card.js darkLightCounteract.)
         const dark = darkLightCounteract(state.plan, chosenSpell(state), cast?.rank ?? request.rank);
         if (dark) {
