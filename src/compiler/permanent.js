@@ -175,8 +175,9 @@ const field = (block, name) => {
 };
 
 // "once per day", "once per hour", "once per 10 minutes", "three times per day" → { max, per, raw }.
+// (And a week's or a month's, Passage Pane's "once per week": the activations card counts those too — 2026-10-27.)
 export function readFrequency(text) {
-    const match = /\b(once|twice|three times|(\d+) times) per (round|turn|minute|10 minutes|hour|day|encounter)\b/i.exec(String(text ?? ""));
+    const match = /\b(once|twice|three times|(\d+) times) per (round|turn|minute|10 minutes|hour|day|week|month|encounter)\b/i.exec(String(text ?? ""));
     if (!match) return text ? { raw: text } : null;
     const max = match[2] ? Number(match[2]) : { once: 1, twice: 2, "three times": 3 }[match[1].toLowerCase()];
     return { max, per: match[3].toLowerCase().replace(" ", "-"), raw: text };
@@ -327,8 +328,8 @@ function creaturesOf(item, entry, plan) {
 // (A unique item's or an artifact's own rules, src/compiler/special-readings.js — last of all; its lore then decided again, 2026-10-27.)
 function specialOf(item, entry, plan) {
     if (!isSpecialItem(item)) return plan;
-    const name = `${item.name}${entry.activation?.name ? `: ${entry.activation.name}` : ""}`;
-    const next = withSpecialReadings(plan, { name, html: entry.activation?.html, text: plainText(entry.activation?.html) });
+    const { base, info, frequency } = activationBase(item, entry);
+    const next = withSpecialReadings(plan, { name: base.source.name, html: entry.activation?.html, text: plainText(entry.activation?.html), words: effectWords(entry.activation?.html, "activation"), base, info, frequency });
     return next === plan || !(next?.partial || next?.noteOnly) ? next : decideActivation(item, entry, next);
 }
 

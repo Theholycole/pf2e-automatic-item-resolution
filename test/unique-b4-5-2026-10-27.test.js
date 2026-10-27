@@ -12,6 +12,7 @@ import { pausedAfter } from "../src/live/conjured.js";
 import { planFor } from "../src/live/if-target.js";
 import { withNearbyDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
+import { saveText } from "../src/live/poison-card.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -60,4 +61,14 @@ test("Flawed Orb of Gold Dragonkind: dragons only, gold ones at -4, +1 DC a shar
     assert.deepEqual(hostileAt({ type: "saving-throw" }, "Actor.d"), { at: ["Actor.d"] });
     assert.equal(hostileAt({ type: "damage-roll" }, "Actor.d"), null);
     assert.deepEqual([endsFor("Flawed Orb of Gold Dragonkind: Stunned 3", "Flawed Orb of Gold Dragonkind"), endsFor("Flawed Orb of Gold Dragonkind: Stunned 3", "Fireball"), endsFor("Flawed Orb of Gold Dragonkind: Stunned 3", null)], [false, true, true]);
+});
+
+test("Passage Pane: its user's Religion check locks it on (a note Effect on them), its rift a note Effect for 24 hours at most, its closing that Effect ended", () => {
+    const [lock, rift, close] = plans("Passage Pane");
+    assert.deepEqual([done(lock), routeOf(lock, "Attempt a @Check[religion|dc:40] check."), lock.ownSave, lock.resolution.check.statistic, lock.resolution.check.against.value], [true, "save", true, "religion", 40]);
+    assert.deepEqual([lock.resolution.outcomes.success.noteEffects[0].label, lock.resolution.outcomes.criticalSuccess.noteEffects[0].label, lock.resolution.outcomes.failure.noteEffects], ["Locked on", "Locked on", undefined]);
+    const [open] = rift.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([done(rift), routeOf(rift), rift.trigger.frequency.per, open.label, open.duration.value, open.duration.unit], [true, "item", "week", "Rift to the Boneyard", 24, "hours"]);
+    assert.deepEqual([done(close), routeOf(close), close.item.endsOwn, close.noRules], [true, "item", { label: "Rift to the Boneyard" }, undefined]);
+    assert.equal(saveText(lock), "DC 40 Religion check");
 });

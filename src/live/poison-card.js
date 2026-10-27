@@ -46,7 +46,9 @@ export function saveText(plan) {
         return `${words([].concat(check.statistic)[0])}${Number.isFinite(check.modifier) ? ` +${check.modifier}` : ""} against ${check.against?.statistic === "ac" ? "AC" : `${words(check.against?.statistic)} DC`}`;
     }
     const statistic = String(check.statistic ?? "fortitude");
-    return `DC ${check.against?.value ?? "?"} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)} save`;
+    // (Its user's own skill check rolled as a save is, Passage Pane's Religion: "DC 40 Religion check", 2026-10-27.)
+    const kind = ["fortitude", "reflex", "will"].includes(statistic) ? "save" : "check";
+    return `DC ${check.against?.value ?? "?"} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)} ${kind}`;
 }
 
 // An automatic row in words: its damage ("2d6 fire damage", "1d6 persistent bleed damage") and conditions.
