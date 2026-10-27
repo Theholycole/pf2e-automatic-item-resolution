@@ -189,3 +189,14 @@ test("saves with rows the GM had: Ghost Chasing Tiger's possession, Gearblade's 
     assert.deepEqual([done(rule), rule.spend, success(rule).noteEffects[0].label], [true, { mythicPoints: 1 }, "Rewards of Rule"]);
     assert.match(success(rule).noteEffects[0].text, /wrath: Vengeful Glare/i);
 });
+
+test("a gel turned into the light, its user's pick: Splendid Floodlight's red gel a zone of PF2e's +2 to Charisma-based skill checks, the yellow gel's sight a zone's note", () => {
+    const [light, gels] = activations("Splendid Floodlight");
+    assert.deepEqual([done(gels), routeOf(gels), gels.ways.map((way) => routeOf(way.plan))], [true, "ways", ["zone", "zone", "item", "item", "item"]]);
+    const [red, yellow] = gels.ways.map((way) => way.plan.zone);
+    assert.deepEqual([red.area, red.centre, red.modifiers, red.lasts.value, red.lasts.unit], [{ type: "cone", value: 120 }, "placed", [{ selector: "cha-skill-check", value: 2, type: "item" }], 1, "hours"]);
+    assert.deepEqual(yellow.saves.map((entry) => [entry.when, entry.plan]), [[["initial", "enter"], null]]);
+    // (Its light, the other activation, isn't this reading's.)
+    assert.notEqual(light?.builtin, "ways");
+});
+

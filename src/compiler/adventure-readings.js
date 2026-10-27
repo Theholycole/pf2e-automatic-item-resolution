@@ -14,6 +14,7 @@
 
 import { sentencesOf } from "./lasting.js";
 import { conditionUuid } from "./row-readings.js";
+import { zoneOf } from "./area-readings.js";
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
@@ -240,6 +241,34 @@ const READINGS = [
             html: "",
             plan: wayPlan(ownRow({ noteEffects: [{ label: `${capital(slug)} lowered`, text: `Its ${capital(slug)} counts 1 lower for ${hours} hours (its penalties${slug === "drained" ? " and lost Hit Points" : ""}); at 0 it stays, with none. Then it's back to its own value, unless it ended meanwhile.`, duration: timeOf(hours, "hours"), rules }] }), context)
         })))
+    },
+    {
+        // (A gel turned into the light, its user's pick — the ways card: the red one a zone of the light's cone with PF2e's +2 item bonus to
+        // Charisma-based skill checks inside, the yellow one a zone whose creatures are told they're seen there; the green and blue ones only
+        // looks, lines; one rotated out, a line.)
+        name: "Splendid Floodlight",
+        sentences: [
+            /^You rotate one of the following gels into position in the floodlight or rotate a gel out\.$/,
+            /^You can do this even if the splendid floodlight has been moved from its position when the light was created\.$/,
+            /^You can have up to two gels in place at once; if you rotate in a third, another of your choice rotates out\.$/,
+            /^Red Gel The light lends an air of gravitas to all creatures illuminated by it\.$/,
+            /^Creatures in the light gain a \+(\d+) item bonus to Charisma-based skill checks\.$/,
+            /^Yellow Gel Invisible creatures and objects are visible while in the light, and creatures with the spirit trait appear substantial rather than ghostly\.$/,
+            /^Green Gel All creatures illuminated by the light appear to be wearing exceptionally stylish clothing with elegantly coiffed hair styles\.$/,
+            /^Blue Gel Undead creatures in the light appear as they did when alive, and living creatures in the light appear decayed, like an undead creature\.$/
+        ],
+        card: ([, , , , [, bonus]], plan, context) => {
+            const gels = ["Its light must be on; the gels turn even when the floodlight has been moved from where it lit.", "Two gels at most: turning in a third rotates another out, its user's pick (end that one's zone)."];
+            const cone = (fields) => ({ builtin: "zone", actions: null, targeting: { target: null, range: null, area: { type: "cone", value: 120 } }, zone: zoneOf({ area: { type: "cone", value: 120 }, centre: "placed", lasts: timeOf(1, "hours"), ...fields }) });
+            const way = (name, card) => ({ name, html: "", plan: wayPlan(card, context) });
+            return wayList([
+                way("Red gel", cone({ modifiers: [{ selector: "cha-skill-check", value: Number(bonus), type: "item" }], notes: ["Place it over the floodlight's cone of light: creatures in it gain the bonus (an air of gravitas).", ...gels, "It ends with the light (an hour at most): end it then."] })),
+                way("Yellow gel", cone({ saves: [{ when: ["initial", "enter"], plan: null, note: "In the yellow light: if Invisible it's visible while it stays in the light; a creature with the spirit trait looks substantial, not ghostly." }], notes: ["Place it over the floodlight's cone of light; invisible objects in it are visible too (the GM's).", ...gels, "It ends with the light (an hour at most): end it then."] })),
+                way("Green gel", ownRow({ notes: ["The creatures in the light look exceptionally stylish, finely dressed and coiffed (only looks).", ...gels] })),
+                way("Blue gel", ownRow({ notes: ["Undead in the light look as they did alive, and the living look decayed, like undead (only looks).", ...gels] })),
+                way("Rotate a gel out", ownRow({ notes: ["A gel rotated out: end its zone, if it has one."] }))
+            ]);
+        }
     },
     {
         // (Its user's Strike first, then the possessor's save: confirmed as the degree says, its control lost for a minute on a failure, the
