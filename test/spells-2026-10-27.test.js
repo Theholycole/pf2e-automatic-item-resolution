@@ -222,3 +222,18 @@ test("About Face! the map's, Mariner's Mien Quickened for its minute with its ac
 test("one-offs of the vehicles: Kraken Figurehead (Wracking)'s Grab Them!, Hongbao of Many Things, Violin of the Waves", () => {
     assert.deepEqual([activation("Kraken Figurehead (Wracking)", "Grab Them!").decided, activations("Hongbao of Many Things")[0].decided, activations("Violin of the Waves")[0].decided], ["one-off", "one-off", "one-off"]);
 });
+
+test("Blessed Reformer: its protection cast whole, its Redeemer Wielder critical hit the weapon's own rider — unholy creatures, champions of redemption only", async () => {
+    const [protection] = activations("Blessed Reformer");
+    assert.ok(done(protection));
+    assert.ok(!(protection.notes ?? []).some((note) => /critically hit|Wielder|following way/.test(note)));
+    const { etchedCritRiders, riderFits } = await import("../src/compiler/rune-strikes.js");
+    const { wielderFits } = await import("../src/compiler/wielder-riders.js");
+    const riders = etchedCritRiders(item("Blessed Reformer"), new Map()).filter((rider) => rider.only?.wielder);
+    assert.equal(riders.length, 1);
+    const [rider] = riders;
+    assert.deepEqual(rider.plan.resolution.outcomes.success.modifiers.map((modifier) => [modifier.selector, modifier.value]), [["all-speeds", -10]]);
+    assert.equal(rider.plan.resolution.outcomes.success.noteEffects[0].label, "Can't Step");
+    assert.deepEqual([riderFits(rider, { traits: ["unholy", "fiend"] }), riderFits(rider, { traits: ["holy"] })], [true, false]);
+    assert.deepEqual([wielderFits(rider, { class: "champion", features: ["redemption"] }), wielderFits(rider, { class: "champion", features: ["justice"] }), wielderFits(rider, { class: "fighter", features: [] })], [true, false, false]);
+});

@@ -7,6 +7,7 @@
 
 import { ABILITY_ID, ownerDCsOf } from "./foundry.js";
 import { riderFits } from "../src/compiler/rune-strikes.js";
+import { wielderFits } from "../src/compiler/wielder-riders.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { withUserDCs } from "./item-dcs.js";
 
@@ -38,7 +39,9 @@ export async function strikeWithRunes(message, ridersOf) {
     const creature = creatureOf(target.actor);
     const sourceToken = message.token ?? actor.getActiveTokens?.(true)?.[0]?.document ?? null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
-    for (const rider of riders.filter((entry) => riderFits(entry, creature))) {
+    // (A rider only for some wielders, Blessed Reformer's redemption champions: its wielder's class and class features — src/compiler/wielder-riders.js.)
+    const wielder = { class: actor.class?.slug ?? null, features: (actor.itemTypes?.feat ?? []).map((feat) => feat.slug).filter(Boolean) };
+    for (const rider of riders.filter((entry) => riderFits(entry, creature) && wielderFits(entry, wielder))) {
         const name = rider.own ? weapon.name : `${weapon.name} (${rider.rune.name})`;
         // (A save against its wielder's class DC, Thundercrasher's: that DC as it is now; without one, by hand.)
         const owned = hasOwnerDC(rider.plan) ? fillOwnerDCs(rider.plan, ownerDCsOf(actor)) : { plan: rider.plan, missing: false };

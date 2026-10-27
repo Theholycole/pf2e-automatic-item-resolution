@@ -21,6 +21,8 @@
 //   no trait to a cast.
 // Innermost in the chains (src/compiler/permanent.js, index.js): src/compiler/honest.js withCastNotes then reads what's left. Pure.
 
+import { isWielderSection } from "./wielder-riders.js";
+
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 const sentences = (note) => said(note).split(/(?<=[.!?])\s*(?=[A-Z])/).map((one) => one.trim()).filter(Boolean);
 
@@ -53,9 +55,17 @@ export function withCastChanges(plan, item = null, options = {}) {
     const kept = [];
     let next = { ...plan };
     let unplayed = false;
+    let wielded = false;
     for (const note of plan.notes) {
         const left = [];
         for (const sentence of sentences(note)) {
+            // (A weapon's section for some wielders that the activation's text took in, Blessed Reformer's Redeemer Wielder: its critical-hit
+            // rider the weapon's own, src/compiler/wielder-riders.js; its "You can Activate the weapon in the following way" the next
+            // activation's.)
+            if (isWielderSection(sentence)) {
+                wielded = true;
+                continue;
+            }
             if (LINES.some((pattern) => pattern.test(sentence))) {
                 lines.push(sentence);
                 continue;
@@ -102,7 +112,7 @@ export function withCastChanges(plan, item = null, options = {}) {
         const rest = impulse ? joined.replace(impulse[0], " ").replace(/\s+/g, " ").trim() : joined;
         if (rest) kept.push(left.length === sentences(note).length && !impulse ? note : rest);
     }
-    if (!lines.length && !next.choices && !next.castImpulse && next.dc === plan.dc && !unplayed) return plan;
+    if (!lines.length && !next.choices && !next.castImpulse && next.dc === plan.dc && !unplayed && !wielded) return plan;
     if (next.castImpulse && !next.choices?.some((choice) => choice.element)) delete next.castImpulse;
     if (kept.length) next.notes = kept;
     else delete next.notes;
