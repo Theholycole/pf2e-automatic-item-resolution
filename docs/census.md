@@ -17,8 +17,8 @@ Results, for the items this module handles:
 
 | Result | Items | Share |
 |---|---:|---:|
-| resolves | 839 | 56% |
-| partial | 66 | 4% |
+| resolves | 841 | 57% |
+| partial | 64 | 4% |
 | note-only | 113 | 8% |
 | builtin:zone | 121 | 8% |
 | builtin:cast-spell | 35 | 2% |
@@ -40,13 +40,13 @@ Results, for the items this module handles:
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 245 | 31 | 59 | 0 | 100 | 77 |
+| other | 512 | 246 | 30 | 59 | 0 | 100 | 77 |
 | potion | 182 | 130 | 5 | 10 | 0 | 21 | 16 |
 | talisman | 156 | 72 | 3 | 5 | 0 | 53 | 23 |
 | elixir | 149 | 106 | 13 | 10 | 0 | 17 | 3 |
 | poison | 115 | 107 | 3 | 1 | 0 | 4 | 0 |
 | snare | 82 | 1 | 0 | 1 | 0 | 74 | 6 |
-| gadget | 77 | 31 | 4 | 6 | 0 | 32 | 4 |
+| gadget | 77 | 32 | 3 | 6 | 0 | 32 | 4 |
 | mutagen | 68 | 68 | 0 | 0 | 0 | 0 | 0 |
 | oil | 66 | 31 | 6 | 9 | 0 | 16 | 4 |
 | fulu | 46 | 21 | 1 | 7 | 0 | 5 | 12 |
@@ -88,8 +88,8 @@ An item can do several of these. *resolves* counts the items doing it whose plan
 
 | Mechanism | Items | resolves | gaps | none |
 |---|---:|---:|---:|---:|
-| duration | 943 | 645 | 0 | 13 |
-| fixed-dc | 491 | 319 | 0 | 21 |
+| duration | 943 | 647 | 0 | 13 |
+| fixed-dc | 491 | 321 | 0 | 21 |
 | condition | 433 | 282 | 0 | 18 |
 | linked-effect | 393 | 366 | 0 | 0 |
 | damage | 277 | 175 | 0 | 7 |

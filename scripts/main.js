@@ -30,6 +30,7 @@ import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpEndEarly } from "./end-early.js";
 import { setUpDropHeld } from "./drop-held.js";
 import { setUpMoveDamage } from "./move-damage.js";
+import { setUpFootDamage } from "./foot-damage.js";
 import { setUpPreventCondition } from "./prevent-condition.js";
 import { setUpHalfDamage } from "./half-damage.js";
 import { setUpHealAfter } from "./heal-after.js";
@@ -185,6 +186,8 @@ Hooks.once("ready", async () => {
     setUpDropHeld();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)
     setUpMoveDamage();
+    // (Damage back each time its foot Strike deals damage, Hoof Stakes Snare's stakes: scripts/foot-damage.js.)
+    setUpFootDamage();
     setUpPreventCondition();
     // (Half the triggering attack's damage, Laurel of the Empath's: scripts/half-damage.js.)
     setUpHalfDamage();

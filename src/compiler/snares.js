@@ -161,6 +161,38 @@ function greasedRows(read, text) {
     };
 }
 
+// (Stakes in its feet, Hoof Stakes Snare's failure: "The triggering creature takes full damage. The creature takes a –5-foot circumstance penalty
+// to its Speed, and any time it deals damage with a foot Strike (including as part of Trample or a similar ability), the creature takes 2d6 piercing
+// damage. The effect lasts for 1 minute, or until the creature or an ally spends three Interact actions to carefully remove the stakes.", its
+// critical failure "As failure, but the circumstance penalty to its Speed is -10 feet, and the creature takes 4d6 piercing damage whenever it
+// deals damage with a foot Strike": the rows' damage the snare's own, in full (the ability compiler had read the foot Strike's dice as the
+// row's); the Speed penalty for that time; a note Effect with PF2e's RollOption "air-foot-damage:<dice>:<type>" — scripts/foot-damage.js deals
+// those dice to it each time its foot Strike damages a creature. Its three Interact actions, its own or an ally's: the end-early card. 2026-10-27.)
+const STAKES = /\bFailure The triggering creature takes full damage\. The creature takes a [–-](\d+)-foot circumstance penalty to its Speed, and any time it deals damage with a foot Strike \(including as part of Trample or a similar ability\), the creature takes @Damage\[(\d+d\d+)\[(\w+)\]\] damage\. The effect lasts for (\d+) (minutes?|rounds?), or until the creature or an ally spends (three|two|\d) Interact actions to carefully remove the stakes\./i;
+const STAKES_WORSE = /\bCritical Failure As failure, but the circumstance penalty to its Speed is [–-](\d+) feet, and the creature takes @Damage\[(\d+d\d+)\[(\w+)\]\] damage whenever it deals damage with a foot Strike\./i;
+function stakedRows(read, html) {
+    const stakes = STAKES.exec(html);
+    const outcomes = read?.resolution?.outcomes;
+    const shared = read?.resolution?.sharedDamage?.components?.[0]?.id;
+    if (!stakes || !outcomes?.failure || !shared) return null;
+    const worse = STAKES_WORSE.exec(html);
+    const duration = { mode: "fixed", value: Number(stakes[4]), unit: /^min/i.test(stakes[5]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" };
+    const count = WORD_COUNT[stakes[6].toLowerCase()] ?? Number(stakes[6]);
+    const until = `the creature or an ally spends ${stakes[6].toLowerCase()} Interact actions to carefully remove the stakes`;
+    const row = (row, penalty, dice, type) => {
+        const { manualInstructions, ...rest } = row;
+        return {
+            ...rest,
+            damage: { mode: "shared", multiplier: 1, sourceComponentIds: [shared] },
+            modifiers: [...(rest.modifiers ?? []), { selector: "land-speed", value: -Number(penalty), type: "circumstance", duration, until }],
+            noteEffects: [...(rest.noteEffects ?? []), { label: "Stakes in its feet", text: `Each time it deals damage with a foot Strike (Trample and the like too), it takes ${dice} ${type.toLowerCase()} damage (rolled as it does).`, duration, rules: [{ key: "RollOption", option: `air-foot-damage:${dice}:${type.toLowerCase()}` }] }]
+        };
+    };
+    const rows = { ...outcomes, failure: row(outcomes.failure, stakes[1], stakes[2], stakes[3]) };
+    if (worse && outcomes.criticalFailure) rows.criticalFailure = row(outcomes.criticalFailure, worse[1], worse[2], worse[3]);
+    return { read: { ...read, resolution: { ...read.resolution, outcomes: rows } }, endEarly: { how: { kind: "actions", count, helped: true }, conditions: [], said: [until] } };
+}
+
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
 export function snareZone(item, read) {
     // (Not a square stepped into: Fire Box's "Anyone who opens the box triggers …" — its save card at those its cone reaches, src/compiler/opened.js.)
@@ -186,7 +218,8 @@ export function snareZone(item, read) {
     // (Barbs that hurt each long Stride, Poison Barbs Snare's: a note Effect on its failing rows, src/compiler/snares.js barbedRows.)
     const barbs = barbedRows(read, whole);
     const greased = barbs ? null : greasedRows(read, whole);
-    const plan = { ...markedRows(barbs?.read ?? greased?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ?? barbs?.endEarly ? { endEarly: greased?.byDegree && endEarly ? { ...endEarly, byDegree: { ...(endEarly.byDegree ?? {}), ...greased.byDegree } } : endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
+    const staked = barbs || greased ? null : stakedRows(read, String(item.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
+    const plan = { ...markedRows(barbs?.read ?? greased?.read ?? staked?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(staked ? { endEarly: staked.endEarly } : endEarly ?? barbs?.endEarly ? { endEarly: greased?.byDegree && endEarly ? { ...endEarly, byDegree: { ...(endEarly.byDegree ?? {}), ...greased.byDegree } } : endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
     const cap = sizeCap(plainText(item.system?.description?.value));
     const only = gate || cap || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(cap ? { maxSize: cap } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};

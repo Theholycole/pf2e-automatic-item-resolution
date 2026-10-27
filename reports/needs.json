@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1258,
+  "entries": 1254,
   "results": {
-   "partial": 361,
+   "partial": 357,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -17,8 +17,8 @@
    "visibility": 47,
    "lasting": 64,
    "choice": 30,
-   "strike": 94,
-   "spells": 36,
+   "strike": 93,
+   "spells": 34,
    "information": 21,
    "out-of-combat": 35,
    "no-rules": 14,
@@ -33,7 +33,7 @@
    "cooldown": 10,
    "vehicles": 21,
    "reader": 17,
-   "triggers": 86,
+   "triggers": 85,
    "situational": 16,
    "dying": 29,
    "senses": 21,
@@ -54,19 +54,19 @@
    "immunity": 89,
    "objects": 388,
    "speech": 120,
-   "out-of-combat": 440,
+   "out-of-combat": 438,
    "counteract": 103,
    "afflictions": 106,
    "lasting": 228,
    "moving": 106,
-   "triggers": 115,
+   "triggers": 114,
    "visibility": 49,
    "dying": 75,
    "choice": 107,
-   "several": 102,
-   "strike": 188,
-   "reader": 205,
-   "spells": 75,
+   "several": 101,
+   "strike": 186,
+   "reader": 203,
+   "spells": 73,
    "information": 195,
    "actions": 60,
    "from-events": 26,
@@ -1323,18 +1323,6 @@
     "triggers",
     "strike",
     "from-events"
-   ]
-  },
-  {
-   "name": "Stonethroat Ammunition",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "attack rolls",
-   "needs": [
-    "strike",
-    "reader",
-    "out-of-combat"
    ]
   },
   {
@@ -6864,20 +6852,6 @@
    ]
   },
   {
-   "name": "Hoof Stakes Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering creature",
-   "needs": [
-    "triggers",
-    "strike",
-    "several",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Moonlit Ink",
    "kind": "consumable",
    "result": "note-only",
@@ -9639,16 +9613,6 @@
     "situational",
     "several",
     "objects"
-   ]
-  },
-  {
-   "name": "Moritype",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "spells",
-   "work": "to cast a spell",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -12454,16 +12418,6 @@
    "work": "ships",
    "needs": [
     "vehicles"
-   ]
-  },
-  {
-   "name": "Moritype (Greater)",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "spells",
-   "work": "to cast a spell",
-   "needs": [
-    "spells"
    ]
   },
   {

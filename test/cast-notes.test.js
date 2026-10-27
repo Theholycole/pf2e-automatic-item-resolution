@@ -621,3 +621,47 @@ test("greased (2026-10-27): Grease Snare's failure and critical failure — a no
     assert.deepEqual([snare.zone.then.area, snare.zone.then.terrain], [{ type: "square", value: 10 }, [{ movement: ["walk"], difficulty: 2 }]]);
     assert.deepEqual(snare.zone.notes, ["The first creature to enter the square sets it off; then it's spent."]);
 });
+
+test("spells it can't cast for a while (2026-10-27): Moritype — each row a 1-round note Effect saying which ranks, its target a living creature", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    for (const name of ["Moritype", "Moritype (Greater)"]) {
+        const plan = compileItem(item(name), options);
+        assert.equal(plan.partial, undefined);
+        assert.equal(plan.targeting.target, "1 living creature");
+        const { success, failure, criticalFailure, criticalSuccess } = plan.resolution.outcomes;
+        assert.match(success.noteEffects[0].text, /highest rank/);
+        assert.match(failure.noteEffects[0].text, /2 highest ranks/);
+        assert.match(criticalFailure.noteEffects[0].text, /any spells but cantrips and focus spells/);
+        assert.deepEqual([success.noteEffects[0].duration.value, success.noteEffects[0].duration.unit], [1, "rounds"]);
+        assert.equal(criticalSuccess.noteEffects, undefined);
+        assert.equal([success, failure, criticalFailure].some((row) => row.manualInstructions), false);
+    }
+});
+
+test("stakes in its feet (2026-10-27): Hoof Stakes Snare — its failure rows the snare's full damage (not the foot Strike's dice), the Speed penalty and a note Effect whose RollOption deals those dice on each foot Strike that damages; three Interact actions, helped, end it", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { footDamagesOf, FOOT } = await import("../scripts/foot-damage.js");
+    const snare = compileItem(item("Hoof Stakes Snare"), options);
+    assert.equal(snare.partial, undefined);
+    const save = snare.zone.saves[0].plan;
+    const { failure, criticalFailure } = save.resolution.outcomes;
+    assert.deepEqual([failure.damage, criticalFailure.damage].map((damage) => [damage.mode, damage.multiplier]), [["shared", 1], ["shared", 1]]);
+    assert.deepEqual([failure.modifiers[0].value, criticalFailure.modifiers[0].value], [-5, -10]);
+    assert.deepEqual([failure.noteEffects[0].rules[0].option, criticalFailure.noteEffects[0].rules[0].option], ["air-foot-damage:2d6:piercing", "air-foot-damage:4d6:piercing"]);
+    assert.deepEqual(save.endEarly.how, { kind: "actions", count: 3, helped: true });
+    assert.equal(snare.zone.saves[0].only.minSize, "lg");
+    const actor = { itemTypes: { effect: [{ name: "Hoof Stakes Snare: Stakes in its feet", system: { rules: [{ key: "RollOption", option: "air-foot-damage:2d6:piercing" }] } }] } };
+    assert.deepEqual(footDamagesOf(actor).map(({ dice, type }) => [dice, type]), [["2d6", "piercing"]]);
+    assert.deepEqual(["Hoof", "Foot", "Trample", "Jaws", "Horn"].map((name) => FOOT.test(name)), [true, true, true, false, false]);
+});
+
+test("ammunition in the throat (2026-10-27): Stonethroat Ammunition — its success's -2 to Athletics and jaws and fangs attacks for 1 round, its failure's and critical failure's note Effect until the end of its next turn; no notes left", () => {
+    const plan = first("Stonethroat Ammunition");
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual(plan.strike.notes, []);
+    const { success, failure, criticalFailure } = plan.strike.save.resolution.outcomes;
+    assert.deepEqual(success.modifiers.map((modifier) => [modifier.selector, modifier.value, modifier.duration.value]), [["athletics", -2, 1], ["jaws-attack", -2, 1], ["fangs-attack", -2, 1]]);
+    assert.deepEqual([failure.noteEffects[0].label, failure.noteEffects[0].duration.anchor], ["Throat blocked", "target-turn"]);
+    assert.deepEqual([criticalFailure.noteEffects[0].label, criticalFailure.effects[0].slug], ["Throat blocked", "enfeebled"]);
+    assert.equal([success, failure, criticalFailure].some((row) => row.manualInstructions), false);
+});

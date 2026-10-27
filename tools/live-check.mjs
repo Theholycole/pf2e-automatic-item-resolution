@@ -1467,6 +1467,52 @@ export const cases = {
         });
     },
 
+    // Hoof Stakes Snare (2026-10-27): a Large creature critically fails — the snare's 2d6 in full (not the foot Strike's 4d6 too), -10 feet of
+    // Speed and the stakes' note Effect; then damage from its Hoof to another creature deals it 4d6 piercing (scripts/foot-damage.js).
+    async hoofStakesFoot(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Stakes Setter", { type: "character", x: 0, y: 18 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Stakes Walker", { x: 6, y: 18, alliance: "opposition", hp: 200, save: -30 });
+            const { actor: victim, token: victimToken } = await creature(scene, "Stakes Victim", { x: 10, y: 18, hp: 100 });
+            await walker.update({ "system.traits.size.value": "lg" });
+            await walkerToken.update({ width: 2, height: 2 });
+            const [hoof] = await walker.createEmbeddedDocuments("Item", [{ name: "Hoof", type: "melee", system: { bonus: { value: 10 }, damageRolls: { a: { damage: "1d6", damageType: "bludgeoning" } }, traits: { value: [] } } }]);
+            const snare = await give(setter, "Hoof Stakes Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Hoof Stakes Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                let since = Date.now();
+                const before = walker.system.attributes.hp.value;
+                // (Its 2-by-2 space's middle on the snare's square: half a square up and left of it.)
+                await walkerToken.update({ x: shape.x - 50, y: shape.y - 50 }, { animate: false });
+                const save = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+                const rolledDamage = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.outcomes.criticalFailure.damage;
+                assert(rolledDamage.mode === "shared" && rolledDamage.multiplier === 1, `the snare's damage in full only (${JSON.stringify(rolledDamage)})`);
+                await rollAndApply(save);
+                const stakes = () => walker.itemTypes.effect.find((effect) => /Hoof Stakes Snare/.test(effect.name) && (effect.system.rules ?? []).some((rule) => rule.key === "RollOption" && /^air-foot-damage:4d6:piercing$/.test(rule.option)));
+                await until(() => stakes(), `the stakes' note Effect (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+                const afterSave = walker.system.attributes.hp.value;
+                assert(before - afterSave >= 2 && before - afterSave <= 12, `2d6 from the snare (${before} → ${afterSave})`);
+                since = Date.now();
+                await victim.applyDamage({ damage: 5, token: victimToken, item: hoof });
+                await until(() => walker.system.attributes.hp.value < afterSave, `4d6 back from its Hoof (${walker.system.attributes.hp.value})`, { timeout: 10000 });
+                const back = await messageAfter(since, (message) => /Hoof Stakes Snare/.test(message.flavor ?? "") && /4d6 piercing/.test(message.flavor ?? ""), { what: "the stakes' damage roll" });
+                return { snare: before - afterSave, back: afterSave - walker.system.attributes.hp.value, roll: back.rolls?.[0]?.total ?? null, speed: walker.system.movement?.speeds?.land?.value ?? null };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Hoof Stakes Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Poison Barbs Snare (2026-10-27): a failed save, the barbs' note Effect; a 10-foot step gives nothing, a 20-foot move (more than half a 25-foot
     // Speed) 1d4 poison damage; the end-early card's 3 Interact actions remove the barbs.
     async poisonBarbsMove(scene) {
@@ -6869,6 +6915,33 @@ export const cases = {
         }
         await until(() => !foe.hasCondition("immobilized"), `pulled free (${JSON.stringify(game.messages.get(ending.id).getFlag(NS, "card").results)})`, { timeout: 8000 });
         return { critical, results: game.messages.get(ending.id).getFlag(NS, "card").results };
+    },
+
+    // Stonethroat Ammunition (2026-10-27): a hit and a successful Fortitude save (a 10 on the die, +25) — -2 to the target's Athletics (and its jaws
+    // and fangs attacks) for 1 round, as its own modifiers.
+    async stonethroatSuccess(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Stonethroat Archer", { type: "character", x: 8, y: 22 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Stonethroat Target", { x: 9, y: 22, ac: -20, hp: 200, alliance: "opposition", save: 25 });
+        const bow = await give(archer, "Shortbow");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const arrows = await give(archer, "Stonethroat Ammunition");
+        await arrows.update({ "system.baseItem": "arrows" });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        const athletics = foe.skills.athletics.mod;
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        since = Date.now();
+        await strike(archer, bow);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the ammunition's save card" });
+        await withDie(10, () => rollAndApply(save));
+        await until(() => foe.skills.athletics.mod === athletics - 2, `Athletics ${athletics} - 2 (${foe.skills.athletics.mod}; ${foe.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        const degree = game.messages.get(save.id).flags["pf2e-automatic-ability-resolution"].card.targets?.[0]?.degree;
+        assert(degree === "success", `a success (${degree})`);
+        return { degree, athletics: [athletics, foe.skills.athletics.mod], effects: foe.itemTypes.effect.map((effect) => `${effect.name} ${effect.system.duration.value} ${effect.system.duration.unit}`) };
     },
 
     // Silencing Ammunition (2026-10-27): a hit, its DC 25 Will save failed — the spell module's Silence on the target (-2 to that save after a
