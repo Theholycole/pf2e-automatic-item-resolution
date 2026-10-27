@@ -6,10 +6,12 @@
 
 import { sentencesOf } from "./lasting.js";
 import { spherePlanOf } from "./sphere.js";
+import { cubeWaysOf, inertPlanOf } from "./cube-faces.js";
 
 // Each reading: the source names it's for (an activation's "Item: Activation"), whether it reads over the plan read before (by default only
 // none, note-only, or the GM's no-effect), its Requirements line's pattern when it has one, a pattern for each of its effect's sentences —
-// every sentence must be one, in order — and the card they make (from its matches, the plan before and { html, item, requirements, trigger }).
+// every sentence must be one, in order — and the card they make (from its matches, the plan before and { html, item, itemHtml, requirements,
+// trigger, base, info }). index: which of the item's activations, when they have no names.
 const READINGS = [
     {
         // Sphere of Annihilation: its control a check each round, the sphere moved toward a failed controller or where a successful one directs
@@ -27,6 +29,39 @@ const READINGS = [
             /^On a failure, you lose control of the sphere, and it moves (\d+) feet closer to you in a straight line \(or (\d+) feet on a critical failure\)\.$/
         ],
         card: (found, _plan, { requirements, item }) => spherePlanOf(found, requirements, item)
+    },
+    {
+        // Cube of Nex: the cube of walls, its face picked on the ways card (src/compiler/cube-faces.js): each a zone or the walls of force,
+        // until dismissed. (Its zones' crossing saves wait on the ability module's "exit" saves and only.notTraits, its walls of force on the
+        // environment module's invisible walls: partial till then.)
+        names: ["Cube of Nex"],
+        index: 0,
+        sentences: [
+            /^You hold the cube aloft and depress one of its six faces for several seconds\.$/,
+            /^The cube creates six walls around you, creating a cube 10 feet on each side centered on you \(typically centered on the top of your space if you're a Medium creature\)\.$/,
+            /^If a creature or object overlaps any of these walls, that face of the cube doesn't appear; this also means if you're Huge or larger, the activation has no effect, as your space is larger than the cube would be\.$/,
+            /^The effect of the six walls depends on which face of the cube you press when you Activate the cube, as seen on the Cube Effects table \(below\)\.$/,
+            /^Pressing the sixth cube face with a simple Interact action Dismisses the effect; doing so isn't an activation and thus doesn't count against the cube's frequency\.$/,
+            /^The walls have the AC, Hit Points, and Hardness of a Wall of Force\.\s*You must first Dismiss any previous activation before you use it again\.$/
+        ],
+        card: (_found, _plan, { itemHtml, base, info }) => {
+            const ways = cubeWaysOf(itemHtml, { base, info });
+            return ways ? { ...ways, partial: true, automation: { level: "guided" } } : null;
+        }
+    },
+    {
+        // Cube of Nex's other activation: a cube of force or Lesser Cube of Nex made inert (src/compiler/cube-faces.js inertPlanOf); its block
+        // ends with the first activation's table, read there.
+        names: ["Cube of Nex"],
+        index: 1,
+        sentences: [
+            /^(An? cube of force or Lesser Cube of Nex) within (\d+) feet of you becomes inert\.$/,
+            /^It can't be Activated, any current activation ends, and any constant abilities it has cease to function\.$/,
+            /^Cube Face Effect 1 The walls keep out gas and wind\b.*\b2 The walls block nonliving matter from crossing\b.*\bunattended objects can't cross\.$/,
+            /^Non-magical ranged attacks can't cross either and instead attack the wall\.$/,
+            /^A living creature can bring attended objects across the walls without needing to attempt a saving throw\. 3 The walls block living matter\b.*\b6 The cube is Dismissed \(this takes only an Interact action and isn't an activation\)\.$/
+        ],
+        card: (found, _plan, { info }) => inertPlanOf(found, info)
     }
 ];
 
@@ -42,16 +77,16 @@ export const hasArtifactReading = (name) => READINGS.some((reading) => named(rea
 
 // The plan (null, note-only or the GM's no-effect — or any, for a reading over it) and its effect's words → the reading's card, or the same
 // plan. name: its source name; base, info, frequency: its own (src/compiler/lasting.js activationBase); requirements, trigger: its activation's
-// lines; item: its item's whole text, plain.
-export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", base, info, frequency = null }) {
-    const readings = READINGS.filter((reading) => named(reading, name) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
+// lines; item: its item's whole text, plain (itemHtml: as it is); index: the activation's (a reading for one of several unnamed ones).
+export function withArtifactReading(plan, { name, words, requirements = null, trigger = null, html = "", item = "", itemHtml = "", index = null, base, info, frequency = null }) {
+    const readings = READINGS.filter((reading) => named(reading, name) && (reading.index === undefined || reading.index === index) && (reading.over ? reading.over(plan) : !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
         const asked = reading.requirements ? reading.requirements.exec(String(requirements ?? "").trim()) : null;
         if (reading.requirements && !asked) continue;
         if (reading.trigger && !reading.trigger.test(String(trigger ?? "").trim())) continue;
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan, { html, item, requirements: asked, trigger, base, info }) : null;
+        const card = found ? reading.card(found, plan, { html, item, itemHtml, requirements: asked, trigger, base, info }) : null;
         if (!card) continue;
         if (card.keep) {
             const { keep, ...changes } = card;

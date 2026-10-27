@@ -9,6 +9,7 @@ import { lightZone } from "./placed-light.js";
 import { pickConjured } from "./creature-pick.js";
 import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
 import { SLAIN } from "./slain-wait.js";
+import { aroundZone } from "../src/live/cube.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -22,7 +23,11 @@ export async function startItemZone({ plan, used, actor, token }) {
         if (template) await actor.createEmbeddedDocuments("Item", [effectSource(template.toObject(), { item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, flags: { [MODULE_ID]: { card: true } } })]);
     }
     if (startZone) {
-        const started = await startZone({ item, plan, sourceToken: token?.document ?? token });
+        // (A square round its user, Cube of Nex's walls: its grid squares, src/live/cube.js.)
+        const own = plan.zone?.centre === "around" ? token?.document ?? token : null;
+        const grid = own?.parent?.grid?.size ? { size: own.parent.grid.size, gridFeet: own.parent.grid.distance ?? 5 } : null;
+        const zone = grid ? aroundZone(plan.zone, { x: Number(own.x), y: Number(own.y), w: Math.max(1, Number(own.width) || 1) * grid.size, h: Math.max(1, Number(own.height) || 1) * grid.size }, grid) : plan.zone;
+        const started = await startZone({ item, plan: zone === plan.zone ? plan : { ...plan, zone }, sourceToken: token?.document ?? token });
         // (Its light at the zone, Spark Wafer's: scripts/placed-light.js.)
         if (plan.zone?.light) await lightZone(plan.zone.light, plan.zone.lasts, { scene: (token?.document ?? token)?.parent ?? canvas.scene, item }).catch((error) => console.error(`${MODULE_ID} | zone light`, error));
         return started;

@@ -98,6 +98,8 @@ export async function activate(itemUuid, index, userId = game.user.id) {
     if (!sender || !(sender.isGM || item.actor.testUserPermission?.(sender, "OWNER"))) return null;
     const entry = playable(item).find((candidate) => String(candidate.index) === String(index));
     if (!entry) throw new Error("That activation isn't there any more.");
+    // (An item made inert, Cube of Nex's other activation: scripts/cube.js — none of its activations.)
+    if (item.getFlag(MODULE_ID, "inert")) throw new Error(`${item.name} is inert (${item.getFlag(MODULE_ID, "inert").by ?? "made so"}): it can't be activated.`);
     const frequency = entry.plan.trigger?.frequency ?? null;
     const record = item.getFlag(MODULE_ID, USES) ?? {};
     const name = entry.rune ? `${item.name} (${activationName(entry.activation, entry.rune)})` : entry.activation.name ? `${item.name}: ${entry.activation.name}` : item.name;

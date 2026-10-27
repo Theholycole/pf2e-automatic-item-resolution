@@ -8,6 +8,7 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { createSphereCard, sphereCardHTML, sphereDC, sphereRow, stepToward, touchedOn } from "../src/live/sphere-card.js";
+import { aroundZone, createInertCard, inertCardHTML, namedInert, squareCellsAround } from "../src/live/cube.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -46,4 +47,23 @@ test("the sphere's steps toward its user, by PF2e's grid, and the creatures in i
     assert.deepEqual([touching.x, touching.path.length], [200, 2]);
     const others = [{ id: "a", x: 100, y: 0, w: 100, h: 100 }, { id: "b", x: 100, y: 300, w: 100, h: 100 }, { id: "c", x: 200, y: 0, w: 100, h: 100 }];
     assert.deepEqual(touchedOn(touching.path.map((place) => ({ ...place, w: 100, h: 100 })), others), ["a", "c"]);
+});
+
+test("Cube of Nex: its face picked on the ways card — zones round its user, the counteract card, crossing saves, walls of force; its other activation makes a cube inert", () => {
+    const [walls, inert] = activations("Cube of Nex");
+    assert.deepEqual([walls.builtin, walls.partial, walls.ways.length, walls.trigger.frequency.per], ["ways", true, 5, "hour"]);
+    const [gas, nonliving, living, magic, force] = walls.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(gas), routeOf(force)], ["zone", "structure"]);
+    assert.deepEqual([gas.zone.area, gas.zone.centre, gas.zone.lasts, gas.item.counteract.modifier, gas.item.counteract.rank, magic.item.counteract.free.name], [{ type: "square", value: 10 }, "around", null, 20, 13, "the magical effect crossing its walls"]);
+    const save = nonliving.zone.saves[0];
+    assert.deepEqual([save.when, save.only, save.plan.resolution.check.against.value, save.plan.resolution.outcomes.failure.forcedMovement.distance], [["enter", "exit"], { traits: ["construct", "undead"] }, 30, 5]);
+    assert.deepEqual(living.zone.saves[0].only, { notTraits: ["construct", "undead"] });
+    assert.deepEqual([force.structure.stats, force.structure.feet, force.structure.pushOut, force.structure.invisible], [{ hardness: 30, hp: 60 }, 10, false, true]);
+    assert.deepEqual([inert.builtin, routeOf(inert), inert.inert.within, done(inert)], ["inert", "inert", 60, true]);
+    assert.ok(namedInert(inert.inert, "Cube of Force") && namedInert(inert.inert, "Lesser Cube of Nex") && !namedInert(inert.inert, "Cube of Nex"));
+    assert.match(inertCardHTML(createInertCard({ plan: inert, item: { name: "Cube of Nex" }, user: { name: "Ezren" }, candidates: [{ itemUuid: "x", name: "Cube of Force", holder: "Seelah" }] }), { canApply: true }), /Make it inert/);
+    // (Its squares as the environment module lays a square out: a Medium user's space and the squares to its right and below.)
+    const grid = { size: 100, gridFeet: 5 };
+    assert.deepEqual(squareCellsAround({ x: 300, y: 300, w: 100, h: 100 }, 10, grid), [{ x: 300, y: 300 }, { x: 300, y: 400 }, { x: 400, y: 300 }, { x: 400, y: 400 }]);
+    assert.equal(aroundZone(gas.zone, { x: 300, y: 300, w: 100, h: 100 }, grid).area.type, "squares");
 });

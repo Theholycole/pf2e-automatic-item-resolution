@@ -54,6 +54,7 @@ import { setUpImplosion } from "./implosion.js";
 import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
 import { setUpSphere, sphereTouched } from "./sphere.js";
+import { setUpCube } from "./cube.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -177,6 +178,8 @@ Hooks.once("ready", async () => {
     setUpReadiedRefund();
     // (A sphere its user controls and what it touches destroyed, Sphere of Annihilation's: scripts/sphere.js.)
     setUpSphere();
+    // (A cube's walls and the cubes it makes inert, Cube of Nex's: scripts/cube.js.)
+    setUpCube();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)

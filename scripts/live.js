@@ -40,6 +40,7 @@ import { applyWaysCard, postWaysCard } from "./ways.js";
 import { reviveCreature } from "./revive.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { postSphereCard } from "./sphere.js";
+import { placeItemStructure, postInertCard } from "./cube.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
@@ -332,6 +333,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "ways") return postWaysCard({ message, plan, used, actor, token });
     if (route === "teleport") return postTeleportCard({ message, plan, used, actor, token });
     if (route === "sphere") return postSphereCard({ message, plan, used, actor, token });
+    if (route === "structure") return placeItemStructure({ plan, used, actor, token });
+    if (route === "inert") return postInertCard({ message, plan, used, actor, token });
     if (route === "whisper") return postWhisper({ plan, used, actor, token });
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
