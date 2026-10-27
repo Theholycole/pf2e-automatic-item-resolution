@@ -14,10 +14,10 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 150,
+   "none": 148,
    "resolves": 827,
    "builtin:readied-bonus": 23,
-   "builtin:zone": 119,
+   "builtin:zone": 121,
    "builtin:ways": 29,
    "builtin:item-action": 16,
    "partial": 75,
@@ -38,13 +38,13 @@
    "count": 512,
    "results": {
     "builtin:cast-spell": 14,
-    "builtin:zone": 27,
+    "builtin:zone": 28,
     "resolves": 242,
     "builtin:ways": 22,
     "partial": 32,
     "note-only": 59,
     "builtin:readied-bonus": 8,
-    "none": 80,
+    "none": 79,
     "builtin:no-effect": 12,
     "builtin:teleport": 4,
     "builtin:counteract": 9,
@@ -176,8 +176,8 @@
   "snare": {
    "count": 82,
    "results": {
-    "none": 8,
-    "builtin:zone": 71,
+    "none": 7,
+    "builtin:zone": 72,
     "note-only": 1,
     "builtin:ways": 1,
     "builtin:whisper": 1
@@ -399,10 +399,10 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 202,
+   "none": 200,
    "item": 658,
    "fortune": 25,
-   "zone": 119,
+   "zone": 121,
    "save": 134,
    "expose": 89,
    "ways": 29,
@@ -420,8 +420,8 @@
   "byCategory": {
    "other": {
     "cast": 14,
-    "zone": 27,
-    "none": 101,
+    "zone": 28,
+    "none": 100,
     "ways": 22,
     "save": 86,
     "item": 229,
@@ -478,8 +478,8 @@
     "item": 1
    },
    "snare": {
-    "none": 8,
-    "zone": 71,
+    "none": 7,
+    "zone": 72,
     "item": 1,
     "ways": 1,
     "whisper": 1
@@ -523,7 +523,7 @@
    }
   },
   "noCard": {
-   "no-plan": 150,
+   "no-plan": 148,
    "triggered": 11,
    "gm": 37,
    "other": 4
@@ -4463,7 +4463,9 @@
     "sonic"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Demon Bone Tiles (Brimorak)",
@@ -5697,7 +5699,9 @@
     "trap"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:zone",
+   "kind": null,
+   "live": "zone"
   },
   {
    "name": "Camp Shroud (Greater)",

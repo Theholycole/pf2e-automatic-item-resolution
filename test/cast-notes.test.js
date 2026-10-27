@@ -132,3 +132,36 @@ test("a longer reach for the item's own Strikes: Soulpiercer's Extend, an Effect
     const source = weaponEffectSource(reach, { item: { name: "Soulpiercer", uuid: "Actor.a.Item.b" } });
     assert.deepEqual([source.system.rules, /reach of 15 feet/.test(source.system.description.value)], [[], true]);
 });
+
+test("a square that only makes a noise when set off (2026-10-27): Alarm Snare's and Popdust's zone, gone once a creature enters, its set-off a note to the GM; Alarm Snare's size the GM's", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { zoneActions, zoneSetOff } = await import("../../pf2e-automatic-ability-resolution/src/live/zones.js");
+    const snare = compileItem(item("Alarm Snare"), options);
+    assert.deepEqual([snare.builtin, snare.zone.once, snare.partial], ["zone", true, true]);
+    assert.match(snare.zone.saves[0].note, /\(100 to 500 feet\)/);
+    const popdust = compileItem(item("Popdust"), options);
+    const actions = zoneActions(popdust.zone, "tokenEnter", {});
+    assert.deepEqual([actions.map((action) => action.kind), zoneSetOff(popdust.zone, actions), popdust.partial], [["note"], true, undefined]);
+});
+
+test("a wider scatter for the next Strike (2026-10-27): Magnetite Scope's Expansion, an Effect saying the 5 feet for the turn that a Strike with a scatter weapon ends (PF2e has no rule for a scatter radius)", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { weaponEffectSource } = await import("../src/live/card.js");
+    const [expansion] = activations(item("Magnetite Scope"), options);
+    const scatter = expansion.plan.item.weapon[0];
+    assert.deepEqual([scatter.property, scatter.value, scatter.duration.expiry, expansion.plan.partial], ["scatter", 5, "turn-end", undefined]);
+    const source = weaponEffectSource(scatter, { item: { name: "Magnetite Scope", uuid: "Actor.a.Item.b" } });
+    assert.deepEqual([source.system.rules, source.flags["pf2e-automatic-item-resolution"].endsOnStrike], [[], { trait: "scatter" }]);
+    assert.match(source.system.description.value, /scatter radius 5 feet wider/);
+    assert.equal(activations(item("Magnetite Scope (Greater)"), options)[0].plan.item.weapon[0].value, 10);
+});
+
+test("an Effect a Strike with a weapon of a trait ends: only that Strike (scripts/ends-on-strike.js)", async () => {
+    const { endOnStrike } = await import("../scripts/ends-on-strike.js");
+    const deleted = [];
+    const actor = { itemTypes: { effect: [{ id: "scatter", flags: { "pf2e-automatic-item-resolution": { endsOnStrike: { trait: "scatter" } } } }, { id: "other", flags: {} }] }, deleteEmbeddedDocuments: async (type, ids) => deleted.push(...ids) };
+    const strike = (traits) => ({ actor, flags: { pf2e: { context: { type: "attack-roll", outcome: "success", options: ["action:strike", ...traits.map((trait) => `item:trait:${trait}`)] } } } });
+    assert.deepEqual(await endOnStrike(strike(["agile"])), []);
+    assert.deepEqual(await endOnStrike(strike(["concussive", "scatter-10"])), ["scatter"]);
+    assert.deepEqual(deleted, ["scatter"]);
+});

@@ -2474,6 +2474,35 @@ export const cases = {
         return { invisible: false };
     },
 
+    // Magnetite Scope's Expansion (2026-10-27): the scatter Effect for the turn, kept by a Strike with a plain dagger, ended by one with a
+    // scatter weapon (a dagger given scatter 10 here, so it needs no ammunition).
+    async magnetiteScatter(scene) {
+        await clearSquares(scene, [[3, 8], [4, 8]]);
+        const { actor: user, token } = await creature(scene, "Scope Gunner", { type: "character", x: 3, y: 8, level: 9 });
+        const { token: foeToken } = await creature(scene, "Scope Target", { x: 4, y: 8, alliance: "opposition" });
+        const scope = await give(user, "Magnetite Scope");
+        await scope.update({ "system.equipped.carryType": "worn", "system.equipped.invested": true });
+        const dagger = await give(user, "Dagger");
+        await dagger.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const scattering = await give(user, "Dagger");
+        await scattering.update({ name: "PFTEST ITEM Scatter Dagger", "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.traits.value": [...scattering.system.traits.value, "scatter-10"] });
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(scope.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the scope's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [token.uuid] });
+        const effect = () => user.itemTypes.effect.find((entry) => entry.flags?.[NS]?.endsOnStrike?.trait === "scatter");
+        await until(effect, "the scatter Effect", { timeout: 8000 });
+        assert(/scatter radius 5 feet wider/.test(effect().system.description.value), "its words");
+        await token.object?.control?.();
+        await target(foeToken);
+        await strike(user, dagger);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        assert(effect(), "kept by a Strike without scatter");
+        await strike(user, scattering);
+        await until(() => !effect(), "ended by the scatter Strike", { timeout: 8000 });
+        return { ended: true };
+    },
+
     // Golden Blade of Mzali's second activation: PF2e's "used Elemental Form" toggle on, the form's Effect at fire.
     async goldenBladeForm(scene) {
         await clearSquares(scene, [[5, 5]]);
@@ -5161,6 +5190,31 @@ export const cases = {
         } finally {
             canvas.regions.placeRegion = placing;
             for (const region of scene.regions.filter((entry) => /Bleeding Spines Snare/.test(entry.name))) await region.delete().catch(() => null);
+        }
+    },
+
+    // Popdust (2026-10-27): its square, set off by the first creature to step in — the GM's note of its cracks, the square gone.
+    async popdustCracks(scene) {
+        const { actor: setter, token: setterToken } = await creature(scene, "Popdust Setter", { type: "character", x: 0, y: 6 });
+        const { token: walkerToken } = await creature(scene, "Popdust Walker", { x: 4, y: 6, alliance: "opposition" });
+        const popdust = await give(setter, "Popdust");
+        await setterToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+        try {
+            await popdust.consume();
+            const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Popdust/.test(region.name));
+            await until(() => square(), "the popdust's Region", { timeout: 8000 });
+            const shape = square().shapes[0];
+            const since = Date.now();
+            await walkerToken.update({ x: shape.x, y: shape.y });
+            const note = await messageAfter(since, (message) => /Popdust/.test(message.content) && /thunderous cracks/.test(message.content), { what: "the GM's note of its cracks" });
+            assert(note.whisper?.length, "whispered to the GM");
+            await until(() => !square(), "the square gone once set off", { timeout: 8000 });
+            return { whisper: note.whisper.length };
+        } finally {
+            canvas.regions.placeRegion = placing;
+            for (const region of scene.regions.filter((entry) => /Popdust/.test(entry.name))) await region.delete().catch(() => null);
         }
     },
 

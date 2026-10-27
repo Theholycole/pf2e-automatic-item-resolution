@@ -118,6 +118,38 @@ export function snareZone(item, read) {
     };
 }
 
+// A square that only makes a noise when set off (2026-10-27): Alarm Snare's "When a Small or larger creature enters the square, the snare
+// makes a noise loud enough that it can be heard by all creatures in the range you designated" (100 to 500 feet, chosen as it's made),
+// Popdust's "sprinkle popdust in an empty square adjacent to you. The first creature that applies pressure to the popdust … causes it to
+// emit a series of thunderous cracks". The zone, gone once set off, its set-off a note to the GM (the ability module's note save) — who
+// hears it is the GM's to tell. Alarm Snare's size: a Tiny creature doesn't set it off, which the zone can't tell (a GM line).
+const ALARM = /\bWhen a Small or larger creature enters the square, the snare makes a noise loud enough that it can be heard by all creatures in the range you designated\./i;
+const POPDUST = /\bsprinkle \w+ in an empty square adjacent to you\. The first creature that applies pressure to the \w+, such as by moving into that square, causes it to emit a series of thunderous cracks\./i;
+export function alarmZone(item, base) {
+    const plain = plainText(item?.system?.description?.value);
+    const alarm = isSnare(item) && ALARM.test(plain);
+    if (!alarm && !(item?.type === "consumable" && POPDUST.test(plain))) return null;
+    const range = alarm ? /\bdesignate a range between (\d+) (?:to|and) (\d+) feet\b/i.exec(plain) : null;
+    const note = alarm ? `It makes a noise loud enough for every creature within the range its crafter chose${range ? ` (${range[1]} to ${range[2]} feet)` : ""} to hear it.` : "It gives off a string of loud, thunderous cracks for those around to hear.";
+    return {
+        ...base,
+        builtin: "zone",
+        actions: null,
+        automation: { level: "automatic" },
+        trigger: { event: "use" },
+        zone: {
+            area: { type: "square", value: 5 }, centre: "placed", range: 5, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null,
+            saves: [{ when: ["enter"], note }],
+            damage: [],
+            effect: null,
+            modifiers: [],
+            notes: [alarm ? "The first Small or larger creature to enter the square sets it off; then it's spent." : "The first creature to step into the square sets it off; then it's spent.", ...(alarm ? ["A Tiny creature doesn't set it off: if one did, the GM places it again."] : [])],
+            once: true
+        },
+        ...(alarm ? { partial: true } : {})
+    };
+}
+
 // What a snare leaves behind, Ice Slick Snare's "to create a slippery patch of ice on the ground": a note, the GM's.
 function leftOnTheGround(item) {
     const left = /\bto create (an? [^.]*?) on the ground\b/i.exec(String(item?.system?.description?.value ?? "").replace(/<[^>]+>/g, " "))?.[1];

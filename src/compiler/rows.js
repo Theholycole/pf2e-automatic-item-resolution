@@ -671,8 +671,13 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
         // turn": PF2e has no rule for a character's weapon reach past a trait's 10 feet (it drops a reach-15 trait from a weapon, found live
         // 2026-10-27), so an Effect saying it for its time, its user's to measure by — property "reach".)
         const reach = /\bYour Strikes with the [\w' -]+? have a reach of (\d+) feet\b/i.exec(sentence);
+        // (Or a wider scatter for its next Strike, Magnetite Scope's "The next Strike you make this round with the gun to which the scope is attached
+        // has its scatter radius increased by 5 feet": PF2e has no rule for a scatter radius (its splash beyond the target is its user's), so an
+        // Effect saying it until the end of its user's turn, which that Strike ends (a Strike with a scatter weapon), 2026-10-27.)
+        const scatter = /^The next Strike you make this round with the (?:gun|firearm|weapon) to which the scope is attached has its scatter radius increased by (\d+) feet\.$/i.exec(sentence.trim());
         if (range) found.push({ property: "range-increment", value: Number(range[1]), definition: ["item:ranged"], duration: timeIn(sentence, duration) });
         else if (reach) found.push({ property: "reach", value: Number(reach[1]), own: true, definition: [], duration: timeIn(sentence, duration) });
+        else if (scatter) found.push({ property: "scatter", value: Number(scatter[1]), definition: [], nextStrike: { trait: "scatter" }, duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "source-turn" } });
         else if (thrown) found.push({ property: "weapon-traits", value: `thrown-${thrown[1]}`, definition: ["item:melee"], duration: timeIn(sentence, duration) });
         else if (loses) found.push({ property: "weapon-traits", value: loses[1].toLowerCase(), mode: "remove", own: true, definition: [], duration: timeIn(sentence, duration) });
         else if (gains) found.push({ property: "weapon-traits", value: gains[1].toLowerCase(), mode: "add", own: true, definition: [], duration: timeIn(sentence, duration) });
@@ -681,7 +686,7 @@ function weaponAdjustOf(sentences, duration, used = new Set()) {
         // Strike with it, it flies back …" says more.)
         // (But its coming back after a thrown Strike, Dragonbone Arrowhead's ", and when you make a thrown Strike with it, it flies back to your hand
         // after the Strike completes": the weapon's way home, which stays in its user's inventory — no rule.)
-        const read = range ?? reach ?? thrown ?? loses ?? gains;
+        const read = range ?? reach ?? scatter ?? thrown ?? loses ?? gains;
         const after = sentence.slice(read.index + read[0].length);
         if (!/,\s*and\b/i.test(after) || /^[^,]*,\s*and when you make a thrown Strike with it, it flies back to your hand after the Strike completes\.$/i.test(after.trim())) used.add(index);
     }

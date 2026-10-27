@@ -588,6 +588,8 @@ export function weaponText(adjust) {
     if (adjust.property === "range-increment") return `+${adjust.value} feet to its ${which ? `${which} ` : ""}weapons' range increment${forTime(adjust.duration)}`;
     // (A reach PF2e has no rule for: said, measured by its user.)
     if (adjust.property === "reach") return `The weapon's Strikes have a reach of ${adjust.value} feet${forTime(adjust.duration)} (measure it so: PF2e has no rule for it)`;
+    // (A scatter radius, the same: "Its next Strike with a scatter weapon this turn has a scatter radius 5 feet wider".)
+    if (adjust.property === "scatter") return `Its next Strike with a ${adjust.nextStrike?.trait ?? "scatter"} weapon this turn has a scatter radius ${adjust.value} feet wider (that Strike ends it; measure its splash so: PF2e has no rule for it)`;
     const thrown = /^thrown-(\d+)$/.exec(adjust.value);
     // (The item's own weapon losing a trait: "The weapon loses nonlethal for 1 round".)
     if (adjust.mode === "remove") return `${adjust.own ? "The weapon loses" : `Its ${which ? `${which} ` : ""}weapons lose`} ${adjust.value}${forTime(adjust.duration)}`;
@@ -601,7 +603,8 @@ const ownId = (uuid) => /\.Item\.([A-Za-z0-9]+)$/.exec(String(uuid ?? ""))?.[1] 
 export function weaponEffectSource(adjust, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const definition = adjust.own && ownId(item.uuid) ? [`item:id:${ownId(item.uuid)}`] : adjust.definition ?? [];
     const rule = { key: "AdjustStrike", mode: adjust.mode ?? "add", property: adjust.property, value: adjust.value, definition };
-    return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: adjust.property === "reach" ? [] : [rule], duration: adjust.duration, flag: { weapon: adjust.property }, item, user, worldTime, initiative, moduleId });
+    // (Ended by its creature's next Strike with a weapon of that trait, Magnetite Scope's: adjust.nextStrike, scripts/ends-on-strike.js.)
+    return ownEffectSource({ name: "weapon", img: "icons/svg/sword.svg", words: weaponText(adjust), rules: ["reach", "scatter"].includes(adjust.property) ? [] : [rule], duration: adjust.duration, flag: { weapon: adjust.property, ...(adjust.nextStrike ? { endsOnStrike: { trait: adjust.nextStrike.trait } } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // An unarmed attack it grants in words: "A claw unarmed attack (1d6 slashing; agile) until the end of the turn".

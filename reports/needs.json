@@ -1,17 +1,17 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1343,
+  "entries": 1340,
   "results": {
-   "partial": 425,
-   "none": 550,
+   "partial": 426,
+   "none": 546,
    "note-only": 249,
    "builtin:no-effect": 119
   },
   "main": {
    "cast-changes": 25,
    "speeds": 23,
-   "areas": 145,
+   "areas": 141,
    "counteract": 24,
    "afflictions": 61,
    "moving": 88,
@@ -22,7 +22,7 @@
    "spells": 36,
    "information": 23,
    "out-of-combat": 36,
-   "no-rules": 18,
+   "no-rules": 19,
    "actions": 31,
    "immunity": 27,
    "objects": 114,
@@ -50,10 +50,10 @@
   "any": {
    "cast-changes": 25,
    "speeds": 29,
-   "areas": 210,
+   "areas": 206,
    "immunity": 90,
-   "objects": 392,
-   "speech": 130,
+   "objects": 391,
+   "speech": 129,
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 110,
@@ -64,13 +64,13 @@
    "dying": 77,
    "choice": 111,
    "several": 107,
-   "strike": 198,
+   "strike": 196,
    "reader": 216,
    "spells": 76,
    "information": 199,
    "actions": 63,
    "from-events": 29,
-   "no-rules": 18,
+   "no-rules": 19,
    "situational": 86,
    "creatures": 72,
    "mind": 64,
@@ -2366,16 +2366,6 @@
    ]
   },
   {
-   "name": "Popdust",
-   "kind": "consumable",
-   "result": "none",
-   "main": "areas",
-   "work": "first creature that applies",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Belt of Giant Strength",
    "kind": "activation",
    "result": "none",
@@ -2935,13 +2925,10 @@
   {
    "name": "Alarm Snare",
    "kind": "consumable",
-   "result": "none",
-   "main": "areas",
-   "work": "trip wire",
+   "result": "partial",
+   "main": "no-rules",
    "needs": [
-    "areas",
-    "objects",
-    "speech"
+    "no-rules"
    ]
   },
   {
@@ -9107,18 +9094,6 @@
     "actions",
     "afflictions",
     "reader"
-   ]
-  },
-  {
-   "name": "Magnetite Scope (Greater)",
-   "kind": "activation",
-   "activation": "Expansion",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "strike"
    ]
   },
   {
@@ -15444,18 +15419,6 @@
     "immunity",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Magnetite Scope",
-   "kind": "activation",
-   "activation": "Expansion",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "strike"
    ]
   },
   {
