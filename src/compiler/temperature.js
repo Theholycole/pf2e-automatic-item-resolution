@@ -177,15 +177,16 @@ export function auraOf(text, rules = []) {
 }
 
 // (The environment module's flag on an Effect: what the creature with it feels.)
+// (where "underwater": it holds only while the creature is underwater, Faydhaan's Dallah's coffee — the core's 6a14f09, 2026-10-27.)
 export function temperatureFlag(reading, source) {
-    return { counts: reading.counts, ...(reading.fatigueHours ? { fatigueHours: reading.fatigueHours } : {}), source };
+    return { counts: reading.counts, ...(reading.fatigueHours ? { fatigueHours: reading.fatigueHours } : {}), ...(reading.where ? { where: reading.where } : {}), source };
 }
 
 // A protection's line on the card: "Severe heat counts as mild heat; extreme heat counts as mild heat", "2 more hours before fatigue".
 export function temperatureText(reading) {
     const words = (key) => key.replace("-", " ");
     const counts = Object.entries(reading.counts ?? {}).map(([from, to]) => `${words(from).replace(/^./, (letter) => letter.toUpperCase())} counts as ${words(to)}`);
-    return [...counts, ...(reading.fatigueHours ? [`${reading.fatigueHours} more hours before travel fatigue`] : [])].join("; ");
+    return `${[...counts, ...(reading.fatigueHours ? [`${reading.fatigueHours} more hours before travel fatigue`] : [])].join("; ")}${reading.where ? ` (${reading.where} only)` : ""}`;
 }
 
 // A consumable's or an activation's plan with its protection (plan.temperature { counts, fatigueHours?, duration, only? }): the item card's

@@ -8,7 +8,8 @@
 // as a note. Now the save card at the creatures in the emanation: the failure's and the critical failure's note Effect for their time, with
 // PF2e's rules for what PF2e can play — the jaws Strike, +2 damage on unarmed Strikes, +2 status to saves against mental effects, the
 // imprecise bloodsense 30 feet, +10 feet status to Speed, –1 to AC — and the rest (whom it attacks, no weapons, no concentrate actions but Seek)
-// in its words, a behaviour beside those rules; the critical success's 24 hours' immunity (src/compiler/immunity.js reads it). Pure.
+// in its words, a behaviour beside those rules; the critical success's 24 hours' immunity (src/compiler/immunity.js reads it). Its
+// incapacitation: the ability module's save card's, from the plan's traits — PF2e's own degree change at the horn's level (ability 79db4dd). Pure.
 
 import { plainText } from "./rows.js";
 import { withImmunity } from "./immunity.js";
@@ -59,7 +60,6 @@ export function withCannibalCall(plan, html, itemHtml = "") {
         },
         notes: [
             ...(plan.notes ?? []),
-            `Incapacitation: a creature above level ${Number(plan.item?.level) || "the horn's"} treats its save as one degree better.`,
             ...(OWNER.test(plainText(itemHtml)) ? ["If its owner doesn't use it on sapient creatures at least once a day, the horn activates on them at a time of its own choosing (the GM's): they critically fail, with no save."] : [])
         ]
     }, html, { name: plan.source?.name });

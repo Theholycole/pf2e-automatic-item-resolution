@@ -120,7 +120,9 @@ const READINGS = [
     },
     {
         // (A coffee its drinkers breathe water with for 8 hours: an Effect on each creature targeted, its name the environment module's water
-        // breathing; its underwater temperatures in its words, the brewing, pouring and keeping of the coffee the card's lines.)
+        // breathing; its underwater temperatures the environment module's protection that holds only underwater (plan.temperature where
+        // "underwater", the core's 6a14f09: mild and severe heat and cold count as normal) — the brewing, pouring and keeping of the coffee the
+        // card's lines.)
         name: "Faydhaan's Dallah: Brew",
         sentences: [
             /^You place a handful of beans in the dallah, and it immediately grinds the beans, fills with water, and brews six cups' worth of coffee\.$/,
@@ -129,9 +131,12 @@ const READINGS = [
             /^The coffee can later be transmuted using the dallah's other activation, but this latent magic ends if the dallah is used to brew coffee again\.$/,
             /^Coffee poured from the dallah stays in its vessel until someone drinks it or deliberately pours it out, even if the vessel is in an environment where the coffee would normally escape, such as underwater\.$/
         ],
-        card: ([, , drinks]) => ownRow({
+        card: ([, , drinks]) => ({
+            ...ownRow({
             notes: ["It brews six cups of coffee: pouring a cup into a vessel and drinking one each take an Interact action. Target the creatures that drink a cup, then press Apply.", "Poured coffee stays in its vessel until drunk or poured out, even underwater; Faydhaan's Hospitality can transmute it later, until the dallah brews again."],
-            item: { recipient: "targets", ruleEffects: [{ name: "water breathing", words: "Can breathe underwater, and is protected from mild and severe temperatures in underwater environments", rules: [], duration: timeOf(drinks[1], drinks[2]) }] }
+            item: { recipient: "targets", ruleEffects: [{ name: "water breathing", words: "Can breathe underwater", rules: [], duration: timeOf(drinks[1], drinks[2]) }] }
+            }),
+            temperature: { counts: { "mild-cold": "normal", "severe-cold": "normal", "mild-heat": "normal", "severe-heat": "normal" }, where: "underwater", duration: timeOf(drinks[1], drinks[2]) }
         })
     },
     {

@@ -150,7 +150,8 @@ test("Horn of the Aoyin's Cannibal Call: a DC 30 Will card in its 60-foot emanat
     assert.deepEqual(rage.rules.map((rule) => [rule.key, rule.selector ?? rule.slug, rule.value ?? rule.range ?? rule.damage?.base?.die]), [["Strike", "aoyin-jaws", "d8"], ["FlatModifier", "strike-damage", 2], ["FlatModifier", "saving-throw", 2], ["Sense", "bloodsense", 30], ["FlatModifier", "land-speed", 10], ["FlatModifier", "ac", -1]]);
     assert.deepEqual(horn.trigger.immunity.degrees, ["criticalSuccess"]);
     assert.ok(horn.traits.includes("incapacitation"));
-    assert.ok(horn.notes.some((note) => /above level 13/.test(note)) && horn.notes.some((note) => /critically fail, with no save/.test(note)));
+    // (Its incapacitation: since 2026-10-27 the ability module's save card's, from the plan's traits — no line of its own.)
+    assert.ok(!horn.notes.some((note) => /above level 13/.test(note)) && horn.notes.some((note) => /critically fail, with no save/.test(note)) && horn.traits.includes("incapacitation"));
 });
 
 test("words on an Effect for what PF2e can't play: Infiltrator's Elixir's disguise beside its +4, Look-Me-Not's untrained Feint and reactionless Strikes beside its +2, Sinister Knight's disguise until dismissed, Scope of Truth's 10 minutes of the GM's secret counteracts", () => {

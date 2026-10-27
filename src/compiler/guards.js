@@ -8,11 +8,12 @@ import { durationIn, selectorsOf } from "./rows.js";
 
 const VALUED = new Set(["clumsy", "doomed", "drained", "enfeebled", "frightened", "sickened", "slowed", "stunned", "stupefied", "wounded"]);
 
-const unvalued = (effect) => effect?.kind === "condition" && VALUED.has(effect.slug) && !Number.isFinite(effect.value) && !(effect.slug === "stunned" && effect.duration) && effect.recipient !== "self";
+const unvalued = (effect) => effect?.kind === "condition" && VALUED.has(effect.slug) && !Number.isFinite(effect.value) && !effect.valueRoll && !(effect.slug === "stunned" && effect.duration) && effect.recipient !== "self";
 
 // (A value the text leaves out while another row gives one higher, The Desert's "Fatigued and enfeebled for 1 minute" beside its critical
 // failure's Enfeebled 2: 1, the user's answer to question 5 (2026-10-26) — a line of the card saying the GM may change it. Not one the text
-// rolls, Guise of the Smirking Devil's "Drained [[/r 1d4]]": its roll, a note still. text: the item's html, else no default.)
+// rolls, Guise of the Smirking Devil's "Drained [[/r 1d4]]": that roll the effect's valueRoll, which the ability module's save card rolls for
+// each creature on Apply (ability 79db4dd, 2026-10-27). text: the item's html, else no default.)
 const DEGREE_NAMES = { criticalSuccess: "critical success", success: "success", failure: "failure", criticalFailure: "critical failure" };
 function guardOutcomes(resolution, text = null) {
     if (!resolution?.outcomes) return null;
@@ -21,7 +22,14 @@ function guardOutcomes(resolution, text = null) {
     const defaulted = [];
     const higher = (slug) => Object.values(resolution.outcomes).some((row) => (row?.effects ?? []).some((effect) => effect?.slug === slug && Number(effect.value) > 1));
     const rolled = (slug) => new RegExp(String.raw`\{${slug}\}\s*\[\[/r|\b${slug} \[\[/r`, "i").test(String(text ?? ""));
-    for (const [degree, row] of Object.entries(resolution.outcomes)) {
+    const rollOf = (slug) => new RegExp(String.raw`(?:\{${slug}\}|\b${slug})\s*\[\[/r\s*(\d+d\d+(?:\s*[+-]\s*\d+)?)\s*(?:#[^\]]*)?\]\]`, "i").exec(String(text ?? ""))?.[1]?.replace(/\s+/g, "") ?? null;
+    for (let [degree, row] of Object.entries(resolution.outcomes)) {
+        // (Its rolled ones first: their valueRoll, and no longer unvalued.)
+        const withRolls = (row?.effects ?? []).map((effect) => (unvalued(effect) && rollOf(effect.slug) ? { ...effect, valueRoll: rollOf(effect.slug) } : effect));
+        if (withRolls.some((effect, index) => effect !== row.effects[index])) {
+            changed = true;
+            row = { ...row, effects: withRolls };
+        }
         const unvaluedHere = (row?.effects ?? []).filter(unvalued);
         if (!unvaluedHere.length) {
             outcomes[degree] = row;
