@@ -6455,6 +6455,40 @@ export const cases = {
         throw new Error(`no success in ${degrees.length} saves (${degrees.join(", ")})`);
     },
 
+    // Storm Arrow (2026-10-27): shot from a shortbow with a shock rune — the strike card says the rune's damage is off, its save card is DC 27, the
+    // Strike's own damage roll has no electricity (the shock rune's dice none for it), and the save's own 3d12 electricity is dealt.
+    async stormArrowShock(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Storm Archer", { type: "character", x: 8, y: 14 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Storm Target", { x: 9, y: 14, ac: -20, hp: 200, alliance: "opposition", save: -30 });
+        const bow = await give(archer, "Shortbow");
+        await bow.update({ "system.runes.potency": 1, "system.runes.property": ["shock"] });
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const arrows = await give(archer, "Storm Arrow");
+        await arrows.update({ "system.baseItem": "arrows" });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        assert(/No shock rune damage on it/.test(card.content), `the card's line (${card.content.replace(/<[^>]+>/g, " ").slice(0, 300)})`);
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        since = Date.now();
+        const { action, attack } = await strike(archer, bow);
+        const save = await messageAfter(since, abilitySaveCard, { what: "the arrow's save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.against.value === 27, `DC 27 from the shock rune's bow (${JSON.stringify(check)})`);
+        since = Date.now();
+        await (attack.flags.pf2e.context.outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
+        const damage = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the Strike's damage roll" });
+        const formula = damage.rolls?.[0]?.formula ?? "";
+        assert(formula && !/electricity/i.test(formula), `no shock rune electricity in the Strike's damage (${formula})`);
+        const hp = foe.system.attributes.hp.value;
+        await rollAndApply(save);
+        await until(() => hp - foe.system.attributes.hp.value >= 6, `the save's 3d12 electricity, doubled (${hp} → ${foe.system.attributes.hp.value})`, { timeout: 8000 });
+        return { formula, check: check.against.value, taken: hp - foe.system.attributes.hp.value };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

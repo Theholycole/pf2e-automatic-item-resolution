@@ -318,6 +318,7 @@ function withOwnRuleDamage(plan, item) {
     return { ...plan, strike: { ...plan.strike, notes: left, ownRules: said.map((note) => String(note).trim().replace(/^On a hit, the attack deals /i, "").replace(/\.$/, "")) }, ...(plan.partial && !leftAll.length ? { partial: undefined, automation: { level: "automatic" } } : {}) };
 }
 
+const RUNE_DC = /^If this (?:arrow|bolt|bullet|ammunition) is (?:shot|fired) from a weapon with an? (\w+) property rune, the save DC increases to (\d+), though the attack doesn't benefit from the \1 property rune itself\.$/i;
 const LIFESENSE_LOST = /^An undead affected by an? [\w' ]+? further loses any lifesense ability it might have had for the same duration as the (deafening|blinding)\.$/i;
 // (Its note Effect for an undead on the rows that give that condition, its time theirs.)
 function withLifeless(plan) {
@@ -366,6 +367,11 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
     const criticalTime = longer ? { value: Number(longer[3]), unit: /^min/i.test(longer[4]) ? "minutes" : "rounds" } : null;
     // (An undead's lifesense lost beside, its "An undead affected by a rattling bolt further loses any lifesense ability it might have had for
     // the same duration as the deafening": a note Effect on the failing rows for an undead, plan.ifTarget — src/live/if-target.js.)
+    // (Shot from a weapon with a property rune, Storm Arrow's "If this arrow is shot from a weapon with a shock property rune, the save DC
+    // increases to 27, though the attack doesn't benefit from the shock property rune itself": strike.runeDC, the save's DC then (scripts/strikes.js),
+    // and strike.withoutRune, that rune's dice off the Strike's damage (src/live/strike-card.js), 2026-10-27.)
+    const runed = save ? extras.notes.map((note) => [note, RUNE_DC.exec(String(note).trim())]).find(([, match]) => match) : null;
+    if (runed) extras.notes = extras.notes.filter((note) => note !== runed[0]);
     const lifeless = save ? extras.notes.find((note) => LIFESENSE_LOST.test(String(note).trim())) : null;
     if (lifeless) extras.notes = extras.notes.filter((note) => note !== lifeless);
     // (Its flavor in the hit's words, "On a hit, the rattling transfers into that creature's body": no rule.)
@@ -430,7 +436,7 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
         },
         // (A weapon's own Strike, riders alone or not: Gloaming Arc's "Attempt a melee Strike with the gloaming arc", Growth Gun's "Make a
         // ranged Strike" — only a Strike with it carries them.)
-        strike: { range: strike.range, save: save ? { ...(lifeless ? withLifeless(save.plan) : save.plan), ...(wipe ? { endEarly: wipe[1] } : {}) } : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(save && criticalTime ? { criticalTime } : {}), ...(worse ? { criticalWorse: [worse[1][1].toLowerCase()] } : {}), ...(penalty ? { criticalSaveBonus: { value: -Number(penalty[1][1]), type: penalty[1][2].toLowerCase() } } : {}), ...(against ? { against } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
+        strike: { range: strike.range, save: save ? { ...(lifeless ? withLifeless(save.plan) : save.plan), ...(wipe ? { endEarly: wipe[1] } : {}) } : null, ...(critical ? { criticalDC: Number(critical[1][3]) } : {}), ...(save && criticalTime ? { criticalTime } : {}), ...(worse ? { criticalWorse: [worse[1][1].toLowerCase()] } : {}), ...(penalty ? { criticalSaveBonus: { value: -Number(penalty[1][1]), type: penalty[1][2].toLowerCase() } } : {}), ...(runed ? { runeDC: { rune: runed[1][1].toLowerCase(), dc: Number(runed[1][2]), said: runed[0] }, withoutRune: runed[1][1].toLowerCase() } : {}), ...(against ? { against } : {}), ...(item?.type === "weapon" && !strike.unarmed ? { own: true } : {}), ...extra, ...(strike.ammo ? { ammo: true, notes: extras.notes } : strike.wordsAmmo ? { notes: extras.notes, ...(strike.ammunition ? { ammunition: strike.ammunition } : {}) } : {}), ...(cast ? { cast } : {}), ...(follow ? { follow } : {}) },
         ...(((extras.read || strike.ammo || strike.wordsAmmo) && extras.notes.length) || follow?.notes?.length ? { partial: true } : {})
     };
 }

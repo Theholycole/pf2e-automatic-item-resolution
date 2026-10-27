@@ -198,8 +198,12 @@ export async function strikeWithRider(message) {
     // (A critical hit's harder save, Blister Ammunition's: its DC then.)
     const plain = rider.plan.strike?.save;
     const harder = plain && rider.plan.strike.criticalDC && context.outcome === "criticalSuccess" ? { ...plain, resolution: { ...plain.resolution, check: { ...plain.resolution.check, against: { ...plain.resolution.check.against, value: rider.plan.strike.criticalDC } } } } : plain;
+    // (Shot from a weapon with that property rune, Storm Arrow's shock: its DC then.)
+    const runeDC = harder ? rider.plan.strike.runeDC : null;
+    const bow = runeDC ? message.item ?? (message.flags?.pf2e?.origin?.uuid ? await fromUuid(message.flags.pf2e.origin.uuid).catch(() => null) : null) : null;
+    const runed = runeDC && (bow?.system?.runes?.property ?? []).includes(runeDC.rune) ? { ...harder, resolution: { ...harder.resolution, check: { ...harder.resolution.check, against: { ...harder.resolution.check.against, value: runeDC.dc } } } } : harder;
     // (After a critical hit only its critical success escapes, Rhino Shot's: the failure's conditions on the success row too.)
-    const worsened = harder && (rider.plan.strike.criticalWorse ?? []).length && context.outcome === "criticalSuccess" ? criticalWorse(harder, rider.plan.strike.criticalWorse) : harder;
+    const worsened = runed && (rider.plan.strike.criticalWorse ?? []).length && context.outcome === "criticalSuccess" ? criticalWorse(runed, rider.plan.strike.criticalWorse) : runed;
     // (After a critical hit, a penalty to the save, Blindpepper Bolt's: the core's own save bonus.)
     const worse = worsened && rider.plan.strike.criticalSaveBonus && context.outcome === "criticalSuccess" ? { ...worsened, resolution: { ...worsened.resolution, check: { ...worsened.resolution.check, bonus: rider.plan.strike.criticalSaveBonus } } } : worsened;
     // (Its conditions longer after a critical hit, Rattling Bolt's 1 minute: each of the save's rows' times then, src/compiler/strikes.js.)
@@ -306,7 +310,7 @@ async function strikeInstead({ message, context, actor, effect, rider, what }) {
 
 // PF2e's damage roll of a Strike by a creature whose readied Strike carries extra dice: that Strike's damage is rolled, so
 // it's spent (with its Effect's rules in the roll). The item's own weapon must be the one rolled.
-const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash);
+const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.withoutRune || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash);
 async function damageWithRider(message) {
     const context = message.flags.pf2e.context;
     if (context.sourceType !== "attack") return;

@@ -190,7 +190,9 @@ export function bombSave(item, { scope: given = null } = {}) {
     const flatChecks = usable(read) ? read.castFlatCheck ?? null : null;
     if (usable(read)) read = { ...asRowCopies(read, text), ...(flatChecks ? { castFlatCheck: flatChecks } : {}) };
     const resolution = usable(read)
-        ? { check: read.resolution.check, outcomes: read.resolution.outcomes, ...(read.resolution.afflictionHandoff ? { afflictionHandoff: read.resolution.afflictionHandoff } : {}) }
+        // (Its own damage too when its rows deal a share of it — Storm Arrow's 3d12 electricity, Corpsecaller Round's 4d10 void, a damage of the
+        // save's, not the Strike's: its components, which the rows' shares are of. 2026-10-27.)
+        ? { check: read.resolution.check, outcomes: read.resolution.outcomes, ...(read.resolution.afflictionHandoff ? { afflictionHandoff: read.resolution.afflictionHandoff } : {}), ...(read.resolution.sharedDamage && Object.values(read.resolution.outcomes ?? {}).some((row) => row?.damage?.mode === "shared" && (row.damage.sourceComponentIds ?? []).length) ? { sharedDamage: read.resolution.sharedDamage } : {}) }
         : plainSave(html, text);
     if (!resolution) return null;
     return {

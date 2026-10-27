@@ -177,6 +177,17 @@ test("what a row makes a creature drop of what it holds (2026-10-27): Deadweight
     assert.match(dropCardHTML(card, { canApply: true }), /data-air-drop="0:0" checked.*data-air-drop="0:1">/s);
 });
 
+test("a property rune's DC and dice (2026-10-27): Storm Arrow from a shock-rune weapon — DC 27, the rune's dice none for the Strike; its own 3d12 kept for the save (Corpsecaller Round's 4d10 too)", async () => {
+    const { strikeRules } = await import("../src/live/strike-card.js");
+    const [{ plan: arrow }] = compileActivations(item("Storm Arrow"), options);
+    assert.deepEqual([arrow.strike.runeDC.rune, arrow.strike.runeDC.dc, arrow.strike.withoutRune, arrow.strike.notes, arrow.partial], ["shock", 27, "shock", [], undefined]);
+    assert.equal(arrow.strike.save.resolution.sharedDamage.components[0].formula, "3d12[electricity]");
+    const rule = strikeRules(arrow, { weaponId: "bow", label: "Storm Arrow" }).find((entry) => entry.key === "DamageAlteration");
+    assert.deepEqual([rule.property, rule.value, rule.slug, rule.mode], ["dice-number", 0, "shock", "override"]);
+    const [{ plan: round }] = compileActivations(item("Corpsecaller Round"), options);
+    assert.equal(round.strike.save.resolution.sharedDamage.components[0].formula, "4d10[void]");
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);
