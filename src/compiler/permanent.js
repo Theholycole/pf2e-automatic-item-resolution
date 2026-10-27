@@ -314,6 +314,7 @@ function sharedAttacks(entries) {
 // Points; reduce the value of your Clumsy, Enfeebled, or Stupefied conditions by 1; or reduce the stage of one toxin or disease you're
 // suffering by one stage (…)". The ways card's pick, each way its own activation compiled alone ("You regain … Hit Points", "You reduce
 // …"); a way nothing reads stays a note, and the plan is partial then.
+const STAGE_DOWN = /^reduce the stage of one ((?:toxin|poison|disease)(?: or (?:toxin|poison|disease))?) you're suffering by (one|\d) stages? \(this can't reduce the stage below stage 1 or cure the affliction\)$/i;
 const CHOOSE_EFFECTS = /\bChoose one of the following effects:\s*((?:[^.(]|\([^)]*\)|\.(?=\d))+)\./i;
 function chosenEffectsPlan(html, base, item, options, own = null) {
     // (Its links as their words: a condition's link has periods in it.)
@@ -324,6 +325,15 @@ function chosenEffectsPlan(html, base, item, options, own = null) {
     const ways = [];
     const left = [];
     for (const option of options_) {
+        // (A toxin's or disease's stage lowered, "reduce the stage of one toxin or disease you're suffering by one stage (this can't reduce the
+        // stage below stage 1 or cure the affliction)": the item card's, item.afflictionStage — scripts/foundry.js lowerAfflictionStage.)
+        const stage = STAGE_DOWN.exec(option);
+        if (stage) {
+            const traits = stage[1].split(/\s+or\s+/).map((word) => (/^toxin$/i.test(word) ? "poison" : word.toLowerCase()));
+            const plan = { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] } } }, item: { ...(base.item ?? {}), activation: own ?? base.item?.activation, afflictionStage: { traits, by: Number(stage[2] === "one" ? 1 : stage[2]), min: 1 } } };
+            ways.push({ name: `Reduce the stage of one ${stage[1]} by one`, html: `<p>You ${option.charAt(0).toLowerCase()}${option.slice(1)}.</p>`, plan });
+            continue;
+        }
         const body = /^restore (@Damage\[.*?\]\])(?:\s+Hit Points)?$/i.exec(option);
         const sentence = body ? `You regain ${body[1]} Hit Points.` : `You ${option.charAt(0).toLowerCase()}${option.slice(1)}.`;
         const [entry] = compileEach({ ...item, system: { ...(item.system ?? {}), description: { value: `<p><strong>Activate</strong> <span class="action-glyph">1</span></p><p><strong>Effect</strong> ${sentence}</p>` } } }, options);

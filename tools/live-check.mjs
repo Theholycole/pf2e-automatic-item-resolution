@@ -3496,6 +3496,36 @@ export const cases = {
         return { land, fly, duration: effect.system.duration };
     },
 
+    // Heartripper Blade's siphon (2026-10-27): its ways card's third way lowers its wielder's poison (Pseudo Afflictions' Viper Venom) from stage 2
+    // to 1 — and not below stage 1 the next time.
+    async heartripperStage(scene) {
+        const { actor: wielder } = await creature(scene, "Heartripper Wielder", { type: "character", x: 16, y: 14, level: 5 });
+        const pack = game.packs.get("pseudo-afflictions.effects");
+        const entry = pack ? (await pack.getIndex()).find((row) => /Viper Venom/.test(row.name)) : null;
+        assert(entry, "Pseudo Afflictions' Viper Venom");
+        const venom = (await pack.getDocument(entry._id)).toObject();
+        delete venom._id;
+        const [affliction] = await wielder.createEmbeddedDocuments("Item", [venom]);
+        await affliction.update({ "system.badge.value": 2 });
+        const blade = await give(wielder, "Heartripper Blade");
+        await blade.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const stage = () => wielder.items.get(affliction.id)?.system?.badge?.value ?? null;
+        const results = [];
+        for (const expected of [1, 1]) {
+            let since = Date.now();
+            await game.modules.get(NS).api.live.activate(blade.uuid, 1);
+            const ways = await messageAfter(since, itemCard("ways"), { what: "the ways card" });
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(ways.id, { choice: 2 });
+            const card = await messageAfter(since, itemCard("item"), { what: "the stage card" });
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+            await wait(1000);
+            assert(stage() === expected, `stage ${expected} (${stage()})`);
+            results.push(...game.messages.get(card.id).getFlag(NS, "card").results);
+        }
+        return { results };
+    },
+
     // Quenching Potion (2026-10-27): its new save against the drinker's poison (Pseudo Afflictions' Viper Venom at stage 2, its Fortitude save
     // at +30): a success lowers it a stage, a critical success two (ending it); the card says which.
     async quenchPoisonSave(scene) {

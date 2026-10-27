@@ -297,6 +297,11 @@ test("a Strike whose hit sets off one of several songs (2026-10-27): Singing Sho
     assert.deepEqual([soothing.radius, soothing.plan.resolution.outcomes.success.effects[0], soothing.plan.resolution.outcomes.success.nativeEffects[0].label, suffering.plan.resolution.check.statistic, suffering.plan.resolution.check.basic], [10, { kind: "heal", formula: "3d10" }, "Effect: Song of Soothing", "fortitude", true]);
 });
 
+test("a toxin's or disease's stage lowered, one of its choices (2026-10-27): Heartripper Blade's siphon — the ways card's third way, item.afflictionStage", async () => {
+    const [, { plan: siphon }] = compileActivations(item("Heartripper Blade"), options);
+    assert.deepEqual([siphon.ways.length, siphon.ways[2].plan.item.afflictionStage, siphon.notes, siphon.partial], [3, { traits: ["poison", "disease"], by: 1, min: 1 }, undefined, undefined]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

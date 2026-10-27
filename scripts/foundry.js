@@ -207,6 +207,21 @@ export async function afflictionSaves(actor, name, { traits = [], noWorse = fals
     return lines;
 }
 
+// One affliction of those traits lowered (src/compiler/permanent.js: Heartripper Blade's "reduce the stage of one toxin or disease you're
+// suffering by one stage (this can't reduce the stage below stage 1 …)"): the Pseudo Afflictions one at the highest stage above the minimum,
+// its badge lowered, never below it — Pseudo Afflictions gives that stage's conditions.
+export async function lowerAfflictionStage(actor, name, { traits = [], by = 1, min = 1 } = {}) {
+    const found = afflictionsOf(actor).filter((one) => one.document?.flags?.[PSEUDO_AFFLICTIONS]?.stages && traits.some((trait) => one.traits.includes(trait) || one.document.traits?.has?.(trait)));
+    const stageOf = (one) => Number(one.document.system?.badge?.value) || 1;
+    const above = found.filter((one) => stageOf(one) > min).sort((a, b) => stageOf(b) - stageOf(a));
+    if (!found.length) return [`${name} has no ${traits.join(" or ")} affliction to lower.`];
+    if (!above.length) return [`${name}: ${found.map((one) => one.name).join(", ")} already at stage ${min}; it can't go lower this way.`];
+    const one = above[0];
+    const next = Math.max(min, stageOf(one) - by);
+    await one.document.update({ "system.badge.value": next });
+    return [`${name}: ${one.name} down to stage ${next}${above.length > 1 ? ` (the highest of ${above.length}; change another on the sheet if you'd rather)` : ""}`];
+}
+
 export async function recover(actor, name, recovery) {
     const persistent = () => (actor?.itemTypes?.condition ?? []).filter((condition) => condition.slug === "persistent-damage" && recovery.types.includes(condition.system?.persistent?.damageType));
     const found = persistent();
