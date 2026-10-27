@@ -66,7 +66,7 @@ import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
 import { isSpecialItem, withDecided } from "./decided.js";
-import { effectWords, withLastingReading } from "./lasting.js";
+import { effectWords, hasLastingReading, withLastingReading } from "./lasting.js";
 import { withTemperature } from "./temperature.js";
 import { readFoam, withFalls } from "./falls.js";
 import { readShieldTemp } from "./shield-temp.js";
@@ -277,7 +277,7 @@ export function compileItem(given, options = {}) {
 // (Sustained, repeating and later effects the readers before left whole, src/compiler/lasting.js: a note Effect and the card's lines — last,
 // over what the user's rulings left.)
 function lastingOf(plan, given) {
-    if (!given?.name) return plan;
+    if (!hasLastingReading(given?.name)) return plan;
     return withLastingReading(plan, { name: given.name, words: effectWords(given.system?.description?.value, "consumable"), base: basePlan(given), info: itemInfo(given) });
 }
 

@@ -92,7 +92,7 @@ import { perceptionCheckPlan } from "./perception-check.js";
 import { offGuardNextPlan } from "./off-guard-next.js";
 import { preventConditionPlan } from "./prevent-condition.js";
 import { withStartTurnHeal } from "./turn-heals.js";
-import { activationBase, effectWords, withLastingReading } from "./lasting.js";
+import { activationBase, effectWords, hasLastingReading, withLastingReading } from "./lasting.js";
 import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { counteractLeaves, readCounteract, withCounteractLeaves } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
@@ -232,6 +232,7 @@ export function compileActivations(item, options = {}) {
 // (Sustained, repeating and later effects the readers before left whole, src/compiler/lasting.js: a note Effect and the card's lines — last,
 // over what the user's rulings left.)
 function lastingOf(item, entry, plan) {
+    if (!hasLastingReading(`${item.name}${entry.activation?.name ? `: ${entry.activation.name}` : ""}`)) return plan;
     const { base, info, frequency } = activationBase(item, entry);
     return withLastingReading(plan, { name: base.source.name, words: effectWords(entry.activation?.html, "activation"), base, info, frequency });
 }

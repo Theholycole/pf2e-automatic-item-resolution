@@ -305,6 +305,9 @@ const READINGS = [
     }
 ];
 
+// Whether a reading is for this source name (its words aren't worth reading otherwise).
+export const hasLastingReading = (name) => READINGS.some((entry) => entry.name === name);
+
 // Its sentences as one reading's, each matched in order → the matches, or null.
 function matched(reading, sentences) {
     if (sentences.length !== reading.sentences.length) return null;
