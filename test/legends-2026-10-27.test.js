@@ -23,6 +23,8 @@ import { heldBy } from "../scripts/hit-counteract.js";
 import { reflection, createCounteractCard, counteractCardHTML } from "../src/live/counteract-card.js";
 import { planFor } from "../src/live/if-target.js";
 import { riderFor } from "../src/live/strike-card.js";
+import { etchedCritRiders, riderFits } from "../src/compiler/rune-strikes.js";
+import { isSapient, soulBindingRiders } from "../src/compiler/soul-binding.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
@@ -259,4 +261,20 @@ test("Shot of the First Vault: its fragments torn out (15 persistent bleed, Clum
     assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => (save.resolution.outcomes[degree].noteEffects ?? []).map((note) => note.label)), [[], ["Hurled by the shot"], ["Sent to Axis"], ["In the First Vault"]]);
     // (Its save on a hit and on a failure, not on a critical failure.)
     assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((outcome) => riderFor(deposit, { ranged: true, outcome })), ["hit", "hit", "failure", "spend"]);
+});
+
+test("Whisperer of Souls' soul binding: a critical hit or a kill on a sapient creature of 18th level or higher, its DC 50 Fortitude save draining it", () => {
+    const glaive = item("Whisperer of Souls");
+    const riders = soulBindingRiders(glaive);
+    assert.deepEqual(riders.map((rider) => [rider.on, rider.only]), [["critical", { minLevel: 18, sapient: true }], ["felled", { minLevel: 18, sapient: true }]]);
+    const { plan } = riders[0];
+    assert.deepEqual([plan.resolution.check.statistic, plan.resolution.check.against.value], ["fortitude", 50]);
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => plan.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`)), [[], ["drained 1"], ["drained 2"], ["drained 4"]]);
+    assert.match(plan.resolution.outcomes.success.noteEffects[0].text, /soul is bound in the glaive/);
+    // (Its critical hit's: the weapon's own riders, as its runes' are.)
+    assert.deepEqual(etchedCritRiders(glaive).filter((rider) => rider.only?.sapient).length, 1);
+    assert.deepEqual([riderFits(riders[0], { level: 19, traits: ["humanoid"], int: 2 }), riderFits(riders[0], { level: 17, traits: ["humanoid"] }), riderFits(riders[0], { level: 20, traits: ["mindless"] }), riderFits(riders[0], { level: 20, traits: ["beast"], int: -4 })], [true, false, false, false]);
+    assert.deepEqual([isSapient({ traits: [], int: null }), isSapient({ traits: [], int: -3 })], [true, true]);
+    // (Another weapon reads none.)
+    assert.deepEqual(soulBindingRiders(item("Wintershot")), []);
 });

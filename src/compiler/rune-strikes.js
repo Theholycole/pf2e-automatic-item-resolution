@@ -12,6 +12,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { etchedKeys } from "./runes.js";
 import { ownerDCs } from "./item-data.js";
 import { wielderCritRiders } from "./wielder-riders.js";
+import { isSapient, soulBindingRiders } from "./soul-binding.js";
 
 // The sentence's critical-hit opening, and who it's for.
 // (A weapon's own, its name or kind in it: Mindlance's "When you critically succeed at an attack roll with a mindlance", Deathseeker's
@@ -93,7 +94,8 @@ export function runeCritRiders(rune) {
     });
     // (And those only for some wielders, in a section after an activation: Blessed Reformer's Redeemer Wielder — src/compiler/wielder-riders.js,
     // 2026-10-27.)
-    return [...riders, ...wielderCritRiders(rune)];
+    // (And a weapon's soul binding against a sapient creature of its level, Whisperer of Souls': src/compiler/soul-binding.js, 2026-10-27.)
+    return [...riders, ...wielderCritRiders(rune), ...soulBindingRiders(rune).filter((rider) => rider.on === "critical")];
 }
 
 // The item's own PF2e rules that add damage on a critical hit; a plan that only deals damage.
@@ -133,6 +135,9 @@ export function etchedCritRiders(weapon, index) {
 export function riderFits(rider, creature = {}) {
     const only = rider?.only;
     if (!only || only.note) return true;
+    // (A sapient creature of a level or higher, Whisperer of Souls': its level and its Intelligence, src/compiler/soul-binding.js.)
+    if (only.minLevel && !(Number(creature.level) >= only.minLevel)) return false;
+    if (only.sapient && !isSapient(creature)) return false;
     if (only.trait) return (creature.traits ?? []).includes(only.trait);
     if (only.condition === "bleed") return (creature.persistent ?? []).includes("bleed");
     if (only.condition) return (creature.conditions ?? []).includes(only.condition);
