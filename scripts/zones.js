@@ -4,7 +4,7 @@
 // the ability module's conjured token beside its user (its api.live.startConjure), or the GM's by hand.
 
 import { ABILITY_ID, MODULE_ID } from "./foundry.js";
-import { effectSource } from "../src/live/card.js";
+import { effectSource, lightEffectSource } from "../src/live/card.js";
 import { lightZone } from "./placed-light.js";
 import { pickConjured } from "./creature-pick.js";
 import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
@@ -20,6 +20,12 @@ export async function startItemZone({ plan, used, actor, token }) {
     if (plan.ownEffect?.uuid && actor) {
         const template = await fromUuid(plan.ownEffect.uuid).catch(() => null);
         if (template) await actor.createEmbeddedDocuments("Item", [effectSource(template.toObject(), { item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, flags: { [MODULE_ID]: { card: true } } })]);
+    }
+    // (Its light on its user while the zone lasts, Soulspark Candle's: PF2e's TokenLight on its user's Effect, the last one it gave gone — 2026-10-27.)
+    if (plan.ownLight && actor) {
+        const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.light && (effect.system?.context?.origin?.item ?? null) === (used.data.uuid ?? null)).map((effect) => effect.id);
+        if (old.length) await actor.deleteEmbeddedDocuments("Item", old);
+        await actor.createEmbeddedDocuments("Item", [lightEffectSource(plan.ownLight, { item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, moduleId: MODULE_ID })]);
     }
     if (startZone) {
         const started = await startZone({ item, plan, sourceToken: token?.document ?? token });

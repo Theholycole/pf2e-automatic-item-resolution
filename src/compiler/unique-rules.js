@@ -53,6 +53,17 @@
 //   with a FlatModifier when its user's own modifier with it is lower (scripts/live.js, as it's applied). Each Sustain is its user's own
 //   Strike with it (PF2e's multiple attack penalty as normal); its space, its 30 feet, grabs failing and its return to the hand, the map's, its
 //   words.
+// - A candle whose light is a consecrated area (withConsecratedLight, withPutOut, withLimned): Soulspark Candle's "When lit, the candle sheds
+//   bright light for 20 feet and dim light for a further 20 feet … The area within the candle's light is a consecrated space. Worshippers of
+//   Pharasma within this area gain a +3 status bonus to attack rolls, skill checks, saving throws, and Perception checks. Undead creatures and
+//   worshippers of Urgathoa within this area take a –3 status penalty to those checks." Lit ("You light the candle"): the ability module's
+//   zone around its user for as long as it burns, its rules on each creature inside as PF2e's own Effect: Soulspark Candle has them (by
+//   deity, PF2e's deity:primary and self:mode:undead), and plan.ownLight, PF2e's TokenLight on its user (scripts/zones.js). Put out ("You put
+//   out the candle with ritual prayers"): item.putsOut — the item's zones and light gone (scripts/live.js), its limned undead's Effects then a
+//   minute more. Its other words (black flame by undead, no snuffing by weather, no heat, never used up) are the zone's lines.
+//   Its undead limned ("All undead creatures in the area are limned in blue, heatless fire …"): a note Effect on each undead targeted (only
+//   those, plan.onlyAgainst; haunts aren't creatures), with its visibility words and its mark — the light's end gives it its minute.
+//   "The candle is lit": plan.gate.lit, refused unless its user has its light (scripts/live.js).
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -65,6 +76,8 @@ const effectOf = (html) => /\bEffect\b\s*(.*)$/s.exec(plainText(html).replace(/\
 const matches = (patterns, sentences) => patterns.length === sentences.length && patterns.every((pattern, at) => pattern.test(sentences[at]));
 const MINUTE = { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" };
 const hours = (value) => ({ mode: "fixed", value: Number(value), unit: "hours", expiry: "turn-start", anchor: "effect-start" });
+// (Nothing read for it yet: no plan, or the GM's no-effect.)
+const unread = (plan) => !plan || plan.builtin === "no-effect";
 const slugOf = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 // --- One more use of a feat its user just used -------------------------------------------------------------------------------------------------
@@ -237,7 +250,7 @@ function withSoilSummon(plan, { activation }) {
 const RETYPE = [/^You adjust the damage that [\w' -]+? deals before firing\.$/, /^[\w' -]+? ?'s damage type changes to either ((?:\w+, )*\w+,? or \w+) until you change the type again\.$/];
 function withDamageTypeWays(plan, { activation, index }, item) {
     const sentences = sentencesOf(effectOf(activation.html));
-    if (plan || item?.type !== "weapon" || !item.system?.slug || !matches(RETYPE, sentences)) return plan;
+    if (!unread(plan) || item?.type !== "weapon" || !item.system?.slug || !matches(RETYPE, sentences)) return plan;
     const types = RETYPE[1].exec(sentences[1])[1].split(/,\s*(?:or\s+)?|\s+or\s+/).map((type) => type.trim().toLowerCase()).filter(Boolean);
     const base = keptBase(plan, item, { activation, index });
     const way = (type) => {
@@ -272,13 +285,77 @@ function withFlyingGun(plan, { activation, index }, item) {
     return { ...ownCard(base, {}), item: { ...base.item, ruleEffects: [{ name: "flying on its own", words, rules, duration: { mode: "fixed", value: rounds, unit: "rounds", expiry: "turn-start" }, attackFloor: { value: floor, slug: item.system.slug } }] }, noteOnly: undefined };
 }
 
+// --- A candle whose light is a consecrated area -----------------------------------------------------------------------------------------------
+
+const SHEDS = /\bWhen lit, the [\w' -]+? sheds bright light for (\d+) feet and dim light for a further (\d+) feet\./i;
+const CONSECRATED = /\bThe area within the [\w' -]+?'s light is a consecrated space\. Worshippers of ([A-Z]\w+) within this area gain a \+(\d+) status bonus to attack rolls, skill checks, saving throws, and Perception checks\. Undead creatures and worshippers of ([A-Z]\w+) within this area take a [–-](\d+) status penalty to those checks\./i;
+const LIMN_MARK = "limned-in-candlelight";
+// Its light and its area's rules, from the item's own text: { bright, dim, rules, deities } or null.
+function candleOf(item) {
+    const text = plainText(item?.system?.description?.value);
+    const sheds = SHEDS.exec(text);
+    const area = CONSECRATED.exec(text);
+    if (!sheds || !area) return null;
+    const selector = ["attack", "skill-check", "saving-throw", "perception"];
+    const deity = (name) => `deity:primary:${name.toLowerCase()}`;
+    const rules = [
+        { key: "FlatModifier", predicate: [deity(area[1])], selector, slug: `${slugOf(item.name)}-${area[1].toLowerCase()}`, type: "status", value: Number(area[2]) },
+        { key: "FlatModifier", predicate: [{ or: [deity(area[3]), "self:mode:undead"] }], selector, slug: `${slugOf(item.name)}-undead`, type: "status", value: -Number(area[4]) }
+    ];
+    return { bright: Number(sheds[1]), dim: Number(sheds[1]) + Number(sheds[2]), rules, blessed: area[1], foe: area[3], bonus: Number(area[2]), penalty: Number(area[4]) };
+}
+const CANDLE_LINES = [
+    [/\bWhen an undead creature or a haunt comes within the light of an? [\w' -]+?, the candle's flame turns from red to black\b/i, "Its flame turns black, crackling and sparking, while an undead or a haunt is in its light (the GM says when)."],
+    [/\bThe candle can't be snuffed by weather, water, or accident but can be purposefully snuffed through ritual prayer\./i, "Weather, water or accident can't snuff it; only its own prayer puts it out (its other activation)."],
+    [/\bThe candle doesn't release heat and can't be used to start a fire\. The candle is never exhausted, regardless of how long it burns\./i, "It gives no heat, can't start a fire, and never burns down."]
+];
+const candleLines = (item) => CANDLE_LINES.filter(([pattern]) => pattern.test(plainText(item?.system?.description?.value))).map(([, line]) => line);
+
+function withConsecratedLight(plan, { activation, index }, item) {
+    const candle = candleOf(item);
+    if (!unread(plan) || !candle || !/^You light the [\w' -]+?\.$/.test(effectOf(activation.html))) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    const lines = [`Consecrated: within its light, worshippers of ${candle.blessed} get +${candle.bonus} status to attack rolls, skill checks, saves and Perception; undead and worshippers of ${candle.foe}, −${candle.penalty}.`, ...candleLines(item)];
+    return {
+        ...base,
+        builtin: "zone",
+        automation: { level: "automatic" },
+        actions: null,
+        targeting: { target: null, range: null, area: { type: "emanation", value: candle.dim } },
+        zone: { area: { type: "emanation", value: candle.dim }, centre: "self", range: null, lasts: null, untilReused: true, concealed: false, terrain: [], others: false, hazard: null, saves: [], damage: [], effect: null, modifiers: [], inside: [{ rules: candle.rules }], notes: lines },
+        ownLight: { bright: candle.bright, dim: candle.dim, duration: null, note: "until it's put out" }
+    };
+}
+
+const LIT = /^The candle is lit\b/i;
+function withPutOut(plan, { activation, index }, item) {
+    if (!unread(plan) || !candleOf(item) || !LIT.test(String(activation.requirements ?? "")) || !/^You put out the [\w' -]+? with ritual prayers to [A-Z]\w+\.$/.test(effectOf(activation.html))) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    return { ...ownCard(base, {}), item: { ...base.item, putsOut: { lingers: { option: LIMN_MARK, duration: MINUTE } } }, gate: { lit: true } };
+}
+
+const LIMNED = [
+    /^You command the candle to illuminate the dead\.$/,
+    /^All (undead) creatures in the area are limned in blue, heatless fire for as long as they remain in the area, plus 1 minute after they leave the area or the light goes out\.$/,
+    /^Visible undead can't be Concealed while limned in these flames\.$/,
+    /^Invisible undead are concealed while limned in these flames, rather than being undetected\.$/,
+    /^Haunts are unaffected by this light\.$/
+];
+function withLimned(plan, { activation, index }, item) {
+    const candle = candleOf(item);
+    if (!unread(plan) || !candle || !LIT.test(String(activation.requirements ?? "")) || !matches(LIMNED, sentencesOf(effectOf(activation.html)))) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    const text = "Limned in blue, heatless fire: while visible it can't be Concealed, and while Invisible it's Concealed rather than Undetected. It lasts while it's in the candle's light, and 1 minute more once it leaves the light (the map's: set this Effect to 1 minute then) or the light goes out.";
+    return { ...ownCard({ ...base, targeting: { target: "each undead in the candle's light", range: null, area: { type: "emanation", value: candle.dim } } }, { noteEffects: [{ label: "Limned in blue fire", text, duration: null, rules: [{ key: "RollOption", domain: "all", option: LIMN_MARK }] }] }), atTarget: true, onlyAgainst: { traits: ["undead"] }, gate: { lit: true }, notes: ["Target the undead in the candle's light (haunts aren't affected)."] };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned]) {
         const next = reader(plan, entry, item);
         if (next !== plan) return next;
     }

@@ -162,3 +162,17 @@ test("Kaldemash's Lament: flying on its own for 3 rounds — its targets Off-Gua
     assert.deepEqual(attackFloorRule(effect.attackFloor, 28, "Kaldemash's Lament"), { key: "FlatModifier", selector: "strike-attack-roll", predicate: ["item:slug:kaldemashs-lament"], type: "untyped", value: 3, label: "Kaldemash's Lament (+31)" });
     assert.equal(attackFloorRule(effect.attackFloor, 33, "Kaldemash's Lament"), null);
 });
+
+test("Soulspark Candle: lit, a 40-foot zone around its user with PF2e's deity rules for those inside and its light; put out by prayer; its undead limned", () => {
+    const [light, out, limn] = plans("Soulspark Candle");
+    assert.deepEqual([light.builtin, light.zone.area, light.zone.centre, light.zone.lasts, light.zone.untilReused, routeOf(light)], ["zone", { type: "emanation", value: 40 }, "self", null, true, "zone"]);
+    const [blessed, cursed] = light.zone.inside[0].rules;
+    assert.deepEqual([blessed.predicate, blessed.value, cursed.predicate, cursed.value], [["deity:primary:pharasma"], 3, [{ or: ["deity:primary:urgathoa", "self:mode:undead"] }], -3]);
+    assert.deepEqual(light.ownLight, { bright: 20, dim: 40, duration: null, note: "until it's put out" });
+    assert.ok(light.zone.notes.some((note) => /turns black/.test(note)));
+    assert.deepEqual([out.builtin, out.gate, out.item.putsOut.lingers.option, routeOf(out)], [undefined, { lit: true }, "limned-in-candlelight", "item"]);
+    assert.deepEqual([limn.atTarget, limn.onlyAgainst, limn.gate, routeOf(limn)], [true, { traits: ["undead"] }, { lit: true }, "save"]);
+    const [note] = success(limn).noteEffects;
+    assert.deepEqual([note.duration, note.rules[0].option], [null, "limned-in-candlelight"]);
+    assert.match(note.text, /Concealed rather than Undetected/);
+});

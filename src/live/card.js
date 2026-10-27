@@ -175,6 +175,8 @@ export function previewLines(state) {
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     // (PF2e's own rules on it, Mirrorblade's flanking.)
     for (const entry of plan?.item?.ruleEffects ?? []) lines.push(`${entry.words}${forTime(entry.duration)}`);
+    // (Put out, Soulspark Candle's prayer: its light and its areas end — 2026-10-27.)
+    if (plan?.item?.putsOut) lines.push(`Puts it out: its light and its area end${plan.item.putsOut.lingers ? `, and what its light marked lasts ${timeText(plan.item.putsOut.lingers.duration)} more` : ""}`);
     // (Another of its activations recharged: Smoldering Armor's Fire Shield.)
     if (plan?.item?.recharges) lines.push(`The ${plan.item.recharges.name} activation recharges (its uses given back)`);
     if (plan?.item?.mark) lines.push(markText(plan.item.mark));
