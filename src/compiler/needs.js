@@ -2,6 +2,9 @@
 // work, where that work lies, and the words that show it. An item gets every need its words show; its main need is the first in this
 // order (the most particular first). Pure.
 
+// Several patterns as one need's test: test() when any matches, exec() the first match in the text.
+const anyOf = (...patterns) => ({ test: (text) => patterns.some((pattern) => pattern.test(text)), exec: (text) => patterns.map((pattern) => pattern.exec(text)).filter(Boolean).sort((a, b) => a.index - b.index)[0] ?? null });
+
 export const NEEDS = [
     {
         id: "creatures",
@@ -131,7 +134,9 @@ export const NEEDS = [
         title: "Changes to a Strike",
         needs: "A change to the triggering or the next Strike (damage added on a hit, ignoring cover or concealment, a critical effect, reach, the multiple attack penalty), or a Strike the item makes with numbers of its own. Needs an Effect for the next Strike (roll options, DamageDice, AdjustStrike) that ends after it, or a Strike card.",
         where: "item reader + item live play",
-        test: /\b(?:(?:your|the|that|this|next|triggering) Strike|Strikes? (?:with|against|up to)|make a (?:melee |ranged )?Strike|attack rolls?\b|on a (?:critical )?hit\b|critical hits?\b|score a critical|damage rolls?\b|multiple attack penalty|reach (?:increases|of|by)|the attack (?:deals|gains|ignores)|ignores? (?:the target's )?(?:cover|concealment|circumstance bonus to AC)|uses the [\w' ]+ statistics|range increment|damage dice?\b|damage die\b|martial (?:ranged |melee )?weapon|Retributive Strike|[A-Z][a-z]+ Strike\b)\b/i
+        // (The action as PF2e writes it, "Strike" capitalized — "your Strike", "make a melee Strike", "Retributive Strike" —: "strike the
+        // chime", "strike two links together", the verb, aren't one; the rest in any case. 2026-10-27.)
+        test: anyOf(/\b(?:Strikes? (?:with|against|up to)|[A-Za-z][a-z]+ Strike)\b/, /\b(?:attack rolls?\b|on a (?:critical )?hit\b|critical hits?\b|score a critical|damage rolls?\b|multiple attack penalty|reach (?:increases|of|by)|the attack (?:deals|gains|ignores)|ignores? (?:the target's )?(?:cover|concealment|circumstance bonus to AC)|uses the [\w' ]+ statistics|range increment|damage dice?\b|damage die\b|martial (?:ranged |melee )?weapon)\b/i)
     },
     {
         id: "actions",
@@ -224,7 +229,7 @@ export const NEEDS = [
         title: "Objects and the item itself",
         needs: "What the card targets or changes isn't a creature: a lock, door, rope, container, an unattended object's Hardness and Hit Points, the item turning into another item or making one, its ammunition, charges or runes. Needs object targets on the card and item updates (create, transform, repair).",
         where: "item live play",
-        test: /\b(?:an? (?:unattended )?object\b|objects\b|lock\b|locks\b|Pick a Lock|padlock|door\b|doors\b|rope\b|chains?\b|container\b|extradimensional|Hardness|Broken condition|is broken|repair\w*|negligible Bulk|\d+ Bulk|the (?:item|weapon|armor|shield|staff|cane|rod) (?:becomes|transforms|turns|changes|grows|extends|returns)|transforms? into an? (?:common )?(?:weapon|shield|tool|item|object)|weapon of your choice|(?:transforms?|transform|extends?|expands?|expand|shrinks?|grows?|folds?|collapses?|unfolds?|reverts?|reforms?)(?: (?:the|this|its|your) [\w' ]{1,30}?)?(?: from its \w+ form)? (?:down |back )?(?:into|to) (?:an?|its|the) (?:[+\w-]+ ){0,4}(?:form|weapon|shield|figurine|tree|boat|bridge|tent|crossbow|bow|club|greatclub|longspear|spear|sword|greatsword|staff|hammer|axe|whip|item|object|instrument)|an item takes|shackles|manacles|mundane gear|pieces of gear|\bdon\b|\bdoff|\bfolds?\b|\bunfold\w*|its other form|(?:shield|staff|weapon|armor) form|return to the|fly back into|uses of the same|weapons contained|permanently transforms|transforms into it|any-tool|\brefill\b|\blens\b|Bomb Fitted|reload\w*|staff's charges|temporary charges?|adds? (?:one|a|\d+) (?:temporary )?charges?|etched (?:onto|rune)|(?:potency|striking|property|fundamental|resilient) runes?|corpse|the item is destroyed|crumbles?)\b/i
+        test: /\b(?:an? (?:unattended )?object\b|objects\b|lock\b|locks\b|Pick a Lock|padlock|door\b|doors\b|rope\b|chains?\b|container\b|extradimensional|Hardness|Broken condition|is broken|repair\w*|negligible Bulk|\d+ Bulk|the (?:item|weapon|armor|shield|staff|cane|rod) (?:becomes|transforms|turns|changes|grows|extends|returns)|transforms? into an? (?:common )?(?:weapon|shield|tool|item|object)|weapon of your choice|(?:transforms?|transform|extends?|expands?|expand|shrinks?|grows?|folds?|collapses?|unfolds?|reverts?|reforms?)(?: (?:the|this|its|your) [\w' ]{1,30}?)?(?: from its \w+ form)?(?: permanently)? (?:down |back )?(?:into|to) (?:an?|its|the) (?:[+\w-]+ ){0,4}(?:form|weapon|shield|figurine|tree|boat|ladder|bridge|tent|crossbow|bow|club|greatclub|longspear|spear|sword|greatsword|staff|hammer|axe|whip|item|object|instrument)|an item takes|shackles|manacles|mundane gear|pieces of gear|\bdon\b|\bdoff|\bfolds?\b|\bunfold\w*|its other form|(?:shield|staff|weapon|armor) form|return to the|fly back into|uses of the same|weapons contained|permanently transforms|transforms into it|any-tool|\brefill\b|\blens\b|Bomb Fitted|reload\w*|staff's charges|temporary charges?|adds? (?:one|a|\d+) (?:temporary )?charges?|etched (?:onto|rune)|(?:potency|striking|property|fundamental|resilient) runes?|corpse|the item is destroyed|crumbles?)\b/i
     },
     {
         // (A spell-cast card's note whose words show no other need: the user's answer 2, 2026-10-26 — entry.cast, needsOf.)
@@ -239,7 +244,8 @@ export const NEEDS = [
         title: "Plain results the reader doesn't parse yet",
         needs: "Damage dice, a condition, a bonus or penalty, Hit Points, in words of their own: the item reader (or the ability compiler) taught the sentence. The cheapest kind to fix.",
         where: "item reader",
-        test: /\b(?:\d+d\d+|takes? \d+ (?:\w+ )?damage|(?:Clumsy|Enfeebled|Drained|Stupefied|Frightened|Sickened|Slowed|Stunned|Dazzled|Blinded|Deafened|Fatigued|Off-Guard|Prone|Grabbed|Restrained|Immobilized|Paralyzed|Confused|Fascinated|Fleeing|Quickened|Petrified|Persistent)\b|[+-]\d+ (?:item|status|circumstance) (?:bonus|penalty)|temporary Hit Points|regains? \d+)/
+        // (Not a check's own d20 and modifier, Chime of Opening's "a Thievery bonus of 1d20+13": no result in it — 2026-10-27.)
+        test: /\b(?:(?!1d20[+-]\d)\d+d\d+|takes? \d+ (?:\w+ )?damage|(?:Clumsy|Enfeebled|Drained|Stupefied|Frightened|Sickened|Slowed|Stunned|Dazzled|Blinded|Deafened|Fatigued|Off-Guard|Prone|Grabbed|Restrained|Immobilized|Paralyzed|Confused|Fascinated|Fleeing|Quickened|Petrified|Persistent)\b|[+-]\d+ (?:item|status|circumstance) (?:bonus|penalty)|temporary Hit Points|regains? \d+)/
     },
     {
         id: "mind",
@@ -283,10 +289,14 @@ export const NEED_IDS = NEEDS.map((need) => need.id);
 
 // The text an item's card leaves over: its notes, unread lines, GM lines and note Effects; for one nothing reads (note-only, none, the GM's),
 // its own text — an activation's from "Effect" on (its Trigger kept), with its Craft Requirements left out.
+// (Or from after its Activate line when that's the Strike that fires it, a feather token's "Activate Strike from a ranged weapon When
+// activated, …": its user's own Strike, not a change to one — 2026-10-27.)
+const FIRED = /^\s*Activat(?:e|ion)\s+Strike from an? (?:ranged|melee|thrown) weapon\s+/;
 export function leftText(entry) {
     if (entry.result === "partial" || entry.result === "gaps") return entry.left.map(([, line]) => line).join(" ");
     const text = String(entry.text ?? "").replace(/\bCraft Requirements\b.*$/s, "");
     const effect = /\bEffect\b\s*(.*)$/s.exec(text);
+    if (entry.kind === "activation" && !effect && FIRED.test(text)) return text.replace(FIRED, "");
     return entry.kind === "activation" && effect ? `${entry.trigger ? "Trigger " : ""}${effect[1]}` : text;
 }
 

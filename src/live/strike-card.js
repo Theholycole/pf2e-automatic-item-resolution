@@ -67,6 +67,8 @@ export function strikeLines(plan) {
         ...(strike.options ?? []).map((option) => (/^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
         ...(strike.suppress ?? []).map((penalty) => `No ${penalty} penalty`),
         strike.splash ? `+${strike.splash.value} ${strike.splash.damageType} splash damage` : null,
+        // (Hardness it ignores: PF2e subtracts no creature's Hardness itself.)
+        strike.ignoresHardness ? `Its damage ignores the target's Hardness if that's ${strike.ignoresHardness} or lower (a higher Hardness still applies)` : null,
         strike.runes ? `Its weapon is a +${strike.runes.potency} ${["", "", "greater ", "major "][strike.runes.striking] ?? ""}striking weapon for it (PF2e keeps the weapon's own runes when they're better)` : null,
         ...(strike.damage ?? []).map((entry) => `+${dieText(entry)} damage`),
         // (Damage in place of the weapon's, Big Rock Bullet's: the card's own roll.)

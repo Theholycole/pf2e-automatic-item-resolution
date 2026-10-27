@@ -458,6 +458,8 @@ function strikePlan({ base, item, strike, riders, save, extras: read, cast = nul
               ...(extras.offGuard ? { offGuard: true } : {}),
               // (Cover it ignores: Golden-Cased Bullet's levels.)
               ...(extras.ignoresCover ? { ignoresCover: extras.ignoresCover } : {}),
+              // (Hardness it ignores, Shatterpoint Ammunition's: the card's line.)
+              ...(extras.ignoresHardness ? { ignoresHardness: extras.ignoresHardness } : {}),
               // (Weapon dice on a failure: Brutal Finish's.)
               ...(extras.failDice ? { failDice: extras.failDice } : {}),
               // (A feat's own extra die, Iron Cudgel's Brutal Finish; its user's turn over after it.)

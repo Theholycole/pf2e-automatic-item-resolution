@@ -16,8 +16,12 @@ import { oneOff } from "./one-offs.js";
 
 const DECIDED = new Set(["speech", "mind", "information"]);
 const CARD_LINE = new Set(["out-of-combat", "objects"]);
-const COMBAT = /\b(?:Strikes?|attack rolls?|saving throws?|save|AC|temporary Hit Points|teleport\w*|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|drained|stupefied|fatigued|off-guard|quickened|persistent|dies|concealed|invisible|hidden|undetected|the next (?:elixir|potion|mutagen|bomb|Strike|attack))\b|\bextended by \d+%/i;
-const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b\d+ (?:feet|foot)\b|\b(?:damage|Hit Points|Strikes?|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
+const COMBAT = /\b(?:attack rolls?|saving throws?|save|AC|temporary Hit Points|teleport\w*|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|drained|stupefied|fatigued|off-guard|quickened|persistent|dies|concealed|invisible|hidden|undetected|the next (?:elixir|potion|mutagen|bomb|Strike|attack))\b|\bextended by \d+%/i;
+const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b\d+ (?:feet|foot)\b|\b(?:damage|Hit Points|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
+// (A Strike only as PF2e writes the action, capitalized: "strike the chime", the verb, isn't one — src/compiler/needs.js, 2026-10-27.)
+const STRIKE = /\bStrikes?\b/;
+const combat = (words) => COMBAT.test(words) || STRIKE.test(words);
+const mechanical = (words) => MECHANICAL.test(words) || STRIKE.test(words);
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 // A unique item or an artifact: special, its own rules built rather than a card's line (the user, 2026-10-27).
 export const isSpecialItem = (item) => item?.system?.traits?.rarity === "unique" || (item?.system?.traits?.value ?? []).includes("artifact");
@@ -82,13 +86,13 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // (Nothing in its words a card could play — food, refills, ingredients, flavor —: counted done, its card saying so (the user's answer to
     // question 1, 2026-10-26).)
     // (A note-only one only when its words show no number either — Vambrace of Gorum's "+3 … major striking" is a rule the needs' words miss.)
-    if (needs.length === 1 && needs[0] === "no-rules" && (!plan || result === "builtin:no-effect" || (result === "note-only" && !MECHANICAL.test(leftText(entry)) && !/\d/.test(leftText(entry))))) {
+    if (needs.length === 1 && needs[0] === "no-rules" && (!plan || result === "builtin:no-effect" || (result === "note-only" && !mechanical(leftText(entry)) && !/\d/.test(leftText(entry))))) {
         return { ...(base ?? plan ?? {}), ...(plan?.item ? { item: plan.item } : {}), builtin: undefined, noteOnly: undefined, partial: undefined, noRules: true, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: ["It has no rules to play: the card does nothing more."] };
     }
     const lined = !special && needs.some((need) => CARD_LINE.has(need));
     if (!needs.length || !needs.every((need) => DECIDED.has(need) || (lined && CARD_LINE.has(need)))) return plan;
     const words = leftText(entry);
-    if (lined ? COMBAT.test(words) : MECHANICAL.test(words)) return plan;
+    if (lined ? combat(words) : mechanical(words)) return plan;
     const decided = needs.includes("information") ? "information" : needs.find((need) => need === "speech" || need === "mind") ?? (lined ? "card-line" : needs[0]);
     const body = bodyOf(kind, text, words);
     // (Information: whispered to the GM and its user, what it tells filled in by the GM.)

@@ -333,7 +333,8 @@ test("ammunition's hit in other words: \"In addition, the target takes 1d8 persi
     const [shatter] = compileActivations(source("Shatterpoint Ammunition"));
     assert.equal(routeOf(shatter.plan), "strike");
     assert.deepEqual(shatter.plan.strike.damage, [{ diceNumber: 1, dieSize: "d8", category: "persistent", damageType: "sonic" }]);
-    assert.match(shatter.plan.strike.notes.join(" "), /ignores the target's Hardness/);
+    // (2026-10-27: the Hardness it ignores is read now, strike.ignoresHardness — the Strike card's line, no note.)
+    assert.deepEqual([shatter.plan.strike.ignoresHardness, shatter.plan.strike.notes], [4, []]);
     // Garrote Bolt's 2d12 persistent slashing is PF2e's own DamageDice rule: nothing to add.
     assert.equal(compileActivations(source("Garrote Bolt"))[0].plan?.strike?.damage?.length ?? 0, 0);
 });
