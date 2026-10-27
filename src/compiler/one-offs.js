@@ -60,7 +60,9 @@ export const ONE_OFFS = new Map([
     // (2026-10-27: a creature thrown 10 feet where its user picks, or tossed straight up to land in its square, after the Stride and Strike.)
     ["Hodag Leather: Hodag Toss", { rule: "after its user's Stride and a successful Strike, a successful Athletics check against the creature's Fortitude DC throws it 10 feet in a straight line its user picks (1d6 bludgeoning if into a solid object) or straight up to land in its own square (1d6 bludgeoning), Prone either way", build: "a ways card on the success: thrown to a space its user picks (placed.js) and Prone, or tossed up with the 1d6 and Prone" }],
     // (2026-10-27: a misfortune ended outright, once a month for a year, after a week of offerings.)
-    ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }]
+    ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }],
+    // (2026-10-27, the casts: a second spell beside the activation's own, with a frequency of its own — no other item's.)
+    ["Elemental Wayfinder (Air)", { rule: "beside its once-a-day Lightning Bolt, Gentle Landing as a primal innate spell once every 10 minutes", build: "a second choice on the cast card with its own frequency (once every 10 minutes), not counted against the activation's day" }]
 ]);
 
 export const oneOff = (name) => ONE_OFFS.get(String(name ?? "")) ?? null;
