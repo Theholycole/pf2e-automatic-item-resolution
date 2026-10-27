@@ -7,7 +7,7 @@
 
 import { withCastDuration } from "./cast-duration.js";
 import { withCastRange } from "./cast-range.js";
-import { withCastBonus, withCastSelf, withTurnHeal } from "./cast-riders.js";
+import { withCastBonus, withCastDegree, withCastSelf, withTurnHeal } from "./cast-riders.js";
 import { withCastOwner, withLevelChoice, withRankIf } from "./cast-owner.js";
 import { RUNE_STEP_SENTENCE } from "./rune-steps.js";
 import { restatesCounteract } from "./counteract.js";
@@ -402,7 +402,7 @@ export function withCastNotes(plan, options = {}, item = null) {
     const spell = options.spells?.[String(plan.spell?.name ?? "").toLowerCase()] ?? null;
     // (A duration or range the cast plays now — cast-duration.js, cast-range.js — is no leftover; nor its rank and DC from its caster,
     // cast-owner.js.)
-    const timed = withRankIf(withLevelChoice(withCastSelf(withCastOwner(withCastBonus(withTurnHeal(withCastRange(withCastDuration(plan, spell), spell), item)))), options.spells ?? {}));
+    const timed = withRankIf(withLevelChoice(withCastSelf(withCastOwner(withCastDegree(withCastBonus(withTurnHeal(withCastRange(withCastDuration(plan, spell), spell), item)), item))), options.spells ?? {}));
     const adds = timed.notes.filter((note) => !isGmCall(note) && !NOT_A_RULE.test(said(note)) && !itemGives(note, item) && CAST_RULE.test(castWords(note, timed, spell)));
     return adds.length ? { ...timed, partial: true, automation: { ...(timed.automation ?? {}), level: "guided" } } : timed;
 }

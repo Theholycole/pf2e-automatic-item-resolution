@@ -1,15 +1,15 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1243,
+  "entries": 1242,
   "results": {
-   "partial": 349,
+   "partial": 348,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
   },
   "main": {
-   "cast-changes": 22,
+   "cast-changes": 21,
    "speeds": 22,
    "counteract": 21,
    "afflictions": 58,
@@ -48,7 +48,7 @@
    "by-kind": 7
   },
   "any": {
-   "cast-changes": 22,
+   "cast-changes": 21,
    "speeds": 28,
    "areas": 179,
    "immunity": 89,
@@ -3411,15 +3411,6 @@
     "mind",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Radiant Spark",
-   "kind": "activation",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
    ]
   },
   {

@@ -48,3 +48,24 @@ export function withCastSelf(plan) {
     }
     return plan;
 }
+
+// A worse save against the spell for creatures of a kind (2026-10-27, docs/needs.md): Radiant Spark's "The Radiant Spark casts a 10th-rank
+// Dominate spell (@Check[will|dc:49]) on a creature that isn't from the Material Plane. Celestials get an outcome one degree of success worse than
+// the result of their save." → plan.castDegree { traits, selector, adjustment, said }: once cast (scripts/casts.js), each target of that trait
+// gets PF2e's AdjustDegreeOfSuccess on that save, gone with its first such save (scripts/first-degree.js). Pure.
+const WORSE_FOR = /^([A-Z][a-z]+?)s get an outcome one degree of success worse than the result of their save\.$/;
+export function withCastDegree(plan, item = null) {
+    if (plan?.builtin !== "cast-spell" || plan.castDegree) return plan;
+    const note = (plan.notes ?? []).find((entry) => WORSE_FOR.test(String(typeof entry === "string" ? entry : entry?.text ?? "").trim()));
+    if (!note) return plan;
+    const said = String(typeof note === "string" ? note : note.text).trim();
+    const save = /@Check\[(fortitude|reflex|will)\|/i.exec(String(item?.system?.description?.value ?? ""))?.[1]?.toLowerCase() ?? "saving-throw";
+    const worse = "one-degree-worse";
+    const notes = (plan.notes ?? []).filter((entry) => entry !== note);
+    return {
+        ...plan,
+        notes,
+        castDegree: { traits: [WORSE_FOR.exec(said)[1].toLowerCase()], selector: save, adjustment: { criticalSuccess: worse, success: worse, failure: worse }, said },
+        ...(plan.partial && !notes.length && !(plan.unread ?? []).length ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {})
+    };
+}

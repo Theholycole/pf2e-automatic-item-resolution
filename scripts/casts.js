@@ -7,6 +7,7 @@ import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf }
 import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
+import { castDegreeEffectSource } from "../src/live/card.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -89,6 +90,15 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (far.length) throw new Error(`${far.join(", ")} ${far.length === 1 ? "is" : "are"} beyond ${state.item.name}'s range.`);
         // (Smoke where its user was and where it arrives, Charlatan's Cape's Translocate: watched for before the cast moves it, scripts/cast-smoke.js.)
         const smoke = state.plan.castSmoke ? smokeAfterMove(state.plan.castSmoke, { actor, token, item: state.item }) : null;
+        // (A worse save for targets of a kind, Radiant Spark's celestials: PF2e's AdjustDegreeOfSuccess on each before the cast, till its save.)
+        if (state.plan.castDegree) {
+            for (const target of targetTokens) {
+                const traits = [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
+                if (!target.actor || !state.plan.castDegree.traits.some((trait) => traits.includes(trait))) continue;
+                await target.actor.createEmbeddedDocuments("Item", [castDegreeEffectSource(state.plan.castDegree, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+                lines.push(`${target.name}, a ${state.plan.castDegree.traits.join(" or ")}: its save is one degree worse.`);
+            }
+        }
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: targetTokens, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${targetTokens.length && !selfOf(state) ? ` at ${targetTokens.map((target) => target.name).join(", ")}` : ""}.`);
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)

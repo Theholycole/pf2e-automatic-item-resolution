@@ -775,3 +775,13 @@ test("smoke where its caster was and where it arrives (2026-10-27): Charlatan's 
     const zone = smokeZone(cape.castSmoke, 2);
     assert.deepEqual([zone.area, zone.concealed, zone.centre], [{ type: "square", value: 10 }, true, "snare"]);
 });
+
+test("a worse save against the spell for a kind (2026-10-27): Radiant Spark's Dominate — celestials one degree worse on their Will save, PF2e's AdjustDegreeOfSuccess gone with that save", async () => {
+    const { castDegreeEffectSource } = await import("../src/live/card.js");
+    const plan = first("Radiant Spark");
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual([plan.castDegree.traits, plan.castDegree.selector], [["celestial"], "will"]);
+    const source = castDegreeEffectSource(plan.castDegree, "Dominate", { item: { name: "Radiant Spark" } });
+    assert.deepEqual(source.system.rules[0], { key: "AdjustDegreeOfSuccess", selector: "will", adjustment: { criticalSuccess: "one-degree-worse", success: "one-degree-worse", failure: "one-degree-worse" }, label: "Radiant Spark" });
+    assert.deepEqual(source.flags["pf2e-automatic-item-resolution"].firstDegree.selector, "will");
+});

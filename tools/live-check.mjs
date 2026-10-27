@@ -717,6 +717,31 @@ export const cases = {
         });
     },
 
+    // Radiant Spark (2026-10-27): its Dominate at a celestial and at a creature that isn't one — only the celestial's Will save one degree
+    // worse (PF2e's AdjustDegreeOfSuccess), the Effect gone with that save.
+    async radiantSparkCelestial(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Spark Holder", { type: "character", x: 5, y: 9 });
+        const { actor: angel, token: angelToken } = await creature(scene, "Spark Angel", { x: 6, y: 9, alliance: "opposition", save: 40 });
+        const { actor: other, token: otherToken } = await creature(scene, "Spark Other", { x: 6, y: 10, alliance: "opposition", save: 40 });
+        await angel.update({ "system.traits.value": ["celestial", "angel"] });
+        const spark = await give(user, "Radiant Spark");
+        await spark.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        await userToken.object?.control?.();
+        await target(angelToken, otherToken);
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(spark.uuid, 0);
+        const card = await messageAfter(since, itemCard("cast"), { what: "the spark's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [angelToken.uuid, otherToken.uuid] });
+        const worse = (actor) => actor.itemTypes.effect.filter((effect) => /worse Will save/.test(effect.name));
+        await until(() => worse(angel).length === 1, `the angel's worse save (${angel.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+        assert(!worse(other).length, "none on the creature that isn't a celestial");
+        const at = Date.now();
+        await withDie(10, () => angel.saves.will.roll({ dc: { value: 49 }, skipDialog: true }));
+        const roll = await messageAfter(at, (message) => message.flags?.pf2e?.context?.type === "saving-throw" && message.actor?.id === angel.id, { what: "the angel's Will save" });
+        await until(() => !worse(angel).length, "its Effect gone after the save", { timeout: 8000 });
+        return { outcome: roll.flags.pf2e.context.outcome, unadjusted: roll.flags.pf2e.context.unadjustedOutcome ?? null, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });
