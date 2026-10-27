@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1288,
+  "entries": 1286,
   "results": {
-   "partial": 391,
+   "partial": 389,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -29,7 +29,7 @@
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "areas": 126,
+   "areas": 124,
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
@@ -50,7 +50,7 @@
   "any": {
    "cast-changes": 22,
    "speeds": 28,
-   "areas": 188,
+   "areas": 186,
    "immunity": 90,
    "objects": 389,
    "speech": 129,
@@ -10144,16 +10144,6 @@
    ]
   },
   {
-   "name": "Deadweight Snare",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Sinew-Song",
    "kind": "activation",
    "activation": "Cutting Cadenza",
@@ -10881,16 +10871,6 @@
    "work": "Trigger: the troop under …",
    "needs": [
     "triggers"
-   ]
-  },
-  {
-   "name": "Fire Box",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas"
    ]
   },
   {

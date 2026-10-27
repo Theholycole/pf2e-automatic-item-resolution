@@ -13,6 +13,7 @@
 //   other change goes through the ability module's api.live.applyChange.
 
 import { applyEndEarlyCard } from "./end-early.js";
+import { applyDropCard } from "./drop-held.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
@@ -344,6 +345,8 @@ function choicesOf(state, root) {
     // (A stored spell cast at the creatures targeted: src/compiler/stored-spell.js.)
     if (state.kind === "objects") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     if (state.kind === "table") return {};
+    // (The held items ticked to drop: scripts/drop-held.js.)
+    if (state.kind === "drop") return { ticked: [...root.querySelectorAll("[data-air-drop]")].filter((box) => box.checked).map((box) => box.dataset.airDrop) };
     // (The creatures trying to disbelieve an illusion: the GM's targets.)
     if (state.kind === "disbelief") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (An ally's condition taken: the ally targeted.)
@@ -374,6 +377,8 @@ const APPLY = {
     take: (message, choices) => applyTakeCard(message, choices),
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     "end-early": (message, choices) => applyEndEarlyCard(message, choices),
+    // (What a creature drops of what it holds, Deadweight Snare's metal: scripts/drop-held.js.)
+    "drop": (message, choices) => applyDropCard(message, choices),
     // (A RollTable's row drawn: compiled as the item's use, a consumable's of that text.)
     table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
     item: (message, choices) => applyCard(message, choices)
@@ -481,6 +486,7 @@ async function onRequest(data) {
         : state.kind === "toggle" || state.kind === "ways" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "table" ? {}
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }

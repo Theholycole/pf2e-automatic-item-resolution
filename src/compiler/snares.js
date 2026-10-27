@@ -111,6 +111,8 @@ function markedRows(read, text) {
 
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
 export function snareZone(item, read) {
+    // (Not a square stepped into: Fire Box's "Anyone who opens the box triggers …" — its save card at those its cone reaches, src/compiler/opened.js.)
+    if (OPENED.test(plainText(item?.system?.description?.value))) return null;
     if (isSnare(item) && read?.resolution?.kind !== "save") {
         const attack = attackSnare(item);
         if (attack) return { ...attack, source: read?.source ?? attack.zone.saves[0].plan.source };
@@ -225,6 +227,8 @@ function burstOf(plain) {
     if (aimed) return { area: { type: aimed[2].toLowerCase(), value: Number(aimed[1]) }, said: aimed[0] };
     return null;
 }
+
+export const OPENED = /\bAnyone who opens the (?:box|chest|lid) triggers\b/i;
 
 // The save of the creature that set the snare off, its condition for longer than the others': "The triggering creature is deafened for 1 minute on
 // a failure, or 1 hour on a critical failure." (a sentence of its text, or already a note) → { plan, notes, unread, slug } (its rows with those

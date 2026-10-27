@@ -1242,6 +1242,46 @@ export const cases = {
         });
     },
 
+    // Deadweight Snare (2026-10-27): a critical failure, and the drop card after its save card — the walker's longsword ticked (metal), its club
+    // not; pressed, the longsword dropped and the club still held.
+    async deadweightDrops(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Deadweight Setter", { type: "character", x: 0, y: 6 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Deadweight Walker", { x: 6, y: 6, alliance: "opposition", save: -30 });
+            const sword = await give(walker, "Longsword");
+            const club = await give(walker, "Club");
+            for (const weapon of [sword, club]) await weapon.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+            const snare = await give(setter, "Deadweight Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Deadweight Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                let since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const save = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+                since = Date.now();
+                await rollAndApply(save);
+                const card = await messageAfter(since, itemCard("drop"), { what: "the drop card", timeout: 10000 });
+                const held = card.getFlag(NS, "card").entries[0].held;
+                assert(held.find((one) => one.name === "Longsword")?.ticked && !held.find((one) => one.name === "Club")?.ticked, `the longsword ticked, not the club (${JSON.stringify(held)})`);
+                await game.modules.get(NS).api.live.apply(card.id);
+                await until(() => sword.system.equipped.carryType === "dropped", `the longsword dropped (${sword.system.equipped.carryType})`, { timeout: 8000 });
+                assert(club.system.equipped.carryType === "held", `the club still held (${club.system.equipped.carryType})`);
+                return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Deadweight Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Scale of Igroon (2026-10-27): its +4 Stealth Effect ended by its user's next activation (the scale's other one), and again by a Shield
     // Block (PF2e's applyDamage with shieldBlockRequest).
     async scaleIgroonEnds(scene) {
@@ -4660,6 +4700,28 @@ export const cases = {
         const state = place.getFlag(NS, "card");
         assert(state.plan.teleport.within === 30 && /Worm Meal/.test(state.user.name), `within 30 feet, the creature spat out (${JSON.stringify([state.user.name, state.plan.teleport])})`);
         return { taken: hp - foe.system.attributes.hp.value, degree: game.messages.get(save.id).flags["pf2e-automatic-ability-resolution"].card.targets?.[0]?.degree };
+    },
+
+    // Fire Box (2026-10-27): not a square stepped into — used when someone opens it, its DC 17 basic Reflex save card at the creatures its cone
+    // reaches (the opener here), 4d6 fire.
+    async fireBoxOpened(scene) {
+        const { actor: owner } = await creature(scene, "Box Owner", { type: "character", x: 14, y: 19 });
+        const { actor: opener, token: openerToken } = await creature(scene, "Box Opener", { x: 15, y: 19, hp: 100, alliance: "opposition", save: -30 });
+        const box = await give(owner, "Fire Box");
+        const regions = scene.regions.size;
+        let since = Date.now();
+        await box.consume();
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the box's card" });
+        assert(scene.regions.size === regions, "no snare square placed");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [openerToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the save card" });
+        const check = save.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
+        assert(check.statistic === "reflex" && check.basic && check.against.value === 17, `DC 17 basic Reflex (${JSON.stringify(check)})`);
+        const hp = opener.system.attributes.hp.value;
+        await rollAndApply(save);
+        await until(() => opener.system.attributes.hp.value < hp, `fire damage (${hp} → ${opener.system.attributes.hp.value})`, { timeout: 8000 });
+        return { taken: hp - opener.system.attributes.hp.value };
     },
 
     // Zealous Banner: the ally targeted Quickened for 1 round.

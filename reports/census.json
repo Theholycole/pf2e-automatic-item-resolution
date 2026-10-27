@@ -15,9 +15,9 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 145,
-   "resolves": 832,
+   "resolves": 833,
    "builtin:readied-bonus": 23,
-   "builtin:zone": 122,
+   "builtin:zone": 121,
    "builtin:ways": 29,
    "builtin:item-action": 16,
    "partial": 72,
@@ -177,10 +177,11 @@
    "count": 82,
    "results": {
     "none": 6,
-    "builtin:zone": 73,
+    "builtin:zone": 72,
     "note-only": 1,
     "builtin:ways": 1,
-    "builtin:whisper": 1
+    "builtin:whisper": 1,
+    "resolves": 1
    },
    "mechanisms": {
     "damage": 49,
@@ -325,7 +326,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 174,
+   "resolves": 175,
    "gaps": 0,
    "none": 7
   },
@@ -337,7 +338,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 318,
+   "resolves": 319,
    "gaps": 0,
    "none": 21
   },
@@ -402,8 +403,8 @@
    "none": 197,
    "item": 660,
    "fortune": 25,
-   "zone": 122,
-   "save": 134,
+   "zone": 121,
+   "save": 135,
    "expose": 89,
    "ways": 29,
    "action": 16,
@@ -479,10 +480,11 @@
    },
    "snare": {
     "none": 6,
-    "zone": 73,
+    "zone": 72,
     "item": 1,
     "ways": 1,
-    "whisper": 1
+    "whisper": 1,
+    "save": 1
    },
    "gadget": {
     "save": 17,
@@ -21386,9 +21388,10 @@
     "damage",
     "fixed-dc"
    ],
-   "result": "builtin:zone",
-   "kind": null,
-   "live": "zone"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Expulsion Snare",

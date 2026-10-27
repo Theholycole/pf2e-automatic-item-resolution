@@ -139,7 +139,7 @@ const saveSentence = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/
 // manipulate action, "provoke"; Exploding Shield's "The exploding shield is destroyed", "death". Not a Strike's or a zone's.)
 const pressedEvent = (plan) => ["use", "passive"].includes(plan.trigger?.event) || (Boolean(plan.item?.activation) && !["strike", "zone"].includes(plan.trigger?.event ?? "use"));
 const savedOnUse = (plan) => plan?.resolution?.kind === "save" && pressedEvent(plan) && ["fixed", "owner"].includes(plan.resolution.check?.against?.dc)
-    && (!plan.item?.delivery || !plan.resolution.afflictionHandoff) && plan.item?.category !== "snare" && !(plan.item?.type === "consumable" && /\bsnare\b/i.test(plan.source?.name ?? ""));
+    && (!plan.item?.delivery || !plan.resolution.afflictionHandoff) && ((plan.item?.category !== "snare" && !(plan.item?.type === "consumable" && /\bsnare\b/i.test(plan.source?.name ?? ""))) || Boolean(plan.openedTrap));
 const useSave = (plan, text) => savedOnUse(plan) && !TRIGGERED.test(saveSentence(text));
 // (Set off by a creature attacking its user while it lasts — Oil of Repulsion's "For 1 minute after you apply this oil to
 // armor, any creature that hits you with a melee Strike must attempt …", Vermin Repellent Agent's "… when attempting to attack

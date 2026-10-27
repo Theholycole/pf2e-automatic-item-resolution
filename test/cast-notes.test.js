@@ -157,6 +157,26 @@ test("a snare's setter worse off than the others (2026-10-27): Piercing Whistle 
     assert.equal(compileItem(item("Sanctified Beans"), options).partial, undefined);
 });
 
+test("a trap set off by opening it (2026-10-27): Fire Box — not a snare square, its basic Reflex save card for those its 15-foot cone reaches, used when someone opens it", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const box = compileItem(item("Fire Box"), options);
+    assert.deepEqual([box.builtin, box.trigger.event, box.targeting.area, box.resolution.check.basic, box.resolution.check.against.value, box.partial], [undefined, "use", { type: "cone", value: 15 }, true, 17, undefined]);
+    assert.match(box.notes[0], /^Use it when someone opens the box: its 15-foot cone goes a way the GM picks at random, always through the one who opened it/);
+});
+
+test("what a row makes a creature drop of what it holds (2026-10-27): Deadweight Snare's critical failure, the metal items — plan.dropHeld; the drop card ticks what looks metal", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { createDropCard, dropCardHTML, looksMetal } = await import("../src/live/drop-card.js");
+    const snare = compileItem(item("Deadweight Snare"), options);
+    const save = snare.zone.saves[0].plan;
+    assert.deepEqual([save.dropHeld.degrees, save.dropHeld.metallic, save.resolution.outcomes.criticalFailure.noteEffects, snare.partial], [["criticalFailure"], true, undefined, undefined]);
+    const weapon = (name, group, material = null) => ({ type: "weapon", name, system: { group, material: { type: material } } });
+    assert.deepEqual([looksMetal(weapon("Longsword", "sword")), looksMetal(weapon("Club", "club")), looksMetal(weapon("Longbow", "bow")), looksMetal(weapon("Club", "club", "cold-iron")), looksMetal({ type: "shield", name: "Steel Shield", system: {} }), looksMetal({ type: "shield", name: "Wooden Shield", system: {} })], [true, false, false, true, true, false]);
+    const card = createDropCard({ dropHeld: save.dropHeld, item: { name: "Deadweight Snare" }, user: { name: "Setter" }, creatures: [{ actorUuid: "Actor.a", name: "Walker", held: [{ id: "1", name: "Longsword", metal: true }, { id: "2", name: "Club", metal: false }] }] });
+    assert.deepEqual(card.entries[0].held.map((one) => one.ticked), [true, false]);
+    assert.match(dropCardHTML(card, { canApply: true }), /data-air-drop="0:0" checked.*data-air-drop="0:1">/s);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);
