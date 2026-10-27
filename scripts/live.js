@@ -660,7 +660,7 @@ async function loseHitPoints(creature, hpLoss, { user, userName }) {
     const amountOf = (value) => (Number.isFinite(Number(value)) ? Number(value) : Math.max(0, Math.floor(level * (Number(value?.level) || 0))));
     const amount = amountOf(hpLoss.amount);
     if (!creature.actor?.applyDamage || !(amount > 0)) return [`${creature.name} loses ${amount} Hit Points (by hand).`];
-    await creature.actor.applyDamage({ damage: amount, token: creature.token?.object ?? creature.token ?? undefined, final: true });
+    await creature.actor.applyDamage({ damage: amount, token: creature.token?.document ?? creature.token ?? undefined, final: true });
     const lines = [`${creature.name} loses ${amount} Hit Points`];
     const left = Number(creature.actor.system?.attributes?.hp?.value);
     // (Killed: a creature other than a character at 0 Hit Points; a character only once its Dying reaches its maximum.)
