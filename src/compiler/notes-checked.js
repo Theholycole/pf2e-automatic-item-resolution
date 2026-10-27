@@ -48,6 +48,13 @@ export const NOTES_CHECKED = new Map([
     ["Philosopher's Stone", "broken open with Force Open (DC 35), its quicksilver makes an infused Elixir of Life (True) an Elixir of Rejuvenation with an Interact, or silver or gold over a month of downtime: crafting and downtime, its user's own"],
     ["Watchful Portrait", "hung up, its user sees through its eyes from within 500 feet for 10 minutes (a creature notices with a DC 30 Perception check), then it's a plain painting: what's seen the GM's"],
     ["Accolade Robe: Review", "an item drawn from the robe's storage, then a Recall Knowledge: its user's own Interact and check"],
+    // (2026-10-27, objects: an object worn down over hours and days, or one blown up when its time is up — a building's or a thing's, the GM's.)
+    ["Deteriorating Dust", "an unattended object's Hardness 1 lower each hour, then 1 damage every 3 hours once it's 0, for 3 days (its lost Hardness back after): an object's, over days"],
+    ["Caustic Deteriorating Dust", "an unattended object's Hardness 1 lower each hour, then 1 damage an hour once it's 0, for 3 days (its lost Hardness back after): an object's, over days"],
+    ["Extended Deteriorating Dust", "an unattended object's Hardness 1 lower each hour, then 1 damage every 3 hours once it's 0, for a week (its lost Hardness back after): an object's, over days"],
+    ["Demolition Fulu (Lesser)", "the object it's fixed to loses Hardness equal to the fulu's level and takes 3d6 bludgeoning once its 5 minutes to 8 hours are up; a hazard to find (Perception DC 17) and disable (Thievery DC 17): a building's, the GM's"],
+    ["Demolition Fulu (Moderate)", "the object it's fixed to loses Hardness equal to the fulu's level and takes 6d6 bludgeoning once its 5 minutes to 8 hours are up; a hazard to find (Perception DC 28) and disable (Thievery DC 28): a building's, the GM's"],
+    ["Demolition Fulu (Greater)", "the object it's fixed to loses Hardness equal to the fulu's level and takes 10d6 bludgeoning once its 5 minutes to 8 hours are up; a hazard to find (Perception DC 37) and disable (Thievery DC 37): a building's, the GM's"],
     ["Accolade Robe (Greater): Review", "an item drawn from the robe's storage, then a Recall Knowledge (once a minute as a free action): its user's own Interact and check"]
 ]);
 

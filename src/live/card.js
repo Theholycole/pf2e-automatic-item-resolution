@@ -715,13 +715,16 @@ export function shieldFormEffectSource(form, { item = {}, user = {}, worldTime =
 export function skillPickText(pick) {
     // (Any skill, Stone of Unrivaled Skill's contract skill: "any skill".)
     const list = pick.any ? "any skill" : `${pick.skills.slice(0, -1).join(", ")} or ${pick.skills.at(-1)}`;
-    return `${pick.modifier.value > 0 ? "+" : "−"}${Math.abs(pick.modifier.value)} ${pick.modifier.type} to the skill picked (${list})${pick.degree ? `, and a critical failure on it or ${pick.degree.selectors.join(" or ")} becomes a failure` : ""}${forTime(pick.duration)}`;
+    // (Only for one action, Possibility Tome's Recall Knowledge: "to Recall Knowledge with the skill picked"; its degree on that skill alone.)
+    const what = pick.only ? `${pick.only} with the skill picked` : "the skill picked";
+    const degree = !pick.degree ? "" : pick.degree.selectors.length ? `, and a critical failure on it or ${pick.degree.selectors.join(" or ")} becomes a failure` : ", and a critical failure on it becomes a failure";
+    return `${pick.modifier.value > 0 ? "+" : "−"}${Math.abs(pick.modifier.value)} ${pick.modifier.type} to ${what} (${list})${degree}${forTime(pick.duration)}`;
 }
 
 // That skill's Effect: the bonus on it and the better degree (src/compiler/skill-pick.js skillPickRules).
 export function skillPickEffectSource(pick, index, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const skill = pick.skills[index] ?? pick.skills[0];
-    return ownEffectSource({ name: skill.charAt(0).toUpperCase() + skill.slice(1), img: "icons/svg/upgrade.svg", words: skillPickText({ ...pick, skills: [skill, skill] }).replace(/the skill picked \([^)]*\)/, skill), rules: skillPickRules(pick, index, item.name ?? null), duration: pick.duration, flag: { skillPick: skill }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: skill.charAt(0).toUpperCase() + skill.slice(1), img: "icons/svg/upgrade.svg", words: skillPickText({ ...pick, skills: [skill, skill] }).replace(/the skill picked \([^)]*\)/, skill === "lore" ? "the Lore picked" : skill), rules: skillPickRules(pick, index, item.name ?? null), duration: pick.duration, flag: { skillPick: skill }, item, user, worldTime, initiative, moduleId });
 }
 
 // A condition's penalty ignored, in words: "Ignores Fatigued's penalty to AC and saving throws for 1 hour".

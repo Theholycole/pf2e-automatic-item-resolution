@@ -242,7 +242,7 @@ function decide(read, given, options) {
     if (!handlesItem(given, options)) return read;
     // (A trigger's own effect first, src/compiler/triggered.js: Reflecting Shard's Spell Riposte, Spellslasher's Spellslash.)
     // (Then its user's own action or rule as its sentences say, src/compiler/user-actions.js: Vital Earth's air.)
-    const plan = withUserActionsUse(withTriggeredUse(read, given, { base: basePlan(given), info: itemInfo(given) }), given, { base: basePlan(given), info: itemInfo(given) });
+    const plan = withUserActionsUse(withTriggeredUse(read, given, { base: basePlan(given), info: itemInfo(given) }), given, { base: basePlan(given), info: itemInfo(given), options });
     const next = withDecided(plan, { text: plainText(given?.system?.description?.value), base: basePlan(given), kind: "consumable", name: given.name, special: isSpecialItem(given) });
     return next && next !== plan && !next.item ? { ...next, item: itemInfo(given) } : next;
 }

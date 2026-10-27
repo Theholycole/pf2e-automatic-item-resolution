@@ -12,6 +12,10 @@ import { ONE_OFFS } from "../src/compiler/one-offs.js";
 import { readItemAction } from "../src/compiler/item-actions.js";
 import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
+import { spellIndex } from "../src/compiler/cast-words.js";
+import { skillPickRules } from "../src/compiler/skill-pick.js";
+import { skillPickText } from "../src/live/card.js";
+import { routeOf } from "../src/live/route.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -267,4 +271,107 @@ test("Battle Medic's Baton: Battle Medicine its user's own, the creature's immun
     assert.deepEqual(notes(baton).map((note) => [note.label, note.duration.value, note.duration.unit]), [["Immune to Battle Medicine", 1, "hours"]]);
     assert.match(baton.notes[0], /^Its user uses Battle Medicine on the creature targeted/);
     assert.deepEqual(baton.trigger.frequency, { max: 1, per: "hour", raw: "once per hour" });
+});
+
+// --- Choices on the card ------------------------------------------------------------------------------------------------------------------------
+
+const spells = spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items"));
+const rulesOf = (note) => note.rules.map((rule) => [rule.key, rule.selector ?? rule.option, rule.value ?? null, rule.predicate ?? null]);
+
+test("Magnetic Suit's attract or repel, the ways card: its user's Effect with toggles for metal weapons and objects, then the allies' card", () => {
+    for (const [name, value, radius] of [["Magnetic Suit", 1, 10], ["Magnetic Suit (Greater)", 2, 15], ["Magnetic Suit (Major)", 3, 20]]) {
+        const suit = compileItem(item(name));
+        assert.ok(done(suit), name);
+        assert.deepEqual(suit.ways.map((way) => way.name), ["Attract", "Repel"]);
+        const [attract, repel] = suit.ways.map((way) => notes(way.plan)[0]);
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-$/, "");
+        assert.deepEqual([attract.duration.value, attract.duration.unit], [10, "minutes"]);
+        assert.deepEqual(rulesOf(attract).slice(2), [["FlatModifier", "ac", -value, [`${slug}-metal-weapon`]], ["FlatModifier", "athletics", value, ["action:climb", `${slug}-metal-object`]], ["FlatModifier", "athletics", value, ["action:grapple", "target:trait:metal"]], ["FlatModifier", "athletics", -value, ["action:shove", "target:trait:metal"]]], name);
+        assert.deepEqual(rulesOf(repel).slice(2).map(([, selector, amount, predicate]) => [selector, amount, predicate[0]]), [["ac", value, `${slug}-metal-weapon`], ["athletics", value, "action:shove"], ["athletics", -value, "action:climb"], ["athletics", -value, "action:grapple"]]);
+        // (Attracting, its allies within the emanation: their own card after, the presser's targets.)
+        const allies = suit.ways[0].plan.again.plan;
+        assert.deepEqual([allies.allyArea, allies.targeting.area, routeOf(allies)], [true, { type: "emanation", value: radius }, "save"]);
+        assert.deepEqual(rulesOf(allies.resolution.outcomes.success.noteEffects[0])[1], ["FlatModifier", "ac", value, [`${slug}-drawn`]]);
+        assert.equal(suit.ways[1].plan.again, undefined);
+    }
+});
+
+test("Captivating Score's positive or negative emotion: each a Will save at the creatures that hear it, a failure's attitude on a note Effect", () => {
+    const score = compileItem(item("Captivating Score"));
+    assert.ok(done(score));
+    assert.deepEqual(score.ways.map((way) => way.name), ["Positive", "Negative"]);
+    for (const [way, change] of [[score.ways[0], "improves"], [score.ways[1], "worsens"]]) {
+        const save = way.plan;
+        assert.deepEqual([save.resolution.kind, save.resolution.check.statistic, save.resolution.check.against.value], ["save", "will", 28]);
+        for (const degree of ["failure", "criticalFailure"]) {
+            const [note] = save.resolution.outcomes[degree].noteEffects;
+            assert.deepEqual([note.duration.value, note.duration.unit], [1, "hours"]);
+            assert.match(note.text, new RegExp(`subject ${change} by one step`));
+        }
+        assert.deepEqual([save.resolution.outcomes.success.noteEffects, save.resolution.outcomes.criticalSuccess.noteEffects], [undefined, undefined]);
+        assert.equal(save.notes.length, 2);
+    }
+});
+
+test("Possibility Tome's Skim: the skill picked on the card, +3 item to Recall Knowledge with it and its critical failure a failure, for 24 hours", () => {
+    const skim = activation("Possibility Tome", "Skim");
+    assert.ok(done(skim));
+    const pick = skim.item.skillPick;
+    assert.deepEqual(pick.skills, ["arcana", "crafting", "medicine", "nature", "occultism", "religion", "society", "lore"]);
+    assert.deepEqual([pick.modifier, pick.duration.value, pick.duration.unit, pick.predicate], [{ value: 3, type: "item" }, 24, "hours", ["action:recall-knowledge"]]);
+    assert.deepEqual(skillPickRules(pick, 7).map((rule) => [rule.key, rule.selector, rule.predicate]), [["FlatModifier", "lore-skill-check", ["action:recall-knowledge"]], ["AdjustDegreeOfSuccess", "lore-skill-check", ["action:recall-knowledge"]]]);
+    assert.match(skillPickText(pick), /^\+3 item to Recall Knowledge with the skill picked \(.*\), and a critical failure on it becomes a failure for 24 hours$/);
+    assert.equal(skim.notes.length, 3);
+});
+
+test("Conch of Otherworldly Seas' Sounds of the Deep: Clairaudience's range a mile to a place underwater; Lion's Call's Locate cast, what it seeks a line", () => {
+    const sounds = compileActivations(item("Conch of Otherworldly Seas"), { spells }).find((entry) => entry.activation.name === "Sounds of the Deep").plan;
+    assert.ok(done(sounds));
+    assert.deepEqual(sounds.castRange.words, "1 mile (to a location underwater)");
+    const pride = compileActivations(item("Lion's Call"), { spells }).find((entry) => entry.activation.name === "Find the Pride").plan;
+    assert.ok(done(pride));
+    assert.deepEqual([pride.builtin, pride.spell.name, pride.rank], ["cast-spell", "Locate", 5]);
+    assert.match(pride.notes[0], /^What it looks for, its user's pick/);
+});
+
+// --- Objects and the item itself ----------------------------------------------------------------------------------------------------------------
+
+test("Self-Immolating Note: its 1 fire damage at the holder its user targets, when it catches fire a line", () => {
+    const note = compileItem(item("Self-Immolating Note"));
+    assert.ok(done(note));
+    assert.equal(routeOf(note), "save");
+    assert.deepEqual(note.resolution.sharedDamage.components.map((entry) => [entry.formula, entry.type]), [["1", "fire"]]);
+    assert.match(note.notes[0], /^It catches fire 5 minutes after/);
+});
+
+test("Anointing Oil: Peaceful Rest cast at the corpse, the undead's Enfeebled a one-off line", () => {
+    const oil = compileItem(item("Anointing Oil"), { spells });
+    assert.ok(done(oil) && oil.decided === "one-off");
+    assert.deepEqual([oil.builtin, oil.spell.name, routeOf(oil)], ["cast-spell", "Peaceful Rest", "cast"]);
+    assert.ok(oil.notes.some((line) => /Enfeebled 1/.test(line)));
+});
+
+test("Spectacles of Understanding: every written language for the hour on its note Effect, in place of Translate's one; Aether Appendage's solid arm", () => {
+    const spectacles = activation("Spectacles of Understanding");
+    assert.ok(done(spectacles));
+    assert.equal(spectacles.builtin, undefined);
+    assert.deepEqual(notes(spectacles).map((note) => [note.label, note.duration.value, note.duration.unit]), [["Reading every language", 1, "hours"]]);
+    const arm = compileActivations(item("Aether Appendage"))[0].plan;
+    assert.ok(done(arm));
+    const [solid] = notes(arm);
+    assert.deepEqual([solid.duration.value, solid.duration.expiry], [0, "turn-end"]);
+    assert.deepEqual(solid.rules.map((rule) => [rule.key, rule.property, rule.value]), [["AdjustStrike", "traits", "magical"], ["AdjustStrike", "property-runes", "ghostTouch"]]);
+});
+
+test("objects one-offs and checked: Splatrope Extruder, Violet Ray, Inexplicable Patch, Rusting Carapace, Bottled Roc; the dusts and demolition fulus", () => {
+    for (const name of ["Splatrope Extruder", "Violet Ray: Electric Love", "Inexplicable Apparatus: Inexplicable Patch", "Rusting Carapace", "Bottled Roc", "Anointing Oil"]) assert.ok(ONE_OFFS.has(name), name);
+    for (const [name, which] of [["Splatrope Extruder", null], ["Violet Ray", "Electric Love"], ["Inexplicable Apparatus", "Inexplicable Patch"], ["Rusting Carapace", null]]) {
+        const plan = activation(name, which);
+        assert.ok(done(plan) && plan.decided === "one-off", name);
+    }
+    assert.ok(done(compileItem(item("Bottled Roc"))));
+    for (const name of ["Deteriorating Dust", "Caustic Deteriorating Dust", "Extended Deteriorating Dust", "Demolition Fulu (Lesser)", "Demolition Fulu (Moderate)", "Demolition Fulu (Greater)"]) {
+        const plan = compileItem(item(name));
+        assert.ok(done(plan) && plan.decided === "checked", name);
+    }
 });
