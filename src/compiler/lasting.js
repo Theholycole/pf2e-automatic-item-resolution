@@ -7,16 +7,21 @@
 // copies the original text onto a blank writing surface you're touching": a Dismiss is its user removing the Effect. And a Sustain that
 // gives again, Blakenshipper's "For the next minute, you can Sustain to continue the music, granting you and all allies within a 60-foot
 // emanation 5 temporary Hit Points that last for 1 round": plan.again, its card kept open for that minute and pressed at each Sustain
-// (scripts/poisons.js). The item card plays the rest (src/live/card.js), the spell module the casts. Pure.
+// (scripts/poisons.js). The item card plays the rest (src/live/card.js), the spell module the casts. And (2026-10-27, batch 3) the adventure
+// books' items of these kinds, and their dying and afflictions: Philter of Empty Dreams' "the potion attempts to counteract the addiction" —
+// the counteract card's free row, for what no PF2e item holds —, a revival and its fast healing, the ability module's zones, ways cards for
+// an item used one of several ways, PF2e's own toggle on the item; each reading says what it builds. Pure.
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
+import { zoneOf } from "./area-readings.js";
 import { plainText } from "./rows.js";
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
-const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours" };
+const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days" };
 const WORDS = { a: 1, an: 1, one: 1, ten: 10 };
 const timeOf = (value, unit) => ({ mode: "fixed", value: WORDS[String(value).toLowerCase()] ?? Number(value), unit: UNITS[String(unit).toLowerCase()], expiry: "turn-start", anchor: "effect-start" });
 export const sentencesOf = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 const SPELL = (id, name) => ({ uuid: `Compendium.pf2e.spells-srd.Item.${id}`, name });
 
 // Its effect's words: an activation's from "Effect" on (or from its traits' close, with no Effect heading — Bivouac Targe's), a
@@ -30,14 +35,16 @@ export function effectWords(html, kind) {
 }
 
 // The card's parts: a row of its own (a note Effect, conditions) for its user or for the creatures targeted, and its lines.
-const ownRow = ({ noteEffects = [], effects = [], notes = [], target = null, item = null }) => ({
+// (And its modifiers, for its time: Philter of Empty Dreams' +1 to saves, 2026-10-27.)
+const ownRow = ({ noteEffects = [], effects = [], modifiers = [], notes = [], target = null, item = null }) => ({
     targeting: { target, range: null, area: null },
-    resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), effects, ...(noteEffects.length ? { noteEffects } : {}) } } },
+    resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), effects, modifiers, ...(noteEffects.length ? { noteEffects } : {}) } } },
     ...(notes.length ? { notes } : {}),
     ...(item ? { item } : {})
 });
 // (A spell the spell module casts: its rank, DC, whom it's on.)
-const cast = ({ spell, rank = null, dc = null, self = false, area = false, targets = false, notes = [] }) => ({ builtin: "cast-spell", spell, rank, dc, attack: null, tradition: null, self, area, targets, notes });
+// (Its tradition when the text names one, Ring of Recalcitrant Wishes' arcane Wish, 2026-10-27.)
+const cast = ({ spell, rank = null, dc = null, self = false, area = false, targets = false, notes = [], tradition = null }) => ({ builtin: "cast-spell", spell, rank, dc, attack: null, tradition, self, area, targets, notes });
 // (What it tells: whispered to the GM and its user, the GM filling in what it shows — the user's ruling, src/compiler/decided.js.)
 const whisper = (text) => ({ builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text } });
 
@@ -307,11 +314,453 @@ const READINGS = [
             const sustained = { ...own, automation: { level: "automatic" }, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...row, effects: row.effects.map((effect) => (effect === temp ? { ...effect, amount: Number(sustain[3]) } : effect)) } } } };
             return { keep: true, notes: undefined, partial: undefined, automation: { level: "automatic" }, again: { plan: sustained, later: true, repeat: true, time, when: "{user} Sustains it (an action with the auditory and manipulate traits)" } };
         }
+    },
+    // --- The adventure books' items (2026-10-27, batch 3: sustained and later effects, dying and death, afflictions) ---------------------
+    {
+        // (Heaven's Wings' counteract after its save, read already — item.counteract, the counteract card beside the save card: its sentence
+        // no longer a note. The unholy's –2 is the save's ifTarget.)
+        name: "Golden Gloves: Heaven's Wings",
+        over: true,
+        sentences: [
+            /^You throw wide your arms\b.*\bblazing halo\b.*\.$/,
+            /^All enemies within a \d+-(?:foot|feet) emanation must\b.*@Check\[fortitude\|dc:\d+\] save or be Dazzled\b.*\.$/,
+            /^Unholy creatures take a [-–]2 item penalty\b.*\.$/,
+            /^The halo then melts into your body\b.*\bany one affliction\b.*\bcounteract rank of (\d+)\b.*\bmodifier of \+(\d+)\.$/
+        ],
+        card: ([, , , halo], plan) => {
+            const counteract = plan?.item?.counteract;
+            if (plan?.resolution?.kind !== "save" || !plan.ifTarget || counteract?.rank !== Number(halo[1]) || counteract?.modifier !== Number(halo[2])) return null;
+            const notes = (plan.notes ?? []).filter((note) => !said(note).startsWith("The halo then melts"));
+            const left = notes.length || (plan.unread ?? []).length || Object.values(plan.resolution.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length);
+            return { keep: true, notes: notes.length ? notes : undefined, ...(left ? {} : { partial: undefined, automation: { level: "automatic" } }) };
+        }
+    },
+    {
+        // (No dreams for 8 hours and +1 to saves against what's dreamlike — no PF2e trait marks those, so a toggle on its note Effect, as
+        // Addiction Suppressant's: the item card's bonus for the time; a midnight milk addiction counteracted, the counteract card's free row —
+        // the addiction isn't an item PF2e keeps —, its DC and rank the GM's; an intellect devourer in a stolen body drinking it, a line.)
+        name: "Philter of Empty Dreams",
+        sentences: [
+            /^A philter of empty dreams\b.*\bprevents dreams\.$/,
+            /^When you drink\b.*\bno dreams for the next (\d+) (hours?)\b.*\+(\d+) item bonus\b.*\bnightmare-themed effects\b.*\bmidnight milk\)\.$/,
+            /^If you're suffering\b.*\baddiction to midnight milk\b.*\bcounteract rank of (\d+)\b.*\+(\d+) modifier\b.*\.$/,
+            /^If an intellect devourer\b.*\bstolen body\b.*@Check\[fortitude\|dc:(\d+)\] save\b.*\bExit the Body\b.*\.$/
+        ],
+        card: ([, dreams, addiction, devourer]) => {
+            const duration = timeOf(dreams[1], dreams[2]);
+            const toggle = "philter-of-empty-dreams:dream";
+            return ownRow({
+                target: "the drinker",
+                modifiers: [{ selector: "saving-throw", value: Number(dreams[3]), type: "item", duration, predicate: [toggle] }],
+                noteEffects: [{ label: "No dreams", text: `It has no dreams for ${duration.value} hours. For a save against a dream- or nightmare-themed effect (midnight milk's among them), tick "Against a dream or nightmare" (this Effect's toggle): +${dreams[3]} item bonus. No PF2e trait marks such effects.`, duration, rules: [{ key: "RollOption", option: toggle, toggleable: true, label: "Against a dream or nightmare" }] }],
+                notes: [`An intellect devourer controlling a stolen body that drinks it: a DC ${devourer[1]} Fortitude save, or it must Exit the Body at once (the GM rolls it).`],
+                item: { counteract: { modifier: Number(addiction[2]), rank: Number(addiction[1]), conditions: [], traits: [], afflictions: [], free: { name: "the addiction to midnight milk", counteredWords: "the addiction ends" }, pick: "one", notes: ["Only for a drinker addicted to midnight milk: the addiction's DC and rank are the GM's to give."] } }
+            });
+        }
+    },
+    {
+        // (A supernatural deal its drinker made, counteracted: the counteract card's free row, the deal's DC and rank the GM's — no PF2e item
+        // holds a contract —, its rank the potion's level halved as PF2e's rule for an item without one; what follows the card's lines.)
+        names: ["Potion of Annulment (Lesser)", "Potion of Annulment (Moderate)", "Potion of Annulment (Greater)"],
+        sentences: [
+            /^A potion of annulment magically breaks\b.*\binfernal contract\b.*\bGeas ritual\.$/,
+            /^Upon drinking the potion\b.*\bhighest-\s?level such effect\b.*\bcounteract modifier of \+(\d+)\.$/,
+            /^If the check is successful\b.*\bends for all parties\.$/,
+            /^You're not penalized for breaking\b.*\bbenefits or rewards\.$/,
+            /^Individuals with whom you shared\b.*\bseek vengeance\.$/,
+            /^This potion can't rewind time\b.*\bback to life\.$/
+        ],
+        card: ([, check], _plan, { info }) => ({
+            builtin: "counteract",
+            targeting: { target: "the drinker", range: null, area: null },
+            item: {
+                counteract: {
+                    modifier: Number(check[1]),
+                    rank: Math.max(1, Math.ceil((Number(info?.level) || 0) / 2)),
+                    conditions: [],
+                    traits: [],
+                    afflictions: [],
+                    free: { name: "its drinker's highest-level supernatural deal", counteredWords: "the deal ends for all parties" },
+                    pick: "one",
+                    notes: [
+                        "A deal its drinker made (an infernal contract, a sea hag's bargain, the Geas ritual): the GM gives the highest-level one's DC and rank.",
+                        "Its own counteract rank is half its level, rounded up: the potion gives none.",
+                        "Annulled, the deal binds nobody: its drinker isn't penalized for breaking it but loses all it gave, and those who shared it know and may seek revenge.",
+                        "It undoes nothing already done: someone killed to fulfil a contract stays dead."
+                    ]
+                }
+            }
+        })
+    },
+    {
+        // (Its protection from the werecreature's full-moon change for its 3 days: a note Effect on its eater — no PF2e rule for the curse.)
+        name: "Moonkeep Orchid",
+        sentences: [
+            /^These magical flowers are infused\b.*\bcurse of the werecreature\.$/,
+            /^Intentionally growing these flowers\b.*\blost to time\.$/,
+            /^They occasionally grow in places\b.*\bremains a mystery\.$/,
+            /^This pale orchid glows\b.*\bmoonlight\.$/,
+            /^When you eat the flower\b.*\bprotection for (\d+) (days?)\.$/,
+            /^During this time\b.*\bmoon frenzy don't cause you\b.*\bfull control of your faculties\b.*\.$/
+        ],
+        card: ([, , , , eat]) => ownRow({ target: "the drinker", noteEffects: [{ label: "Moonkeep's protection", text: "Neither its curse of the werecreature nor its moon frenzy makes it change by itself under a full moon, and it keeps full control of its mind then.", duration: timeOf(eat[1], eat[2]) }] })
+    },
+    {
+        // (Its air kept clean for 8 hours: a note Effect named for the environment module's "doesn't need to breathe" — underwater or strangled,
+        // it breathes on —, with PF2e's Immunity to olfactory effects; the inhaled diseases its words, as no PF2e immunity picks them out from
+        // inhaled poisons.)
+        name: "Choral Toga: Elysium's Breath",
+        sentences: [
+            /^The air around the robe constantly circulates\b.*\.$/,
+            /^For (\d+) (hours?), you become immune to diseases\b.*\binhalation, olfactory effects\b.*\bprevent you from breathing\b.*\bunderwater\b.*\bstrangled\)\.$/
+        ],
+        card: ([, breath]) => ownRow({ noteEffects: [{ label: "doesn't need to breathe", text: "Immune to diseases spread by inhalation and to olfactory effects (PF2e's Immunity holds the olfactory ones), and to whatever would keep it from breathing: underwater, strangled or in foul air, it breathes on.", duration: timeOf(breath[1], breath[2]), rules: [{ key: "Immunity", type: "olfactory" }] }] })
+    },
+    {
+        // (On a living creature, an hour's ward against rising undead if it dies: a note Effect on it; on a fresh corpse, kept till sunrise —
+        // the card's line, out of combat.)
+        name: "Restful Salve",
+        sentences: [
+            /^A restful salve is a compound\b.*\bprevent undeath\.$/,
+            /^If applied to a fresh corpse\b.*\buntil the sun rises the next morning\.$/,
+            /^If applied to a living creature\b.*\blasts for only (\d+) (hours?)\b.*\.$/,
+            /^For that duration, the salve wards\b.*\bupon dying\.$/
+        ],
+        card: ([, , living]) => ownRow({
+            target: "the creature it's applied to",
+            noteEffects: [{ label: "Restful Salve", text: "Effects that would make it undead as it dies are warded off.", duration: timeOf(living[1], living[2]) }],
+            notes: ["On a fresh corpse instead: it doesn't decay, and it can't be made undead or otherwise controlled until the next sunrise (out of combat, the GM's)."]
+        })
+    },
+    {
+        // (A changed appearance for its hour, fading over 10 minutes after, stabilizing on a fourth drink in a row: a note Effect on its drinker
+        // — an appearance, no game numbers.)
+        name: "Potion of Passing Fancy",
+        sentences: [
+            /^A lesser variant of the Serum\b.*\bdoses at hand\.$/,
+            /^Upon drinking the potion, your appearance changes\b.*\bgender expression\.$/,
+            /^You have little control over the details\b.*\bheartfelt ideal\.$/,
+            /^More importantly\b.*\bfamily resemblance\b.*\bmore anonymously\.$/,
+            /^A potion of passing fancy's effects\b.*\blast for (\d+) (hours?)\b.*\bfading over (\d+) minutes\b.*\.$/,
+            /^If you extend the effect this way\b.*\bfamily resemblance\b.*\bserum of sex shift ?\.$/
+        ],
+        card: ([, , , , lasts]) => ownRow({ target: "the drinker", noteEffects: [{ label: "Passing fancy", text: `Its looks take on the sex characteristics of another gender expression, as its deepest ideal would have them, with no family resemblance to its own. When this ends it fades over ${lasts[3]} minutes; another potion before it's gone starts the time again, and a fourth in a row makes the change its own for good, with a family resemblance to its old looks (as Serum of Sex Shift's).`, duration: timeOf(lasts[1], lasts[2]) }] })
+    },
+    {
+        // (Attuned to the beacon until it Dismisses it, dies or attunes to another: a note Effect on its user, no time — out of combat, and what
+        // it senses the GM's to tell. Its link for teleports, the other activation, isn't this reading's.)
+        name: "Witchwyrd Beacon",
+        sentences: [
+            /^By touching the witchwyrd beacon\b.*\byou attune yourself to it\.$/,
+            /^Up to (four|\d+) creatures can be attuned\b.*\bmust become unattuned\.$/,
+            /^You can break your attunement\b.*\bDismissing the effect\.$/,
+            /^The attunement automatically ends if\b.*\bdies\b.*\bdifferent witchwyrd beacon ?\.$/,
+            /^The effect can also be dispelled normally\.$/,
+            /^You can sense whenever the witchwyrd beacon\b.*\bin any way\.$/
+        ],
+        card: ([, four]) => ownRow({ noteEffects: [{ label: "Attuned", text: `Attuned to its witchwyrd beacon (${four[1]} creatures at most at a time: another attunes only once one of them isn't). It senses whenever that beacon is activated in any way (the GM tells it). It ends when it Dismisses it (remove this Effect), dies or attunes to another beacon, and it can be dispelled (counteracted) as usual.`, duration: null }] })
+    },
+    {
+        // (The tattoo shown — PF2e's own toggle on the item, its +1 to Intimidation and –1 to Make an Impression: the toggle card flipping it,
+        // hidden again by the same activation, not while its user is Doomed.)
+        name: "Spider Lily Tattoo: Reveal Tattoo",
+        sentences: [/^You make the tattoo visible\.$/, /^You can use this activation again\b.*\bnot visible\b.*\bdoomed condition\.$/],
+        card: () => ({ builtin: "modes", targeting: { target: "self", range: null, area: null }, modes: [{ name: "Reveal Tattoo", plan: { builtin: "roll-option", option: "spider-lily-tattoo", value: "flip" } }], notes: ["Used again, it hides the tattoo — not while its user is Doomed: then it stays visible."] })
+    },
+    {
+        // (An arcane Wish, the spell module's cast; Drained 3 either way, given as it's used; the ring's judgement of the wish the GM's, a line.)
+        name: "Ring Of Recalcitrant Wishes",
+        sentences: [
+            /^You attempt to make the ring cast\b.*\barcane Wish spell\.$/,
+            /^However, if the ring doesn't deem\b.*\bselfless\b.*\bcan't be activated for (\d+) (hours?)\.$/,
+            /^You are Drained (\d+), whether or not\b.*\brefuses the wish\.$/,
+            /^Once the wish is cast\b.*\bno powers\b.*\brestores the wish to the ring\.$/
+        ],
+        card: ([, refused, drained]) => ({
+            ...cast({ spell: SPELL("6dDtGIUerazSHIOu", "Wish"), rank: 10, tradition: "arcane", notes: [`If the ring doesn't find the wish selfless enough (the GM's call), there's no wish to cast, and the ring can't be activated for ${refused[1]} ${refused[2]}.`, "Once the wish is cast, the ring has no more powers; a wearer's death in an act of great self-sacrifice is said to restore its wish (the GM's)."] }),
+            userEffects: [{ slug: "drained", value: Number(drained[1]), duration: null }]
+        })
+    },
+    {
+        // (A map from its memories of a place: what it shows whispered to the GM and its user, the GM filling it in; its free-action Dismiss
+        // said there.)
+        name: "Nomad's Shawl: Mind's Map",
+        sentences: [/^You focus your mind's eye\b.*\.$/, /^The beads on the shawl shift colors\b.*\byour memories\.$/, /^You can dismiss this effect\b.*\bfree action\.$/],
+        card: () => whisper("Its user focuses on a place it has been before, and the shawl's beads shift colours into a map of that area as it remembers it (the GM fills in what it shows). It can dismiss the map as a free action.")
+    },
+    {
+        // (A message kept, not sent — Message's words whispered to the head, repeated at its next activation: a note Effect on its user, no
+        // time — the user's ruling for speech. Not the Message cast the plan read before.)
+        name: "Soulspeaker",
+        over: (plan) => !plan || plan.noteOnly || plan.builtin === "cast-spell",
+        sentences: [/^You cast Message, but instead\b.*\bstored in the soulspeaker ?\.$/, /^The soulspeaker's eyes open\b.*\bnext time it's activated\b.*\brasping whisper\b.*\bmessage expended\.$/],
+        card: () => ownRow({ noteEffects: [{ label: "Soulspeaker's message", text: "The shrunken head holds the short message its user whispered to it, its eyes open. The next time it's activated, it repeats the message in a rasping whisper and its eyes close: the message is spent (remove this Effect then, rather than storing another).", duration: null }] })
+    },
+    {
+        // (A command mimed with the puppet: the creature's Will save, its failure a note Effect for its next turn — its first action the
+        // command's —, and the Sustain's next command the same save again: plan.again, the later card kept open for the minute.)
+        name: "Ebon Marionette",
+        sentences: [
+            /^When you Activate the ebon marionette\b.*\bcreature within (\d+) feet\b.*\bwith the puppet\.$/,
+            /^You might command the creature\b.*\battack an ally\.$/,
+            /^Whenever you issue a command\b.*@Check\[will\|dc:(\d+)\] save\b.*\bfollow the command\b.*\bfirst action on its next turn\.$/,
+            /^If you command it to do something\b.*\bwith 1 action\.$/,
+            /^You can Sustain the Activation\b.*\bup to (\d+) (minutes?)\b.*\banother Will save\.$/,
+            /^If the target succeeds\b.*\bthe effect ends\.$/,
+            /^Sustaining the Activation has no effect\b.*\bper turn\.$/
+        ],
+        card: ([envision, , command, , sustain], _plan, { base, info }) => {
+            const commanded = { label: "Commanded by the marionette", text: "Its first action on its next turn must carry out the command it was given (what the puppet mimed: dropping its weapon, running away, attacking an ally…); a command of more than 1 action goes only as far as 1 action takes it.", duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } };
+            const failed = () => ({ ...none(), noteEffects: [commanded] });
+            const save = {
+                targeting: { target: "1 creature", range: `${envision[1]} feet`, area: null },
+                resolution: { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: Number(command[1]) } }, sharedDamage: null, outcomes: { criticalSuccess: none(), success: none(), failure: failed(), criticalFailure: failed() } }
+            };
+            return {
+                ...save,
+                again: { plan: { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...save, item: info }, later: true, repeat: true, time: timeOf(sustain[1], sustain[2]), when: "{user} Sustains the activation to give the creature another command" },
+                notes: ["A success ends it: no more Sustains.", "Sustaining while the creature still has a command does nothing: one command a turn at most."]
+            };
+        }
+    },
+    {
+        // (A bonfire in an adjacent square for 8 hours: the ability module's zone, its 1d6 fire at the start of the turn of a creature that
+        // stayed in it; its fuel and dousing the card's lines.)
+        name: "Ember Dust",
+        sentences: [
+            /^This handful of gritty black dust\b.*\bcool to the touch\.$/,
+            /^When ember dust is sprinkled\b.*\badjacent unoccupied square\b.*\bbonfire\b.*\.$/,
+            /^For (\d+) (hours?), the bonfire blazes\b.*\bany fuel\.$/,
+            /^The fire doesn't harm the surface\b.*\bsmothering it completely\.$/,
+            /^Anything that's lit from the bonfire\b.*\bquenched normally\.$/,
+            /^While it's safe enough\b.*\bat least a full round takes (\d+d\d+) fire damage each round\.$/,
+            /^After \d+ hours, the bonfire becomes\b.*\.$/
+        ],
+        card: ([, , burns, , , fire]) => {
+            const area = { type: "square", value: 5 };
+            return {
+                builtin: "zone",
+                actions: null,
+                targeting: { target: null, range: "5 feet", area },
+                zone: zoneOf({
+                    area,
+                    centre: "placed",
+                    range: 5,
+                    lasts: timeOf(burns[1], burns[2]),
+                    damage: [{ when: "start", formulas: [`${fire[1]}[fire]`] }],
+                    notes: [
+                        "Sprinkled in an adjacent unoccupied square (place it there), it's a bonfire filling most of the square, burning without fuel; once its time is up it's a normal fire, burning only as conditions allow.",
+                        "It doesn't harm the surface it's on, and only dousing or submerging it in water, or smothering it completely, puts it out; what's lit from it needs fuel and goes out as usual.",
+                        `Moving through or around it is safe: a creature that stays in it a full round takes the ${fire[1]} fire, at the start of its turn there.`
+                    ]
+                })
+            };
+        }
+    },
+    {
+        // (Tiny for 10 minutes, its reach 0: a note Effect with PF2e's Shrink rules — CreatureSize tiny, reach 0, its equipment resized —, its
+        // Dismiss its user removing it.)
+        name: "Miniaturization Module: Miniaturize Me!",
+        sentences: [/^You instantly shrink, becoming Tiny in size\.$/, /^Your equipment shrinks with you\b.*\bif removed\.$/, /^While Tiny, your reach changes\b.*\.$/, /^You remain Tiny for (\d+) (minutes?), but you can Dismiss this effect\.$/],
+        card: ([, , , remain]) => ownRow({ noteEffects: [{ label: "Miniaturized", text: "Tiny, its equipment shrunk with it (an item taken off returns to its size); its reach is 0 feet. It can Dismiss this (remove this Effect).", duration: timeOf(remain[1], remain[2]), rules: [{ key: "CreatureSize", value: "tiny", reach: { override: 0 }, resizeEquipment: true }] }] })
+    },
+    {
+        // (A severed head kept from decay: the card's lines — a corpse's, out of combat. Its questions, the other activation, aren't this
+        // reading's.)
+        name: "Cresset of Grisly Interrogation",
+        sentences: [
+            /^You open the cresset\b.*\binside the bowl\.$/,
+            /^Once the cage lid is folded back\b.*\bfor no longer than (\d+) minutes\b.*\bno longer subject to decay\b.*\bthe remains\.$/,
+            /^This doesn't prevent the rest\b.*\bin the first place\)\.$/,
+            /^If the head is later removed\b.*\bcresset of grisly interrogation ?\.$/
+        ],
+        card: ([, kept]) => ownRow({
+            notes: [
+                `A severed head (of a Medium or Small humanoid) dead no more than ${kept[1]} minutes, latched into its bowl, no longer decays, and no pests eat it (an object, out of combat).`,
+                "The rest of the corpse and its soul can still become undead, and effects that restore life still work, though some (Raise Dead) can't restore a beheaded corpse.",
+                "Taken out later, the head decays at once, of no more use in a cresset."
+            ]
+        })
+    },
+    {
+        // (The giant rat a minion of its user's for its hour, PF2e's minion trait its commands, a week before it can be called again once it's
+        // slain — plan.slainWait, scripts/slain-wait.js —, once a day as the item's own words say: over the conjure card read before.)
+        name: "Pyrite Rat: Transform Statue",
+        over: (plan) => plan?.builtin === "conjure" && plan.creatures?.length === 1,
+        sentences: [
+            /^You place the statue on solid ground\b.*\bliving Giant Rat\.$/,
+            /^In creature form, the giant rat\b.*\bon your turn\.$/,
+            /^It gets 2 actions\b.*\breactions\.$/,
+            /^You have to spend an action\b.*\bcowers where it is\.$/,
+            /^If the rat is slain\b.*\bcan't be transformed again until (\d+|one) (weeks?|days?) has passed\.$/,
+            /^If the figurine is destroyed\b.*\blost forever\.$/
+        ],
+        card: ([, , , , slain], plan) => {
+            const [creature] = plan.creatures;
+            const wait = { value: /^one$/i.test(slain[1]) ? 1 : Number(slain[1]), unit: `${slain[2].toLowerCase().replace(/s$/, "")}s` };
+            const time = plan.lasts?.unit === "hours" ? [`It lasts ${plan.lasts.value} hour${plan.lasts.value === 1 ? "" : "s"}: dismiss it when that's up.`] : [];
+            return {
+                keep: true,
+                creatures: [{ ...creature, traits: [...new Set([...(creature.traits ?? []), "minion"])] }],
+                slainWait: wait,
+                trigger: { ...(plan.trigger ?? {}), event: "use", frequency: { max: 1, per: "day", raw: "once per day" } },
+                notes: ["A minion: it acts when its user commands it (1 action for 2 of its own).", ...time, `Slain, it reverts and can't be activated again for ${wait.value} ${wait.unit.replace(/s$/, "")}: set as it falls.`, "Destroyed as a statue, it shatters, its magic lost for good (an object's)."],
+                partial: undefined
+            };
+        }
+    },
+    {
+        // (A creature dead 2 rounds or less — 3, wound with 2 Interact actions — brought back with 1 Hit Point, then 10 Hit Points a round for the
+        // minute: the item card's revival (item.revive, scripts/revive.js) and PF2e's fast healing 10 for the minute (item.fastHealing) on the
+        // creature it's latched to; how recently it died the GM's, a line.)
+        name: "Clockwork Rejuvenator",
+        sentences: [
+            /^(?:1 )?or (?:2 )?Interact Requirements The round\b.*\bto wind the device\.$/,
+            /^This device has four finger-like latches\b.*\.$/,
+            /^After winding the clockwork rejuvenator\b.*\brecently dead creature\b.*\.$/,
+            /^If you wound the rejuvenator using 1\b.*\bdied in the last (\d+) rounds, restoring it to (\d+) HP\.$/,
+            /^If you wound the rejuvenator using 2\b.*\bdied within the last (\d+) rounds\.$/,
+            /^After attaching, the device continues\b.*\bfor (\d+) (minutes?), restoring (\d+) HP per round\b.*\.$/,
+            /^Thereafter, the clockwork rejuvenator\b.*\binert\.$/
+        ],
+        card: ([, , , one, two, whirls]) => ownRow({
+            target: "the creature it's latched to",
+            notes: [`Only an adjacent creature that died in the last ${one[1]} rounds (wound with 1 Interact action) or ${two[1]} (with 2): the GM's to judge.`],
+            item: { recipient: "drinker", revive: { hp: Number(one[2]), words: "Brought back to life by the clockwork rejuvenator" }, fastHealing: [{ value: Number(whirls[3]), duration: timeOf(whirls[1], whirls[2]) }] }
+        })
+    },
+    {
+        // (The next death from damage within 8 hours held off — 20 Hit Points, then a day's immunity to it: a note Effect on its drinker for
+        // the 8 hours, the user's ruling for a rule PF2e can't play.)
+        name: "Ambrosia of Undying Hope",
+        sentences: [
+            /^This elixir is usually stored\b.*\bstein\.$/,
+            /^The dark liquid sparkles\b.*\bFailed in Absalom\.$/,
+            /^The next time you would die\b.*\bdamage within (\d+) (hours?)\b.*\bprevents you from dying, you regain (\d+) Hit Points\b.*\bbenefits end\b.*\btemporarily immune\b.*\bfor (\d+) (hours?)\.$/,
+            /^The ambrosia can't protect you\b.*\bdeath effects or disintegration\b.*\bvia damage\.$/,
+            /^You can only be under the effect\b.*\bat a time\.$/
+        ],
+        card: ([, , saved]) => ownRow({ target: "the drinker", noteEffects: [{ label: "Undying hope", text: `The next time it would die from damage while this lasts (not from a death effect or disintegration), it doesn't: it regains ${saved[3]} Hit Points, this Effect ends, and it's immune to ambrosia of undying hope for ${saved[4]} ${saved[5]}. Only one ambrosia of undying hope at a time.`, duration: timeOf(saved[1], saved[2]) }] })
+    },
+    {
+        // (Not needing to breathe for each way's time — 24 hours, 7 days with a Mythic Point —: a note Effect named for the environment
+        // module's "doesn't need to breathe" beside each way's +1 to saves against inhaled threats, over the ways card read before; the
+        // reminder of its whole text no longer needed.)
+        names: ["One Day's Breath", "Three Day's Breath"],
+        over: (plan) => plan?.builtin === "ways" && plan.ways?.length === 2,
+        sentences: [
+            /^This glass bottle holds breezes\b.*\bPlane of Air\.$/,
+            /^When you inhale the bottle's contents\b.*\bno longer need to breathe\b.*\bfor a time\.$/,
+            /^While the effect lasts, you also gain\b.*\binhaled poisons\.$/,
+            /^If you spend 1 Mythic Point when\b.*\beffect's duration\.$/,
+            /^You don't need to breathe for (\d+) (hours?|days?)\.$/,
+            /^While the effect lasts, you gain a \+(\d+) status bonus\b.*\binhaled threats\.$/,
+            /^If you spend 1 Mythic Point, you\b.*\bbreathe for (\d+) (days?)\.$/
+        ],
+        card: ([, , , , plain, bonus, mythic], plan) => {
+            const times = [timeOf(plain[1], plain[2]), timeOf(mythic[1], mythic[2])];
+            const ways = plan.ways.map((way, index) => {
+                const row = way.plan?.resolution?.outcomes?.success;
+                const modifier = (row?.modifiers ?? []).find((entry) => entry.selector === "saving-throw" && entry.value === Number(bonus[1]));
+                if (!modifier || modifier.duration?.value !== times[index].value || modifier.duration?.unit !== times[index].unit) return null;
+                const { partial: _partial, unread: _unread, ...kept } = way.plan;
+                const note = { label: "doesn't need to breathe", text: `It doesn't need to breathe; its +${bonus[1]} status bonus to saves against inhaled threats is this card's other Effect.`, duration: modifier.duration };
+                return { ...way, plan: { ...kept, automation: { level: "automatic" }, resolution: { ...kept.resolution, outcomes: { ...kept.resolution.outcomes, success: { ...row, noteEffects: [...(row.noteEffects ?? []).filter((entry) => !entry.reminder), note] } } } } };
+            });
+            return ways.every(Boolean) ? { keep: true, ways, partial: undefined, unread: undefined, automation: { level: "automatic" } } : null;
+        }
+    },
+    {
+        // (Upright, a stone column for good — the card's lines; on its side, Barricade Stone (Sphere)'s rolling boulder with its numbers
+        // raised: the save card for each creature in its way (basic Reflex DC 27, 6d6 bludgeoning, Prone on a failure, Wounded 1 too on a
+        // critical failure), kept open for a minute as it rolls on — plan.again. The ways card picks which.)
+        name: "Barricade Stone (Cylinder)",
+        sentences: [
+            /^The ancient inhabitants of Bloodsalt\b.*\.$/,
+            /^In its stone form, a barricade stone\b.*\.$/,
+            /^The size and shape\b.*\.$/,
+            /^When you activate the barricade stone\b.*\bup to (\d+) feet away\b.*\bsling weapon\.$/,
+            /^Upon landing, the stone instantly\b.*\bexpands\.$/,
+            /^The stone grows to its maximum size\.$/,
+            /^While normally items with the structure trait\b.*\bwhere there are creatures\.$/,
+            /^While it's likely to take some time\b.*\(Hardness (\d+), HP (\d+)\)\.$/,
+            /^Type: Cylinder When activated\b.*\bdiameter of 5 feet\b.*\bheights of 80 feet\b.*\.$/,
+            /^If a dimension can't be reached\b.*\bin that direction\.$/,
+            /^You can activate the cylinder horizontally\b.*\.$/,
+            /^If you do, the cylinder moves\b.*\bBarricade Stone \(Sphere\).*\bboth DCs increase to (\d+), the damage increases to (\d+d\d+) (bludgeoning)\b.*\bcritically fails\b.*\bWounded (\d+) condition\b.*\.$/
+        ],
+        card: ([, , , thrown, , , , hard, , , , side], _plan, { base, info }) => {
+            const dc = Number(side[1]);
+            const prone = { kind: "condition", slug: "prone", value: null, duration: null };
+            const shared = (multiplier) => ({ mode: "shared", multiplier, sourceComponentIds: multiplier ? ["0"] : [] });
+            const stone = `Hardness ${hard[1]}, ${hard[2]} Hit Points: it can be broken as any stone structure, given time and tools.`;
+            const own = { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, item: info };
+            const rolling = {
+                ...own,
+                targeting: { target: "each creature in its way", range: `${thrown[1]} feet`, area: null },
+                resolution: {
+                    kind: "save",
+                    check: { roll: "save", statistic: "reflex", basic: true, against: { dc: "fixed", value: dc } },
+                    sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${side[2]}[${side[3]}]`, type: null, category: null }] },
+                    outcomes: { criticalSuccess: { damage: shared(0), effects: [] }, success: { damage: shared(0.5), effects: [] }, failure: { damage: shared(1), effects: [prone] }, criticalFailure: { damage: shared(2), effects: [prone, { kind: "condition", slug: "wounded", value: Number(side[4]), duration: null }] } }
+                }
+            };
+            const upright = { ...own, ...ownRow({ notes: [`Dropped, thrown up to ${thrown[1]} feet or slung, it lands and at once grows for good into a stone cylinder 5, 10 or 20 feet across (by its command) and 80, 40 or 20 feet tall, stopping where a solid surface blocks it: place it on the map, never where there are creatures.`, stone] }) };
+            const onSide = {
+                ...rolling,
+                again: { plan: rolling, later: true, repeat: true, time: timeOf(1, "minute"), when: "the rolling cylinder reaches another creature" },
+                notes: [`Thrown or slung on its side, it rolls on as Barricade Stone (Sphere)'s boulder does, 25 feet a round away from its user (the map's); stopped, it can be pushed 5 feet with a DC ${dc} Athletics check. A creature in its way: this save, and the card stays open a minute for the next.`, "Already Wounded, its Wounded value rises by 1 instead (PF2e's rule).", stone]
+            };
+            return { builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways: [{ name: "Upright", html: "<p><strong>Effect</strong> Upright.</p>", plan: upright }, { name: "On its side, rolling", html: "<p><strong>Effect</strong> On its side, rolling.</p>", plan: onSide }] };
+        }
+    },
+    {
+        // (PF2e's Quicksand hazard in the squares it's poured on — one or two (1 action) or a 15-foot cone (2) —, for a day or till Dismissed:
+        // the ability module's zone, its GM told as a creature sinks in on entering; the hazard's routine — deeper each round, its Swim out —
+        // the zone card's lines, as PF2e's hazards are the GM's to run. The ways card picks the area.)
+        name: "Dirt Sea in a Jar",
+        sentences: [
+            /^You pour the contents of the jar\b.*\bunworked ground\.$/,
+            /^If you activate this item with one\b.*\bone or two 5-foot squares\b.*\.$/,
+            /^If you activate this item with two\b.*\b(\d+)-foot cone\.$/,
+            /^The affected space turns into Quicksand\.$/,
+            /^Creatures already in the area\b.*\bas a reaction\.$/,
+            /^The quicksand doesn't inflict lasting damage\b.*\bsettle naturally\.$/,
+            /^This terrain lasts for (\d+|1) (days?|hours?) or until the effect is Dismissed\b.*\bin the jar\.$/
+        ],
+        card: ([, , cone, , , , lasts], _plan, { base, info }) => {
+            const quicksand = (area, time) => ({
+                ...base,
+                activation: { ...(base?.activation ?? {}), time },
+                automation: { level: "automatic" },
+                trigger: { event: "use" },
+                builtin: "zone",
+                actions: null,
+                targeting: { target: null, range: `${area.value} feet`, area },
+                zone: zoneOf({
+                    area,
+                    centre: "placed",
+                    range: 5,
+                    lasts: timeOf(lasts[1], lasts[2]),
+                    saves: [{ when: ["initial"], note: "it can Step out of the quicksand as a reaction; staying, it sinks in up to its waist" }, { when: ["enter"], note: "it sinks into the quicksand up to its waist" }],
+                    notes: [
+                        "Quicksand (PF2e's hazard): each round on the hazard's initiative it pulls every creature in it a step deeper — from its waist to its neck, from its neck under, holding its breath. A creature can Swim (Athletics DC 20) to rise a step, or to move 5 feet while only waist-deep; a critical failure pulls it down a step. Swimming out, it's Prone beside the patch; others can Aid it, or pull it out with the same check.",
+                        "Poured only on unworked ground, adjacent to its user (place it there). It doesn't harm surfaces or buildings, though what it surrounds may sink or settle.",
+                        "Dismissed, the sand returns to the jar."
+                    ]
+                }),
+                item: info
+            });
+            const way = (name, area, time) => ({ name, html: `<p><strong>Effect</strong> ${name}.</p>`, plan: quicksand(area, time) });
+            return { builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways: [way("One action: one square", { type: "square", value: 5 }, "1"), way("One action: two squares in a row", { type: "line", value: 10 }, "1"), way(`Two actions: a ${cone[1]}-foot cone`, { type: "cone", value: Number(cone[1]) }, "2")] };
+        }
     }
 ];
 
 // Whether a reading is for this source name (its words aren't worth reading otherwise).
-export const hasLastingReading = (name) => READINGS.some((entry) => entry.name === name);
+// (A reading for several grades of one item, names: the adventure books' readings, 2026-10-27.)
+const forName = (entry, name) => entry.name === name || (entry.names ?? []).includes(name);
+export const hasLastingReading = (name) => READINGS.some((entry) => forName(entry, name));
 
 // Its sentences as one reading's, each matched in order → the matches, or null.
 function matched(reading, sentences) {
@@ -337,11 +786,13 @@ export const withLastingReading = (plan, given) => withSentenceReadings(READINGS
 
 // The same for any table of readings of this shape (src/compiler/visibility.js's too, 2026-10-27).
 export function withSentenceReadings(table, plan, { name, words, base, info, frequency = null }) {
-    const readings = table.filter((entry) => entry.name === name && (entry.over || !plan || plan.noteOnly || plan.builtin === "no-effect"));
+    // (over: true over any plan, or a test of the plan read before — Pyrite Rat's conjure card —, as area-readings.js's, 2026-10-27.)
+    const readings = table.filter((entry) => forName(entry, name) && (typeof entry.over === "function" ? entry.over(plan) : entry.over || !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan) : null;
+        // (Its base and item part too, for a card that needs its level: Potion of Annulment's counteract rank.)
+        const card = found ? reading.card(found, plan, { base, info }) : null;
         if (!card) continue;
         // (Over the plan read before, its own parts kept: Blakenshipper's first card.)
         if (card.keep) {
