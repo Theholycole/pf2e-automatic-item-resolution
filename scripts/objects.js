@@ -6,15 +6,19 @@
 
 import { storable } from "../src/compiler/stored-spell.js";
 import { ruleEffectSource } from "../src/live/card.js";
-import { anyItemChoices, createObjectsCard, objectsCardHTML } from "../src/live/objects-card.js";
+import { anyItemChoices, createObjectsCard, douseable, objectsCardHTML } from "../src/live/objects-card.js";
+import { fortuneEffectSource } from "../src/live/fortune-card.js";
+import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { chargesOf } from "../src/live/charges.js";
-import { FLAG, MODULE_ID, entryOf, isActiveGM, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, creaturesNear, entryOf, isActiveGM, spaceOf, stateOf } from "./foundry.js";
+import { pauseEffectSource, pauseWords } from "../src/live/shield-repair.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
 const PHYSICAL = new Set(["equipment", "armor", "weapon", "shield", "backpack", "consumable", "treasure", "ammo", "book"]);
 const bulkOf = (item) => Number(item?.system?.bulk?.value ?? 0) || 0;
-const fits = (item, objects) => !Number.isFinite(objects.maxBulk) || bulkOf(item) <= objects.maxBulk;
+// (And its level, Forgefather's Seal's "of its level or lower": objects.maxLevel, 2026-10-27.)
+const fits = (item, objects) => (!Number.isFinite(objects.maxBulk) || bulkOf(item) <= objects.maxBulk) && (!Number.isFinite(objects.maxLevel) || (Number(item.system?.level?.value) || 0) <= objects.maxLevel);
 const itemsOf = (actor) => [...(actor?.items ?? [])].filter((item) => PHYSICAL.has(item.type));
 // (A weapon's rounds loaded — PF2e keeps them as its subitems — and how many it holds; its user's ammunition for it, PF2e's isAmmoFor.)
 const loadedOf = (weapon) => [...(weapon?.subitems ?? [])].filter((entry) => entry.isOfType?.("ammo") || entry.type === "ammo").reduce((sum, entry) => sum + (Number(entry.quantity ?? entry.system?.quantity) || 0), 0);
@@ -52,6 +56,75 @@ export function objectChoices(actor, objects, holderId) {
                     : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && (ammoFor(actor, item) || (objects.recalled && (spentAmmoFor(actor, item) || item.getFlag?.(MODULE_ID, "lastRound")))))
                         : [];
     return list.map((item) => ({ id: item.id, name: item.name }));
+}
+
+// The lights within its user's reach it can put out (op "douse"): each creature's light Effects that fit (src/live/objects-card.js douseable), a
+// token's own light, and the scene's placed lights — { kind, id, name, actorUuid?, tokenUuid? }.
+function lightChoices(token, actor, objects) {
+    const placeable = token?.object ?? token ?? null;
+    if (!placeable || !canvas?.ready) return [];
+    const reach = Math.max(5, Number(actor?.system?.attributes?.reach?.base) || 5);
+    const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
+    const from = spaceOf(placeable);
+    const near = [placeable, ...canvas.tokens.placeables.filter((other) => other !== placeable && !other.document.hidden && distanceFeet(from, spaceOf(other), grid) <= reach)];
+    const choices = [];
+    for (const other of near) {
+        for (const effect of other.actor?.itemTypes?.effect ?? []) {
+            const facts = { level: effect.system?.level?.value, spell: fromSpell(effect), rules: effect.system?.rules ?? [] };
+            if (douseable(facts, objects)) choices.push({ kind: "effect", id: effect.id, actorUuid: other.actor.uuid, name: `${other.name}: ${effect.name}` });
+        }
+        const light = other.document?.light ?? {};
+        if ((Number(light.bright) || 0) > 0 || (Number(light.dim) || 0) > 0) choices.push({ kind: "token", id: other.document.id, tokenUuid: other.document.uuid, name: `${other.name}'s light` });
+    }
+    for (const light of canvas.lighting?.placeables ?? []) {
+        const data = light.document;
+        if (data.hidden || !((Number(data.config?.dim) || 0) > 0 || (Number(data.config?.bright) || 0) > 0)) continue;
+        if (distanceFeet(from, { x: Number(data.x), y: Number(data.y), w: 1, h: 1, elevation: 0 }, grid) > reach) continue;
+        choices.push({ kind: "ambient", id: data.id, sceneId: data.parent?.id ?? canvas.scene?.id, name: `A light on the scene (${Number(data.config?.bright) || 0}/${Number(data.config?.dim) || 0} feet)` });
+    }
+    return choices;
+}
+
+// (A spell's Effect: PF2e's "spell-effect-" slug, or its origin item a spell.)
+function fromSpell(effect) {
+    if (/^spell-effect-/.test(String(effect.slug ?? effect.system?.slug ?? ""))) return true;
+    try {
+        return fromUuidSync(effect.system?.context?.origin?.item ?? "")?.type === "spell";
+    } catch {
+        return false;
+    }
+}
+
+// The picked light put out. → the card's line.
+async function douseLight(choice) {
+    if (!choice) throw new Error("No light within reach to put out.");
+    if (choice.kind === "effect") {
+        const owner = await fromUuid(choice.actorUuid).catch(() => null);
+        const effect = owner?.items?.get?.(choice.id);
+        if (!effect) throw new Error(`${choice.name} isn't there any more.`);
+        await effect.delete();
+        return `${choice.name}: put out.`;
+    }
+    if (choice.kind === "token") {
+        const document = await fromUuid(choice.tokenUuid).catch(() => null);
+        if (!document) throw new Error(`${choice.name} isn't there any more.`);
+        await document.update({ "light.bright": 0, "light.dim": 0 });
+        return `${choice.name}: put out.`;
+    }
+    const scene = game.scenes?.get?.(choice.sceneId) ?? canvas.scene;
+    const light = scene?.lights?.get?.(choice.id);
+    if (!light) throw new Error("That light isn't there any more.");
+    await light.update({ hidden: true });
+    return `${choice.name}: put out (hidden; the GM shows it again if it's relit).`;
+}
+
+// The items of the creatures within its user's reach the op can take: { id, name, actorUuid }.
+function reachChoices(token, actor, objects) {
+    const reach = Math.max(5, Number(actor?.system?.attributes?.reach?.base) || 5);
+    return creaturesNear(token, reach).flatMap((entry) => {
+        const other = fromUuidSync(entry.tokenUuid ?? "")?.actor ?? fromUuidSync(entry.actorUuid ?? "") ?? null;
+        return other && other.uuid !== actor?.uuid ? objectChoices(other, objects, null).map((choice) => ({ ...choice, name: `${entry.name}: ${choice.name}`, actorUuid: other.uuid })) : [];
+    });
 }
 
 // (The shapes a weapon can take, src/compiler/objects.js op "reshape": its other form — Anchor Spear's — or PF2e's base melee weapons held in as
@@ -109,7 +182,9 @@ export async function charmChoices(objects, actor = null) {
 export async function postObjectsCard({ message, plan, used, actor, token }) {
     const holderId = String(used.data.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? used.data._id ?? null;
     const held = storedOf(actor?.items?.get?.(holderId));
-    const choices = plan.objects.op === "reshape" ? await reshapeChoices(actor?.items?.get?.(holderId), plan.objects) : plan.objects.op === "create" && plan.objects.choose ? await charmChoices(plan.objects, actor) : objectChoices(actor, plan.objects, holderId);
+    const own = plan.objects.op === "reshape" ? await reshapeChoices(actor?.items?.get?.(holderId), plan.objects) : plan.objects.op === "create" && plan.objects.choose ? await charmChoices(plan.objects, actor) : objectChoices(actor, plan.objects, holderId);
+    // (And the items of the creatures within its user's reach, Forgefather's Seal's "an item within reach": each named with its owner, 2026-10-27.)
+    const choices = plan.objects.op === "douse" ? lightChoices(token, actor, plan.objects) : plan.objects.reach ? [...own, ...reachChoices(token, actor, plan.objects)] : own;
     const state = createObjectsCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, id: holderId }, user: entryOf(token, actor), choices, stored: held ? { name: held.name, rank: held.rank } : null });
     return ChatMessage.create({ content: objectsCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
@@ -131,6 +206,12 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
     }
     // (Another creature's item damaged, Rustbringer's disarmed weapon: src/compiler/objects.js op "damage".)
     if (objects.op === "damage") return damageTheirItem(message, state, { pick: Number(pick) || 0, targets });
+    // (A light within its user's reach put out, Spellcutter's: src/compiler/unique-rules.js withDoused, 2026-10-27.)
+    if (objects.op === "douse") {
+        const line = await douseLight(state.choices[Number(pick) || 0]);
+        const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
+        return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+    }
     // (Its own shape changed, Anchor Spear's and the Shifting rune's: the picked base weapon's numbers on it.)
     if (objects.op === "reshape") {
         const shape = state.choices[Number(pick) || 0];
@@ -140,12 +221,15 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
         const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [`${holder.name} takes the shape of a ${name.toLowerCase()}, its runes kept`] };
         return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
     }
-    const chosen = objects.self ? holder : state.choices[Number(pick) || 0] ? actor.items.get(state.choices[Number(pick) || 0].id) : null;
+    const choice = state.choices[Number(pick) || 0] ?? null;
+    // (Another creature's within reach: its own item, src/compiler/unique-rules.js withMended.)
+    const owner = choice?.actorUuid ? await fromUuid(choice.actorUuid).catch(() => null) : null;
+    const chosen = objects.self ? holder : choice ? (owner ?? actor).items.get(choice.id) : null;
     // (A weapon made by a talisman used up as it's made, Chain of Stars': no holder needed.)
     const spentMaker = objects.op === "create" && objects.self && !holder && state.plan.item?.type === "consumable";
     if (!chosen && !spentMaker) throw new Error(objects.self ? `${state.item.name} isn't on ${state.user.name} any more.` : `Pick one of ${state.user.name}'s items first.`);
     // (Still fit for it: the item may have moved since the card was posted.)
-    if (!objects.self && !objectChoices(actor, objects, state.item.id).some((choice) => choice.id === chosen.id)) throw new Error(`${chosen.name} can't be taken now.`);
+    if (!objects.self && !objectChoices(owner ?? actor, objects, owner ? null : state.item.id).some((entry) => entry.id === chosen.id)) throw new Error(`${chosen.name} can't be taken now.`);
     let line;
     if (objects.op === "store") {
         if (!holder) throw new Error(`${state.item.name} isn't on ${state.user.name} any more.`);
@@ -191,10 +275,24 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
         const after = Math.min(max, before + Math.max(0, roll.total));
         await chosen.update({ "system.hp.value": after });
         line = `${chosen.name} regains ${after - before} Hit Points (rolled ${objects.amount} = ${roll.total}): ${after}/${max}`;
+    } else if (objects.op === "repair" && objects.pf2eRepair) {
+        // (PF2e's own Repair, Flawless Celestial Shawl's Reweave: its Crafting check one degree better — the readied card's AdjustDegreeOfSuccess on
+        // its user first, spent by that roll (scripts/fortune.js) — 2026-10-27.)
+        if (objects.degree) await actor.createEmbeddedDocuments("Item", [fortuneEffectSource({ state: { plan: { builtin: "readied-bonus", bonus: { modifiers: [], degree: objects.degree, spend: [objects.degree.selector], duration: { value: 1, unit: "minutes", expiry: "turn-start" } } }, item: state.item, user: state.user }, worldTime: game.time.worldTime, moduleId: MODULE_ID })]);
+        if (!game.pf2e?.actions?.repair) throw new Error("PF2e's Repair action isn't there.");
+        await game.pf2e.actions.repair({ item: chosen, actors: [actor] });
+        line = `PF2e's Repair of ${owner ? `${owner.name}'s ` : ""}${chosen.name}: ${actor.name}'s Crafting check${objects.degree ? ", one degree of success better" : ""} (its card's buttons restore the Hit Points)`;
     } else if (objects.op === "repair") {
         const max = Number(chosen.system?.hp?.max) || 0;
+        const destroyed = (Number(chosen.system?.hp?.value) || 0) <= 0;
         await chosen.update({ "system.hp.value": max });
-        line = `${chosen.name} is repaired (${max} Hit Points), no longer broken`;
+        line = `${owner ? `${owner.name}'s ` : ""}${chosen.name} is ${destroyed ? "remade" : "repaired"} (${max} Hit Points), no longer broken${destroyed ? " or destroyed" : ""}`;
+        // (What its use stops until its user's next daily preparations, Forgefather's Seal's shields' repair: an Effect on its user then,
+        // scripts/shield-repair.js.)
+        if (objects.pauses) {
+            await actor.createEmbeddedDocuments("Item", [pauseEffectSource(objects.pauses, { item: state.item, user: state.user, worldTime: game.time.worldTime })]);
+            line += `; ${pauseWords(objects.pauses)}`;
+        }
     } else if (objects.op === "reload") {
         // (One round of its user's ammunition for it: PF2e's own attach, as the weapon's reload button does. Recalled, Persistent Lodestone's: the round
         // it missed with given back first, so none of its user's is spent.)

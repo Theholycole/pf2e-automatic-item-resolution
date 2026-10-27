@@ -159,9 +159,10 @@ test("Guiding Chisel: a building of up to ten 10-foot cubes, the structure card'
 test("Guiding Star Orb's embedded place on its user, in place of the last; the soulhearts' maximum Hit Points for each PC, the soulheart destroyed", () => {
     const embed = activation("Guiding Star Orb", "Embed Location");
     assert.deepEqual([done(embed), embed.item.ruleEffects[0].replaces, routeOf(embed)], [true, true, "item"]);
-    for (const [name, value] of [["Soulheart (Major)", 3], ["Soulheart (Greater)", 2]]) {
+    // (The soulhearts' card is the fourth group's withPhantomBolster since the merge, 2026-10-27: the phantom targeted, each PC's Hit Points.)
+    for (const name of ["Soulheart (Major)", "Soulheart (Greater)"]) {
         const bolster = activation(name, "Bolster Maiserene Phantom");
-        assert.deepEqual([done(bolster), bolster.item.recipient, bolster.item.destroyed, bolster.item.ruleEffects[0].rules[0], routeOf(bolster)], [true, "targets", true, { key: "FlatModifier", selector: "hp", value, label: "Soulheart" }, "item"], name);
+        assert.deepEqual([done(bolster), Boolean(bolster.item.phantom), routeOf(bolster)], [true, true, "item"], name);
     }
     assert.equal(activations("Phoenix Fighting Fan")[1].item.destroyed, true);
 });

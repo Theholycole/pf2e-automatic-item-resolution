@@ -543,24 +543,8 @@ const READINGS = [
             notes: ["Its 10 minutes' focus are its user's, where they stand."]
         })
     },
-    ...["Soulheart (Major)", "Soulheart (Greater)"].map((name) => ({
-        // (The soulheart spent on a Maiserene phantom: each PC targeted +N maximum Hit Points while in cursed Bastardhall — an Effect with PF2e's
-        // own modifier, on each —, the phantom's rank raised the GM's to set (an adventure creature's), the soulheart destroyed.)
-        name: `${name}: Bolster Maiserene Phantom`,
-        sentences: [
-            /^When touched to a rank (\d+) Maiserene phantom, the soulheart flashes with bright red light and is destroyed\.$/,
-            /^As it does so, it permanently increases the targeted phantom to rank (\d+), and increases each PC's maximum Hit Points by (\d+) for as long as they remain within Bastardhall while the castle remains cursed\.$/
-        ],
-        card: ([from, raised]) => ({
-            ...ownRow({}),
-            item: {
-                recipient: "targets",
-                destroyed: true,
-                ruleEffects: [{ name: "Bolstered by the soulheart", words: `+${raised[2]} maximum Hit Points while it stays within Bastardhall and the castle remains cursed (remove this when it leaves or the curse ends)`, rules: [{ key: "FlatModifier", selector: "hp", value: Number(raised[2]), label: "Soulheart" }], duration: null }]
-            },
-            notes: [`Target the PCs: each gets +${raised[2]} maximum Hit Points while in cursed Bastardhall.`, `Touched to a rank ${from[1]} Maiserene phantom, which is rank ${raised[1]} from now on (set its rank by hand); the soulheart is destroyed.`]
-        })
-    })),
+    // (The soulhearts' Bolster Maiserene Phantom: src/compiler/unique-rules.js withPhantomBolster's — built by two groups, that one kept at
+    // the merge for its phantom's rank and every PC's Hit Points, 2026-10-27.)
     {
         // (The flame claimed: an Effect on its user with its candle's light, one at a time — a new one in place of the last —, until its death or
         // its spending; spent, 6th-rank Raise Dead from the spell module, the flame's Effect gone (plan.castEndsRule): the ways card's two, kept

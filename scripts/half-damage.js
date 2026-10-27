@@ -5,7 +5,8 @@
 // Effect is then spent by the damage, as one with resistance is (scripts/fortune.js). And bonus.reduceCrit (Indomitable Keepsake's critical
 // hit reduced by 10, no lower than a normal hit's): the hit's damage less that much, at most half of it — the doubling's part — by
 // alter(1, -N) on its first instance; nothing off a damage PF2e says wasn't a critical hit. And bonus.noDamage (Hollow Robes' Hollow Target,
-// 2026-10-27: "The damage from a critical hit Strike is reduced to 0", or the persistent damage that triggered it): the damage 0.
+// 2026-10-27: "The damage from a critical hit Strike is reduced to 0", or the persistent damage that triggered it; Redeemer's Pistol's "You're
+// unharmed by the triggering damage"): the damage 0.
 
 import { MODULE_KEY } from "../src/live/fortune-card.js";
 import { CORE_ID, MODULE_ID } from "./foundry.js";

@@ -176,6 +176,10 @@ export function previewLines(state) {
     if (plan?.item?.shieldForm) lines.push(shieldFormText(plan.item.shieldForm));
     // (PF2e's own rules on it, Mirrorblade's flanking.)
     for (const entry of plan?.item?.ruleEffects ?? []) lines.push(`${entry.words}${forTime(entry.duration)}`);
+    // (A phantom raised, every PC's Hit Points up, the soulheart spent — Soulheart's, 2026-10-27.)
+    if (plan?.item?.phantom) lines.push(`The targeted rank ${plan.item.phantom.from} ${plan.item.phantom.kind} phantom rises to rank ${plan.item.phantom.to} for good; each PC gets +${plan.item.phantom.hp} maximum Hit Points while within ${plan.item.phantom.place} as long as it stays cursed${plan.item.spentOnUse ? `; the item is destroyed` : ""}`);
+    // (Put out, Soulspark Candle's prayer: its light and its areas end — 2026-10-27.)
+    if (plan?.item?.putsOut) lines.push(`Puts it out: its light and its area end${plan.item.putsOut.lingers ? `, and what its light marked lasts ${timeText(plan.item.putsOut.lingers.duration)} more` : ""}`);
     // (Another of its activations recharged: Smoldering Armor's Fire Shield.)
     if (plan?.item?.recharges) lines.push(`The ${plan.item.recharges.name} activation recharges (its uses given back)`);
     if (plan?.item?.mark) lines.push(markText(plan.item.mark));
@@ -338,14 +342,23 @@ export function recoveryText(recovery) {
 
 // One of the card's own Effects (its resistance, Speed or vision): PF2e's rules for the item's time (unlimited with none),
 // named for the item, flagged as the module's. Returns a new source.
+// An attack modifier at least so much with a weapon (item.ruleEffects[].attackFloor, Kaldemash's Lament's "your attack modifier while wielding it
+// or a +31 bonus, whichever is higher"): the FlatModifier that makes up the difference from its user's own modifier now, or none. 2026-10-27.
+export function attackFloorRule(floor, ownModifier, label) {
+    const short = Number(floor?.value) - Number(ownModifier);
+    if (!Number.isFinite(short) || short <= 0) return null;
+    return { key: "FlatModifier", selector: "strike-attack-roll", predicate: [`item:slug:${floor.slug}`], type: "untyped", value: short, label: `${label} (+${floor.value})` };
+}
+
 // An Effect of PF2e's own rules on its user (item.ruleEffects): Mirrorblade's flanking.offGuardable.
 export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     // (Ended by its creature's next Strike, Amulet of the Hellcat's Invisible: entry.endsOnStrike, scripts/ends-on-strike.js.)
     // (The conditions it keeps its creature from gaining once, Immortal Bastion's: entry.prevents, scripts/prevent-condition.js; its healing at
     // each turn's start, Infernal Health's: entry.turnHeal, scripts/turn-heal.js.)
     // (Gone at its creature's next daily preparations, and in place of the item's earlier one, Terrain Adaptation's: entry.untilRest,
-    // entry.replaces — scripts/until-rest.js.)
-    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: entry.replaces === "any" ? "any" : true } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}) }, item, user, worldTime, initiative, moduleId });
+    // entry.replaces — scripts/until-rest.js; true for one of that name, "any" for one of any item, or a word for one of that kind, Kaldemash's
+    // Lament's damage type: 2026-10-27.)
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: entry.replaces } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".
@@ -501,7 +514,8 @@ export function castPenaltySource(penalty, spellName, { item = {}, user = {}, wo
 // on that save, gone with the first one (scripts/first-degree.js), a minute at most.
 export function castDegreeEffectSource(castDegree, spellName, { item = {}, user = {}, worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     const save = castDegree.selector === "saving-throw" ? "save" : `${castDegree.selector.charAt(0).toUpperCase()}${castDegree.selector.slice(1)} save`;
-    return ownEffectSource({ name: `worse ${save}`, img: "icons/svg/downgrade.svg", words: `Its next ${save}${spellName ? ` (against ${spellName})` : ""} is one degree of success worse`, rules: [{ key: "AdjustDegreeOfSuccess", selector: castDegree.selector, adjustment: castDegree.adjustment, ...(item.name ? { label: item.name } : {}) }], duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { firstDegree: { selector: castDegree.selector, adjustment: castDegree.adjustment } }, item, user, worldTime, initiative, moduleId });
+    // (Its own words, the Oculus of Abaddon's save made a failure: castDegree.words.)
+    return ownEffectSource({ name: castDegree.words ? `no ${save}` : `worse ${save}`, img: "icons/svg/downgrade.svg", words: castDegree.words ? `${castDegree.words}${spellName ? ` (against ${spellName})` : ""}` : `Its next ${save}${spellName ? ` (against ${spellName})` : ""} is one degree of success worse`, rules: [{ key: "AdjustDegreeOfSuccess", selector: castDegree.selector, adjustment: castDegree.adjustment, ...(item.name ? { label: item.name } : {}) }], duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { firstDegree: { selector: castDegree.selector, adjustment: castDegree.adjustment } }, item, user, worldTime, initiative, moduleId });
 }
 
 // All of the spell's damage of one type, at its user's option (Sacred Valkyrie Helm's electricity Weapon Storm, src/compiler/adventure-readings.js

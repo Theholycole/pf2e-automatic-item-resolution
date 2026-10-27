@@ -35,12 +35,13 @@ export function bonusWords(bonus) {
     const degree = bonus.degree ? `${nameOf(bonus.degree.selector)}${actionWords(bonus.degree.predicate) ? ` (${actionWords(bonus.degree.predicate)})` : ""}: ${[...new Set(Object.entries(bonus.degree.adjustment).map(([key, value]) => DEGREE_WORDS[value === "to-success" ? "to-success" : key]))].join(", ")}` : null;
     // ("resistance 5 to physical damage", "resistance 5 to mental, poison or spirit damage" — the one that hit.)
     const types = [].concat(bonus.resistance?.type ?? []).filter((type) => type !== "all-damage");
-    const resistance = bonus.resistance ? `resistance ${bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}${(bonus.resistanceAlso ?? []).map((entry) => ` (${entry.value} to damage from ${entry.from})`).join("")}` : null;
+    // (Its value by its user's level, Redeemer's Pistol's "2 + your level": PF2e's formula on the rule, its words here — 2026-10-27.)
+    const resistance = bonus.resistance ? `resistance ${bonus.resistance.words ?? bonus.resistance.value} to ${types.length ? `${types.length > 1 ? `${types.slice(0, -1).join(", ")} or ${types.at(-1)}` : types[0]} damage` : "damage"}${(bonus.resistanceAlso ?? []).map((entry) => ` (${entry.value} to damage from ${entry.from})`).join("")}` : null;
     // ("immunity to physical damage": none of it.)
     const immunity = bonus.immunity ? `immunity to ${bonus.immunity.type} damage` : null;
     // (Laurel of the Empath's: half of it.)
     const halved = bonus.halfDamage ? "half damage from the triggering attack" : null;
-    // (Hollow Robes' Hollow Target's: none of it, 2026-10-27.)
+    // (Hollow Robes' Hollow Target's and Redeemer's Pistol's: none of it, 2026-10-27.)
     const zeroed = bonus.noDamage ? "the triggering damage reduced to 0" : null;
     const cut = bonus.reduceCrit ? `the triggering critical hit's damage reduced by ${bonus.reduceCrit.value}, by no more than its doubling added (half of it)` : null;
     // (Arrow-Catching Shield's: PF2e's Shield Block on the damage of the Strike it takes.)

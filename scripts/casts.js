@@ -6,6 +6,7 @@ import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, destroyUsedItem, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
 import { castRankAt } from "../src/compiler/cast-owner.js";
+import { rankFromLevel } from "../src/compiler/unique-rules.js";
 import { impulseNumbers } from "../src/compiler/cast-changes.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
@@ -43,7 +44,9 @@ export function beyondRange(castRange, casterToken, actor, targets) {
 // The cast's bonus beside the spell (src/compiler/cast-riders.js castBonus) on each creature it's cast on: PF2e's FlatModifier rules for its
 // time. → the card's lines.
 export async function giveCastBonus(state, actors) {
-    const { modifiers, said } = state.plan.castBonus;
+    const { modifiers, said, ifKnows } = state.plan.castBonus;
+    // (Only for a caster who already has that spell or ritual, the Oculus of Abaddon's Binding Circle: none otherwise — 2026-10-27.)
+    if (ifKnows && !actors.some((actor) => (actor.itemTypes?.spell ?? []).some((spell) => spell.name.toLowerCase() === ifKnows.toLowerCase()))) return [`No ${said.replace(/^(?:and|with) /i, "")}: its caster doesn't know ${ifKnows}.`];
     const time = modifiers[0].duration;
     const words = said.replace(/^(?:and|with) /i, "");
     const lines = [];
@@ -126,6 +129,20 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const tooFar = forTarget?.within ? beyondRange({ feet: forTarget.within }, token, actor, designated) : [];
         if (tooFar.length) throw new Error(`${tooFar.join(", ")} is beyond ${forTarget.within} feet.`);
         const targetTokens = (await Promise.all(request.targetUuids.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
+        // (Its rank from the body its user targets, Shadowed Scale, the Jungle Secret's half the slain creature's level: one its other activation
+        // decomposed (that Effect's roll option), adjacent to its caster — the body no target of the spell. src/compiler/unique-rules.js, 2026-10-27.)
+        const by = state.plan.castRankBy;
+        const bodyToken = by ? targetTokens[0] ?? null : null;
+        if (by) {
+            const body = bodyToken?.actor ?? null;
+            if (!body) throw new Error(`Target ${by.target} first.`);
+            if (by.mark && !(body.itemTypes?.effect ?? []).some((effect) => (effect.system?.rules ?? []).some((rule) => rule?.key === "RollOption" && rule.option === by.mark))) throw new Error(`${bodyToken.name ?? body.name} isn't ${by.target}.`);
+            const placeable = token?.object ?? token;
+            const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
+            if (by.within && placeable && canvas?.ready && distanceFeet(spaceOf(placeable), spaceOf(bodyToken.object ?? bodyToken), grid) > by.within) throw new Error(`${bodyToken.name ?? body.name} is more than ${by.within} feet from ${actor.name}.`);
+            request.rank = rankFromLevel(by, body.level);
+            lines.push(`${bodyToken.name ?? body.name} was level ${body.level}: ${spellName} at rank ${request.rank}.`);
+        }
         if (needsTargets(state.plan, chosenSpell(state)) && !targetTokens.length) throw new Error("Target the creatures first.");
         // (Up to so many targets, The Joke's 10: refused beyond that.)
         if (state.plan.castTargets && targetTokens.length > state.plan.castTargets.max) throw new Error(`Target up to ${state.plan.castTargets.max} creatures.`);
@@ -138,16 +155,19 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const arrival = state.plan.castArrival ? arrivalAfterMove(state.plan.castArrival, { actor, token, item: state.item }) : null;
         // (A worse save for targets of a kind, Radiant Spark's celestials: PF2e's AdjustDegreeOfSuccess on each before the cast, till its save.)
         if (state.plan.castDegree) {
+            const degree = state.plan.castDegree;
             for (const target of targetTokens) {
                 const traits = [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
-                if (!target.actor || !state.plan.castDegree.traits.some((trait) => traits.includes(trait))) continue;
-                await target.actor.createEmbeddedDocuments("Item", [castDegreeEffectSource(state.plan.castDegree, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-                lines.push(`${target.name}, a ${state.plan.castDegree.traits.join(" or ")}: its save is one degree worse.`);
+                // (Or below a level, the Oculus of Abaddon's mass suggestion: those under 7th level can't save, their save a failure — 2026-10-27.)
+                const fits = degree.belowLevel ? Number(target.actor?.level) < degree.belowLevel : (degree.traits ?? []).some((trait) => traits.includes(trait));
+                if (!target.actor || !fits) continue;
+                await target.actor.createEmbeddedDocuments("Item", [castDegreeEffectSource(degree, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+                lines.push(degree.belowLevel ? `${target.name}, below level ${degree.belowLevel}: it can't resist, its save a failure.` : `${target.name}, a ${degree.traits.join(" or ")}: its save is one degree worse.`);
             }
         }
         // (Creatures of a kind immune and others worse off, Castrovel's Beacon's elves and demons: the immune targeted left out of the cast, the
         // others' penalty on them before it.)
-        let castTargets = targetTokens;
+        let castTargets = bodyToken ? targetTokens.filter((target) => target !== bodyToken) : targetTokens;
         if (state.plan.castTraits) {
             const traitsOf = (target) => [...(target.actor?.traits ?? new Set(target.actor?.system?.traits?.value ?? []))];
             // (Or its user itself, Dragonfire Halfbow's "You and your mount are immune": its own token left out — castTraits.user.)
@@ -189,6 +209,14 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (heals) lines.push(heals);
         if (smoke) lines.push(smoke);
         if (arrival) lines.push(arrival);
+        // (A check its user rolls with the chosen cast, Cane of the Maelstrom's Crafting for a delicate or complex object: PF2e's own roll, its DC
+        // the object's, the GM's — src/compiler/unique-rules.js withCheckedCreation, 2026-10-27.)
+        const check = chosenSpell(state).castCheck;
+        if (check) {
+            const statistic = actor.getStatistic?.(check.statistic) ?? actor.skills?.[check.statistic] ?? null;
+            if (statistic?.roll) await statistic.roll(check.dc ? { dc: { value: check.dc } } : {}).catch((error) => console.error(`${MODULE_ID} | cast check`, error));
+            lines.push(statistic?.roll ? `${actor.name} rolls ${check.statistic} ${check.why}${check.dc ? ` (DC ${check.dc})` : "; the GM sets its DC by the object"}.` : `${actor.name}: roll ${check.statistic} ${check.why} by hand.`);
+        }
         // (A note Effect beside the spell with its user's numbers, Enigma-Sight Potion's Truesight checks: src/compiler/cast-note.js.)
         if (state.plan.castNote) {
             const words = castNoteText(state.plan.castNote, { perception: Number(actor.perception?.mod ?? actor.system?.perception?.mod), level: Number(actor.level) });

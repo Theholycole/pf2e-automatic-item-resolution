@@ -1,0 +1,315 @@
+// Unique items' and artifacts' own rules, built in full (2026-10-27, the user: "unique effects that are on unique rarity items should be
+// automated"): src/compiler/unique-rules.js and the cards that play them.
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import path from "node:path";
+import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
+import { spellIndex } from "../src/compiler/index.js";
+import { compileActivations } from "../src/compiler/permanent.js";
+import { routeOf } from "../src/live/route.js";
+import { featUseCardHTML, createFeatUseCard, oneMoreUse, spentFeats } from "../src/live/feat-use-card.js";
+
+const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
+const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
+const equipment = documents("equipment");
+const options = { spells: spellIndex(documents("spells")) };
+const item = (name) => {
+    const doc = equipment.find((entry) => entry.name === name);
+    return { ...doc, ownerLevel: Number(doc.system.level?.value) || 1 };
+};
+const plans = (name) => compileActivations(item(name), options).map((entry) => entry.plan);
+const success = (plan) => plan.resolution.outcomes.success;
+
+test("Ancestral Embrace: one more use of the ancestry feat just used, the feat-use card's — its spent feats a day picked, one use given back", () => {
+    const [embrace] = plans("Ancestral Embrace");
+    assert.deepEqual([embrace.builtin, embrace.featUse.category, embrace.trigger.frequency.max, embrace.partial, embrace.noteOnly], ["feat-use", "ancestry", 1, undefined, undefined]);
+    assert.equal(routeOf(embrace), "feat-use");
+    const feats = [
+        { id: "a", name: "Fey Disappearance", system: { category: "ancestry", frequency: { max: 1, value: 0, per: "day" } } },
+        { id: "b", name: "Unused Gift", system: { category: "ancestry", frequency: { max: 1, value: 1, per: "day" } } },
+        { id: "c", name: "Hourly Trick", system: { category: "ancestry", frequency: { max: 1, value: 0, per: "PT1H" } } },
+        { id: "d", name: "Class Power", system: { category: "class", frequency: { max: 1, value: 0, per: "day" } } }
+    ];
+    const spent = spentFeats(embrace.featUse, feats);
+    assert.deepEqual(spent.map((feat) => feat.id), ["a"]);
+    assert.equal(oneMoreUse(spent[0], "Valeros").value, 1);
+    assert.equal(oneMoreUse({ ...spent[0], value: 1 }, "Valeros"), null);
+    const html = featUseCardHTML(createFeatUseCard({ plan: embrace, item: { name: "Ancestral Embrace" }, user: { name: "Valeros" }, feats: spent }), { canApply: true });
+    assert.match(html, /data-air-field="pick"/);
+    assert.match(html, /Fey Disappearance \(0\/1\)/);
+});
+
+test("Ancestral Embrace: Legend Lore about its ancestry in 1 hour with no secondary casters, a note Effect on its user for that hour", () => {
+    const lore = plans("Ancestral Embrace")[1];
+    assert.deepEqual([lore.builtin, lore.partial, lore.noteOnly, lore.automation.level], [undefined, undefined, undefined, "automatic"]);
+    const [note] = success(lore).noteEffects;
+    assert.deepEqual([note.duration.value, note.duration.unit], [1, "hours"]);
+    assert.match(note.text, /Legend Lore/);
+    assert.match(note.text, /no secondary casters/);
+});
+
+test("Ancestral Embrace: Avatar with the armor's own Speeds and Strikes — PF2e's BattleForm on its user for the minute, the blowgun's poison dice its own", () => {
+    const avatar = plans("Ancestral Embrace")[2];
+    assert.deepEqual([avatar.builtin, avatar.partial, avatar.rank, avatar.trigger.frequency.max], [undefined, undefined, 10, 1]);
+    assert.ok(avatar.traits.includes("polymorph"));
+    const [note] = success(avatar).noteEffects;
+    assert.deepEqual([note.duration.value, note.duration.unit], [1, "minutes"]);
+    const [form, poison] = note.rules;
+    assert.equal(form.key, "BattleForm");
+    assert.deepEqual([form.overrides.size, form.overrides.tempHP, form.overrides.armorClass.modifier, form.overrides.speeds.land, form.overrides.skills.athletics.modifier], ["huge", 30, "25 + @actor.level", 70, 35]);
+    assert.deepEqual(form.overrides.strikes.spear.traits, ["unarmed", "reach-15", "thrown-50"]);
+    assert.deepEqual(form.overrides.strikes.spear.damage, { dice: 6, die: "d6", modifier: 6, damageType: "piercing" });
+    assert.deepEqual([form.overrides.strikes.blowgun.ability, form.overrides.strikes.blowgun.range.max, form.overrides.strikes.blowgun.modifier], ["dex", 120, 33]);
+    assert.deepEqual([poison.key, poison.diceNumber, poison.dieSize, poison.damageType, poison.predicate[0]], ["DamageDice", 5, "d6", "poison", "item:slug:blowgun"]);
+    assert.match(note.text, /walks on air/);
+    assert.match(note.text, /ignores difficult terrain/);
+    assert.equal(routeOf(avatar), "item");
+});
+
+test("Forgefather's Seal's Retributive Rebuff: Earthquake at DC 40 on the attacker, and the readied card's resistance 100 against the attack beside it", async () => {
+    const { routeOf: route } = await import("../src/live/route.js");
+    const [rebuff] = plans("Forgefather's Seal");
+    assert.deepEqual([rebuff.builtin, rebuff.spell.name, rebuff.dc, rebuff.partial, rebuff.notes], ["cast-spell", "Earthquake", 40, undefined, undefined]);
+    assert.match(rebuff.castLines.at(-1), /60-foot burst/);
+    assert.deepEqual([rebuff.alsoReadied.builtin, rebuff.alsoReadied.bonus.resistance, rebuff.alsoReadied.bonus.against], ["readied-bonus", { type: "all-damage", value: 100 }, true]);
+    assert.equal(route(rebuff), "cast");
+    assert.equal(route(rebuff.alsoReadied), "fortune");
+});
+
+test("Forgefather's Seal's Seal of Mending: an item within reach remade to full Hit Points up to level 24, the shields' repair stopped till its next rest", async () => {
+    const { objectsText } = await import("../src/live/objects-card.js");
+    const { pauseEffectSource } = await import("../src/live/shield-repair.js");
+    const mending = plans("Forgefather's Seal")[1];
+    assert.deepEqual([mending.builtin, mending.partial, mending.objects.op, mending.objects.reach, mending.objects.maxLevel, mending.objects.pauses], ["objects", undefined, "repair", true, 24, { what: "shield-repair", untilRest: true }]);
+    assert.equal(routeOf(mending), "objects");
+    const words = objectsText(mending.objects, { name: "Forgefather's Seal" });
+    assert.match(words, /even if destroyed/);
+    assert.match(words, /within its reach, of level 24 or lower/);
+    assert.match(words, /don't recover Hit Points at the start of its turns until its next daily preparations/);
+    const pause = pauseEffectSource(mending.objects.pauses, { item: { name: "Forgefather's Seal" }, user: {} });
+    assert.deepEqual([pause.flags["pf2e-automatic-item-resolution"].pauses, pause.flags["pf2e-automatic-item-resolution"].untilRest, pause.system.duration.unit], ["shield-repair", true, "unlimited"]);
+});
+
+test("Forgefather's Seal's passive: its wearer's held shields recover 10 Hit Points at each turn's start, a destroyed one not, never past the maximum", async () => {
+    const { readShieldRepair, shieldRepairs } = await import("../src/compiler/shield-repair.js");
+    const repair = readShieldRepair(item("Forgefather's Seal").system.description.value);
+    assert.deepEqual(repair, { hp: 10 });
+    assert.equal(readShieldRepair(item("Ancestral Embrace").system.description.value), null);
+    const shields = [{ id: "a", name: "Steel Shield", hp: { value: 15, max: 20 } }, { id: "b", name: "Tower Shield", hp: { value: 0, max: 20 } }, { id: "c", name: "Buckler", hp: { value: 6, max: 6 } }, { id: "d", name: "Sturdy", hp: { value: 30, max: 100 } }];
+    assert.deepEqual(shieldRepairs(shields, repair).map((entry) => [entry.id, entry.to]), [["a", 20], ["d", 40]]);
+});
+
+test("Cane of the Maelstrom's Creation: unlimited, and a second choice with its user's Crafting check for a delicate or complex object", () => {
+    const creation = plans("Cane of the Maelstrom")[2];
+    assert.deepEqual([creation.builtin, creation.partial, creation.notes, creation.castDuration.unit, creation.choices.length], ["cast-spell", undefined, undefined, "unlimited", 2]);
+    assert.equal(creation.choices[0].castCheck, undefined);
+    assert.deepEqual(creation.choices[1].castCheck, { statistic: "crafting", why: "to make it a delicate or complex object", dc: null });
+    assert.match(creation.choices[1].when, /Crafting check/);
+    assert.equal(routeOf(creation), "cast");
+});
+
+test("Shadowed Scale, the Jungle Secret: a body its user's last melee Strike killed turned to soil — the gate, its note Effect on that body, marked", async () => {
+    const { gateMet } = await import("../src/compiler/strike-gate.js");
+    const [soil] = plans("Shadowed Scale, the Jungle Secret");
+    assert.deepEqual(soil.gate, { strike: { range: "melee", maneuvers: [], any: true, killed: true } });
+    assert.deepEqual([soil.atTarget, soil.partial, soil.noteOnly, soil.builtin], [true, undefined, undefined, undefined]);
+    assert.equal(routeOf(soil), "save");
+    const [note] = success(soil).noteEffects;
+    assert.deepEqual([note.label, note.duration, note.rules[0].option], ["Decomposed into soil", null, "decomposed-into-soil"]);
+    assert.match(note.text, /Miracle or Wish/);
+    // (Any of its user's melee Strikes, not the mask's own: a hit with a sword counts, a ranged one doesn't.)
+    const roll = { actorUuid: "Actor.a", type: "attack-roll", outcome: "success", itemUuid: "Item.sword", targetUuid: "Token.t", ranged: false };
+    assert.deepEqual(gateMet(soil.gate, [roll], { actorUuid: "Actor.a", itemUuid: "Item.mask" }), { ok: true, struck: "Token.t" });
+    assert.equal(gateMet(soil.gate, [{ ...roll, ranged: true }], { actorUuid: "Actor.a", itemUuid: "Item.mask" }).ok, false);
+});
+
+test("Shadowed Scale, the Jungle Secret: Summon Plant or Fungus at half the decomposed body's level, rounded up", async () => {
+    const { rankFromLevel } = await import("../src/compiler/unique-rules.js");
+    const summon = plans("Shadowed Scale, the Jungle Secret")[1];
+    assert.deepEqual([summon.builtin, summon.spell.name, summon.partial, summon.notes, summon.requirementUnread], ["cast-spell", "Summon Plant or Fungus", undefined, undefined, undefined]);
+    assert.deepEqual(summon.castRankBy, { mark: "decomposed-into-soil", within: 5, half: true, target: "the decomposed body" });
+    assert.deepEqual([rankFromLevel(summon.castRankBy, 15), rankFromLevel(summon.castRankBy, 0), rankFromLevel(summon.castRankBy, 8)], [8, 1, 4]);
+    assert.equal(summon.castLines.length, 2);
+});
+
+test("Anima Robe (Heroic)'s Who Are They?: Illusory Creature at rank 8 for up to a minute, Sustained by the robe's own action", async () => {
+    const { lastsWords } = await import("../src/live/cast-card.js");
+    const they = plans("Anima Robe (Heroic)")[3];
+    assert.deepEqual([they.spell.name, they.rank, they.partial, they.castDuration.value, they.castDuration.unit, they.castDuration.sustained], ["Illusory Creature", 8, undefined, 1, "minutes", "item"]);
+    assert.match(lastsWords(they.castDuration), /the item Sustains it with an action of its own, not its user's/);
+});
+
+test("Kaldemash's Lament: its damage type picked on the ways card, PF2e's DamageAlteration till changed again (the last one replaced)", () => {
+    const [retype] = plans("Kaldemash's Lament");
+    assert.equal(routeOf(retype), "ways");
+    assert.deepEqual(retype.ways.map((way) => way.name), ["Electricity", "Fire", "Force"]);
+    const fire = retype.ways[1].plan;
+    assert.equal(routeOf(fire), "item");
+    const [effect] = fire.item.ruleEffects;
+    assert.deepEqual([effect.duration, effect.replaces, effect.rules[0].key, effect.rules[0].property, effect.rules[0].value, effect.rules[0].predicate[0]], [null, "damage-type", "DamageAlteration", "damage-type", "fire", "item:slug:kaldemashs-lament"]);
+});
+
+test("Kaldemash's Lament: flying on its own for 3 rounds — its targets Off-Guard to it, its Strikes at +31 when its user's own are lower", async () => {
+    const { attackFloorRule } = await import("../src/live/card.js");
+    const flying = plans("Kaldemash's Lament")[1];
+    assert.deepEqual([flying.noteOnly, flying.partial, routeOf(flying)], [undefined, undefined, "item"]);
+    const [effect] = flying.item.ruleEffects;
+    assert.deepEqual([effect.duration.value, effect.duration.unit, effect.attackFloor], [3, "rounds", { value: 31, slug: "kaldemashs-lament" }]);
+    assert.deepEqual([effect.rules[0].key, effect.rules[0].affects, effect.rules[0].uuid.endsWith("AJh5ex99aV6VTggg")], ["EphemeralEffect", "target", true]);
+    assert.match(effect.words, /Off-Guard/);
+    assert.match(effect.words, /holsters itself/);
+    assert.deepEqual(attackFloorRule(effect.attackFloor, 28, "Kaldemash's Lament"), { key: "FlatModifier", selector: "strike-attack-roll", predicate: ["item:slug:kaldemashs-lament"], type: "untyped", value: 3, label: "Kaldemash's Lament (+31)" });
+    assert.equal(attackFloorRule(effect.attackFloor, 33, "Kaldemash's Lament"), null);
+});
+
+test("Soulspark Candle: lit, a 40-foot zone around its user with PF2e's deity rules for those inside and its light; put out by prayer; its undead limned", () => {
+    const [light, out, limn] = plans("Soulspark Candle");
+    assert.deepEqual([light.builtin, light.zone.area, light.zone.centre, light.zone.lasts, light.zone.untilReused, routeOf(light)], ["zone", { type: "emanation", value: 40 }, "self", null, true, "zone"]);
+    const [blessed, cursed] = light.zone.inside[0].rules;
+    assert.deepEqual([blessed.predicate, blessed.value, cursed.predicate, cursed.value], [["deity:primary:pharasma"], 3, [{ or: ["deity:primary:urgathoa", "self:mode:undead"] }], -3]);
+    assert.deepEqual(light.ownLight, { bright: 20, dim: 40, duration: null, note: "until it's put out" });
+    assert.ok(light.zone.notes.some((note) => /turns black/.test(note)));
+    assert.deepEqual([out.builtin, out.gate, out.item.putsOut.lingers.option, routeOf(out)], [undefined, { lit: true }, "limned-in-candlelight", "item"]);
+    assert.deepEqual([limn.atTarget, limn.onlyAgainst, limn.gate, routeOf(limn)], [true, { traits: ["undead"] }, { lit: true }, "save"]);
+    const [note] = success(limn).noteEffects;
+    assert.deepEqual([note.duration, note.rules[0].option], [null, "limned-in-candlelight"]);
+    assert.match(note.text, /Concealed rather than Undetected/);
+});
+
+test("The Marriage: a bond with the willing creature targeted, both sides' Effects; its condition countered by the counteract card, the user's on a failure", async () => {
+    const { bondCounteract, bondEffectSource, bondOf, bondWords, counteredBy } = await import("../src/live/bond-card.js");
+    const [marriage] = plans("The Marriage");
+    assert.deepEqual([marriage.builtin, marriage.trigger.frequency.max, routeOf(marriage)], ["bond", 1, "bond"]);
+    assert.deepEqual(marriage.bond, { reach: 5, telepathy: 120, conditions: ["blinded", "confused", "controlled", "fascinated", "frightened", "slowed", "stunned"], counter: { modifier: "class-dc", rank: 10, failCopies: true } });
+    const source = bondEffectSource(marriage.bond, { item: { name: "The Marriage", uuid: "Item.m" }, user: { actorUuid: "Actor.u" }, self: "Kyra", other: "Seelah", partner: "Actor.s", role: "user" });
+    assert.deepEqual([bondOf(source).item, bondOf(source).partner, bondOf(source).role, source.system.duration.unit], ["Item.m", "Actor.s", "user", "unlimited"]);
+    assert.match(bondWords(marriage.bond, { self: "Kyra", other: "Seelah", role: "user" }), /telepathy within 120 feet/);
+    assert.equal(counteredBy({ ...bondOf(source), role: "partner" }, "frightened"), "frightened");
+    assert.equal(counteredBy({ ...bondOf(source), role: "partner" }, "sickened"), null);
+    assert.equal(counteredBy(bondOf(source), "frightened"), null);
+    assert.deepEqual(bondCounteract(bondOf(source), "stunned", 24), { conditions: ["stunned"], modifier: 24, rank: 10, failCopies: true, endsBond: "Item.m", notes: [] });
+});
+
+test("The Unicorn: the GM's pick of a common alchemical or magical consumable up to its user's level, gone after a minute; none found, no use spent", async () => {
+    const { foundMisfit, foundText, vanishesAt } = await import("../src/live/found-card.js");
+    const [unicorn] = plans("The Unicorn");
+    assert.deepEqual([unicorn.builtin, unicorn.trigger.frequency.max, routeOf(unicorn)], ["found-item", 1, "found"]);
+    assert.deepEqual(unicorn.found, { rarity: "common", kinds: ["alchemical", "magical"], maxLevel: "user", vanish: { value: 1, unit: "minutes" }, refundsNone: true });
+    assert.match(unicorn.notes[0], /greater healing potion/);
+    const potion = equipment.find((doc) => doc.name === "Healing Potion (Greater)");
+    assert.equal(foundMisfit(potion, unicorn.found, 20), null);
+    assert.match(foundMisfit(potion, unicorn.found, 5), /above level 5/);
+    assert.match(foundMisfit(item("The Unicorn"), unicorn.found, 20), /isn't a consumable/);
+    assert.match(foundMisfit({ ...potion, system: { ...potion.system, traits: { ...potion.system.traits, rarity: "rare" } } }, unicorn.found, 20), /isn't common/);
+    assert.equal(vanishesAt(unicorn.found, 1000), 1060);
+    assert.match(foundText(unicorn.found, 20), /level 20 or lower, the GM's pick; it vanishes unless used within 1 minute/);
+});
+
+test("Viridian Crown's View Subject: the spell module's Scrying at DC 43, whom it may scry and a willing target's choice its lines", () => {
+    const view = plans("Viridian Crown")[1];
+    assert.deepEqual([view.builtin, view.spell.name, view.dc, view.partial, routeOf(view)], ["cast-spell", "Scrying", 43, undefined, "cast"]);
+    assert.equal(view.castLines.length, 2);
+    assert.match(view.castLines[0], /an elf who has accepted/);
+});
+
+test("Spellcutter: a light within its user's reach put out — PF2e's TokenLight Effects up to level 12 (a light spell's up to rank 6), a token's, a placed one", async () => {
+    const { douseable, objectsText } = await import("../src/live/objects-card.js");
+    const douse = plans("Spellcutter")[1];
+    assert.deepEqual([douse.builtin, douse.objects, douse.partial, routeOf(douse)], ["objects", { op: "douse", maxLevel: 12, maxRank: 6 }, undefined, "objects"]);
+    assert.match(douse.notes[0], /5-foot burst/);
+    const light = [{ key: "TokenLight", value: { bright: 20, dim: 40 } }];
+    assert.equal(douseable({ level: 6, spell: true, rules: light }, douse.objects), true);
+    assert.equal(douseable({ level: 7, spell: true, rules: light }, douse.objects), false);
+    assert.equal(douseable({ level: 12, spell: false, rules: light }, douse.objects), true);
+    assert.equal(douseable({ level: 13, spell: false, rules: light }, douse.objects), false);
+    assert.equal(douseable({ level: 1, spell: false, rules: [] }, douse.objects), false);
+    assert.match(objectsText(douse.objects, { name: "Spellcutter" }), /level 12 or lower \(a light spell of rank 6 or lower\)/);
+});
+
+test("Rowan Rifle's Briarbough Brachiaport: the spell module's Nature's Pathway on its user, within Briarbough a line", () => {
+    const travel = plans("Rowan Rifle")[2];
+    assert.deepEqual([travel.builtin, travel.spell.name, travel.self, travel.trigger.frequency.per, routeOf(travel)], ["cast-spell", "Nature's Pathway", true, "10-minutes", "cast"]);
+    assert.match(travel.castLines[0], /within Briarbough/);
+});
+
+test("Oculus of Abaddon: its Will save on every use unless its user is evil; Binding Circle at rank 7 with +3 for a caster who knows it; its companion's senses; its mile-wide Suggestion", async () => {
+    const { castDegreeEffectSource } = await import("../src/live/card.js");
+    const [scry, circle, senses, mass] = plans("Oculus of Abaddon");
+    for (const plan of [scry, circle, senses, mass]) {
+        assert.deepEqual([plan.alsoUserSave.plan.resolution.check.statistic, plan.alsoUserSave.plan.resolution.check.against.value, plan.alsoUserSave.unlessTraits], ["will", 36, ["evil", "unholy"]]);
+        assert.match(plan.alsoUserSave.plan.resolution.outcomes.failure.noteEffects[0].text, /subconscious suggestion \(rank 8\)/);
+        assert.equal(plan.partial, undefined);
+    }
+    assert.deepEqual([circle.spell.name, circle.rank, circle.trigger.frequency, circle.castBonus.ifKnows, circle.castBonus.modifiers.map((entry) => entry.selector)], ["Binding Circle", 7, { max: 1, per: "week", raw: "once per week" }, "Binding Circle", ["arcana", "occultism"]]);
+    assert.match(circle.castLines[0], /neutral evil/);
+    assert.equal(routeOf(senses), "item");
+    assert.match(success(senses).noteEffects[0].text, /no other actions/);
+    assert.deepEqual([mass.spell.name, mass.dc, mass.castRange.feet, mass.castDegree.belowLevel, mass.trigger.frequency.per], ["Suggestion", 36, 5280, 7, "year"]);
+    const failing = castDegreeEffectSource(mass.castDegree, "Suggestion", { item: { name: "Oculus of Abaddon" } });
+    assert.deepEqual(failing.system.rules[0].adjustment, { criticalSuccess: "to-failure", success: "to-failure" });
+    assert.match(failing.system.description.value, /next Will save is a failure/);
+});
+
+test("Redeemer's Pistol: the foe's pick on the ways card — none of the damage, or resistance 2 + level and the foe Enfeebled 2 with 4 persistent spirit", async () => {
+    const { readiedWords } = await import("../src/live/fortune-card.js");
+    // (bonus.noDamage was built by another group too, Hollow Robes' Hollow Target: its words and its own damage listener, beforeNoDamage, kept
+    // at the merge — 2026-10-27.)
+    const { beforeNoDamage: before } = await import("../scripts/half-damage.js");
+    const [pistol] = plans("Redeemer's Pistol");
+    assert.deepEqual([pistol.builtin, pistol.trigger.frequency.max, routeOf(pistol), pistol.ways.length], ["ways", 1, "ways", 2]);
+    const [spared, punished] = pistol.ways.map((way) => way.plan);
+    assert.deepEqual([spared.bonus.noDamage, routeOf(spared)], [true, "fortune"]);
+    assert.match(readiedWords(spared), /the triggering damage reduced to 0/);
+    assert.deepEqual(punished.alsoReadied.bonus.resistance, { type: "all-damage", value: "2 + @actor.level", words: "2 + its level" });
+    assert.match(readiedWords(punished.alsoReadied), /resistance 2 \+ its level to damage/);
+    assert.equal(routeOf(punished), "save");
+    const row = punished.resolution.outcomes.success;
+    assert.deepEqual([row.effects[0].slug, row.effects[0].value, row.effects[0].duration.anchor, punished.resolution.sharedDamage.components[0].formula], ["enfeebled", 2, "target-turn", "4[persistent,spirit]"]);
+    // (The damage as the core's listener sees it, on a creature with that readied Effect: none of it.)
+    const actor = { itemTypes: { effect: [{ flags: { "pf2e-automatic-item-resolution": { fortune: { noDamage: true } } } }] } };
+    const { MODULE_KEY } = await import("../src/live/fortune-card.js");
+    actor.itemTypes.effect[0].flags["pf2e-automatic-item-resolution"] = { [MODULE_KEY]: { noDamage: true } };
+    assert.equal(before(actor, { damage: 12 }).params.damage, 0);
+    assert.equal(before({ itemTypes: { effect: [] } }, { damage: 12 }), null);
+});
+
+test("Eye of the Wise: linked to a gem it touched, its user's Effect with no end — telepathy with the gem's carrier, the last link replaced", () => {
+    const [link] = plans("Eye of the Wise");
+    assert.deepEqual([link.builtin, routeOf(link)], [undefined, "item"]);
+    const [effect] = link.item.ruleEffects;
+    assert.deepEqual([effect.duration, effect.replaces, effect.rules], [null, "gem-link", []]);
+    assert.match(effect.words, /telepathy at any distance/);
+    assert.match(effect.words, /gem is damaged/);
+});
+
+test("Flawless Celestial Shawl's Reweave: PF2e's Repair of an item within reach, its Crafting check one degree better", async () => {
+    const { objectsText } = await import("../src/live/objects-card.js");
+    const [reweave] = plans("Flawless Celestial Shawl");
+    assert.deepEqual([reweave.builtin, reweave.objects.op, reweave.objects.pf2eRepair, reweave.objects.reach, reweave.objects.degree.predicate, routeOf(reweave)], ["objects", "repair", true, true, ["action:repair"], "objects"]);
+    assert.ok(Object.values(reweave.objects.degree.adjustment).every((step) => step === "one-degree-better"));
+    assert.match(reweave.notes[0], /its own tennin/);
+    assert.match(objectsText(reweave.objects, { name: "Flawless Celestial Shawl" }), /PF2e's Repair .* one degree of success better/);
+});
+
+test("Kindler Cameo's Sense Soulheart: what it tells whispered for the GM to fill in; Soulheart's phantom raised, every PC's Hit Points up, the soulheart spent", () => {
+    const sense = plans("Kindler Cameo")[1];
+    assert.deepEqual([sense.builtin, routeOf(sense), sense.trigger.frequency.max], ["whisper", "whisper", 1]);
+    assert.match(sense.whisper.text, /direction and rough distance/);
+    assert.match(sense.whisper.text, /daily use is spent/);
+    const bolster = plans("Soulheart")[1];
+    assert.deepEqual([bolster.item.phantom, bolster.item.spentOnUse, routeOf(bolster)], [{ from: 0, to: 1, kind: "Maiserene", hp: 1, place: "Bastardhall", key: "soulheart-bastardhall" }, true, "item"]);
+});
+
+test("Forgefather's Seal's Stalwart Sacrifice: all Hit Points back (the dead at half), PF2e's Effect, and its user a statue for good", () => {
+    const sacrifice = plans("Forgefather's Seal")[2];
+    assert.deepEqual([sacrifice.resolution.kind, sacrifice.item.recipient, sacrifice.item.restore, sacrifice.item.revive.hp, routeOf(sacrifice)], ["effect", "targets", { hp: "max" }, "half", "item"]);
+    assert.deepEqual(sacrifice.userEffects.map((entry) => entry.slug ?? entry.kind), ["petrified", "note"]);
+    assert.match(sacrifice.userEffects[1].text, /never be restored/);
+    assert.match(sacrifice.notes[0], /Wish ritual/);
+});
+
+test("Soulspark Candle's flames: the 20d8 basic save at each undead in its light (no longer one creature by touch), only while it's lit", () => {
+    const blast = plans("Soulspark Candle")[3];
+    assert.deepEqual([blast.resolution.kind, blast.targeting.area, blast.onlyAgainst, blast.gate, routeOf(blast)], ["save", { type: "emanation", value: 40 }, { traits: ["undead"] }, { lit: true }, "save"]);
+});

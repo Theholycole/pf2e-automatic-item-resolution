@@ -14,6 +14,9 @@ import { isObjects } from "./objects-card.js";
 import { isTable } from "./table-card.js";
 import { isTake } from "./take-card.js";
 import { isStructure } from "./structure-card.js";
+import { isFeatUse } from "./feat-use-card.js";
+import { isBond } from "./bond-card.js";
+import { isFound } from "./found-card.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -29,7 +32,9 @@ const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolut
         // (Or a note Effect alone on the vehicle its user targets, Feather Token (Anchor)'s stopped boat: src/compiler/vehicles.js, 2026-10-27.)
         || (/\bvehicle\b/i.test(String(plan.targeting.target)) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0)
         // (Or what a creature has, taken or dropped once it's applied — The Juggler's caught item: plan.dropHeld, scripts/drop-held.js, 2026-10-27.)
-        || Boolean(plan.dropHeld));
+        || Boolean(plan.dropHeld)
+        // (Or a note Effect alone on the creature it's at, plan.atTarget — Shadowed Scale, the Jungle Secret's body decomposed: 2026-10-27.)
+        || (Boolean(plan.atTarget) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0));
 
 // Its user's own skill check against a creature's DC (The Crows' Thievery against the Reflex DC, Whip-Tongue Sling's Athletics against
 // the Fortitude DC): the ability module's card at the creatures the presser targets, its user's skill rolled (the core's check family).
@@ -73,6 +78,12 @@ export function routeOf(plan, text = "") {
     if (isTake(plan)) return "take";
     // (A building it raises, the Guiding Chisel's: the environment module's walls, placed where it's clicked — scripts/structure.js.)
     if (isStructure(plan)) return "structure";
+    // (One more use of a feat its user just used: scripts/feat-uses.js, 2026-10-27.)
+    if (isFeatUse(plan)) return "feat-use";
+    // (A bond with a willing creature: scripts/bonds.js, 2026-10-27.)
+    if (isBond(plan)) return "bond";
+    // (A consumable found for the need at hand, the GM's pick: scripts/found.js, 2026-10-27.)
+    if (isFound(plan)) return "found";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

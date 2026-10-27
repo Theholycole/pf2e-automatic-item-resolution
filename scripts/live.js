@@ -18,7 +18,7 @@ import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource, checkGateMet, gateOption, gateWords } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
-import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, storeAfter, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
+import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, storeAfter, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine, attackFloorRule, itemNoteSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
@@ -38,7 +38,7 @@ import { withUserDCs } from "./item-dcs.js";
 import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
-import { reviveCreature } from "./revive.js";
+import { isDead, reviveCreature } from "./revive.js";
 import { setOffSinVulnerability } from "./sin-vulnerability.js";
 import { restCreature } from "./rest.js";
 import { scrapeGoo } from "./scrape.js";
@@ -48,13 +48,16 @@ import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
+import { applyFeatUseCard, postFeatUseCard } from "./feat-uses.js";
+import { applyBondCard, postBondCard } from "./bonds.js";
+import { applyFoundCard, postFoundCard } from "./found.js";
 import { checkSpend, payRegain, paySpend } from "./spend.js";
 import { placeLight } from "./placed-light.js";
 import { readProficiencyRequirement, requirementWarning } from "../src/compiler/requirement.js";
 import { gateMet } from "../src/compiler/strike-gate.js";
 import { applyTableCard, postTableCard } from "./table.js";
 import { applyStrikeCard, postStrikeCard, strikeWithRider } from "./strikes.js";
-import { becomeItem, destroyItem } from "./becomes.js";
+import { becomeItem } from "./becomes.js";
 import { applyRerollCard, postRerollCard } from "./rerolls.js";
 import { applyActionCard, postActionCard } from "./item-actions.js";
 import { applyCounteractCard, postCounteractCard } from "./counteract.js";
@@ -317,7 +320,14 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         const met = gateMet(plan.gate, rolls, { actorUuid: actor?.uuid, itemUuid: used.data.uuid ?? used.data._stats?.compendiumSource ?? null });
         if (!met.ok) throw new Error(`${used.data.name}: its Requirements need ${met.why}.`);
         if (met.struck) plan = { ...plan, struckToken: met.struck };
+        // (And that Strike killed it, Shadowed Scale, the Jungle Secret's: its creature dead now — 2026-10-27.)
+        if (plan.gate.strike?.killed) {
+            const struck = met.struck ? await fromUuid(met.struck).catch(() => null) : null;
+            if (!struck?.actor || !isDead(struck.actor)) throw new Error(`${used.data.name}: its Requirements need its user's last Strike to have killed its creature.`);
+        }
     }
+    // (Only while its own light is on its user, Soulspark Candle's "The candle is lit": refused otherwise — src/compiler/unique-rules.js, 2026-10-27.)
+    if (plan?.gate?.lit && !litBy(actor, used.data)) throw new Error(`${used.data.name} isn't lit.`);
     // (A condition its user takes beside the save, Pharasmin Visor's Dazzled: given as it's used, src/compiler/user-conditions.js.)
     if (plan?.userEffects?.length && actor) await giveUserConditions(plan.userEffects, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user conditions`, error));
     // (A healing of the item's own stopped for a while, Splithead Bow's Two-Headed Arrow: its PF2e toggle off, scripts/toggle-off.js.)
@@ -352,6 +362,10 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.item?.placedLight) await placeLight(plan.item.placedLight, { token, actor, item: used.data }).catch((error) => console.error(`${MODULE_ID} | placed light`, error));
     // (A retaliation beside the rest, Thunder Mail's for the next minute: its later card too, kept open — src/compiler/direct-damage.js.)
     if (plan?.alsoRetaliation && route !== "later") await postExposureCard({ message, plan: { ...plan.alsoRetaliation, item: plan.item, spend: undefined }, used, actor, token, later: true }).catch((error) => console.error(`${MODULE_ID} | retaliation card`, error));
+    // (A save its user makes as it's used, the Oculus of Abaddon's price: the ability module's card at its user, unless it's evil — src/compiler/unique-rules.js, 2026-10-27.)
+    if (plan?.alsoUserSave && actor) await postUserSave(plan.alsoUserSave, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user save`, error));
+    // (A readied bonus beside the rest, Forgefather's Seal's blow absorbed beside its Earthquake: the readied card too — src/compiler/unique-rules.js, 2026-10-27.)
+    if (plan?.alsoReadied && route !== "fortune") await postFortuneCard({ message, plan: { ...plan.alsoReadied, source: plan.source, item: plan.item, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | readied card`, error));
     // (Its user's move beside the rest, Phase Spike's Stride with its resistance: the teleport card's as a move, src/compiler/move.js.)
     if (plan?.item?.move && route !== "teleport") await postTeleportCard({ message, plan: { ...plan, builtin: "teleport", teleport: plan.item.move, spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | move card`, error));
     // (A change to the roll just made beside the rest, Pyrefeather Token's recovery check 1 easier with its temporary Hit Points: the reroll card
@@ -382,6 +396,9 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
     if (route === "take") return postTakeCard({ message, plan, used, actor, token });
+    if (route === "feat-use") return postFeatUseCard({ message, plan, used, actor, token });
+    if (route === "bond") return postBondCard({ message, plan, used, actor, token });
+    if (route === "found") return postFoundCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message?.rolls?.[0];
@@ -456,6 +473,12 @@ function choicesOf(state, root) {
     if (state.kind === "disbelief") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), check: Number(root.querySelector("[data-air-field='check']")?.value ?? 0) };
     // (An ally's condition taken: the ally targeted.)
     if (state.kind === "take") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    // (The feat picked for one more use: scripts/feat-uses.js.)
+    if (state.kind === "feat-use") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0) };
+    // (The creature to bond: the presser's target, scripts/bonds.js.)
+    if (state.kind === "bond") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    // (The GM's pick, typed: scripts/found.js.)
+    if (state.kind === "found") return { name: String(root.querySelector("[data-air-field='found']")?.value ?? "") };
     // (A bonus for the creature targeted: the presser's targets.)
     if (state.kind === "fortune") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
@@ -481,6 +504,9 @@ const APPLY = {
     objects: (message, choices) => applyObjectsCard(message, choices),
     disbelief: (message, choices) => applyDisbeliefCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
+    "feat-use": (message, choices) => applyFeatUseCard(message, choices),
+    bond: (message, choices) => applyBondCard(message, choices),
+    found: (message, choices) => applyFoundCard(message, choices),
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     "end-early": (message, choices) => applyEndEarlyCard(message, choices),
     // (What a creature drops of what it holds, Deadweight Snare's metal: scripts/drop-held.js.)
@@ -605,6 +631,9 @@ async function onRequest(data) {
         : state.kind === "structure" ? { choice: Number.isInteger(data.choice) ? data.choice : null, destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null }
         : state.kind === "table" ? {}
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "feat-use" ? { pick: Number.isInteger(data.pick) ? data.pick : 0 }
+        : state.kind === "bond" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "found" ? { name: typeof data.name === "string" ? data.name : "" }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
@@ -666,6 +695,12 @@ async function giveUserConditions(effects, { actor, token, used }) {
         if (effect.kind === "native") {
             const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "native", uuid: effect.uuid, label: effect.label } }, state) : null;
             lines.push(line ?? `${name} gains ${effect.label}${ability?.applyChange ? "" : " (apply it by hand: the ability module isn't active)"}`);
+            continue;
+        }
+        // (A note Effect on its user, Forgefather's Seal's statue for good: the ability module's note — 2026-10-27.)
+        if (effect.kind === "note") {
+            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note: { label: effect.label, text: effect.text, duration: effect.duration ?? null } } }, state) : null;
+            lines.push(line ?? `${name}: ${effect.label}${ability?.applyChange ? "" : " (a note to keep by hand: the ability module isn't active)"}`);
             continue;
         }
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: effect.slug, value: effect.value ?? null, target: "source", duration: effect.duration ?? null }, state) : null;
@@ -790,9 +825,12 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     const byLevel = (state.plan.item?.levelTemp ?? []).some((entry) => entry.from !== "amount");
     const marks = Boolean(state.plan.item?.mark);
     const hpLoss = state.plan.item?.hpLoss ?? null;
-    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks || hpLoss ? await targetedCreatures(targets) : [];
+    // (Or the phantom a soulheart raises, its one creature: src/compiler/unique-rules.js withPhantomBolster.)
+    const phantom = Boolean(state.plan.item?.phantom);
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks || hpLoss || phantom ? await targetedCreatures(targets) : [];
     // (Hit Points lost by a creature of its user's choice, The Rakshasa's pledged follower: that one targeted.)
     if (hpLoss && others.length !== 1) throw new Error(`Target the one creature that loses the Hit Points (${hpLoss.who ?? "the creature"}) first, then press Apply.`);
+    if (phantom && others.length !== 1) throw new Error("Target the one phantom it touches first, then press Apply.");
     // (The creature its bonuses are against, src/compiler/marked.js: that one targeted.)
     if (marks && !state.plan.item.mark.several && others.length !== 1) throw new Error("Target the one creature it's against first, then press Apply.");
     // (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones: one or more.)
@@ -828,7 +866,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
         const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
         for (const creature of others) lines.push(await lowerCondition(creature.actor, creature.name, slug, entry.by));
     }
-    // (The item itself gone once it's used, a soulheart's Bolster Maiserene Phantom: plan.item.destroyed — scripts/foundry.js destroyUsedItem.)
+    // (The item itself gone once it's used, Soulheart (Angelic)'s Defy Charg: plan.item.destroyed — scripts/foundry.js destroyUsedItem, once
+    // after every recipient; two groups built it, this one kept at the merge, 2026-10-27.)
     if (state.plan.item?.destroyed) lines.push(await destroyUsedItem(state.item));
     const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };
     return message.update({ content: cardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
@@ -990,17 +1029,25 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const became = await becomeItem(state.item.uuid, state.plan.item.becomes);
         if (became) lines.push(became);
     }
-    // (Or destroyed by its use, Soulheart (Angelic)'s Defy Charg: scripts/becomes.js destroyItem, 2026-10-27.)
-    if (state.plan.item?.destroyed) {
-        const gone = await destroyItem(state.item.uuid);
-        if (gone) lines.push(gone);
-    }
+    // (Its light and its areas put out, Soulspark Candle's prayer: src/compiler/unique-rules.js withPutOut, 2026-10-27.)
+    // (A phantom raised and every PC's maximum Hit Points up, the soulheart spent: src/compiler/unique-rules.js withPhantomBolster, 2026-10-27.)
+    if (state.plan.item?.phantom) lines.push(...await bolsterPhantom(state, others));
+    if (state.plan.item?.putsOut && user.actor) lines.push(...await putOut(state, user.actor));
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
-    for (const entry of state.plan.item?.ruleEffects ?? []) {
+    for (const given of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
-        // (In place of its earlier one, Terrain Adaptation's: scripts/until-rest.js.)
-        const replaced = entry.replaces ? replacedBy(target.actor, { itemUuid: state.item.uuid, name: entry.name, any: entry.replaces === "any" }) : [];
+        let entry = given;
+        // (In place of its earlier one: Terrain Adaptation's of that name, Flame of the Radiant Spark's of any item ("any"), Kaldemash's Lament's
+        // damage type of that kind (a word, 2026-10-27) — scripts/until-rest.js replacedBy.)
+        const replaced = entry.replaces ? replacedBy(target.actor, { itemUuid: state.item.uuid, name: entry.name, any: entry.replaces === "any", of: typeof entry.replaces === "string" && entry.replaces !== "any" ? entry.replaces : null }) : [];
         if (replaced.length) await target.actor.deleteEmbeddedDocuments("Item", replaced);
+        // (Its attack at least so much with the weapon, Kaldemash's Lament's +31: what its user's Strike with it lacks now, made up.)
+        if (entry.attackFloor) {
+            const strike = (target.actor.system?.actions ?? []).find((action) => action?.item?.slug === entry.attackFloor.slug || action?.slug === entry.attackFloor.slug);
+            const rule = strike ? attackFloorRule(entry.attackFloor, strike.totalModifier, state.item.name) : null;
+            if (rule) entry = { ...entry, rules: [...(entry.rules ?? []), rule] };
+            if (!strike) lines.push(`${recipient.name} has no Strike with ${state.item.name}: its +${entry.attackFloor.value} by hand.`);
+        }
         await target.actor.createEmbeddedDocuments("Item", [ruleEffectSource(entry, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${entry.words}`);
     }
@@ -1364,7 +1411,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (Restored outright: Elixir of Rejuvenation's maximum Hit Points — PF2e's healing of what's missing — and its afflictions of a
     // level or lower, PF2e's affliction items, deleted.)
     const restore = state.plan.item?.restore;
-    if (restore?.hp === "max") {
+    // (Not a dead one its revive brings back instead, Forgefather's Seal's Stalwart Sacrifice: 2026-10-27.)
+    const revived = Boolean(state.plan.item?.revive) && isDead(target.actor);
+    if (restore?.hp === "max" && !revived) {
         const hp = target.actor.system?.attributes?.hp ?? {};
         const missing = (Number(hp.max) || 0) - (Number(hp.value) || 0);
         lines.push(missing > 0 ? await heal(target, recipient.name, missing, state) : `${recipient.name} is at its maximum Hit Points already`);
@@ -1376,7 +1425,12 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         lines.push(gone.length ? `${recipient.name}: ${gone.map((affliction) => affliction.name).join(", ")} removed` : `${recipient.name} has no afflictions to remove`);
     }
     // (Brought back to life, Elixir of Rejuvenation given to the dead and Gift of the Poisoned Heart: scripts/revive.js.)
-    if (state.plan.item?.revive) lines.push(...await reviveCreature(target, recipient.name, state.plan.item.revive, state));
+    // (At half its maximum, Stalwart Sacrifice's — and only the dead, when its living ones are restored instead.)
+    if (state.plan.item?.revive && (revived || !restore)) {
+        const max = Number(target.actor.system?.attributes?.hp?.max) || 1;
+        const revive = state.plan.item.revive.hp === "half" ? { ...state.plan.item.revive, hp: Math.max(1, Math.floor(max / 2)) } : state.plan.item.revive;
+        lines.push(...await reviveCreature(target, recipient.name, revive, state));
+    }
     // (A demon's sin vulnerability set off, Soulcutter (Heroic)'s Shame Demon: scripts/sin-vulnerability.js, 2026-10-27.)
     if (state.plan.item?.sinVulnerability) lines.push(...await setOffSinVulnerability(target, recipient.name, state.plan.item.sinVulnerability, state));
     // (A full day's rest at once, Hallajin Key's renewal: PF2e's Rest for the Night and a night's Hit Points more, scripts/rest.js, 2026-10-27.)
@@ -1444,4 +1498,82 @@ async function nativeEffect(actor, name, change, state) {
     source._stats = { ...(source._stats ?? {}), compendiumSource: change.effect.uuid };
     await actor.createEmbeddedDocuments("Item", [source]);
     return `${name} gains ${template.name}`;
+}
+
+// Whether the item's light (src/live/card.js lightEffectSource) is on its user: an Effect of its, flagged light.
+function litBy(actor, item) {
+    const uuid = item?.uuid ?? null;
+    return (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.light && (uuid ? effect.system?.context?.origin?.item === uuid : effect.flags[MODULE_ID].from === item?.name));
+}
+
+// The item put out (plan.item.putsOut, Soulspark Candle's): its light on its user gone, its zones on every scene gone (the ability module's
+// Regions, flagged with the item's uuid), and the Effects it marked on creatures of this scene given what's left of their time. → lines.
+async function putOut(state, actor) {
+    const lines = [];
+    const uuid = state.item.uuid ?? null;
+    const lights = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.light && (uuid ? effect.system?.context?.origin?.item === uuid : effect.flags[MODULE_ID].from === state.item.name)).map((effect) => effect.id);
+    if (lights.length) await actor.deleteEmbeddedDocuments("Item", lights);
+    let zones = 0;
+    for (const scene of game.scenes ?? []) {
+        const ids = (scene.regions?.contents ?? [...(scene.regions ?? [])]).filter((region) => uuid && region.flags?.[ABILITY_ID]?.zone?.itemUuid === uuid).map((region) => region.id);
+        if (ids.length) await scene.deleteEmbeddedDocuments("Region", ids);
+        zones += ids.length;
+    }
+    lines.push(`${state.item.name} is out: ${lights.length ? "its light gone" : "no light of it on " + state.user.name}${zones ? `, its area${zones > 1 ? "s" : ""} gone` : ""}`);
+    const lingers = state.plan.item.putsOut.lingers;
+    if (lingers?.option) {
+        const marked = (canvas.tokens?.placeables ?? []).map((token) => token.actor).filter(Boolean).flatMap((other) => (other.itemTypes?.effect ?? []).filter((effect) => (effect.system?.rules ?? []).some((rule) => rule?.key === "RollOption" && rule.option === lingers.option)).map((effect) => ({ other, effect })));
+        for (const { effect } of marked) await effect.update({ "system.duration.value": lingers.duration.value, "system.duration.unit": lingers.duration.unit, "system.duration.expiry": lingers.duration.expiry ?? "turn-start", "system.start.value": game.time.worldTime });
+        if (marked.length) lines.push(`${[...new Set(marked.map(({ other }) => other.name))].join(", ")}: ${marked.length === 1 ? "its" : "their"} limning lasts ${lingers.duration.value} more ${lingers.duration.unit.replace(/s$/, "")}`);
+    }
+    return lines;
+}
+
+// Its user's own save as it's used (plan.alsoUserSave, the Oculus of Abaddon's): the ability module's save card at its user's token — none for
+// a creature with one of its unlessTraits (evil, unholy).
+async function postUserSave(price, { actor, token, used }) {
+    const traits = new Set([...(actor.traits ?? []), ...(actor.system?.traits?.value ?? [])].map((trait) => String(trait).toLowerCase()));
+    if ((price.unlessTraits ?? []).some((trait) => traits.has(trait))) return;
+    const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+    const placeable = token?.object ?? token ?? actor.getActiveTokens?.(true)?.[0] ?? null;
+    if (!postCard || !placeable) {
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${escapeHTML(price.words)} — roll it by hand.</p>` });
+        return;
+    }
+    await postCard({ plan: price.plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, sourceActor: actor, sourceToken: placeable.document ?? placeable, tokens: [placeable] });
+}
+
+// A phantom raised a rank for good (a note Effect on it), every PC's maximum Hit Points up (one Effect each counting every soulheart spent so,
+// PF2e's FlatModifier to Hit Points), and the soulheart gone. PCs: PF2e's party members, else the characters players own. → lines.
+async function bolsterPhantom(state, others) {
+    const phantom = state.plan.item.phantom;
+    const context = { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: null, moduleId: MODULE_ID };
+    const lines = [];
+    const [target] = others;
+    if (target?.actor) {
+        await target.actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: `rank ${phantom.to}`, words: `Raised from rank ${phantom.from} to rank ${phantom.to} for good`, duration: null }, context)]);
+        lines.push(`${target.name}: rank ${phantom.to} for good.`);
+    }
+    const members = game.actors?.party?.members?.length ? game.actors.party.members : (game.actors?.filter?.((actor) => actor.type === "character" && actor.hasPlayerOwner) ?? []);
+    for (const pc of members) {
+        const held = (pc.itemTypes?.effect ?? []).find((effect) => effect.flags?.[MODULE_ID]?.partyHp?.key === phantom.key);
+        const total = (Number(held?.flags?.[MODULE_ID]?.partyHp?.value) || 0) + phantom.hp;
+        const words = `+${total} maximum Hit Points while within ${phantom.place} while the castle is cursed (end this Effect when it leaves, or the curse lifts)`;
+        const rules = [{ key: "FlatModifier", selector: "hp", value: total, label: state.item.name }];
+        if (held) await held.update({ "system.rules": rules, [`flags.${MODULE_ID}.partyHp.value`]: total, "system.description.value": `<p>${escapeHTML(words)}, from <strong>${escapeHTML(state.item.name)}</strong>.</p>` });
+        else {
+            const source = ruleEffectSource({ name: "maximum Hit Points", words, rules, duration: null }, context);
+            source.flags[MODULE_ID].partyHp = { key: phantom.key, value: total };
+            await pc.createEmbeddedDocuments("Item", [source]);
+        }
+    }
+    lines.push(members.length ? `${members.map((pc) => pc.name).join(", ")}: +${phantom.hp} maximum Hit Points while within ${phantom.place} as long as it stays cursed.` : `No PCs found: give each +${phantom.hp} maximum Hit Points by hand.`);
+    if (state.plan.item.spentOnUse) {
+        const spent = state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+        if (spent?.delete) {
+            await spent.delete();
+            lines.push(`${state.item.name} is destroyed.`);
+        }
+    }
+    return lines;
 }

@@ -6,56 +6,62 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1439,
-   "builtin:cast-spell": 472,
+   "resolves": 1448,
+   "builtin:cast-spell": 475,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
    "builtin:readied-bonus": 54,
    "builtin:reroll": 46,
-   "builtin:ways": 84,
-   "builtin:whisper": 50,
+   "builtin:ways": 86,
+   "builtin:whisper": 51,
    "builtin:table": 8,
-   "none": 54,
+   "none": 37,
    "builtin:teleport": 31,
-   "builtin:zone": 40,
+   "builtin:zone": 41,
    "builtin:pf2e-rules": 23,
    "builtin:modes": 36,
-   "builtin:objects": 38,
+   "builtin:objects": 41,
    "builtin:item-action": 28,
    "builtin:conjure": 25,
    "builtin:roll-twice": 15,
-   "note-only": 11,
-   "builtin:no-effect": 10,
+   "note-only": 10,
+   "builtin:found-item": 1,
+   "builtin:no-effect": 6,
    "partial": 9,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1,
    "builtin:structure": 1,
-   "gaps": 5
+   "gaps": 5,
+   "builtin:bond": 1,
+   "builtin:feat-use": 1
   },
   "live": {
-   "save": 444,
-   "cast": 472,
-   "item": 880,
+   "save": 446,
+   "cast": 475,
+   "item": 886,
    "focus": 49,
    "counteract": 39,
    "fortune": 69,
    "reroll": 46,
-   "ways": 84,
+   "ways": 86,
    "strike": 131,
-   "whisper": 50,
+   "whisper": 51,
    "table": 8,
-   "none": 89,
+   "none": 68,
    "teleport": 31,
-   "zone": 40,
+   "zone": 41,
    "toggle": 36,
-   "objects": 38,
+   "objects": 41,
    "action": 28,
    "conjure": 25,
+   "found": 1,
    "coat": 4,
    "later": 3,
    "spellstrike": 9,
    "take": 1,
-   "structure": 1
+   "structure": 1,
+   "bond": 1,
+   "feat-use": 1
   },
   "withFrequency": 1734,
   "withTrigger": 427
@@ -64,49 +70,51 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 878,
-    "builtin:cast-spell": 346,
+    "resolves": 884,
+    "builtin:cast-spell": 349,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
     "builtin:readied-bonus": 34,
     "builtin:reroll": 35,
     "builtin:ways": 53,
-    "builtin:whisper": 46,
+    "builtin:whisper": 47,
     "builtin:table": 5,
-    "none": 39,
+    "none": 27,
     "builtin:teleport": 18,
-    "builtin:objects": 22,
-    "builtin:zone": 21,
+    "builtin:objects": 24,
+    "builtin:zone": 22,
     "builtin:item-action": 16,
     "builtin:conjure": 24,
     "builtin:modes": 19,
     "builtin:roll-twice": 11,
     "note-only": 8,
-    "builtin:no-effect": 7,
+    "builtin:found-item": 1,
+    "builtin:no-effect": 4,
     "partial": 5,
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
     "builtin:structure": 1,
-    "gaps": 4
+    "gaps": 4,
+    "builtin:bond": 1
    }
   },
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 278,
-    "builtin:cast-spell": 80,
+    "resolves": 279,
+    "builtin:cast-spell": 81,
     "builtin:reroll": 7,
     "builtin:zone": 9,
-    "builtin:ways": 15,
+    "builtin:ways": 17,
     "builtin:table": 1,
     "builtin:modes": 13,
-    "none": 14,
+    "none": 10,
     "builtin:item-action": 9,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 10,
-    "builtin:objects": 6,
+    "builtin:objects": 7,
     "builtin:pf2e-rules": 2,
-    "note-only": 2,
+    "note-only": 1,
     "builtin:teleport": 7,
     "partial": 2,
     "builtin:roll-twice": 2,
@@ -141,8 +149,8 @@
   "armor": {
    "activations": 163,
    "results": {
-    "builtin:cast-spell": 33,
-    "resolves": 95,
+    "builtin:cast-spell": 32,
+    "resolves": 97,
     "builtin:counteract": 1,
     "builtin:ways": 8,
     "builtin:zone": 5,
@@ -154,8 +162,7 @@
     "builtin:focus-point": 2,
     "builtin:roll-twice": 2,
     "partial": 1,
-    "none": 1,
-    "builtin:no-effect": 1
+    "builtin:feat-use": 1
    }
   },
   "shield": {
@@ -2213,9 +2220,9 @@
    "time": "cast",
    "frequency": "once per week",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Oculus of Abaddon",
@@ -2224,9 +2231,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Oculus of Abaddon",
@@ -2235,9 +2242,9 @@
    "time": "1 hour",
    "frequency": "once per year",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Tiger Shield",
@@ -4122,9 +4129,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Frost Fair Yanyuedao",
@@ -4573,9 +4580,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:found-item",
    "kind": null,
-   "live": null
+   "live": "found"
   },
   {
    "name": "Mindlock Shot",
@@ -7619,9 +7626,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Goz Mask",
@@ -10009,9 +10016,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Alluring Scarf (Greater)",
@@ -10395,9 +10402,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Viridian Crown",
@@ -13095,9 +13102,9 @@
    "time": "1 minute",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Crystal Ball (Clear Quartz)",
@@ -17108,9 +17115,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:zone",
    "kind": null,
-   "live": null
+   "live": "zone"
   },
   {
    "name": "Soulspark Candle",
@@ -17119,9 +17126,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Soulspark Candle",
@@ -17130,9 +17137,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Soulspark Candle",
@@ -19206,9 +19213,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Eye of the Wise",
@@ -19604,9 +19611,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:bond",
    "kind": null,
-   "live": null
+   "live": "bond"
   },
   {
    "name": "Bolka's Blessing",
@@ -21037,9 +21044,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null
+   "live": "objects"
   },
   {
    "name": "Dispersing Bullet",
@@ -21401,9 +21408,9 @@
    "time": "3",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:objects",
    "kind": null,
-   "live": null,
+   "live": "objects",
    "rune": true
   },
   {
@@ -21658,9 +21665,9 @@
    "time": "1",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Shadowed Scale, the Jungle Secret",
@@ -23236,9 +23243,9 @@
    "time": "1 minute",
    "frequency": "once per 10 minutes",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Medusa's Scream",
@@ -26328,9 +26335,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Kaldemash's Lament",
@@ -26339,7 +26346,7 @@
    "time": "2",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -27914,9 +27921,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:feat-use",
    "kind": null,
-   "live": null
+   "live": "feat-use"
   },
   {
    "name": "Ancestral Embrace",
@@ -27925,9 +27932,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Ancestral Embrace",
@@ -27936,9 +27943,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:cast-spell",
-   "kind": null,
-   "live": "cast"
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Broadleaf Shield (Major)",

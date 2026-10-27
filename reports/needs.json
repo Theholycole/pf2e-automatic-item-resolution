@@ -1,81 +1,80 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 126,
+  "entries": 99,
   "results": {
-   "none": 56,
-   "partial": 41,
-   "note-only": 14,
-   "builtin:no-effect": 10,
+   "none": 39,
+   "partial": 36,
+   "note-only": 13,
+   "builtin:no-effect": 6,
    "gaps": 5
   },
   "main": {
-   "areas": 20,
-   "lasting": 5,
-   "creatures": 16,
+   "areas": 17,
+   "lasting": 2,
+   "creatures": 13,
    "choice": 3,
-   "counteract": 3,
-   "triggers": 11,
-   "afflictions": 3,
-   "visibility": 4,
+   "triggers": 6,
+   "visibility": 3,
    "moving": 4,
-   "spells": 5,
-   "strike": 10,
+   "spells": 4,
+   "strike": 9,
    "cast-changes": 5,
+   "afflictions": 1,
    "fortune": 2,
-   "objects": 5,
+   "objects": 3,
    "information": 3,
-   "immunity": 3,
+   "immunity": 2,
    "mind": 2,
-   "out-of-combat": 2,
-   "several": 3,
+   "counteract": 2,
+   "out-of-combat": 1,
    "vehicles": 1,
-   "dying": 4,
+   "dying": 3,
+   "several": 2,
    "actions": 1,
    "situational": 2,
    "senses": 1,
    "by-kind": 1,
-   "illusions": 1,
    "forms": 3,
    "reader": 1,
    "retaliation": 1,
    "no-rules": 1
   },
   "any": {
-   "areas": 31,
+   "areas": 28,
    "range": 3,
-   "out-of-combat": 32,
-   "lasting": 30,
-   "several": 14,
-   "objects": 34,
-   "reader": 28,
-   "counteract": 10,
-   "creatures": 16,
-   "choice": 9,
-   "strike": 24,
+   "out-of-combat": 25,
+   "lasting": 21,
+   "several": 12,
+   "objects": 27,
+   "reader": 24,
+   "counteract": 9,
+   "creatures": 13,
+   "choice": 6,
+   "strike": 23,
    "moving": 6,
-   "mind": 14,
-   "information": 24,
-   "spells": 17,
-   "immunity": 16,
-   "speech": 11,
-   "triggers": 12,
-   "afflictions": 11,
-   "visibility": 4,
-   "dying": 9,
+   "mind": 13,
+   "information": 19,
+   "triggers": 7,
+   "afflictions": 7,
+   "visibility": 3,
+   "spells": 13,
    "cast-changes": 5,
+   "immunity": 13,
    "fortune": 2,
+   "speech": 7,
    "vehicles": 1,
+   "dying": 6,
    "situational": 6,
    "actions": 2,
    "senses": 3,
    "from-events": 4,
    "by-kind": 1,
-   "illusions": 2,
    "forms": 3,
    "retaliation": 1,
    "speeds": 1,
-   "no-rules": 1
+   "no-rules": 1,
+   "illusions": 1
   }
  },
  "entries": [
@@ -213,50 +212,6 @@
    ]
   },
   {
-   "name": "Oculus of Abaddon",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjure",
-   "needs": [
-    "creatures",
-    "spells",
-    "information"
-   ]
-  },
-  {
-   "name": "Oculus of Abaddon",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "result": "none",
-   "main": "creatures",
-   "work": "familiar",
-   "needs": [
-    "creatures",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Oculus of Abaddon",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "result": "none",
-   "main": "counteract",
-   "work": "counteracted",
-   "needs": [
-    "counteract",
-    "immunity",
-    "several",
-    "mind",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Reaper's Lancet",
    "kind": "activation",
    "tier": "special",
@@ -267,20 +222,6 @@
    "needs": [
     "triggers",
     "afflictions"
-   ]
-  },
-  {
-   "name": "Soulheart",
-   "kind": "activation",
-   "tier": "special",
-   "level": 5,
-   "activation": "Bolster Maiserene Phantom",
-   "result": "none",
-   "main": "afflictions",
-   "work": "cursed",
-   "needs": [
-    "afflictions",
-    "lasting"
    ]
   },
   {
@@ -314,21 +255,6 @@
     "mind",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "The Unicorn",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "builtin:no-effect",
-   "main": "afflictions",
-   "work": "poisoned",
-   "needs": [
-    "afflictions",
-    "dying",
-    "objects",
-    "speech"
    ]
   },
   {
@@ -465,23 +391,6 @@
     "lasting",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Redeemer's Pistol",
-   "kind": "activation",
-   "tier": "special",
-   "level": 11,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: the protective spirit …",
-   "needs": [
-    "triggers",
-    "afflictions",
-    "immunity",
-    "choice",
-    "reader",
-    "information"
    ]
   },
   {
@@ -672,18 +581,6 @@
    ]
   },
   {
-   "name": "Spellcutter",
-   "kind": "activation",
-   "tier": "special",
-   "level": 17,
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Cayden's Tankard",
    "kind": "activation",
    "tier": "special",
@@ -694,20 +591,6 @@
    "needs": [
     "counteract",
     "reader"
-   ]
-  },
-  {
-   "name": "Viridian Crown",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "View Subject",
-   "result": "none",
-   "main": "immunity",
-   "work": "resist the",
-   "needs": [
-    "immunity",
-    "information"
    ]
   },
   {
@@ -803,20 +686,6 @@
    "work": "emotion",
    "needs": [
     "mind"
-   ]
-  },
-  {
-   "name": "Kindler Cameo",
-   "kind": "activation",
-   "tier": "special",
-   "level": 7,
-   "activation": "Sense Soulheart",
-   "result": "none",
-   "main": "several",
-   "work": "ally",
-   "needs": [
-    "several",
-    "information"
    ]
   },
   {
@@ -1066,44 +935,6 @@
    ]
   },
   {
-   "name": "Soulspark Candle",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "areas",
-   "work": "light the candle",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
-   "name": "Soulspark Candle",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "builtin:no-effect",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
-   "name": "Soulspark Candle",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "visibility",
-   "work": "concealed",
-   "needs": [
-    "visibility",
-    "dying",
-    "lasting"
-   ]
-  },
-  {
    "name": "Godsbreath Bow",
    "kind": "activation",
    "tier": "general",
@@ -1177,20 +1008,6 @@
    ]
   },
   {
-   "name": "Eye of the Wise",
-   "kind": "activation",
-   "tier": "special",
-   "level": 11,
-   "result": "builtin:no-effect",
-   "main": "lasting",
-   "work": "dismisses",
-   "needs": [
-    "lasting",
-    "objects",
-    "speech"
-   ]
-  },
-  {
    "name": "Scene Stealer's Tunic",
    "kind": "activation",
    "tier": "special",
@@ -1207,22 +1024,6 @@
    ]
   },
   {
-   "name": "The Marriage",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "lasting",
-   "work": "until you",
-   "needs": [
-    "lasting",
-    "choice",
-    "reader",
-    "information",
-    "speech"
-   ]
-  },
-  {
    "name": "Phoenix Necklace",
    "kind": "activation",
    "tier": "special",
@@ -1233,19 +1034,6 @@
    "needs": [
     "strike",
     "lasting"
-   ]
-  },
-  {
-   "name": "Cane of the Maelstrom",
-   "kind": "activation",
-   "tier": "special",
-   "level": 22,
-   "result": "partial",
-   "main": "objects",
-   "work": "objects",
-   "needs": [
-    "objects",
-    "out-of-combat"
    ]
   },
   {
@@ -1287,63 +1075,6 @@
    ]
   },
   {
-   "name": "Flawless Celestial Shawl",
-   "kind": "activation",
-   "tier": "special",
-   "level": 9,
-   "activation": "Reweave",
-   "result": "none",
-   "main": "objects",
-   "work": "repair",
-   "needs": [
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Anima Robe (Heroic)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Who Are They?",
-   "result": "partial",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions"
-   ]
-  },
-  {
-   "name": "Forgefather's Seal",
-   "kind": "activation",
-   "tier": "special",
-   "level": 24,
-   "activation": "Retributive Rebuff",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering creature",
-   "needs": [
-    "triggers",
-    "spells",
-    "choice"
-   ]
-  },
-  {
-   "name": "Forgefather's Seal",
-   "kind": "activation",
-   "tier": "special",
-   "level": 24,
-   "activation": "Seal of Mending",
-   "result": "none",
-   "main": "lasting",
-   "work": "next time you",
-   "needs": [
-    "lasting",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Shadewither Key",
    "kind": "activation",
    "tier": "special",
@@ -1368,30 +1099,6 @@
    "needs": [
     "areas",
     "several"
-   ]
-  },
-  {
-   "name": "Shadowed Scale, the Jungle Secret",
-   "kind": "activation",
-   "tier": "special",
-   "level": 22,
-   "result": "none",
-   "main": "dying",
-   "work": "returned to life",
-   "needs": [
-    "dying"
-   ]
-  },
-  {
-   "name": "Shadowed Scale, the Jungle Secret",
-   "kind": "activation",
-   "tier": "special",
-   "level": 22,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures"
    ]
   },
   {
@@ -1487,19 +1194,6 @@
    "work": "fatigued",
    "needs": [
     "reader"
-   ]
-  },
-  {
-   "name": "Rowan Rifle",
-   "kind": "activation",
-   "tier": "special",
-   "level": 16,
-   "activation": "Briarbough Brachiaport",
-   "result": "none",
-   "main": "out-of-combat",
-   "work": "travel",
-   "needs": [
-    "out-of-combat"
    ]
   },
   {
@@ -1675,34 +1369,6 @@
    ]
   },
   {
-   "name": "Kaldemash's Lament",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you adjust the …",
-   "needs": [
-    "triggers",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Kaldemash's Lament",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "note-only",
-   "main": "strike",
-   "work": "strike against",
-   "needs": [
-    "strike",
-    "lasting",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Vambrace of Gorum",
    "kind": "activation",
    "tier": "special",
@@ -1781,49 +1447,6 @@
    "work": "cantrip",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Ancestral Embrace",
-   "kind": "activation",
-   "tier": "special",
-   "level": 26,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you gain an …",
-   "needs": [
-    "triggers",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ancestral Embrace",
-   "kind": "activation",
-   "tier": "special",
-   "level": 26,
-   "result": "builtin:no-effect",
-   "main": "triggers",
-   "work": "Trigger: ancestral embrace reduces …",
-   "needs": [
-    "triggers",
-    "spells",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ancestral Embrace",
-   "kind": "activation",
-   "tier": "special",
-   "level": 26,
-   "result": "partial",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "afflictions",
-    "reader"
    ]
   },
   {

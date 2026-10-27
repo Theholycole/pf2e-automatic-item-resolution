@@ -10,6 +10,7 @@ import { USES, now } from "./activations.js";
 import { itemNoteSource, ruleEffectSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { FLAG, MODULE_ID, afflictionsOf, creatureOf, damageRollClass, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
+import { endBond } from "./bonds.js";
 
 export async function postCounteractCard({ message, plan, used, actor, token }) {
     const named = plan.item?.counteract;
@@ -183,6 +184,8 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         }
         if (!removed) {
             lines.push(`${row.name}: ${outcome}, not counteracted.`);
+            // (A failure that afflicts its user too, The Marriage's counter: that condition — or those the Effect grants — on its user, 2026-10-27.)
+            if (state.counteract.failCopies) lines.push(...await copyToUser(actor, row, state));
             continue;
         }
         // (Not on a creature: the GM ends it — or turns it back, Reflecting Shard's Spell Riposte.)
@@ -240,6 +243,8 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
             }
         }
     }
+    // (A bond it ends whatever the result, The Marriage's: both sides' Effects gone — scripts/bonds.js, 2026-10-27.)
+    if (state.counteract.endsBond && await endBond(state.counteract.endsBond)) lines.push("The bond ends.");
     // (A spell's effects on its user after it, Draconal Mask's Truesight for 1 minute: the spell module casts it, its Effects set to that time.)
     const thenSpell = state.counteract.thenSpell;
     if (thenSpell) lines.push(await castAfter(thenSpell, state));
@@ -348,6 +353,21 @@ async function reflectDamage(state, degree, { amount, targets }) {
             await item.setFlag(MODULE_ID, USES, withoutUse(item.getFlag(MODULE_ID, USES) ?? {}, state.counteract.regain.index, state.counteract.regain.frequency, now(item.actor)));
             lines.push(`${item.name} absorbs enough energy: it can be activated again today.`);
         }
+    }
+    return lines;
+}
+
+// The condition a failed counter leaves on the creature, given to its user as well (counteract.failCopies): the row's own condition, or the
+// conditions its Effect grants, at their values. → lines.
+async function copyToUser(actor, row, state) {
+    const held = row.kind === "condition" ? (actor.itemTypes?.condition ?? []).filter((condition) => condition.id === row.id) : (actor.itemTypes?.condition ?? []).filter((condition) => condition.system?.references?.parent?.id === row.id || condition.flags?.pf2e?.grantedBy?.id === row.id);
+    const own = (await creatureOf(state.user)).actor;
+    if (!own || !held.length) return held.length ? [`${state.user.name} isn't there to take it.`] : [];
+    const lines = [];
+    for (const condition of held) {
+        const value = Number(condition.value ?? condition.system?.value?.value);
+        await own.increaseCondition(condition.slug, Number.isFinite(value) && value > 0 ? { value } : {});
+        lines.push(`${state.user.name} is ${condition.slug}${Number.isFinite(value) && value > 0 ? ` ${value}` : ""} as well.`);
     }
     return lines;
 }
