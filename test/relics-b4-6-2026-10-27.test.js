@@ -268,3 +268,31 @@ test("Azarim's help with a Lie, Vile Remnant's Hear My Words, Fan of the Four Wi
     assert.deepEqual([routeOf(fan), done(fan), fan.ways.map((way) => routeOf(way.plan))], ["ways", true, ["cast", "save"]]);
     assert.equal(success(fan.ways[1].plan).noteEffects[0].duration.value, 8);
 });
+
+test("Deck of Many Things: declared draws from PF2e's own table within the hour, never again, each card's rule (choices, more draws, stops, losses)", async () => {
+    const { afterChoice, afterDraw, afterLose, attributeDrop, cardName, createDeckCard, drawsLeft, lostItems, postsOwnCard } = await import("../src/live/deck.js");
+    const [deck] = activations("Deck of Many Things");
+    assert.deepEqual([deck.builtin, routeOf(deck), done(deck), deck.deck.uuid], ["deck", "deck", true, "Compendium.pf2e.rollable-tables.RollTable.mA13pL1Ypo1pYkK6"]);
+    assert.deepEqual([cardName("Fool. You lose 1d10*100 XP"), cardName("Euryale (curse). A medusa's image"), cardName("The Void. Your mind")], ["Fool", "Euryale", "The Void"]);
+    const user = { name: "Ezren", actorUuid: "Actor.e" };
+    assert.deepEqual([createDeckCard({ plan: deck, item: { name: "Deck" }, user, used: true }).status, createDeckCard({ plan: deck, item: { name: "Deck" }, user }).step], ["applied", "declare"]);
+    let state = { ...createDeckCard({ plan: deck, item: { name: "Deck" }, user }), declared: 2 };
+    state = afterDraw(state, "Fool");
+    assert.deepEqual([state.step, state.choice, drawsLeft(state)], ["choice", "Fool", 1]);
+    state = afterChoice(state, 1);
+    assert.deepEqual([state.step, drawsLeft(state)], ["draw", 3]);
+    state = afterDraw(state, "Dullard");
+    assert.deepEqual([state.step, drawsLeft(state)], ["draw", 3]);
+    state = afterDraw(state, "Talons");
+    assert.deepEqual([state.step, state.losing, state.then], ["lose", "magic", "draw"]);
+    state = afterLose(state);
+    state = afterDraw(state, "Donjon");
+    assert.deepEqual([state.step, state.stopped, drawsLeft(state)], ["lose", true, 0]);
+    assert.equal(afterLose(state).step, "done");
+    assert.deepEqual([attributeDrop(2), attributeDrop(5)], [1, 2]);
+    const items = [{ id: "deck", physical: true, magical: true }, { id: "sword", physical: true, magical: true, level: 10 }, { id: "orb", physical: true, magical: true, artifact: true, level: 23 }, { id: "rope", physical: true, magical: false }];
+    assert.deepEqual(lostItems(items, "magic", { deckId: "deck", deckLevel: 22 }), ["sword"]);
+    assert.deepEqual(lostItems(items, "nonmagic", { deckId: "deck", deckLevel: 22 }), ["rope"]);
+    assert.deepEqual(lostItems(items, "all", { deckId: "deck", deckLevel: 22 }), ["sword", "orb", "rope"]);
+    assert.deepEqual(["Throne", "Euryale", "Moon", "The Void", "Fool", "Sun", "Knight"].map(postsOwnCard), [true, true, true, true, false, false, false]);
+});

@@ -714,6 +714,26 @@ const READINGS = [
                 ways: [{ name: "Gust of Wind", html: "", plan: cast }, { name: "Toward a vessel's sail", html: "", plan: vessel }]
             };
         }
+    },
+    {
+        // Deck of Many Things: the deck card (plan.deck, src/live/deck.js, scripts/deck.js) — its user declares how many cards, draws the first,
+        // the rest within the hour (drawn anyway once it's up), never again from this deck; each card from PF2e's own Deck of Many Things table
+        // (with replacement, the deck shuffling itself), its own card when read and the deck's rule for it; the Dullard and the Jester gone
+        // from it once drawn.
+        name: "Deck of Many Things",
+        sentences: [
+            /^You declare how many cards you will draw facedown from the deck, then draw your first card\.$/,
+            /^The card takes effect immediately\.$/,
+            /^Any further cards must be drawn within the next hour, and any card you don't voluntarily draw flits off the deck and affects you anyway\.$/,
+            /^You can never activate the same deck of many things again\.$/,
+            /^Once a card is drawn, it produces its effect immediately and then disappears back into the deck, which immediately shuffles itself\. \(The Dullard and Jester are exceptions, as described in their entries below\.\) The effects of each card are as follows\.$/
+        ],
+        card: () => ({
+            builtin: "deck",
+            targeting: { target: null, range: null, area: null },
+            deck: { uuid: "Compendium.pf2e.rollable-tables.RollTable.mA13pL1Ypo1pYkK6", name: "Deck of Many Things", most: 22, within: { value: 1, unit: "hours" } },
+            notes: ["Declare the cards first: each takes effect as it's drawn, and those not drawn within the hour are drawn anyway. Its user can never activate this deck again."]
+        })
     }
 ];
 

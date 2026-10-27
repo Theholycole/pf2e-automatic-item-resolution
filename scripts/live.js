@@ -51,6 +51,7 @@ import { applyGrantCard, postGrantCard } from "./grimoire.js";
 import { fillWine } from "./grail.js";
 import { winePlan } from "../src/live/grail.js";
 import { rememberAfterRest } from "./after-rest.js";
+import { applyDeckCard, postDeckCard, setUpDecks } from "./deck.js";
 import { impeccableEffect, impeccablePlan } from "../src/live/craft-card.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
@@ -88,6 +89,8 @@ const deleted = new Map();
 export function setUpLivePlay({ compileItem, compileActivations = null, claims = null, runeRiders = null }) {
     compile = compileItem;
     setUpActivations({ compileActivations, postCardFor });
+    // (The Deck of Many Things' cards drawn anyway once its hour is up: scripts/deck.js.)
+    setUpDecks(postCardFor, rowCompiler("Deck of Many Things"));
     // (An item no longer invested: what lasted only while it was, Obsidian Goggles' darkvision, ends.)
     Hooks.on("updateItem", (item, changes) => {
         if (!isActiveGM() || changes?.system?.equipped?.invested !== false || !item.actor) return;
@@ -365,6 +368,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "craft") return postCraftCard({ message, plan, used, actor, token });
     if (route === "transmogrify") return postTransmogrifyCard({ message, plan, used, actor, token });
     if (route === "grant-spell") return postGrantCard({ message, plan, used, actor, token });
+    if (route === "deck") return postDeckCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
     if (route === "take") return postTakeCard({ message, plan, used, actor, token });
     if (route !== "item") return;
@@ -430,6 +434,8 @@ function choicesOf(state, root) {
     if (state.kind === "teleport") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), critical: Boolean(root.querySelector("[data-air-field='critical']")?.checked) };
     // (One of its user's items, picked: scripts/objects.js.)
     // (A stored spell cast at the creatures targeted: src/compiler/stored-spell.js.)
+    // (The deck's cards declared, a card's choice, and whether the GM pressed: scripts/deck.js.)
+    if (state.kind === "deck") return { count: Number(root.querySelector("[data-air-field='count']")?.value ?? 1), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? 0), gm: Boolean(game.user.isGM) };
     // (The spell the GM grants, by name: scripts/grimoire.js.)
     if (state.kind === "grant-spell") return { spell: String(root.querySelector("[data-air-field='spell']")?.value ?? ""), gm: Boolean(game.user.isGM) };
     // (Mutagens made from the creature targeted, how many; or the ability the GM picks for one drunk: scripts/transmogrify.js.)
@@ -453,6 +459,9 @@ function choicesOf(state, root) {
     if (state.kind === "cast") return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     return { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0), ceremony: Boolean(root.querySelector("[data-air-field='ceremony']")?.checked), resistType: Number(root.querySelector("[data-air-field='resistType']")?.value ?? state.resistType ?? 0), recoveryType: Number(root.querySelector("[data-air-field='recoveryType']")?.value ?? state.recoveryType ?? 0), reduceChoice: Number(root.querySelector("[data-air-field='reduceChoice']")?.value ?? state.reduceChoice ?? 0), runeWeapon: Number(root.querySelector("[data-air-field='runeWeapon']")?.value ?? state.runeWeapon ?? 0), runeChoice: Number(root.querySelector("[data-air-field='runeChoice']")?.value ?? state.runeChoice ?? 0), skillPick: Number(root.querySelector("[data-air-field='skillPick']")?.value ?? state.skillPick ?? 0), installedPick: Number(root.querySelector("[data-air-field='installedPick']")?.value ?? state.installedPick ?? 0), potionPick: Number(root.querySelector("[data-air-field='potionPick']")?.value ?? state.potionPick ?? 0), ...(root.querySelector("[data-air-field='amount']") ? { amount: root.querySelector("[data-air-field='amount']").value } : {}), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
 }
+
+// A drawn row's words compiled as the item's use, a consumable's of that text (the table card's and the deck's).
+const rowCompiler = (name) => (html) => compile?.({ name, type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null;
 
 const APPLY = {
     bomb: (message, choices) => applyBombCard(message, choices),
@@ -483,6 +492,8 @@ const APPLY = {
     "drop": (message, choices) => applyDropCard(message, choices),
     // (A RollTable's row drawn: compiled as the item's use, a consumable's of that text.)
     table: (message, choices) => applyTableCard(message, choices, postCardFor, (html) => compile?.({ name: stateOf(message)?.item?.name ?? "Table", type: "consumable", system: { description: { value: `<p><strong>Activate</strong> <span class="action-glyph">2</span></p><p>${html}</p>` }, traits: { value: ["magical", "consumable"] }, level: { value: 1 }, category: "other" } }) ?? null),
+    // (The Deck of Many Things' draws, each card's words compiled as a table row's: scripts/deck.js.)
+    deck: (message, choices) => applyDeckCard(message, choices, postCardFor, rowCompiler(stateOf(message)?.item?.name ?? "Deck")),
     item: (message, choices) => applyCard(message, choices)
 };
 // (What its use costs — a Mythic Point, or a Hero Point under the world setting, src/compiler/spend.js and scripts/spend.js: checked before
@@ -595,6 +606,7 @@ async function onRequest(data) {
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
         : state.kind === "craft" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, gm: Boolean(sender.isGM) }
         : state.kind === "grant-spell" ? { spell: String(data.spell ?? ""), gm: Boolean(sender.isGM) }
+        : state.kind === "deck" ? { count: Number.isFinite(Number(data.count)) ? Number(data.count) : 1, choice: Number.isInteger(data.choice) ? data.choice : 0, gm: Boolean(sender.isGM) }
         : state.kind === "transmogrify" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, count: Number.isFinite(Number(data.count)) ? Number(data.count) : 1, gm: Boolean(sender.isGM), targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
         : state.kind === "disbelief" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], check: data.check === 1 ? 1 : 0 }
