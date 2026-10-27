@@ -566,6 +566,8 @@ export function createdItemSource(creates, { count = 1, level = 0, img = null, w
 // A light its user sheds in words: "Bright light in 20 feet and dim light to 40 feet for 10 minutes".
 export function lightText(light) {
     const reach = light.bright ? `Bright light in ${light.bright} feet${light.dim > light.bright ? ` and dim light to ${light.dim} feet` : ""}` : `Dim light in ${light.dim} feet`;
+    // (Its radius picked, Twilight Lantern's: "Dim light in 60 feet (its radius picked, 5 to 120 feet), until put out".)
+    if (light.pick) return `${reach} (its radius picked, ${light.pick.min} to ${light.pick.max} feet), until put out (delete this Effect; its next activation sets another radius)`;
     return `${reach}${light.duration?.mode === "fixed" ? ` for ${timeText(light.duration)}` : ", until put out (its next activation)"}${light.note ? `; ${light.note}` : ""}`;
 }
 
@@ -788,7 +790,11 @@ export function cardHTML(state, { canApply = false } = {}) {
             : `<p class="aar-actions">Rune: ${escape(runeChoices[state.runeChoice ?? 0]?.name ?? "")}</p>`;
     // (Temporary Hit Points or healing from an amount its trigger gave — Bloodknuckles' bleed damage: typed on the card.)
     const amountOf = (state.plan?.item?.levelTemp ?? []).find((entry) => entry.from === "amount")?.of ?? null;
-    const amountField = !amountOf ? ""
+    // (Or a light's radius, Twilight Lantern's: typed the same way, between its bounds, its standard at first.)
+    const radius = (state.plan?.item?.light ?? []).find((entry) => entry.pick) ?? null;
+    const amountField = radius ? (open && canApply ? `<p class="aar-actions">Radius of its dim light (${radius.pick.min} to ${radius.pick.max} feet): <input type="number" min="${radius.pick.min}" max="${radius.pick.max}" step="5" data-air-field="amount" value="${escape(state.amount ?? radius.dim)}" style="width:4em"></p>`
+            : Number.isFinite(state.amount) ? `<p class="aar-actions">Radius of its dim light: ${escape(state.amount)} feet</p>` : "")
+        : !amountOf ? ""
         : open && canApply ? `<p class="aar-actions">Amount (${escape(amountOf)}): <input type="number" min="0" data-air-field="amount" value="${escape(state.amount ?? "")}" style="width:4em"></p>`
             : Number.isFinite(state.amount) ? `<p class="aar-actions">Amount (${escape(amountOf)}): ${escape(state.amount)}</p>` : "";
     // ("Creatures of your choice", none needed: Cayden's Tankard ends its user's own either way.)

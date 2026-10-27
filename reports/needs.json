@@ -1,20 +1,20 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1340,
+  "entries": 1332,
   "results": {
    "partial": 426,
-   "none": 546,
+   "none": 538,
    "note-only": 249,
    "builtin:no-effect": 119
   },
   "main": {
    "cast-changes": 25,
    "speeds": 23,
-   "areas": 141,
+   "areas": 137,
    "counteract": 24,
    "afflictions": 61,
-   "moving": 88,
+   "moving": 85,
    "visibility": 49,
    "choice": 31,
    "lasting": 69,
@@ -26,7 +26,7 @@
    "actions": 31,
    "immunity": 27,
    "objects": 114,
-   "creatures": 72,
+   "creatures": 71,
    "mind": 6,
    "illusions": 50,
    "removed": 6,
@@ -50,29 +50,29 @@
   "any": {
    "cast-changes": 25,
    "speeds": 29,
-   "areas": 206,
+   "areas": 202,
    "immunity": 90,
    "objects": 391,
    "speech": 129,
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 110,
-   "lasting": 240,
-   "moving": 116,
-   "triggers": 125,
+   "lasting": 239,
+   "moving": 112,
+   "triggers": 123,
    "visibility": 51,
    "dying": 77,
    "choice": 111,
    "several": 107,
    "strike": 196,
    "reader": 216,
-   "spells": 76,
+   "spells": 75,
    "information": 199,
    "actions": 63,
    "from-events": 29,
    "no-rules": 19,
    "situational": 86,
-   "creatures": 72,
+   "creatures": 71,
    "mind": 64,
    "illusions": 60,
    "removed": 7,
@@ -144,16 +144,6 @@
    "needs": [
     "afflictions",
     "lasting"
-   ]
-  },
-  {
-   "name": "Twilight Lantern (Major)",
-   "kind": "activation",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -3288,18 +3278,6 @@
    ]
   },
   {
-   "name": "Spangled Rider's Suit",
-   "kind": "activation",
-   "result": "none",
-   "main": "creatures",
-   "work": "mount",
-   "needs": [
-    "creatures",
-    "moving",
-    "triggers"
-   ]
-  },
-  {
    "name": "Purple Worm Repellent",
    "kind": "consumable",
    "result": "note-only",
@@ -5221,16 +5199,6 @@
    ]
   },
   {
-   "name": "Swiftmount Saddle",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "work": "mount",
-   "needs": [
-    "moving"
-   ]
-  },
-  {
    "name": "Name Pendant",
    "kind": "activation",
    "activation": "Alert Superior Officer",
@@ -6654,16 +6622,6 @@
    ]
   },
   {
-   "name": "Twilight Lantern (Greater)",
-   "kind": "activation",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Glasses of Sociability",
    "kind": "activation",
    "activation": "Have We Met?",
@@ -6864,16 +6822,6 @@
    "needs": [
     "lasting",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Twilight Lantern (Lesser)",
-   "kind": "activation",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -9942,17 +9890,6 @@
    ]
   },
   {
-   "name": "Sandals of the Stag",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "work": "jump",
-   "needs": [
-    "moving",
-    "triggers"
-   ]
-  },
-  {
    "name": "Cooperative Waffles (Greater)",
    "kind": "consumable",
    "result": "none",
@@ -11571,16 +11508,6 @@
    "main": "no-rules",
    "needs": [
     "no-rules"
-   ]
-  },
-  {
-   "name": "Twilight Lantern (Moderate)",
-   "kind": "activation",
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -13927,18 +13854,6 @@
    "needs": [
     "choice",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Maestro's Chair",
-   "kind": "activation",
-   "result": "none",
-   "main": "moving",
-   "work": "stride up to",
-   "needs": [
-    "moving",
-    "spells",
-    "lasting"
    ]
   },
   {

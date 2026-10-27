@@ -52,8 +52,19 @@ export function alliesMovePlan(html, base) {
 // Its user's own one move as the whole of it (2026-10-26): Viper Rapier's reaction "With a slight, obviously mocking bow or curtsy, you Step.",
 // Little Love's "You Leap (or Vault, if you're Spring-Heeled Jack)." Its user's own move on the map: a line of the card, nothing to apply.
 const OWN_MOVE = /^(?:[^.]+?, )?you (Step|Stride|Leap)( \([^)]*\))?\.$/i;
+// (Or its own actions of another kind as the whole of it, 2026-10-27: Swiftmount Saddle's "You Mount the creature wearing the swiftmount saddle",
+// Spangled Rider's Suit's "You dismount, moving off your mount into a space adjacent to it", Maestro's Chair's Stride and Sustain, Sandals of
+// the Stag's jump that "doesn't automatically fail" — PF2e has no rule for mounting, nor for a jump's Stride first: a line of the card.)
+const OWN_ACTS = [
+    [[/^You Mount the creature wearing the [\w' -]+?\s*\.$/i], () => "Mount the creature wearing it (its own action on the map)."],
+    [[/^You dismount, moving off your mount into a space adjacent to it\.$/i], () => "Dismount into a space adjacent to its mount (its own move on the map)."],
+    [[/^You use your chair to Stride up to your chair's speed\.$/i, /^If you have a composition cantrip that is currently active, you Sustain it as a free action\.$/i], () => "Stride up to the chair's Speed, and Sustain an active composition cantrip as a free action (its own actions)."],
+    [[/^You can attempt the jump normally\.$/i, /^It doesn't automatically fail\.$/i], () => "The jump it attempts doesn't automatically fail for want of a 10-foot Stride first (its own action)."]
+];
 export function ownMovePlan(html, base) {
     const sentences = SENTENCES(plainOf(html).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, ""));
+    const acts = OWN_ACTS.find(([forms]) => forms.length === sentences.length && forms.every((form, index) => form.test(sentences[index])));
+    if (acts) return { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: [acts[1]()] };
     const move = sentences.length === 1 ? OWN_MOVE.exec(sentences[0]) : null;
     if (!move) return null;
     return {

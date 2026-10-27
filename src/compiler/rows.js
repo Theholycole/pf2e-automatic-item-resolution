@@ -816,7 +816,21 @@ const HOODED = /\bsheds light\b[^.]*\.(?:[^.]*\.)?[^.]*\bwork as normal for a ho
 // doesn't: no time. Its radius shrinking as it goes, the flower's, a note on it.)
 const ENDS = /^\s*At the end of (an|one|\d+) (hours?|minutes?)\b/i;
 const SHRINKS = /^\s*The radius of this light shrinks by (\d+) feet every (\d+) (minutes?|hours?)\./i;
+// (Or its radius picked, Twilight Lantern's "You concentrate on the lantern's light and reduce or increase its radius. The light can have a
+// minimum radius of 5 feet and a maximum radius equal to double the light's standard radius": its moonlight is always dim, a hooded
+// lantern's 60 feet of light all dim as its standard → { bright: 0, dim: 60, pick: { min: 5, max: 120 } }, the radius its user types on the
+// card, until put out. 2026-10-27.)
+const PICKED = /^You concentrate on the lantern's light and reduce or increase its radius\.$/i;
+const BOUNDS = /^The light can have a minimum radius of (\d+) feet and a maximum radius equal to (double|triple|quadruple) the light's standard radius\.$/i;
+const RADIUS_TIMES = { double: 2, triple: 3, quadruple: 4 };
 function lightOf(sentences, duration, used = new Set()) {
+    const picked = sentences.findIndex((sentence) => PICKED.test(sentence.trim()));
+    const bounds = picked >= 0 ? BOUNDS.exec(String(sentences[picked + 1] ?? "").trim()) : null;
+    if (bounds) {
+        used.add(picked);
+        used.add(picked + 1);
+        return [{ bright: 0, dim: 60, pick: { min: Number(bounds[1]), max: 60 * RADIUS_TIMES[bounds[2].toLowerCase()] }, duration: null }];
+    }
     for (const [index, sentence] of sentences.entries()) {
         if (/^\s*(?:If|Whenever|Each time|Unless)\b/i.test(sentence)) continue;
         const hooded = HOODED.test(sentences.slice(index, index + 3).join(" ")) && /\bsheds light\b/i.test(sentence);

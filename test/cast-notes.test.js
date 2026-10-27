@@ -165,3 +165,21 @@ test("an Effect a Strike with a weapon of a trait ends: only that Strike (script
     assert.deepEqual(await endOnStrike(strike(["concussive", "scatter-10"])), ["scatter"]);
     assert.deepEqual(deleted, ["scatter"]);
 });
+
+test("a light's radius its user picks (2026-10-27): Twilight Lantern's dim moonlight, 60 feet standard, from 5 feet up to double (Lesser) or quadruple (Major) it", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { lightText, lightEffectSource } = await import("../src/live/card.js");
+    const [lesser] = activations(item("Twilight Lantern (Lesser)"), options);
+    const [light] = lesser.plan.item.light;
+    assert.deepEqual([light.bright, light.dim, light.pick, lesser.plan.partial], [0, 60, { min: 5, max: 120 }, undefined]);
+    assert.equal(activations(item("Twilight Lantern (Major)"), options)[0].plan.item.light[0].pick.max, 240);
+    assert.match(lightText({ ...light, dim: 15 }), /^Dim light in 15 feet \(its radius picked, 5 to 120 feet\), until put out/);
+    assert.deepEqual(lightEffectSource({ ...light, dim: 15 }, { item: { name: "Twilight Lantern (Lesser)" } }).system.rules[0].value, { bright: 0, dim: 15 });
+});
+
+test("its user's own actions as the whole of an activation (2026-10-27): Swiftmount Saddle's Mount, Spangled Rider's Suit's dismount, Maestro's Chair's Stride and Sustain, Sandals of the Stag's jump — a line of the card", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const lines = ["Swiftmount Saddle", "Spangled Rider's Suit", "Maestro's Chair", "Sandals of the Stag"].map((name) => activations(item(name), options).find((entry) => entry.plan?.notes?.length)?.plan);
+    assert.ok(lines.every((plan) => plan && /\(its own (?:actions?|action on the map|move on the map)\)\.$/.test(plan.notes[0]) && !plan.partial && !plan.noteOnly));
+    assert.equal(lines[0].notes[0], "Mount the creature wearing it (its own action on the map).");
+});

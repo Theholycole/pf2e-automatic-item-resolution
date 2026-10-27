@@ -5503,6 +5503,31 @@ export const cases = {
         return { lit };
     },
 
+    // Twilight Lantern (Lesser) (2026-10-27): the radius typed on its card — 15 feet of dim light, then 100 replacing it; 200 refused.
+    async twilightRadius(scene) {
+        const { actor: holder } = await creature(scene, "Twilight Holder", { type: "character", x: 7, y: 18 });
+        const lantern = await give(holder, "Twilight Lantern (Lesser)");
+        await lantern.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const lights = () => holder.itemTypes.effect.filter((effect) => effect.system.rules.some((rule) => rule.key === "TokenLight"));
+        const press = async (amount, what) => {
+            const since = Date.now();
+            await game.modules.get(NS).api.live.activate(lantern.uuid, 0);
+            const card = await messageAfter(since, itemCard("item"), { what });
+            assert(/Radius of its dim light \(5 to 120 feet\)/.test(card.content), "the radius field");
+            await game.modules.get(NS).api.live.apply(card.id, { amount }).catch(() => null);
+            return card;
+        };
+        await press(15, "the lantern's card");
+        await until(() => lights().some((effect) => effect.system.rules.some((rule) => rule.value?.dim === 15 && rule.value?.bright === 0)), "15 feet of dim light", { timeout: 8000 });
+        await press(100, "the lantern's second card");
+        await until(() => lights().length === 1 && lights()[0].system.rules.some((rule) => rule.value?.dim === 100), "100 feet replacing it", { timeout: 8000 });
+        const refused = await press(200, "the lantern's third card");
+        await wait(1000);
+        assert(game.messages.get(refused.id).getFlag(NS, "card").status === "open", "200 feet refused (the card still open)");
+        assert(lights().length === 1 && lights()[0].system.rules.some((rule) => rule.value?.dim === 100), "the 100-foot light kept");
+        return { dim: 100 };
+    },
+
     // Flame Navette (Determination): its user's frightened ends outright on the counteract card, no DC or rank asked; no one else offered.
     async flameNavette(scene) {
         const { actor: user } = await creature(scene, "Navette Wearer", { type: "character", x: 8, y: 16 });

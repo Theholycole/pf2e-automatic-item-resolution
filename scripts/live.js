@@ -577,6 +577,13 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
         if (!Number.isFinite(typed) || typed < 0) throw new Error(`Type the amount (${byAmount[0].of}) first, then press Apply.`);
         state = { ...state, amount: typed };
     }
+    // (A light's radius typed on the card, Twilight Lantern's: between its bounds.)
+    const radius = (state.plan.item?.light ?? []).find((entry) => entry.pick);
+    if (radius) {
+        const typed = amount === null || amount === undefined || amount === "" ? radius.dim : Number(amount);
+        if (!Number.isFinite(typed) || typed < radius.pick.min || typed > radius.pick.max) throw new Error(`Type a radius from ${radius.pick.min} to ${radius.pick.max} feet, then press Apply.`);
+        state = { ...state, amount: typed };
+    }
     // (The weapon picked for the rune it lends.)
     if (Number.isInteger(runeWeapon) && state.weapons?.[runeWeapon]) state = { ...state, runeWeapon };
     // (The rune picked of several.)
@@ -879,10 +886,13 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     }
     // (A light its user sheds: Sprite Apple's — an Effect with PF2e's TokenLight rule. One with no time is put out by the item's next
     // activation, Candlecap's "Activating the candlecap again douses the light": its lit Effect gone, no new one.)
-    for (const light of state.plan.item?.light ?? []) {
+    for (const picked of state.plan.item?.light ?? []) {
         if (!target.actor) break;
+        // (Its radius picked, Twilight Lantern's: the light it sheds now replaced by one of the radius typed, not put out.)
+        const light = picked.pick && Number.isFinite(state.amount) ? { ...picked, dim: state.amount } : picked;
         const lit = light.duration?.mode === "fixed" ? [] : (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.light && effect.flags[MODULE_ID].from === state.item.name);
-        if (lit.length) {
+        if (lit.length && light.pick) await target.actor.deleteEmbeddedDocuments("Item", lit.map((effect) => effect.id));
+        else if (lit.length) {
             await target.actor.deleteEmbeddedDocuments("Item", lit.map((effect) => effect.id));
             lines.push(`${recipient.name}: ${state.item.name}'s light put out`);
             continue;
