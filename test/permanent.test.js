@@ -815,7 +815,8 @@ test("a short teleport for its user (Dweomerveil, Mad Mammoth's Juke, Golden Spu
     const coil = compileItem(item("Quartz-Coil Rail Transport (Moderate)"));
     assert.deepEqual([routeOf(coil), coil.teleport.within, coil.teleport.line, coil.partial, coil.notes], ["teleport", 40, { formula: "4", type: "electricity" }, undefined, undefined]);
     assert.ok(teleportLines(coil.teleport).includes("4 electricity damage to its user and each creature in the line between where it was and where it lands"));
-    assert.equal(teleportText(compileActivations(item("Dimension Shot"))[0].plan.teleport), "To a space adjacent to the creature targeted");
+    // (Or a square fired at with no creature targeted, its orSquare since 2026-10-27.)
+    assert.match(teleportText(compileActivations(item("Dimension Shot"))[0].plan.teleport), /^To a space adjacent to the creature targeted; or, fired at a square/);
 });
 
 test("allies in an area put in a condition, read without an Effect heading (a third-party scepter: its user and the allies within 30 feet Quickened for 1 minute, the extra action's limit a note Effect)", async () => {

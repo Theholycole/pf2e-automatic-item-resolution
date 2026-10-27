@@ -5051,6 +5051,25 @@ export const cases = {
         return { refused, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Dimension Shot (2026-10-27): no creature targeted, a square fired at — the archer's teleport to a space 50 feet off taken (its shortbow's
+    // farthest range and the square beyond).
+    async dimensionShotSquare(scene) {
+        await clearSquares(scene, [[0, 16], [10, 16]]);
+        const { actor: archer, token } = await creature(scene, "Dimension Archer", { type: "character", x: 0, y: 16 });
+        const bow = await give(archer, "Shortbow");
+        const ammo = await give(archer, "Dimension Shot");
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": ammo.id });
+        await target();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(ammo.uuid, 0);
+        const card = await messageAfter(since, itemCard("teleport"), { what: "the teleport card" });
+        assert(/fired at a square with no creature targeted/.test(card.content), "its square line");
+        const size = canvas.grid.size;
+        await game.modules.get(NS).api.live.apply(card.id, { destination: { x: 10 * size, y: 16 * size }, targets: [] });
+        await until(() => token.x === 10 * size && token.y === 16 * size, `the archer teleported (${token.x / size}, ${token.y / size})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Golden Spur: within 10 feet of the creature targeted, with line of effect — a space past a wall (the lab's own, gone with it) refused, one
     // on this side taken.
     async goldenSpurWall(scene) {

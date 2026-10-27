@@ -92,8 +92,11 @@ export function teleportPlan(html, base, whole = null) {
     const own = (sentence) => sentence.includes(read.match[0]) || read.match[0].includes(sentence) || (SHOT.test(body) && /\b(?:at an open space on a surface|You teleport to that location)\b/.test(sentence)) || CRITICAL.test(sentence) || ALONE.test(sentence) || LINE.test(sentence) || LINE_OF_EFFECT.test(sentence);
     const ruled = sentences.filter((sentence) => !own(sentence) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
     const strikes = ruled.filter(OWN_STRIKE).map((sentence) => `${sentence.replace(/\.$/, "")} (its own actions).`);
-    const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence));
-    const teleport = { within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
+    // (Or at a square, Dimension Shot's "If you fire at a square, you can teleport to a space that contains that square or an unoccupied space adjacent
+    // to it": teleport.orSquare — no creature targeted, the space picked within the weapon's range of its user, 2026-10-27.)
+    const square = read.from === "target" ? ruled.find((sentence) => /^If you fire at a square, you can teleport to a space that contains that square or an unoccupied space adjacent to it\.$/i.test(sentence)) : null;
+    const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence) && sentence !== square);
+    const teleport = { within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
     return {
         ...base,
         builtin: "teleport",

@@ -123,8 +123,12 @@ export async function applyTeleportCard(message, { destination = null, targets =
     const teleport = state.plan.teleport;
     // (Measured from the creature targeted, Golden Spur's "within 10 feet of the target"; else from where its user stands.)
     const aimed = teleport.from === "target" ? (await Promise.all((targets ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).find((other) => other && other.uuid !== token.uuid) ?? null : null;
-    if (teleport.from === "target" && !aimed) throw new Error("Target the creature first, then press Pick.");
-    const range = critical && teleport.critical ? teleport.critical.within : teleportRange(teleport, { speed: state.speed, weaponRange: state.weaponRange ?? null });
+    // (Or no creature, a square fired at, Dimension Shot's: measured from its user, out to its weapon's farthest range and the square beyond.)
+    const atSquare = teleport.from === "target" && !aimed && teleport.orSquare;
+    if (teleport.from === "target" && !aimed && !atSquare) throw new Error("Target the creature first, then press Pick.");
+    const farthest = atSquare ? weaponRangeFor(await fromUuid(state.user.actorUuid).catch(() => null), null) : null;
+    if (atSquare && !Number.isFinite(farthest)) throw new Error(`${state.item.name}: target the creature it hit (${state.user.name} holds no ranged weapon to measure a square from).`);
+    const range = atSquare ? farthest * 6 + 5 : critical && teleport.critical ? teleport.critical.within : teleportRange(teleport, { speed: state.speed, weaponRange: state.weaponRange ?? null });
     if (teleport.weaponRange && !Number.isFinite(range)) throw new Error(`${state.item.name}: ${state.user.name} has no ranged weapon loaded with it.`);
     const at = { x: Number(destination.x), y: Number(destination.y) };
     const problem = spaceProblem(token, at, { from: aimed ?? token, range });

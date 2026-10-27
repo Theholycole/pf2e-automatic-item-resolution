@@ -813,3 +813,11 @@ test("terrain for that creature alone (2026-10-27): Pit Illusion Snare's success
     assert.deepEqual([success.noteEffects[0].label, success.noteEffects[0].duration.anchor, success.manualInstructions], ["Cautious", "target-turn", undefined]);
     assert.deepEqual(failure.effects.map((effect) => effect.slug), ["prone"]);
 });
+
+test("a teleport to a square fired at (2026-10-27): Dimension Shot — beside the creature hit, or with no creature targeted, at the square fired at or next to it (orSquare)", async () => {
+    const { teleportText } = await import("../src/live/teleport-card.js");
+    const plan = first("Dimension Shot");
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual([plan.teleport.from, plan.teleport.within, plan.teleport.orSquare], ["target", 5, true]);
+    assert.match(teleportText(plan.teleport), /^To a space adjacent to the creature targeted; or, fired at a square with no creature targeted, a space with that square or next to it/);
+});

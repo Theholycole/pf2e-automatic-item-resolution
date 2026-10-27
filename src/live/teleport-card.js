@@ -26,7 +26,9 @@ export function teleportText(teleport, { speed = null, weaponRange = null } = {}
     const plus = Number(teleport?.plus) ? ` + ${teleport.plus} feet` : "";
     if (Number.isFinite(teleport?.leapTimes)) return `Up to ${TIMES[teleport.leapTimes] ?? `${teleport.leapTimes} times `}its user's Leap${Number.isFinite(range) ? ` (${range} feet)` : ""}`;
     if (Number.isFinite(teleport?.speedTimes)) return `Up to ${TIMES[teleport.speedTimes] ?? `${teleport.speedTimes} times `}its user's Speed${plus}${Number.isFinite(range) ? ` (${range} feet)` : ""}`;
-    return teleport?.from === "target" ? (range === 5 ? "To a space adjacent to the creature targeted" : `Within ${range} feet of the creature targeted`) : `Up to ${range} feet`;
+    // (Or a square fired at, Dimension Shot's: with no creature targeted, that square's space or one next to it.)
+    const square = teleport?.orSquare ? "; or, fired at a square with no creature targeted, a space with that square or next to it (within its weapon's range)" : "";
+    return teleport?.from === "target" ? `${range === 5 ? "To a space adjacent to the creature targeted" : `Within ${range} feet of the creature targeted`}${square}` : `Up to ${range} feet`;
 }
 
 // Its other lines: the farther range after a critical success, its user alone, the damage along the way, line of effect.
@@ -60,7 +62,7 @@ export function teleportCardHTML(state, { canApply = false } = {}) {
     const said = lines.length ? `<ul class="aar-lines">${lines.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const tick = open && canApply && state.plan.teleport.critical ? `<label class="aar-choice"><input type="checkbox" data-air-field="critical"> The triggering save was a critical success (within ${escape(state.plan.teleport.critical.within)} feet)</label>` : "";
     const notes = open && (state.plan.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
-    const aim = state.plan.teleport.from === "target" ? "Target the creature first, then press Pick and click" : "Press Pick and click";
+    const aim = state.plan.teleport.from === "target" ? (state.plan.teleport.orSquare ? "Target the creature it hit (none, for a square), then press Pick and click" : "Target the creature first, then press Pick and click") : "Press Pick and click";
     const hint = open && canApply ? `<p class="aar-hint">${aim} the space ${state.plan.teleport.place ? `${escape(state.user.name)} is moved to` : `it ${state.plan.teleport.move ? "moves to" : "lands in"}`} (right-click or Escape cancels).</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const again = state.plan.teleport.move?.again && state.results.length;
