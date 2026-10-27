@@ -14,22 +14,22 @@
   "activatedPermanent": 2679,
   "results": {
    "builtin:cast-spell": 35,
-   "none": 145,
-   "resolves": 844,
+   "none": 125,
+   "resolves": 880,
    "builtin:readied-bonus": 23,
    "builtin:zone": 121,
-   "builtin:ways": 29,
+   "builtin:ways": 30,
    "builtin:item-action": 16,
-   "partial": 63,
-   "note-only": 111,
+   "partial": 60,
+   "note-only": 101,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
-   "builtin:no-effect": 37,
+   "builtin:no-effect": 26,
    "builtin:teleport": 7,
    "builtin:fall-foam": 4,
    "builtin:reroll": 3,
+   "builtin:whisper": 8,
    "builtin:objects": 5,
-   "builtin:whisper": 1,
    "builtin:roll-twice": 2
   }
  },
@@ -39,17 +39,18 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 28,
-    "resolves": 249,
-    "builtin:ways": 22,
-    "partial": 29,
-    "note-only": 57,
+    "resolves": 269,
+    "builtin:ways": 23,
+    "partial": 27,
+    "note-only": 53,
     "builtin:readied-bonus": 8,
-    "none": 77,
-    "builtin:no-effect": 12,
+    "none": 61,
+    "builtin:no-effect": 10,
     "builtin:teleport": 4,
     "builtin:counteract": 9,
     "builtin:item-action": 1,
     "builtin:conjure": 1,
+    "builtin:whisper": 3,
     "builtin:objects": 1
    },
    "mechanisms": {
@@ -72,12 +73,13 @@
   "potion": {
    "count": 182,
    "results": {
-    "resolves": 130,
-    "note-only": 10,
-    "partial": 5,
-    "none": 16,
-    "builtin:no-effect": 9,
+    "resolves": 135,
+    "note-only": 9,
+    "partial": 4,
+    "none": 14,
+    "builtin:no-effect": 7,
     "builtin:cast-spell": 9,
+    "builtin:whisper": 1,
     "builtin:counteract": 2,
     "builtin:zone": 1
    },
@@ -130,13 +132,14 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 106,
+    "resolves": 108,
     "builtin:counteract": 11,
-    "builtin:no-effect": 3,
+    "builtin:no-effect": 2,
     "partial": 13,
     "builtin:ways": 1,
-    "note-only": 10,
-    "none": 3,
+    "builtin:whisper": 1,
+    "note-only": 9,
+    "none": 2,
     "builtin:zone": 2
    },
    "mechanisms": {
@@ -198,11 +201,12 @@
     "resolves": 32,
     "builtin:zone": 17,
     "builtin:fall-foam": 4,
-    "none": 4,
+    "none": 3,
     "note-only": 6,
     "builtin:item-action": 3,
     "builtin:counteract": 8,
-    "partial": 3
+    "partial": 3,
+    "builtin:whisper": 1
    },
    "mechanisms": {
     "damage": 10,
@@ -235,10 +239,9 @@
   "oil": {
    "count": 66,
    "results": {
-    "resolves": 31,
+    "resolves": 38,
     "builtin:conjure": 6,
-    "builtin:no-effect": 6,
-    "note-only": 9,
+    "note-only": 8,
     "none": 4,
     "builtin:cast-spell": 2,
     "builtin:counteract": 2,
@@ -262,8 +265,9 @@
    "results": {
     "builtin:readied-bonus": 2,
     "none": 12,
-    "resolves": 21,
-    "note-only": 7,
+    "resolves": 22,
+    "builtin:whisper": 1,
+    "note-only": 5,
     "builtin:reroll": 2,
     "partial": 1,
     "builtin:cast-spell": 1
@@ -299,8 +303,8 @@
   "toolkit": {
    "count": 9,
    "results": {
-    "note-only": 5,
-    "resolves": 3,
+    "resolves": 4,
+    "note-only": 4,
     "builtin:no-effect": 1
    },
    "mechanisms": {
@@ -325,7 +329,7 @@
   },
   "damage": {
    "count": 277,
-   "resolves": 176,
+   "resolves": 177,
    "gaps": 0,
    "none": 7
   },
@@ -337,9 +341,9 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 321,
+   "resolves": 327,
    "gaps": 0,
-   "none": 21
+   "none": 17
   },
   "affliction": {
    "count": 144,
@@ -361,7 +365,7 @@
   },
   "on-weapon": {
    "count": 67,
-   "resolves": 57,
+   "resolves": 59,
    "gaps": 0,
    "none": 0
   },
@@ -379,9 +383,9 @@
   },
   "area": {
    "count": 44,
-   "resolves": 16,
+   "resolves": 17,
    "gaps": 0,
-   "none": 5
+   "none": 4
   },
   "condition": {
    "count": 433,
@@ -391,7 +395,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 650,
+   "resolves": 666,
    "gaps": 0,
    "none": 13
   }
@@ -399,32 +403,32 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 197,
-   "item": 660,
+   "none": 166,
+   "item": 683,
    "fortune": 25,
    "zone": 121,
    "save": 135,
    "expose": 89,
-   "ways": 29,
+   "ways": 30,
    "action": 16,
    "conjure": 7,
    "counteract": 33,
    "later": 64,
    "teleport": 7,
    "reroll": 3,
+   "whisper": 8,
    "coat": 46,
    "strike": 13,
-   "objects": 5,
-   "whisper": 1
+   "objects": 5
   },
   "byCategory": {
    "other": {
     "cast": 14,
     "zone": 28,
-    "none": 98,
-    "ways": 22,
+    "none": 80,
+    "ways": 23,
     "save": 86,
-    "item": 231,
+    "item": 245,
     "fortune": 8,
     "teleport": 4,
     "counteract": 9,
@@ -432,14 +436,16 @@
     "expose": 3,
     "action": 1,
     "conjure": 1,
+    "whisper": 3,
     "objects": 1,
     "coat": 3
    },
    "potion": {
-    "item": 86,
+    "item": 89,
     "later": 58,
-    "none": 25,
+    "none": 21,
     "cast": 9,
+    "whisper": 1,
     "save": 1,
     "counteract": 2,
     "zone": 1
@@ -460,11 +466,12 @@
     "coat": 1
    },
    "elixir": {
-    "item": 127,
+    "item": 128,
     "counteract": 11,
-    "none": 6,
+    "none": 4,
     "save": 1,
     "ways": 1,
+    "whisper": 1,
     "zone": 2,
     "later": 1
    },
@@ -488,27 +495,29 @@
    "gadget": {
     "save": 17,
     "zone": 17,
-    "none": 8,
+    "none": 7,
     "item": 24,
     "action": 3,
-    "counteract": 8
+    "counteract": 8,
+    "whisper": 1
    },
    "mutagen": {
     "item": 68
    },
    "oil": {
-    "item": 44,
+    "item": 50,
     "conjure": 6,
-    "none": 10,
     "save": 1,
     "later": 1,
+    "none": 4,
     "cast": 2,
     "counteract": 2
    },
    "fulu": {
     "fortune": 2,
     "none": 14,
-    "item": 16,
+    "item": 15,
+    "whisper": 1,
     "save": 10,
     "reroll": 2,
     "later": 1,
@@ -524,9 +533,9 @@
    }
   },
   "noCard": {
-   "no-plan": 145,
+   "no-plan": 125,
    "triggered": 11,
-   "gm": 37,
+   "gm": 26,
    "other": 4
   }
  },
@@ -1311,8 +1320,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -2239,9 +2249,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Blood Booster (Greater)",
@@ -2404,9 +2415,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Aetheric Irritant (Lesser)",
@@ -2814,8 +2825,9 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -2847,7 +2859,10 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Sakura's Sprig",
@@ -2891,7 +2906,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Spellslasher",
@@ -3644,9 +3662,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Clockwork Goggles (Greater)",
@@ -3804,9 +3823,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Courier's Cryptex",
@@ -4833,7 +4853,10 @@
    "mechanisms": [
     "area"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Silver Salve",
@@ -5844,7 +5867,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Bonmuan Swapping Stone (Lesser)",
@@ -6050,7 +6076,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Sportlebore Capsule",
@@ -6526,9 +6555,10 @@
     "on-weapon",
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Spectral Nightshade",
@@ -7363,9 +7393,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Ixamè's Eye",
@@ -8179,7 +8209,10 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Stone Body Mutagen (Moderate)",
@@ -9165,9 +9198,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Camp Shroud (Major)",
@@ -9395,8 +9429,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -9450,8 +9485,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -10012,8 +10048,9 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -10557,9 +10594,9 @@
     "elixir"
    ],
    "mechanisms": [],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Celestial Peach (Rejuvenation)",
@@ -11157,7 +11194,9 @@
     "fire"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Burial Oil",
@@ -12221,7 +12260,10 @@
    "level": 3,
    "traits": [],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Animal Repellent (Moderate)",
@@ -13095,7 +13137,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Bottled Melody",
@@ -14008,9 +14053,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Toadskin Salve (Greater)",
@@ -15428,8 +15474,9 @@
     "fixed-dc",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
+   "gaps": [],
    "live": null
   },
   {
@@ -19834,7 +19881,10 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Twig of Knowledge and Memory",
@@ -20058,9 +20108,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Alicorn Hair",
@@ -20152,9 +20203,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Ablative Shield Plating (Major)",
@@ -20507,7 +20559,10 @@
     "mental"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Barricade Stone (Cube)",
@@ -20533,9 +20588,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Preserved Moonflower",
@@ -20710,7 +20766,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Potion of Cold Resistance (Moderate)",
@@ -20829,7 +20888,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Rust Scrub",
@@ -21030,9 +21091,9 @@
     "missive"
    ],
    "mechanisms": [],
-   "result": "builtin:no-effect",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Gorum's Tear",
@@ -21516,7 +21577,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Dazzling Rays (9th-rank)",
@@ -22045,11 +22109,9 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "The bonus is only in the chosen language, and you can add your level even if untrained."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -22100,7 +22162,10 @@
     "consumable"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Scroll of 8th-rank Spell",
@@ -22472,12 +22537,9 @@
     "potion"
    ],
    "mechanisms": [],
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
-   "unread": [
-    "You can use the limb to perform simple Interact actions, such as opening an unlocked door.",
-    "Your limb can't perform actions that require significant manual dexterity, including any action that would require a check to accomplish."
-   ],
+   "gaps": [],
    "live": "item"
   },
   {
@@ -23053,7 +23115,10 @@
    "level": 0,
    "traits": [],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Periscopic Viewfinder",
@@ -23065,7 +23130,9 @@
     "gadget"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Bottled Roc",
@@ -24294,7 +24361,9 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "none"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Elixir of Life (Greater)",
@@ -24445,8 +24514,9 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -25669,9 +25739,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Taljjae Tassel",
@@ -25777,8 +25848,9 @@
     "on-weapon",
     "duration"
    ],
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
+   "gaps": [],
    "live": "item"
   },
   {
@@ -26600,7 +26672,10 @@
     "elixir"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Grudgestone (Greater)",
@@ -28436,7 +28511,10 @@
     "magical"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Vanishing Shocker (Greater)",

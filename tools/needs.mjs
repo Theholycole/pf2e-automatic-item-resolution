@@ -21,6 +21,8 @@ import { isRuneItem, withArmorPotency } from "../src/compiler/runes.js";
 import { leftToTheGM } from "../src/compiler/honest.js";
 import { plainText } from "../src/compiler/rows.js";
 import { NEEDS, needsOf, workOf } from "./needs-rules.mjs";
+import { isSpecialItem } from "../src/compiler/decided.js";
+import { ONE_OFFS } from "../src/compiler/one-offs.js";
 
 const withOwner = (item) => ({ ...item, ownerLevel: Number(item?.system?.level?.value) || 1, ownerAbilities: { str: 4, dex: 3, con: 2, int: 1, wis: 1, cha: 1 }, ownerFeats: [] });
 
@@ -74,6 +76,11 @@ function leftovers(plan) {
     return out;
 }
 
+// Where an item comes in the order (the user's answer of 2026-10-27): the general books' items first, then the adventures', then the unique
+// items and artifacts — special, their own rules built — highest level first.
+const ADVENTURE = /Adventure Path|Pathfinder #\d|Pathfinder Adventure|Hardcover Compilation|Kingmaker|Abomination Vaults|Beginner Box|Bounty|Society Scenario|Quest/;
+const placingOf = (item) => ({ tier: isSpecialItem(item) ? "special" : ADVENTURE.test(item?.system?.publication?.title ?? "") ? "adventure" : "general", level: Number(item?.system?.level?.value) || 0 });
+
 // Every unfinished entry of a pack's documents → [{ name, kind, activation?, result, needs }].
 // (The ones done only by the user's ruling that they have no rules to play — question 1, 2026-10-26 —, kept on a line of their own.)
 const noRulesDone = [];
@@ -94,7 +101,7 @@ function entriesOf(docs, base = {}) {
                 const plan = compileItem(withOwner(item), options);
                 const result = resultOf(plan);
                 if (plan?.noRules && !base.module) noRulesDone.push(item.name);
-                if (unfinished(result)) add({ kind: "consumable", name: item.name, category: item.system?.category ?? "other", result, ...(plan?.builtin === "cast-spell" ? { cast: true } : {}), left: plan ? leftovers(plan) : [], text: plainText(item.system?.description?.value ?? "") });
+                if (unfinished(result)) add({ ...placingOf(item), kind: "consumable", name: item.name, category: item.system?.category ?? "other", result, ...(plan?.builtin === "cast-spell" ? { cast: true } : {}), left: plan ? leftovers(plan) : [], text: plainText(item.system?.description?.value ?? "") });
             } else if (/<strong>\s*Activat/i.test(String(item.system?.description?.value ?? ""))) {
                 if (!handlesPermanent(item, options)) continue;
                 // (An armor rune as it plays, etched: its armor's numbers in its text — none, for armor with no item bonus to AC.)
@@ -102,11 +109,11 @@ function entriesOf(docs, base = {}) {
                 for (const { activation, plan } of compileActivations(withOwner(etched), options)) {
                     const result = resultOf(plan);
                     if (plan?.noRules && !base.module) noRulesDone.push(`${item.name}${activation.name ? ` (${activation.name})` : ""}`);
-                    if (unfinished(result)) add({ kind: "activation", name: item.name, type: item.type, activation: activation.name ?? null, trigger: Boolean(activation.trigger), result, ...(plan?.builtin === "cast-spell" ? { cast: true } : {}), left: plan ? leftovers(plan) : [], text: plainText(activation.html ?? "") });
+                    if (unfinished(result)) add({ ...placingOf(item), kind: "activation", name: item.name, type: item.type, activation: activation.name ?? null, trigger: Boolean(activation.trigger), result, ...(plan?.builtin === "cast-spell" ? { cast: true } : {}), left: plan ? leftovers(plan) : [], text: plainText(activation.html ?? "") });
                 }
             }
         } catch (error) {
-            add({ kind: item.type === "consumable" ? "consumable" : "activation", name: item.name, result: "error", left: [], text: plainText(item.system?.description?.value ?? ""), error: error.message.slice(0, 120) });
+            add({ ...placingOf(item), kind: item.type === "consumable" ? "consumable" : "activation", name: item.name, result: "error", left: [], text: plainText(item.system?.description?.value ?? ""), error: error.message.slice(0, 120) });
         }
     }
     return entries;
@@ -152,7 +159,7 @@ for (const module of listing(modulesDirectory)) {
 
 // --- Reports ---
 
-const brief = (entry) => ({ name: entry.name, kind: entry.kind, ...(entry.activation ? { activation: entry.activation } : {}), ...(entry.module ? { module: entry.module } : {}), result: entry.result, main: entry.needs[0], ...(entry.phrase ? { work: entry.phrase } : {}), needs: entry.needs });
+const brief = (entry) => ({ name: entry.name, kind: entry.kind, ...(entry.tier ? { tier: entry.tier, level: entry.level } : {}), ...(entry.activation ? { activation: entry.activation } : {}), ...(entry.module ? { module: entry.module } : {}), result: entry.result, main: entry.needs[0], ...(entry.phrase ? { work: entry.phrase } : {}), needs: entry.needs });
 const tally = (list, key) => list.reduce((counts, entry) => ({ ...counts, [key(entry)]: (counts[key(entry)] ?? 0) + 1 }), {});
 const NO_RULES = { id: "no-rules", title: "Nothing to automate", needs: "No rule a card could play: food, refills, ingredients, flavor.", where: "none" };
 const ALL = [...NEEDS, NO_RULES];
@@ -178,7 +185,6 @@ function whoCan(list) {
         ["The item module alone (its reader and its live play)", list.filter((entry) => only(entry, ["item reader", "item live play"])).length],
         ["Another module too (the ability module, the core or the spell module, asked of their session)", list.filter((entry) => any(entry, ["ability module", "core", "spell module"])).length],
         ["A decision of yours still open for some part", list.filter((entry) => any(entry, ["your decision"])).length],
-        ["Kept on the list by your decision for some part (out of combat)", list.filter((entry) => any(entry, ["kept listed"])).length],
         ["Nothing to automate", list.filter((entry) => only(entry, ["none"])).length]
     ];
 }
@@ -239,6 +245,18 @@ const lines = [
     }),
     "",
     `Done by one need alone, all needs together: ${onlyOf(pf2e)} of the ${pf2e.length} PF2e entries; the rest need two or more.`,
+    "",
+    "## The order",
+    "",
+    "Your answer of 2026-10-27: the general books' items first, then the adventure books', then the unique items and artifacts — special, their own rules built, never a card's line — highest level first. Within a tier, the worklist above. A one-off rule of an item that isn't special is a line of its card, counted done and kept in `docs/build-later.md`.",
+    "",
+    "| Tier | PF2e entries | Consumables | Activations |",
+    "|---|---:|---:|---:|",
+    ...[["general", "General books"], ["adventure", "Adventure books"], ["special", "Unique items and artifacts (last, highest level first)"]].map(([tier, title]) => { const list = pf2e.filter((entry) => entry.tier === tier); return `| ${title} | ${list.length} | ${byKind(list, "consumable")} | ${byKind(list, "activation")} |`; }),
+    "",
+    `The special ones, in their order: ${pf2e.filter((entry) => entry.tier === "special").sort((a, b) => b.level - a.level || label(a).localeCompare(label(b))).map((entry) => `${label(entry)} (${entry.level})`).join(", ")}.`,
+    "",
+    `Kept to build later (one-off rules, a line of their card): ${ONE_OFFS.size} — \`docs/build-later.md\`.`,
     "",
     "## Your decisions",
     "",
@@ -310,4 +328,7 @@ for (const module of modules) {
 }
 lines.push("");
 writeFileSync(path.join(root, "docs/needs.md"), `${lines.join("\n")}\n`);
+// The one-off rules kept to build later (src/compiler/one-offs.js).
+const later = ["# Rules to build later", "", `Generated by \`tools/needs.mjs\` on ${generated} from \`src/compiler/one-offs.js\`. Your answer of 2026-10-27: a rule of one item's own — a mechanism no other item would use — is a line of its card and counts done, kept here so it can still be built. Unique items and artifacts are never on it: theirs are built.`, "", "| Item | The rule its card leaves to the table | What building it would take |", "|---|---|---|", ...[...ONE_OFFS].sort((a, b) => a[0].localeCompare(b[0])).map(([name, entry]) => `| ${name} | ${entry.rule} | ${entry.build} |`), ""];
+writeFileSync(path.join(root, "docs/build-later.md"), `${later.join("\n")}\n`);
 console.log(`PF2e ${pf2e.length} entries, installed modules ${thirdParty.length}; docs/needs.md, reports/needs.json, .cache/needs-third-party.json`);

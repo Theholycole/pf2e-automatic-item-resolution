@@ -45,3 +45,31 @@ test("not decided: words with game numbers stay work to build (Comprehension Eli
     assert.equal(activation("Laboratory Coat", "Quick Escape")?.decided, undefined);
     assert.equal(compileItem(item("Feral Linguist")), null);
 });
+
+// The user's answers of 2026-10-27: leftovers that are only out of combat or objects (or those beside speech, minds, information) a line of
+// the card, counted done — never a unique item's or an artifact's, nor words that act on a creature in a fight; a one-off rule
+// (src/compiler/one-offs.js) its card's line, kept to build later.
+test("card lines: out of combat and objects counted done, their words on the card — Everyneed Pack, Timeless Salts, Tentacle Potion's limb", () => {
+    const pack = compileItem(item("Everyneed Pack (Greater)")) ?? compileActivations(item("Everyneed Pack (Greater)"))[0].plan;
+    assert.deepEqual([pack.decided, pack.partial, pack.noteOnly, routeOf(pack)], ["card-line", undefined, undefined, "item"]);
+    assert.match(pack.notes[0], /mundane gear from the pack/);
+    const salts = compileItem(item("Timeless Salts"));
+    assert.deepEqual([salts.decided, salts.builtin, salts.item.type], ["card-line", undefined, "consumable"]);
+    assert.match(salts.notes[0], /preserve it for 1 week/);
+    const tentacle = compileItem(item("Tentacle Potion (Greater)"));
+    assert.deepEqual([tentacle.decided, tentacle.partial, tentacle.unread], ["card-line", undefined, undefined]);
+    assert.ok(tentacle.notes.some((note) => /simple Interact actions/.test(String(note))));
+});
+
+test("card lines: not a unique item's or an artifact's (The Trader, Deck of Many Things), nor words that act in a fight (Aether Appendage's Strikes)", () => {
+    const trader = compileItem(item("The Trader")) ?? compileActivations(item("The Trader"))[0]?.plan;
+    assert.notEqual(trader?.decided, "card-line");
+    assert.notEqual(compileActivations(item("Deck of Many Things"))[0]?.plan?.decided, "card-line");
+    assert.notEqual(compileActivations(item("Aether Appendage"))[0]?.plan?.decided, "card-line");
+});
+
+test("one-offs: Baleblood Draft's next-elixir rule a line of its card, kept to build later", () => {
+    const draft = compileItem(item("Baleblood Draft"));
+    assert.deepEqual([draft.decided, draft.partial, draft.builtin], ["one-off", undefined, undefined]);
+    assert.match(draft.notes[0], /duration extended by 50%/);
+});

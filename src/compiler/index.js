@@ -65,7 +65,7 @@ import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
-import { withDecided } from "./decided.js";
+import { isSpecialItem, withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { readFoam, withFalls } from "./falls.js";
 import { readShieldTemp } from "./shield-temp.js";
@@ -222,7 +222,7 @@ const retaliateAfter = (plan) => (plan?.item?.resist?.length ? withRetaliateAfte
 // (Only the items this module handles: not the spell module's scrolls, wands and catalysts.)
 function decide(plan, given, options) {
     if (!handlesItem(given, options)) return plan;
-    const next = withDecided(plan, { text: plainText(given?.system?.description?.value), base: basePlan(given), kind: "consumable", name: given.name });
+    const next = withDecided(plan, { text: plainText(given?.system?.description?.value), base: basePlan(given), kind: "consumable", name: given.name, special: isSpecialItem(given) });
     return next && next !== plan && !next.item ? { ...next, item: itemInfo(given) } : next;
 }
 

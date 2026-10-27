@@ -34,7 +34,7 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
-import { withDecided } from "./decided.js";
+import { isSpecialItem, withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
 import { withFalls } from "./falls.js";
 import { withRaiseShield } from "./raise-shield.js";
@@ -260,7 +260,7 @@ function withNamedOptions(item, entry, options) {
 function decideActivation(item, entry, plan) {
     const { activation, index } = entry;
     const base = { modelVersion: MODEL_VERSION, source: { name: `${item.name}${activation.name ? `: ${activation.name}` : ""}`, slug: item.system?.slug ?? null, uuid: item.uuid ?? null, type: item.type }, rank: 1, traits: [...(item.system?.traits?.value ?? [])], activation: { time: activation.time ?? null, traits: activation.traits ?? [] } };
-    const next = withDecided(plan, { text: plainText(activation.html), base, kind: "activation", trigger: Boolean(activation.trigger), name: base.source.name });
+    const next = withDecided(plan, { text: plainText(activation.html), base, kind: "activation", trigger: Boolean(activation.trigger), name: base.source.name, special: isSpecialItem(item) });
     if (!next || next === plan || next.item) return next;
     const frequency = activation.frequency?.max ? activation.frequency : null;
     return { ...next, ...(frequency ? { trigger: { ...(next.trigger ?? {}), frequency } } : {}), item: { type: item.type, level: Number(item.system?.level?.value) || 0, recipient: "user", activation: { index, name: activation.name, time: activation.time, frequency, trigger: activation.trigger }, links: 0 } };

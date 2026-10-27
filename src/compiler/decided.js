@@ -3,15 +3,24 @@
 // information a card whispered to the GM and the user, with what the GM fills in, counted done. A plan whose leftover words show only
 // these needs (src/compiler/needs.js), and no game numbers at all — no dice, DC, distance, bonus, condition, damage, Strike or teleport:
 // those are work to build — becomes that: its note row kept and no longer note-only, the GM's lines of its rows note Effects on whom they're
-// for, or (information) plan.whisper, the item module's whispered card (scripts/live.js). Pure.
+// for, or (information) plan.whisper, the item module's whispered card (scripts/live.js).
+// (And out of combat and objects, the user's answer of 2026-10-27: a leftover that's only these — or these beside the kinds above — a line of
+// its card, counted done, decided "card-line": its notes and GM lines kept as they are, or for one nothing read, its words the card's line. Not
+// a unique item's or an artifact's — special, their rules to be built (the user, the same day) — nor words that act on a creature in a fight:
+// a condition, a Strike, a save — COMBAT.) Pure.
 
 import { leftToTheGM } from "./honest.js";
 import { leftText, needsOf } from "./needs.js";
 import { notesChecked } from "./notes-checked.js";
+import { oneOff } from "./one-offs.js";
 
 const DECIDED = new Set(["speech", "mind", "information"]);
+const CARD_LINE = new Set(["out-of-combat", "objects"]);
+const COMBAT = /\b(?:Strikes?|attack rolls?|saving throws?|save|AC|temporary Hit Points|teleport\w*|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|drained|stupefied|fatigued|off-guard|quickened|persistent|dies|concealed|invisible|hidden|undetected|the next (?:elixir|potion|mutagen|bomb|Strike|attack))\b|\bextended by \d+%/i;
 const MECHANICAL = /\b\d+d\d+\b|(?:^|\s)[+\-–]\d+\b|\bDC \d+\b|\b\d+ (?:feet|foot)\b|\b(?:damage|Hit Points|Strikes?|attack|teleport\w*|transport\w*|Speed|bonus|penalty|resistance|weakness|saving throws?|save|check|frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|dies|concealed|invisible|hidden)\b/i;
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
+// A unique item or an artifact: special, its own rules built rather than a card's line (the user, 2026-10-27).
+export const isSpecialItem = (item) => item?.system?.traits?.rarity === "unique" || (item?.system?.traits?.value ?? []).includes("artifact");
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [] });
 
 // What its card leaves over, as tools/needs.mjs reads it: notes, unread lines, note Effects, and its rows' GM lines.
@@ -41,14 +50,34 @@ function timeOf(text) {
     return unit === "days" ? { mode: "fixed", value: value * 24, unit: "hours", expiry: "turn-start" } : { mode: "fixed", value, unit, expiry: "turn-start" };
 }
 
+// Its words from its effect on: a consumable's without its Activate line — "Activate 1 minute", "Activate (manipulate)" — or Usage.
+const bodyOf = (kind, text, words) => (kind === "activation" ? words : String(text).replace(/^\s*(?:Usage [^.]*?(?=Activate)\s*)?Activat(?:e|ion)\s*(?:\[[^\]]*\]\s*)?(?:\d+ (?:minutes?|hours?|rounds?)|reaction|free action|[123])?\s*(?:(?:Interact|command|envision|Cast a Spell)\s*)?(?:\([^)]*\))?\s*/i, "").trim() || words);
+
+// Card lines (decided "card-line", "one-off"): a partial plan's notes and GM lines as they are — its unread lines, and an item card row's GM
+// lines, its notes too, as the item card shows neither —; a note-only one's note row kept; else its words the card's line.
+function asCardLines(plan, { result, base, body, decided }) {
+    if (result === "partial" || result === "note-only") {
+        const { partial, noteOnly, unread, ...rest } = plan;
+        const own = rest.resolution?.check?.roll === "automatic" ? rest.resolution.outcomes?.success : null;
+        const gm = own ? leftToTheGM(own) : [];
+        const lines = [...(unread ?? []).map(said), ...gm.map((line) => line.replace(/^\{(?:target|source)\}(?: \([^)]*\))?:\s*/, "").replace(/\s*\(by hand\)\.?$/, "."))].filter(Boolean);
+        const resolution = gm.length ? { ...rest.resolution, outcomes: { ...rest.resolution.outcomes, success: { ...own, manualInstructions: (own.manualInstructions ?? []).filter((line) => !gm.includes(said(line))) } } } : rest.resolution;
+        return { ...rest, ...(resolution ? { resolution } : {}), ...(lines.length ? { notes: [...(rest.notes ?? []), ...lines] } : {}), decided, automation: { ...(plan.automation ?? {}), level: "automatic" } };
+    }
+    return { ...(base ?? {}), ...(plan && result === "builtin:no-effect" ? { source: plan.source, activation: plan.activation, item: plan.item } : {}), builtin: undefined, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? base?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: [body], decided };
+}
+
 // The plan, its item's plain text and its base, and whether it's an activation (its text from Effect on) → the plan as decided, or as it was.
-export function withDecided(plan, { text = "", base = null, kind = "consumable", trigger = false, name = null } = {}) {
+// special: a unique item's or an artifact's (no card-line ruling).
+export function withDecided(plan, { text = "", base = null, kind = "consumable", trigger = false, name = null, special = false } = {}) {
     const result = resultOf(plan);
     if (result === "resolves" || (result.startsWith("builtin:") && result !== "builtin:no-effect")) return plan;
     const entry = { result, kind, trigger, text, left: plan ? leftovers(plan) : [] };
     // (A note-only item checked and found to hold nothing a card could play, src/compiler/notes-checked.js — the user's answer to question 3,
     // 2026-10-26: its note row kept, done.)
     if (result === "note-only" && notesChecked(name ?? plan?.source?.name)) return { ...plan, noteOnly: undefined, decided: "checked", automation: { ...(plan.automation ?? {}), level: "automatic" } };
+    // (A one-off rule, src/compiler/one-offs.js — the user's answer of 2026-10-27: its card's lines, counted done, kept to build later.)
+    if (!special && oneOff(name ?? plan?.source?.name)) return asCardLines(plan, { result, base, body: bodyOf(kind, text, leftText(entry)), decided: "one-off" });
     const needs = needsOf(entry);
     // (Nothing in its words a card could play — food, refills, ingredients, flavor —: counted done, its card saying so (the user's answer to
     // question 1, 2026-10-26).)
@@ -56,16 +85,17 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     if (needs.length === 1 && needs[0] === "no-rules" && (!plan || result === "builtin:no-effect" || (result === "note-only" && !MECHANICAL.test(leftText(entry)) && !/\d/.test(leftText(entry))))) {
         return { ...(base ?? plan ?? {}), ...(plan?.item ? { item: plan.item } : {}), builtin: undefined, noteOnly: undefined, partial: undefined, noRules: true, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? {}), event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: ["It has no rules to play: the card does nothing more."] };
     }
-    if (!needs.length || !needs.every((need) => DECIDED.has(need))) return plan;
+    const lined = !special && needs.some((need) => CARD_LINE.has(need));
+    if (!needs.length || !needs.every((need) => DECIDED.has(need) || (lined && CARD_LINE.has(need)))) return plan;
     const words = leftText(entry);
-    if (MECHANICAL.test(words)) return plan;
-    const decided = needs.includes("information") ? "information" : needs[0];
-    // (Its words from its effect on: a consumable's without its Activate line — "Activate 1 minute", "Activate (manipulate)" — or Usage.)
-    const body = kind === "activation" ? words : String(text).replace(/^\s*(?:Usage [^.]*?(?=Activate)\s*)?Activat(?:e|ion)\s*(?:\[[^\]]*\]\s*)?(?:\d+ (?:minutes?|hours?|rounds?)|reaction|free action|[123])?\s*(?:(?:Interact|command|envision|Cast a Spell)\s*)?(?:\([^)]*\))?\s*/i, "").trim() || words;
+    if (lined ? COMBAT.test(words) : MECHANICAL.test(words)) return plan;
+    const decided = needs.includes("information") ? "information" : needs.find((need) => need === "speech" || need === "mind") ?? (lined ? "card-line" : needs[0]);
+    const body = bodyOf(kind, text, words);
     // (Information: whispered to the GM and its user, what it tells filled in by the GM.)
     if (decided === "information" && (!plan || result === "builtin:no-effect" || result === "note-only")) {
         return { ...(plan ?? base ?? {}), ...(base ?? {}), builtin: "whisper", noteOnly: undefined, partial: undefined, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { ...(plan?.trigger ?? base?.trigger ?? {}), event: "use" }, whisper: { text: body }, decided, resolution: undefined };
     }
+    if (decided === "card-line") return asCardLines(plan, { result, base, body, decided });
     // (A partial plan: its GM's lines of these kinds note Effects on that row, for whom the row is.)
     if (result === "partial") {
         const outcomes = Object.fromEntries(Object.entries(plan.resolution?.outcomes ?? {}).map(([degree, row]) => {

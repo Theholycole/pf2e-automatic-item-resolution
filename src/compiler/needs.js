@@ -271,10 +271,10 @@ export const NEEDS = [
     {
         id: "out-of-combat",
         title: "Out of combat and the environment",
-        needs: "Hours or days, rest, travel, crafting, downtime, weather, air and water, food: the user's rule keeps out-of-combat consumables as they are; the GM's at the table.",
-        where: "kept listed",
+        needs: "Hours or days, rest, travel, crafting, downtime, weather, air and water, food: what the GM plays at the table. Left over with nothing else (or with objects, information, speech), a line of its card, counted done (src/compiler/decided.js); beside other needs, theirs is the work.",
+        where: "item reader",
         question: "Out-of-combat consumables stay as they are (your rule): count them done, or keep them on this list?",
-        decided: "2026-10-25: Keep them on this list as unfinished; no note-Effect shortcut.",
+        decided: "2026-10-25: Keep them on this list. 2026-10-27: when that's all that's left (with objects, information or speech), a line of its card counts done — not a unique item's or an artifact's.",
         test: /\b(?:\d+ (?:hours?|days?|weeks?|months?|years?)|(?:an|one) (?:hour|day|week|month|year)\b|24 hours|daily preparations|downtime|exploration|Earn Income|Craft\b|crafting|Subsist|rest\b|sleep\w*|travel\w*|journey|weather|severe (?:cold|heat)|extreme (?:cold|heat)|environmental|food|meal|cooking|camping|nourish\w*|formulas?\b|schematics?\b|airless|breathe\w*|underwater|submerged|\bsink\b|drown\w*)\b/i
     }
 ];
