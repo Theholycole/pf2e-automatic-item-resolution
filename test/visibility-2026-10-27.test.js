@@ -221,3 +221,12 @@ test("Alchemical Atomizer: one of its user's elixirs, oils or potions, picked, u
     assert.deepEqual(used, [elixir.id]);
     assert.match(foundry.messages.find((message) => message.id === card.id).content, /Elixir of Life \(Minor\) used through it/);
 });
+
+test("Octopus Bottle: a DC 24 Fortitude save card at the creature grasped, moved within the octopus's reach on a failure, its ink a line", () => {
+    const bottle = compileItem(item("Octopus Bottle"), options);
+    assert.deepEqual([bottle.resolution.kind, bottle.resolution.check.statistic, bottle.resolution.check.against.value, bottle.targeting.range, routeOf(bottle, "")], ["save", "fortitude", 24, "15 feet", "save"]);
+    assert.deepEqual(bottle.placed.rows, { failure: { within: 30 }, criticalFailure: { within: 30 } });
+    assert.equal(bottle.placed.nearSource, 15);
+    assert.ok(bottle.notes.some((line) => /Undetected and can't use their sense of smell/.test(line)));
+    assert.ok(done(bottle));
+});

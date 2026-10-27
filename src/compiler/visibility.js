@@ -116,6 +116,22 @@ const READINGS = [
         })
     },
     {
+        // (A Fortitude save card at the creature its arms grasp, moved within the octopus's reach on a failure — src/compiler/placed.js's
+        // teleport card, its user picking the space; its ink cloud under water a line, the map's.)
+        name: "Octopus Bottle",
+        sentences: [/^Miniature octopus arms press\b.*\.$/, /^When opened, a Huge octopus bursts forth\b.*\.$/, /^Its arms attempt to grasp a creature\b.*\breach of (\d+) feet\.$/, /^The octopus repositions that creature\b.*\bwithin its reach\b.* @Check\[fortitude\|dc:(\d+)\] save\.$/, /^If the octopus is in water\b.*\bcloud of ink in a (\d+)-foot emanation\.$/, /^This cloud has no effect outside of water\.$/, /^Creatures inside the cloud are undetected\b.*\bsense of smell\.$/, /^The cloud dissipates after (\d+|an?|one) (minutes?|rounds?)\.$/],
+        card: ([, , grasp, save, ink, , , lasts]) => {
+            const reach = Number(grasp[1]);
+            const row = () => ({ ...none(), noteEffects: [] });
+            return {
+                targeting: { target: "1 creature", range: `${reach} feet`, area: null },
+                resolution: { kind: "save", check: { roll: "save", statistic: "fortitude", basic: false, against: { dc: "fixed", value: Number(save[1]) } }, sharedDamage: null, outcomes: { criticalSuccess: row(), success: row(), failure: row(), criticalFailure: row() } },
+                placed: { rows: { failure: { within: reach * 2 }, criticalFailure: { within: reach * 2 } }, nearSource: reach, optional: false, lines: [], byHand: `On a failure, move it to another space within the octopus's ${reach}-foot reach (its user picks).` },
+                notes: [`A Huge octopus bursts out beside its user (in water, if there's water there): target the creature its arms grasp within ${reach} feet; on a failed save its user moves it to another space in that reach.`, `In water, it then releases ink in a ${ink[1]}-foot emanation for ${lasts[1]} ${lasts[2]}: creatures inside are Undetected and can't use their sense of smell (the map's). Out of water, no cloud.`]
+            };
+        }
+    },
+    {
         // (The creature in the square pinpointed to the end of its user's turn.)
         name: "Powder",
         sentences: [/^A bag of powder contains\b.*\.$/, /^In addition to other uses for powder\b.*\.$/, /^You can throw the powder\b.*\badjacent square\b.*\.$/, /^If there's a creature in that square\b.*\bObserved until the end of your turn\b.*\.$/, /^The powder quickly falls away\b.*\.$/],
