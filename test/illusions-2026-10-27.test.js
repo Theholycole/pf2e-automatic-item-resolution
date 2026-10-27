@@ -79,3 +79,52 @@ test("Misdirecting Haversack: the GM's disbelief card for a creature inspecting 
     state = withAttempt(state, { name: "Clerk", degree: "success" });
     assert.deepEqual(state.saw, ["Clerk"]);
 });
+
+test("what's told is whispered: Glasses of Sociability's name remembered (a disguise fools it), Undead Detection Dye's colors and the GM's secret DC 20", () => {
+    const glasses = activation("Glasses of Sociability", "Have We Met?");
+    assert.deepEqual([glasses.builtin, routeOf(glasses), glasses.item.activation.name], ["whisper", "whisper", "Have We Met?"]);
+    assert.match(glasses.whisper.text, /A disguise fools it/);
+    const dye = compileItem(item("Undead Detection Dye"));
+    assert.deepEqual([dye.builtin, routeOf(dye), dye.item.type], ["whisper", "whisper", "consumable"]);
+    assert.match(dye.whisper.text, /indigo a wraith/);
+    assert.match(dye.whisper.text, /secret Deception or Stealth check \(DC 20\)/);
+});
+
+test("Potion of Disguise: its reminder replaced by the disguise's words beside its +4 to Deception DC, both for the 24 hours the GM's secret 2d12 can reach; each grade's size", () => {
+    for (const grade of ["Lesser", "Moderate", "Greater"]) {
+        const plan = compileItem(item(`Potion of Disguise (${grade})`));
+        const [bonus] = row(plan).modifiers;
+        const [note] = row(plan).noteEffects;
+        assert.deepEqual([done(plan), plan.unread, bonus.selector, bonus.value, note.label, note.duration.value, note.duration.unit, row(plan).noteEffects.length], [true, undefined, "deception-dc", 4, "Disguised", 24, "hours", 1], grade);
+        assert.match(note.text, /rolled by the GM in secret/);
+    }
+    assert.match(row(compileItem(item("Potion of Disguise (Lesser)"))).noteEffects[0].text, /not below Small/);
+    assert.match(row(compileItem(item("Potion of Disguise (Greater)"))).noteEffects[0].text, /Impersonate a specific individual/);
+});
+
+test("Emergency Disguise: −2 circumstance to Impersonate with it for 24 hours, not with Quick Disguise (PF2e's predicates), its words on its wearer", () => {
+    const plan = compileItem(item("Emergency Disguise"));
+    assert.deepEqual([done(plan), row(plan).modifiers], [true, [{ selector: "deception", value: -2, type: "circumstance", predicate: ["action:impersonate", { not: "feat:quick-disguise" }], duration: { mode: "fixed", value: 24, unit: "hours", expiry: "turn-start", anchor: "effect-start" } }]]);
+    assert.match(row(plan).noteEffects[0].text, /worth up to 3 gp/);
+});
+
+test("Tentacle Potion: the ways card, once — the limb for its time, or a fortified tail as the next better potion (the moderate's for the lesser; the greater's Strike for the moderate)", () => {
+    const lesser = compileItem(item("Tentacle Potion (Lesser)"));
+    assert.deepEqual([done(lesser), lesser.builtin, lesser.once, routeOf(lesser), lesser.ways.map((way) => way.name)], [true, "ways", true, "ways", ["Tentacle", "Fortified tail"]]);
+    const [limb, tail] = lesser.ways.map((way) => way.plan);
+    assert.deepEqual([row(limb).noteEffects[0].duration.value, row(tail).noteEffects[0].duration.value, limb.item.recipient], [1, 8, "drinker"]);
+    assert.match(row(limb).noteEffects[0].text, /can't hold items/);
+    assert.match(row(tail).noteEffects[0].text, /light Bulk/);
+    const moderate = compileItem(item("Tentacle Potion (Moderate)"));
+    const fortified = moderate.ways[1].plan;
+    assert.deepEqual([row(fortified).noteEffects[0].duration.value, fortified.item.attacks.map((attack) => [attack.die, attack.type, attack.traits])], [24, [["d6", "bludgeoning", ["unarmed", "sweep"]]]]);
+    assert.equal(moderate.ways[0].plan.item.attacks, undefined);
+});
+
+test("Trustworthy Round: its called target the card's lines; Herd Mask's swap a one-off; Clockwork Disguise, Hand-Hewed Face and Foe-Sensing Rod checked as having nothing to play", () => {
+    const round = activations("Trustworthy Round")[0];
+    assert.deepEqual([done(round), round.notes.length], [true, 2]);
+    assert.match(round.notes[0], /no ability can redirect it/);
+    assert.deepEqual([activations("Herd Mask")[0].decided, done(activations("Herd Mask")[0])], ["one-off", true]);
+    for (const plan of [activation("Clockwork Disguise", "Deploy Disguise"), activation("Hand-Hewed Face", "Fresh Face"), compileItem(item("Foe-Sensing Rod"))]) assert.deepEqual([plan.decided, done(plan)], ["checked", true], plan.source.name);
+});

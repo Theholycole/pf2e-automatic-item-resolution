@@ -26,6 +26,24 @@ const own = ({ noteEffects = [], effects = [], modifiers = [], notes = [], disbe
 // (The GM's disbelief card: Perception against the DC, for a creature that does what the text says.)
 const seeThrough = ({ dc = null, when, lasts = null, ends = null, against = null, also = null }) => ({ dc, statistic: "perception", when, ...(against ? { against } : {}), ...(lasts ? { lasts } : {}), ...(ends ? { ends } : {}), ...(also ? { also } : {}) });
 
+// (What it tells: whispered to the GM and its user, the GM filling in what it shows — the user's ruling, src/compiler/decided.js.)
+const whisper = (text) => ({ builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text } });
+
+// A tentacle potion's limb by its grade, for the ways card: its words on the drinker for its time (the greater's tentacle's Strike too).
+const TENTACLES = {
+    Lesser: { hours: 1, holds: "It can't hold items with it." },
+    Moderate: { hours: 8, holds: "It can hold an item of up to light Bulk with it, or anchor itself with the whole limb to a branch, balcony, outcrop or the like (the GM's call), its other limbs free for tasks that need both hands." },
+    Greater: { hours: 24, holds: "It can hold an item of up to 1 Bulk with it, or help hold one of up to 2 Bulk as a second hand, and attack with it (its Strike, 1d6 bludgeoning, sweep); or anchor itself with the whole limb to a branch, balcony, outcrop or the like (the GM's call), its other limbs free for tasks that need both hands.", attacks: [{ name: "tentacle", dice: 1, die: "d6", type: "bludgeoning", traits: ["unarmed", "sweep"] }] }
+};
+function tentacleWay(grade, name, { base, info }) {
+    const { hours, holds, attacks } = TENTACLES[grade];
+    const duration = timeOf(hours, "hours");
+    const start = name === "Fortified tail" ? `Its tail is fortified (Flexible Tail, Skillful Tail, the Tailed Goblin heritage or the like, the GM's call), as a ${grade.toLowerCase()} tentacle potion's limb.` : "A long, flexible limb of ectoplasm grows from it, through its clothing and armor.";
+    const text = `${start} The limb can't be hidden or disguised. It can do simple Interact actions with it (opening an unlocked door, say), but nothing that takes real dexterity or a check. ${holds} Only one such limb at a time: a stronger tentacle potion replaces a weaker one's. Its user can Dismiss it: remove this Effect.`;
+    const card = own({ noteEffects: [{ label: name === "Fortified tail" ? "Fortified tail" : "Tentacle", text, duration }], target: "the drinker" });
+    return { name, plan: { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(attacks ? { attacks: attacks.map((attack) => ({ ...attack, duration })) } : {}) } } };
+}
+
 const SHROUDS = ["Minor", "Lesser", "Moderate", "Greater", "Major"];
 
 // Each reading: the plan's source name it's for (an activation's "Item: Activation"), a pattern for each of its effect's sentences — every
@@ -113,6 +131,113 @@ const READINGS = [
             notes: ["Each document in the haversack now looks like one of a similar type with misleading information (the GM's to word).", "It lasts until this activation is used again (for all of them), until the other activation reverts one, or for a document kept an hour out of the haversack."],
             disbelief: seeThrough({ dc: Number(seen[1]), when: "inspects one of the documents", also: { statistic: "society", dc: Number(seen[2]), what: "reads its real text (Decipher Writing)" } })
         })
+    },
+    {
+        // (A name remembered, the GM's to give: whispered, a disguise fooling it as its words say.)
+        name: "Glasses of Sociability: Have We Met?",
+        sentences: [
+            /^You stare at another creature and instantly remember their name\b.*\.$/,
+            /^The glasses rely on your latent memories, so\b.*\bdon't penetrate the disguise\.$/,
+            /^For example, if a divoynik was disguised as an innkeeper\b.*\.$/
+        ],
+        card: () => whisper("Its user stares at a creature and remembers its name, if they've met and traded names: the GM says it. A disguise fools it — it gives the name of whoever the creature is disguised as, if its user met them, never the creature's own.")
+    },
+    {
+        // (What undead touched a sample, by the water's color: whispered, the GM's secret check for an undead hiding itself its own line there.)
+        name: "Undead Detection Dye",
+        sentences: [
+            /^The liquid in this test tube is as clear as water\.$/,
+            /^You can drop in a sample collected from the environment or a creature\b.*\bin the past 24 hours\.$/,
+            /^The water changes color, as seen on the table, .*\.$/,
+            /^The higher the undead's level or number of undead\b.*\.$/,
+            /^This isn't a foolproof way to identify a disguised creature\b.*\.$/,
+            /^If an undead has been disguising its undead nature or its presence in an area, the GM can roll a secret @Check\[deception\|dc:(\d+)[^\]]*\] or @Check\[stealth\|dc:\d+[^\]]*\] check\b.*\.$/,
+            /^On a success, the creature avoided leaving traces\.$/,
+            /^This can't protect the undead from discovery if it actively uses its undead abilities\b.*\.$/,
+            /^Color Undead Detected Red Vampire\b.*\bWhite Other Undead$/
+        ],
+        card: ([, , , , , secret]) => whisper(`A sample from the surroundings or a creature, dropped in, shows by the water's color what kind of undead touched it in the past 24 hours: red a vampire, orange a wight, yellow a mummy, green a ghost, blue a ghoul, indigo a wraith, purple a shadow, gray mindless undead (a zombie, a skeleton), black a lich, white another undead — deeper for a higher level or more of them, clear for none. The GM says which. Any touch of undead colors it, so it doesn't prove a creature is undead. For an undead hiding its nature or its presence there, the GM may roll its secret Deception or Stealth check (DC ${secret[1]}): on a success it left no trace — not if it used its undead abilities on that area or creature, though it can try to clear the evidence (Cover Tracks, Conceal an Object).`)
+    },
+    // (A disguise for 2d12 hours, the GM's secret: words on the drinker beside its +4 to its Deception DC — the bonus only against seeing
+    // through it, its level added even if untrained, as rule-words.js has Infiltrator's Elixir's —, both for the 24 hours its roll can reach,
+    // the GM ending them sooner. Over the plan read before: its bonus kept, its reminder replaced.)
+    ...["Lesser", "Moderate", "Greater"].map((grade) => ({
+        name: `Potion of Disguise (${grade})`,
+        over: true,
+        sentences: [
+            /^Upon imbibing this potion, you take on the appearance of a specific type of creature for \[\[\/br 2d12 #hours\]\]\{2d12 hours\}\.$|^Upon imbibing this potion, you take on the appearance of a specific type of creature for 2d12 hours\.$/,
+            /^The type of creature is determined when the potion is created\.$/,
+            /^For example, you might have a potion of elf disguise\b.*\.$/,
+            /^Drinking the potion doesn't impart the knowledge of how long\b.*\bthe GM rolls the duration in secret\.$/,
+            /^The disguise doesn't change your traits or statistics\b.*\.$/,
+            /^It might affect what items you can hold or wear\b.*\.$/,
+            grade === "Lesser" ? /^The potion shrinks you down to a minimum of size Small, or maintains your size\b.*\.$/ : /^The potion shrinks you down to a minimum of size Tiny, or increases your size\b.*\bto a maximum of Large\.$/,
+            grade === "Lesser" ? /^For example, if you are Medium and drink a potion of fire giant disguise\b.*\.$/ : /^This does not change any of your statistics, with the exception of reducing your reach to 0 as a Tiny creature\.$/,
+            /^The creature has to be of a specific kind\b.*\bcan't cause you to mimic a specific individual creature\.$/,
+            /^The effects of this potion use the same rules as the Impersonate activity of Deception\.$/,
+            /^Onlookers always assume you're the chosen type of creature unless they're actively Seeking\.$/,
+            /^You gain a \+4 status bonus to your Deception DC against such Perception checks and add your level even if untrained\.$/,
+            ...(grade === "Greater" ? [/^While drinking a greater potion of disguise ?, if you picture the specific form\b.*\.$/, /^You can attempt to Impersonate a specific individual, though you still need to roll Deception\.$/] : [])
+        ],
+        card: (found, plan) => {
+            const row = plan?.resolution?.check?.roll === "automatic" ? plan.resolution.outcomes?.success : null;
+            const bonus = row?.modifiers?.length === 1 && row.modifiers[0].selector === "deception-dc" ? row.modifiers[0] : null;
+            if (!bonus) return null;
+            const size = grade === "Lesser" ? "Its size shrinks to the creature's, but not below Small, and never grows." : "Its size becomes the creature's, from Tiny up to Large, its statistics unchanged except that a Tiny one's reach is 0.";
+            const greater = grade === "Greater" ? " Picturing a specific form as it drinks, it takes that form, and it can try to Impersonate a specific individual (still rolling Deception)." : "";
+            const text = `It looks like a creature of the kind its potion was made for (a specific kind, never a specific individual), its traits, statistics and abilities its own — though the form may limit what it can hold or wear. ${size}${greater} Onlookers take it for that creature unless they're actively Seeking (PF2e's Impersonate): the +4 status bonus to its Deception DC is only against those Perception checks, and it adds its level even if untrained. It lasts 2d12 hours, rolled by the GM in secret: this Effect and the bonus are set to the 24 hours that roll can reach, for the GM to end sooner.`;
+            return { keep: true, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...row, noteEffects: [{ label: "Disguised", text, duration: bonus.duration }] } } }, unread: undefined, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } };
+        }
+    })),
+    {
+        // (A disguise ready at once for 24 hours: its −2 circumstance penalty to Impersonate with it a modifier of PF2e's own predicates — not
+        // with Quick Disguise —, its words on its wearer for that time; trained in Deception, its requirement, the card's check.)
+        name: "Emergency Disguise",
+        sentences: [
+            /^Usage affixed to armor Activate Envision Requirements You're trained in Deception\b.*\.$/,
+            /^Each of these talismans stores a specific disguise\b.*\.$/,
+            /^When activated, the talisman applies a disguise to its wearer, allowing them to Impersonate\b.*\.$/,
+            /^The components the disguise creates can appear to be worth up to (\d+) gp total\.$/,
+            /^The instant nature of the disguise leaves a few traces\b.*\bimposing a -(\d+) circumstance penalty on checks to Impersonate using the disguise\.$/,
+            /^Wearers with the Quick Disguise feat don't take this penalty\.$/,
+            /^Any objects created as a part of the disguise disappear after (\d+) (hours?) or after you remove them\.$/
+        ],
+        card: ([, , , worth, penalty, , time]) => own({
+            modifiers: [{ selector: "deception", value: -Number(penalty[1]), type: "circumstance", predicate: ["action:impersonate", { not: "feat:quick-disguise" }], duration: timeOf(time[1], time[2]) }],
+            noteEffects: [{ label: "Emergency disguise", text: `It wears the talisman's stored disguise (its pieces worth up to ${worth[1]} gp in all) and can Impersonate with no time spent putting one together; its −${penalty[1]} to Impersonate with it doesn't apply with Quick Disguise. The disguise's objects vanish after ${time[1]} hours or once removed: remove this Effect then.`, duration: timeOf(time[1], time[2]) }]
+        })
+    },
+    // (An extra limb for its hour or 8 hours: words on the drinker, a Dismiss its removing them. A fortified tail its second way, as the next
+    // better potion — the moderate's for the lesser, the greater's (its tentacle's Strike) for the moderate: the ways card, its pick once.)
+    ...[["Lesser", "Moderate"], ["Moderate", "Greater"]].map(([grade, better]) => ({
+        name: `Tentacle Potion (${grade})`,
+        sentences: [
+            /^Upon consuming this mottled, foul-tasting liquid, .*\blimb of ectoplasm\.$/,
+            /^Your clothing doesn't need to accommodate this limb\b.*\.$/,
+            /^The limb lasts (\d+) (hours?), and you can Dismiss the activation\.$/,
+            /^You can't hide or disguise the tentacle\.$/,
+            /^You can use the limb to perform simple Interact actions\b.*\.$/,
+            /^Your limb can't perform actions that require significant manual dexterity\b.*\.$/,
+            ...(grade === "Lesser" ? [/^You can't use it to hold items\.$/] : []),
+            /^At one time, you can have only one extra limb from any version of this potion\.$/,
+            /^Stronger tentacle potions replace the effects of weaker ones\.$/,
+            ...(grade === "Moderate" ? [/^You can use the limb to hold an item of up to light Bulk\.$/, /^You can also use the whole limb to hold onto a suitable anchor point\b.*\bsubject to the GM's discretion\.$/, /^While using your limb this way, you have free use of all your other limbs\b.*\.$/] : []),
+            /^If you have the Flexible Tail or Skillful Tail feats, the Tailed Goblin heritage, .*\bthis potion can instead fortify your tail\.$/,
+            /^A fortified tail benefits from any tentacle potion as if the potion were the next better type\.$/
+        ],
+        card: (found, plan, own) => ({ builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways: [tentacleWay(grade, "Tentacle", own), tentacleWay(better, "Fortified tail", own)] })
+    })),
+    {
+        // (A target called out: it hits only that one, dust on a miss or on anything else — its user's own Strike; who's who the GM's.)
+        name: "Trustworthy Round",
+        sentences: [
+            /^This ammunition was developed in Dongun Hold\b.*\.$/,
+            /^Before you can fire a trustworthy round, you must call out a target\.$/,
+            /^You don't need to specify a name; .*\bthis also prevents abilities that redirect attacks\.$/,
+            /^The round doesn't have any capabilities beyond your own\b.*\.$/,
+            /^If you specify a target of "Seltyiel" .*\bthe round would dissolve\.$/
+        ],
+        card: () => own({ notes: ["Its user calls out its target before firing (a description will do): the round can hit only that creature, and turns to dust on a miss or on touching anything else — no ability can redirect it.", "It knows no more than its user: it hits the creature its user meant, disguised or not, and dissolves at one its user didn't know was the one named (the GM's)."] })
     }
 ];
 
@@ -133,7 +258,7 @@ export function withIllusionReading(plan, { name, words, base, info, frequency =
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
         const found = matched(reading, sentences);
-        const card = found ? reading.card(found, plan) : null;
+        const card = found ? reading.card(found, plan, { base, info }) : null;
         if (!card) continue;
         // (Over the plan read before, its own parts kept.)
         if (card.keep) {

@@ -38,7 +38,12 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27: a targeting flat check's DC, which no PF2e rule sets — PF2e's own Effect: Mummified Bat leaves the same to its words.)
     ["Cat's Eye Elixir", "flat checks to target Hidden creatures within 30 feet at DC 5, and none to target Concealed ones, for its minute: its user's own rolls"],
     // (2026-10-27: a day's food, and immune to it after a week of nothing else until a day of real meals: the table's, out of combat.)
-    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"]
+    ["Journeybread", "a day's food and water; after a week of nothing else, immune to it until 24 hours of real food and water: meals the GM keeps"],
+    // (2026-10-27, the illusions group: a disguise's look changed, or what a weapon senses — the "disguise" in their words no illusion of the
+    // item's to disbelieve.)
+    ["Clockwork Disguise: Deploy Disguise", "its plates rearranged into one of its preset armor looks, its own statistics unchanged: an appearance"],
+    ["Hand-Hewed Face: Fresh Face", "its user's molded face peeled off, its generic one shown, so it drops a disguise's face at once: an appearance, its Impersonate its own"],
+    ["Foe-Sensing Rod", "a weapon that vibrates for an hour while a creature of the chosen trait is within 60 feet, unless it's disguised or hidden with a Deception or Stealth DC of 26 or more: what it senses the GM's to tell"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

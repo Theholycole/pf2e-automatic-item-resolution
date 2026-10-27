@@ -60,7 +60,10 @@ export const ONE_OFFS = new Map([
     // (2026-10-27: a creature thrown 10 feet where its user picks, or tossed straight up to land in its square, after the Stride and Strike.)
     ["Hodag Leather: Hodag Toss", { rule: "after its user's Stride and a successful Strike, a successful Athletics check against the creature's Fortitude DC throws it 10 feet in a straight line its user picks (1d6 bludgeoning if into a solid object) or straight up to land in its own square (1d6 bludgeoning), Prone either way", build: "a ways card on the success: thrown to a space its user picks (placed.js) and Prone, or tossed up with the 1d6 and Prone" }],
     // (2026-10-27: a misfortune ended outright, once a month for a year, after a week of offerings.)
-    ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }]
+    ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }],
+    // (2026-10-27, the illusions group: two creatures trading places — no other item's own swap; Paired's are objects, Enkindled
+    // Quintessence's a dragon's.)
+    ["Herd Mask", { rule: "its wearer and another wearer of a linked mask within 100 feet trade places; if they're disguised as each other, onlookers get a Perception check against the lower of their two Deception DCs to Impersonate, and on a failure don't notice the swap", build: "the teleport card moving both tokens into each other's spaces, then the disbelief card for the onlookers at the lower of the two wearers' Deception DCs" }]
 ]);
 
 export const oneOff = (name) => ONE_OFFS.get(String(name ?? "")) ?? null;
