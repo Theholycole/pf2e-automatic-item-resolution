@@ -1103,6 +1103,24 @@ export const cases = {
         return { resistances: resistances.map((entry) => `${entry.type} ${entry.value}`), shield: [shieldHP, shield.system.hp.value], hp: [hp, wearer.system.attributes.hp.value] };
     },
 
+    // Laurel of the Empath's first reaction: half damage from the triggering attack — 20 bludgeoning taken as 10, the readied Effect spent.
+    async laurelHalf(scene) {
+        const { actor: wearer } = await creature(scene, "Laurel Wearer", { x: 16, y: 13, level: 20, hp: 100 });
+        const laurel = await give(wearer, "Laurel of the Empath");
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(laurel.uuid, 0);
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
+        assert(/half damage from the triggering attack/.test(card.content), "the card's words");
+        await game.modules.get(NS).api.live.apply(card.id);
+        await until(() => wearer.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")?.halfDamage), "the readied Effect", { timeout: 8000 });
+        const hp = wearer.system.attributes.hp.value;
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await wearer.applyDamage({ damage: await new DamageRoll("20[bludgeoning]").evaluate(), token: wearer.getActiveTokens(true, true)[0] });
+        await until(() => !wearer.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")), "the Effect spent", { timeout: 8000 });
+        assert(wearer.system.attributes.hp.value === hp - 10, `half of 20: ${hp} → ${wearer.system.attributes.hp.value}`);
+        return { hp: [hp, wearer.system.attributes.hp.value] };
+    },
+
     // Potion of Resistance: the type picked on the card (fire, the fourth) — PF2e's Resistance 5 to fire for an hour.
     async resistTypePick(scene) {
         const { actor: drinker } = await creature(scene, "Resistance Drinker", { x: 16, y: 14 });

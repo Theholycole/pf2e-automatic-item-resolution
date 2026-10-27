@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1347,
+  "entries": 1346,
   "results": {
    "partial": 425,
-   "none": 554,
+   "none": 553,
    "note-only": 249,
    "builtin:no-effect": 119
   },
@@ -33,7 +33,7 @@
    "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
-   "triggers": 93,
+   "triggers": 92,
    "situational": 18,
    "dying": 29,
    "senses": 22,
@@ -59,7 +59,7 @@
    "afflictions": 111,
    "lasting": 241,
    "moving": 116,
-   "triggers": 127,
+   "triggers": 126,
    "visibility": 51,
    "dying": 77,
    "choice": 111,
@@ -10549,16 +10549,6 @@
    "work": "counteract",
    "needs": [
     "counteract"
-   ]
-  },
-  {
-   "name": "Laurel of the Empath",
-   "kind": "activation",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you take half …",
-   "needs": [
-    "triggers"
    ]
   },
   {

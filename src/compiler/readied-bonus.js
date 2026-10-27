@@ -114,6 +114,10 @@ function nextSave(plain) {
 
 export function readReadiedBonus(text, { trigger = null } = {}) {
     const plain = String(text ?? "");
+    // (Half the triggering attack's damage, Laurel of the Empath's "You take half damage from the triggering attack": bonus.halfDamage, the
+    // damage halved as PF2e applies it — scripts/half-damage.js —, spent by it. 2026-10-27.)
+    const half = /\bYou take half damage from the triggering (?:attack|Strike)\./i.exec(plain.replace(/^.*?\bEffect\b\s*/s, ""));
+    if (half) return { modifiers: [], resistance: null, halfDamage: true, duration: { value: 0, unit: "rounds", expiry: "turn-end" }, spend: [], notes: [`Only against what triggered it: ${half[0]}`] };
     const next = trigger ? null : nextSave(plain);
     if (next) return next;
     const picked = trigger ? null : pickedRoll(plain.replace(/^.*?\bEffect\b\s*/s, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()));

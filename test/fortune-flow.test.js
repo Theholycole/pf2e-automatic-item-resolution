@@ -445,3 +445,13 @@ test("a flat check to end a persistent damage at once beside the bonus: Pyrefeat
     assert.deepEqual([cloak.plan.bonus.recovery, cloak.plan.bonus.resistance, cloak.plan.partial], [{ types: ["fire"] }, { type: "fire", value: 5 }, undefined]);
     assert.match(readiedWords(cloak.plan), /a flat check now to end persistent fire damage/);
 });
+
+test("half the triggering attack's damage: Laurel of the Empath's reaction, its readied Effect halving the damage roll as PF2e applies it", async () => {
+    const [laurel] = compileActivations(source("Laurel of the Empath"));
+    assert.deepEqual([laurel.plan.builtin, laurel.plan.bonus.halfDamage, laurel.plan.bonus.against, laurel.plan.partial], ["readied-bonus", true, true, undefined]);
+    assert.match(readiedWords(laurel.plan), /half damage from the triggering attack/);
+    const { before } = await import("../scripts/half-damage.js");
+    const actor = { itemTypes: { effect: [{ flags: { [MODULE_ID]: { rollTwice: { halfDamage: true } } } }] } };
+    assert.deepEqual(before(actor, { damage: 15 }).params.damage, 7);
+    assert.equal(before({ itemTypes: { effect: [] } }, { damage: 15 }), null);
+});
