@@ -132,3 +132,33 @@ test("Shadowed Scale, the Jungle Secret: Summon Plant or Fungus at half the deco
     assert.deepEqual([rankFromLevel(summon.castRankBy, 15), rankFromLevel(summon.castRankBy, 0), rankFromLevel(summon.castRankBy, 8)], [8, 1, 4]);
     assert.equal(summon.castLines.length, 2);
 });
+
+test("Anima Robe (Heroic)'s Who Are They?: Illusory Creature at rank 8 for up to a minute, Sustained by the robe's own action", async () => {
+    const { lastsWords } = await import("../src/live/cast-card.js");
+    const they = plans("Anima Robe (Heroic)")[3];
+    assert.deepEqual([they.spell.name, they.rank, they.partial, they.castDuration.value, they.castDuration.unit, they.castDuration.sustained], ["Illusory Creature", 8, undefined, 1, "minutes", "item"]);
+    assert.match(lastsWords(they.castDuration), /the item Sustains it with an action of its own, not its user's/);
+});
+
+test("Kaldemash's Lament: its damage type picked on the ways card, PF2e's DamageAlteration till changed again (the last one replaced)", () => {
+    const [retype] = plans("Kaldemash's Lament");
+    assert.equal(routeOf(retype), "ways");
+    assert.deepEqual(retype.ways.map((way) => way.name), ["Electricity", "Fire", "Force"]);
+    const fire = retype.ways[1].plan;
+    assert.equal(routeOf(fire), "item");
+    const [effect] = fire.item.ruleEffects;
+    assert.deepEqual([effect.duration, effect.replaces, effect.rules[0].key, effect.rules[0].property, effect.rules[0].value, effect.rules[0].predicate[0]], [null, "damage-type", "DamageAlteration", "damage-type", "fire", "item:slug:kaldemashs-lament"]);
+});
+
+test("Kaldemash's Lament: flying on its own for 3 rounds — its targets Off-Guard to it, its Strikes at +31 when its user's own are lower", async () => {
+    const { attackFloorRule } = await import("../src/live/card.js");
+    const flying = plans("Kaldemash's Lament")[1];
+    assert.deepEqual([flying.noteOnly, flying.partial, routeOf(flying)], [undefined, undefined, "item"]);
+    const [effect] = flying.item.ruleEffects;
+    assert.deepEqual([effect.duration.value, effect.duration.unit, effect.attackFloor], [3, "rounds", { value: 31, slug: "kaldemashs-lament" }]);
+    assert.deepEqual([effect.rules[0].key, effect.rules[0].affects, effect.rules[0].uuid.endsWith("AJh5ex99aV6VTggg")], ["EphemeralEffect", "target", true]);
+    assert.match(effect.words, /Off-Guard/);
+    assert.match(effect.words, /holsters itself/);
+    assert.deepEqual(attackFloorRule(effect.attackFloor, 28, "Kaldemash's Lament"), { key: "FlatModifier", selector: "strike-attack-roll", predicate: ["item:slug:kaldemashs-lament"], type: "untyped", value: 3, label: "Kaldemash's Lament (+31)" });
+    assert.equal(attackFloorRule(effect.attackFloor, 33, "Kaldemash's Lament"), null);
+});

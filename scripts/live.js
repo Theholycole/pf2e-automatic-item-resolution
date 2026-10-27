@@ -18,7 +18,7 @@ import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
-import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
+import { attackFloorRule, abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
@@ -904,8 +904,21 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         if (became) lines.push(became);
     }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
-    for (const entry of state.plan.item?.ruleEffects ?? []) {
+    for (const given of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
+        let entry = given;
+        // (One a new use replaces, Kaldemash's Lament's damage type: the last one this item gave of that kind, gone first — 2026-10-27.)
+        if (entry.replaces) {
+            const old = (target.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.replaces === entry.replaces && (state.item.uuid ? effect.system?.context?.origin?.item === state.item.uuid : String(effect.name).startsWith(`${state.item.name}:`))).map((effect) => effect.id);
+            if (old.length) await target.actor.deleteEmbeddedDocuments("Item", old);
+        }
+        // (Its attack at least so much with the weapon, Kaldemash's Lament's +31: what its user's Strike with it lacks now, made up.)
+        if (entry.attackFloor) {
+            const strike = (target.actor.system?.actions ?? []).find((action) => action?.item?.slug === entry.attackFloor.slug || action?.slug === entry.attackFloor.slug);
+            const rule = strike ? attackFloorRule(entry.attackFloor, strike.totalModifier, state.item.name) : null;
+            if (rule) entry = { ...entry, rules: [...(entry.rules ?? []), rule] };
+            if (!strike) lines.push(`${recipient.name} has no Strike with ${state.item.name}: its +${entry.attackFloor.value} by hand.`);
+        }
         await target.actor.createEmbeddedDocuments("Item", [ruleEffectSource(entry, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${entry.words}`);
     }

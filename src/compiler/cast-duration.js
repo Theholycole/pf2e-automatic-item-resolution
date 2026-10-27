@@ -35,6 +35,9 @@ function readTime(note, name) {
         // minutes" (the Effects that long at most), 2026-10-27.)
         String.raw`\bThis doesn't require concentration and lasts for ${TIME}(?: or until you choose to return to material form as a free action)?`,
         String.raw`\bYou can Sustain the activation for up to ${TIME}`,
+        // (Sustained by the item itself, Anima Robe (Heroic)'s "The robe can use an action to Sustain this activation for up to 1 minute": its
+        // Effects that long, no action of its user's — 2026-10-27.)
+        String.raw`\bThe [\w' -]+? can use an action to Sustain this activation for up to ${TIME}`,
         ...(spell ? [String.raw`\beffects? of ${spell} for ${TIME}`] : [])
     ];
     // (And the spell's own it replaces: The Peacock's "instead of 20 minutes", Orb of Dragonkind's "rather than unlimited".)
@@ -63,8 +66,9 @@ export function withCastDuration(plan, spell = null) {
     if (!base || (!atLevel && own && own.value === base.value && own.unit === base.unit)) return plan;
     const said = [found?.said, atLevel?.said].filter(Boolean);
     // (A Sustain's most, Phantom Shroud's: sustained, the card's words.)
-    const sustained = said.some((words) => /\bSustain\b/.test(words));
-    return { ...plan, castDuration: { value: base.value, unit: base.unit, said, ...(sustained ? { sustained: true } : {}), ...(atLevel ? { atLevel: { level: atLevel.level, value: atLevel.value, unit: atLevel.unit } } : {}) } };
+    // (The item's own Sustain, Anima Robe (Heroic)'s: sustained "item", with its own action.)
+    const sustained = said.some((words) => /\bcan use an action to Sustain\b/.test(words)) ? "item" : said.some((words) => /\bSustain\b/.test(words));
+    return { ...plan, castDuration: { value: base.value, unit: base.unit, said, ...(sustained ? { sustained } : {}), ...(atLevel ? { atLevel: { level: atLevel.level, value: atLevel.value, unit: atLevel.unit } } : {}) } };
 }
 
 // The duration for a caster of that level: the higher one from its level on.

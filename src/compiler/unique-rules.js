@@ -42,6 +42,17 @@
 //   into soil … You cast Summon Plant or Fungus; the spell is heightened to a level equal to one-half of the slain creature's level, rounded
 //   up" → plan.castRankBy { mark, within, half }: the cast at half the targeted body's level (rounded up), refused unless that body has the
 //   mark and is adjacent (scripts/casts.js). What the plant becomes when the spell ends, rooted flora: the map's, a line.
+// - A weapon's damage type changed till changed again (withDamageTypeWays): Kaldemash's Lament's "Kaldemash's Lament's damage type changes to
+//   either electricity, fire, or force until you change the type again" (PF2e's item has no toggle for it) → the ways card, one way per type,
+//   each its user's Effect with no end of PF2e's DamageAlteration on the weapon's Strike damage (its slug's), the last one replaced
+//   (item.ruleEffects[].replaces, scripts/live.js).
+// - A gun that flies and fires on its own (withFlyingGun): Kaldemash's Lament's "You release the star gun and it begins to move independently …
+//   for 3 rounds … you can Sustain the activation to have it make a Strike against a creature. It makes a ranged Strike using your attack
+//   modifier while wielding it or a +31 bonus, whichever is higher … creatures it targets are Off-Guard to the gun's attacks." → its user's
+//   Effect for the 3 rounds: PF2e's EphemeralEffect of Off-Guard on its Strikes with it, and item.ruleEffects[].attackFloor — the +31 made up
+//   with a FlatModifier when its user's own modifier with it is lower (scripts/live.js, as it's applied). Each Sustain is its user's own
+//   Strike with it (PF2e's multiple attack penalty as normal); its space, its 30 feet, grabs failing and its return to the hand, the map's, its
+//   words.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -221,13 +232,53 @@ function withSoilSummon(plan, { activation }) {
     return { ...rest, castRankBy: { mark: SOIL_MARK, within: 5, half: true, target: "the decomposed body" }, castLines: [...(plan.castLines ?? []), ...lines], ...(notes.length ? { notes, partial } : { notes: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
 }
 
+// --- A weapon's damage type changed till changed again, and a gun that flies on its own ------------------------------------------------------
+
+const RETYPE = [/^You adjust the damage that [\w' -]+? deals before firing\.$/, /^[\w' -]+? ?'s damage type changes to either ((?:\w+, )*\w+,? or \w+) until you change the type again\.$/];
+function withDamageTypeWays(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (plan || item?.type !== "weapon" || !item.system?.slug || !matches(RETYPE, sentences)) return plan;
+    const types = RETYPE[1].exec(sentences[1])[1].split(/,\s*(?:or\s+)?|\s+or\s+/).map((type) => type.trim().toLowerCase()).filter(Boolean);
+    const base = keptBase(plan, item, { activation, index });
+    const way = (type) => {
+        const rules = [{ key: "DamageAlteration", selectors: ["strike-damage"], predicate: [`item:slug:${item.system.slug}`], mode: "override", property: "damage-type", value: type }];
+        return { name: type.replace(/^./, (letter) => letter.toUpperCase()), plan: { ...ownCard(base, {}), item: { ...base.item, ruleEffects: [{ name: `${type} damage`, words: `Its Strikes with ${item.name} deal ${type} damage until its type is changed again`, rules, duration: null, replaces: "damage-type" }] } } };
+    };
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, ways: types.map(way) };
+}
+
+const FLYING = [
+    /^You leave [\w' -]+? to fire on its own\.$/,
+    /^You release the [\w' -]+? and it begins to move independently, flying through the air and firing\.$/,
+    /^You still gain the benefits of the gun's (quickstrike) rune while it's moving independently\.$/,
+    /^It has a space of 5 feet but doesn't block or impede enemies attempting to move through that space\.$/,
+    /^It always remains within (\d+) feet of you and intentionally resists being taken or otherwise moved; all attempts to Grab it fail\.$/,
+    /^[\w' -]+? moves this way for (\d+) rounds, after which it returns to your hand\.$/,
+    /^If you don't have a free hand to hold it, the gun instead holsters itself on your person\.$/,
+    /^While [\w' -]+? is moving independently, you can Sustain the activation to have it make a Strike against a creature\.$/,
+    /^It makes a ranged Strike using your attack modifier while wielding it or a \+(\d+) bonus, whichever is higher\.$/,
+    /^This attack increases your multiple attack penalty as normal, and the gun uses your multiple attack penalty when determining its attack bonus\.$/,
+    /^Since the star gun is constantly moving and attempting to line up the appropriate shot, creatures it targets are Off-Guard to the gun's attacks\.$/
+];
+function withFlyingGun(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (item?.type !== "weapon" || !item.system?.slug || !matches(FLYING, sentences)) return plan;
+    const said = FLYING.map((pattern, at) => pattern.exec(sentences[at]));
+    const [feet, rounds, floor] = [Number(said[4][1]), Number(said[5][1]), Number(said[8][1])];
+    const own = [`item:slug:${item.system.slug}`];
+    const rules = [{ key: "EphemeralEffect", affects: "target", predicate: own, selectors: ["strike-attack-roll", "strike-damage"], uuid: "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg" }];
+    const words = `${item.name} flies and fires on its own for ${rounds} rounds, within ${feet} feet of its user (a 5-foot space that blocks no enemy; it can't be Grabbed, taken or moved), then returns to its user's hand, or holsters itself on them without a free hand. Each Sustain is one ranged Strike with it at a creature: its user's attack modifier with it, or +${floor} if that's higher, with the multiple attack penalty as normal; the creature is Off-Guard to it. Its ${said[2][1]} rune still works`;
+    const base = keptBase(plan, item, { activation, index });
+    return { ...ownCard(base, {}), item: { ...base.item, ruleEffects: [{ name: "flying on its own", words, rules, duration: { mode: "fixed", value: rounds, unit: "rounds", expiry: "turn-start" }, attackFloor: { value: floor, slug: item.system.slug } }] }, noteOnly: undefined };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun]) {
         const next = reader(plan, entry, item);
         if (next !== plan) return next;
     }
