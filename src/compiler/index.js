@@ -46,7 +46,7 @@ import { readReductions, reductionNotes, reductionPlan } from "./reduce.js";
 import { readRecovery, recoveryNotes, recoveryPlan, recoverySaid, withLowerLevelRecovery } from "./recovery.js";
 import { itemActionOver, itemActionPlan } from "./item-actions.js";
 import { readTeaCeremony } from "./tea.js";
-import { readCounteract, withoutCounteractRestated } from "./counteract.js";
+import { counteractLeaves, readCounteract, withCounteractLeaves, withoutCounteractRestated } from "./counteract.js";
 import { ownerDCs, withItemData } from "./item-data.js";
 import { overUnverified, withoutUnverifiedLinks } from "./unverified-links.js";
 import { affixedTargeting, withPrimedNotes, withWhilePersistent, withZeroHPNote } from "./primed.js";
@@ -259,7 +259,7 @@ export function compileItem(given, options = {}) {
     // (A talisman used with a free action or 1, src/compiler/action-ways.js: Golden Liberator's Feather — the ways card.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
     // (A recovery's own damage first and its lower-level case a second button, src/compiler/recovery.js: Searing Suture.)
-    return decide(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given), given, options);
+    return decide(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given, options);
 }
 
 // (A bonus for the creatures in the light it sheds, Sprite Apple's: plan.item.lightAura, src/compiler/light-aura.js — its sentence no longer a
@@ -463,7 +463,9 @@ function compileOne(given, options = {}) {
     const counteracting = readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value });
     if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && counteracting) {
         // (A spell on a creature nearby: that creature, within that distance.)
-        plan = { ...base, builtin: "counteract", automation: { level: "automatic" }, targeting: counteracting.within ? { target: "1 creature", range: counteracting.within, area: null } : { target: "the drinker", range: null, area: null }, trigger: { event: "use" } };
+        // (Partial when its notes leave a rule the card doesn't play, src/compiler/counteract.js counteractLeaves.)
+        const leaves = counteractLeaves(counteracting).length > 0;
+        plan = { ...base, builtin: "counteract", automation: { level: leaves ? "guided" : "automatic" }, targeting: counteracting.within ? { target: "1 creature", range: counteracting.within, area: null } : { target: "the drinker", range: null, area: null }, trigger: { event: "use" }, ...(leaves ? { partial: true } : {}) };
     }
     // (A save or a result no row holds — death, a push, a pull to its user — src/compiler/save-or.js.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = saveOrPlan(item?.system?.description?.value, base) ?? plan;
@@ -514,7 +516,10 @@ function compileOne(given, options = {}) {
     plan = withHitDelivery(plan, plainText(item?.system?.description?.value), { trigger: /\bTrigger\s+(.+?)(?:\s+(?:Requirements?|Effect)\b|$)/s.exec(plainText(item?.system?.description?.value))?.[1] ?? null, itemType: item.type });
     const source = plan.source ? { ...plan.source, type: item.type, uuid: item.uuid ?? plan.source.uuid ?? null } : plan.source;
     const { resist, speeds, senses, light, levelTemp, weapon, attacks, fastHealing, strikeDamage, firstDegree, suppress, ruleEffects, coats, coatLasts, ...rest } = plan;
-    const info = { ...itemInfo(item), ...(ruleEffects ? { ruleEffects } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) };
+    // (The counteract card's own, with the rest of its text's rules as its notes, src/compiler/counteract.js extras.)
+    const infoOf = itemInfo(item);
+    if (rest.builtin === "counteract" && infoOf.counteract) infoOf.counteract = readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value });
+    const info = { ...infoOf, ...(ruleEffects ? { ruleEffects } : {}), ...(resist ? { resist } : {}), ...(speeds ? { speeds } : {}), ...(senses ? { senses } : {}), ...(light ? { light } : {}), ...(levelTemp ? { levelTemp } : {}), ...(weapon ? { weapon } : {}), ...(attacks ? { attacks } : {}), ...(fastHealing ? { fastHealing } : {}), ...(strikeDamage ? { strikeDamage } : {}), ...(firstDegree ? { firstDegree } : {}), ...(suppress ? { suppress } : {}), ...(coats ? { delivery: "injury", coats, ...(coatLasts ? { coatLasts } : {}) } : {}) };
     // (A valued condition read with no value: a note, not the condition, src/compiler/guards.js.)
     // ("allies": granted to the creatures the presser targets, src/compiler/consumables.js: Therapeutic Snap Peas.)
     const recipient = targetedRecipient(plan, plainText(item?.system?.description?.value)) ? "targets" : plan.otherRecipient ? "drinker" : info.recipient;
@@ -621,7 +626,8 @@ function itemInfo(item) {
         pf2eRoll: pf2eRoll(item),
         activations: readActivations(item?.system?.description?.value),
         // (What it counteracts on its drinker: the counteract card, src/compiler/counteract.js.)
-        ...(readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value }) ? { counteract: readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value }) } : {}),
+        // (Beside another card, the counteract's own notes only: that card reads the rest — src/compiler/counteract.js extras.)
+        ...(readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value }) ? { counteract: readCounteract(item?.system?.description?.value, { level: item?.system?.level?.value, extras: false }) } : {}),
         // (A tea's Tea Ceremony: the card's tick, src/compiler/tea.js.)
         ...(readTeaCeremony(item?.system?.description?.value) ? { ceremony: readTeaCeremony(item?.system?.description?.value) } : {}),
         // (The conditions it lowers: the item card's, after its row, src/compiler/reduce.js.)

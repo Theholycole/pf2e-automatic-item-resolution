@@ -5,6 +5,7 @@
 // one aimed elsewhere (a spell within 30 feet, the triggering spell, ice, adhesives), nor one that "can't be counteracted".
 // Pure.
 
+import { readCooldown } from "./cooldown.js";
 import { plainText } from "./rows.js";
 
 const CONDITIONS = ["blinded", "clumsy", "confused", "controlled", "dazzled", "deafened", "doomed", "drained", "enfeebled", "fascinated", "fatigued", "fleeing", "frightened", "grabbed", "immobilized", "paralyzed", "petrified", "restrained", "sickened", "slowed", "stunned", "stupefied"];
@@ -26,9 +27,54 @@ const DETERMINATION = /\bgain the benefit of the fighter's Determination class f
 // GM Core's DCs by level, 0 to 25.
 const LEVEL_DCS = [14, 15, 16, 18, 19, 20, 22, 23, 24, 26, 27, 28, 30, 31, 32, 34, 35, 36, 38, 39, 40, 42, 44, 46, 48, 50];
 
-// The text → { modifier, rank, conditions, traits, afflictions, pick: "each" | "one" | "highest", reduce?, notes } or null.
+// The text → { modifier, rank, conditions, traits, afflictions, pick: "each" | "one" | "highest", reduce?, then?, notes } or null.
 // (Determination's: { …, spells, magical, endsConditions, self }.)
-export function readCounteract(html, { level = 0 } = {}) {
+// (2026-10-27, an audit of what the reader dropped: every rule sentence after the counteract is a note too — Draconal Mask's "You then gain the
+// effects of truesight for 1 minute", Fu Water's "You're then Sickened 1" were lost — but not one that only gives its rank and modifier. And
+// a condition after it, Fu Water's: counteract.then, given once the card's rolled — scripts/counteract.js.)
+const COUNTERACTS = /\b(?:attempts? (?:a counteract check|to counteract|to counter the misfortune)|to counteract ailments|the salve attempts to counteract)\b|\bcounteract modifier (?:is|of) \+\d+/i;
+const EXTRA_RULE = /\b(?:\d+|Sickened|Stunned|Frightened|Dazzled|Blinded|Slowed|Prone|Fatigued|Stupefied|damage|Hit Points|immune|can't|cannot|again|instead|turned back|reflect\w*|control\w*|truesight|effects? of|consumed|expends?|spent|until|regains?|returns?|shatters?|automatically)\b/i;
+const NUMBERS_ONLY = /\bcounteract (?:rank|level)(?: of| is)? \d+(?:st|nd|rd|th)?\b|(?:a |the |an? )?(?:\[\[[^\]]*\]\]\{)?(?:1d20\s*\+\s*|\+)\d+\}?(?: counteract)?(?: check)? modifier(?: (?:for|on|to) the rolls?)?|\bcounteract (?:check )?modifier(?: of| is)? (?:1d20\s*\+\s*|\+)\d+/gi;
+const THEN_CONDITION = /^You're then (Sickened|Fatigued|Stupefied|Drained|Enfeebled|Clumsy|Frightened) (\d+)\.$/i;
+// (A spell's effects on its user after it, Draconal Mask's "You then gain the effects of truesight for 1 minute": counteract.thenSpell, cast by
+// the spell module for that time once the card's rolled.)
+const THEN_SPELL = /^You then gain the effects of ([a-z][a-z' -]+?) for (\d+) (rounds?|minutes?|hours?)\.$/i;
+export function readCounteract(html, { level = 0, extras: withExtras = true } = {}) {
+    const read = readCounteractOwn(html, { level });
+    if (!read || !withExtras || read.endsConditions || /\bthe item gives none\b/.test((read.notes ?? []).join(" "))) return read;
+    const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
+    const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z(])/).map((sentence) => sentence.trim()).filter(Boolean);
+    const at = sentences.findIndex((sentence) => COUNTERACTS.test(sentence));
+    if (at < 0) return read;
+    const noted = (sentence) => (read.notes ?? []).some((note) => note.includes(sentence.slice(0, 40)) || sentence.includes(note.replace(/^(?:Critical success|Success|Failure|Critical failure): /, "").replace(/ \(by hand\)\.$/, "").slice(0, 40)));
+    // (Its own activation's: up to the next "Activate"; the counteract's own sentences in its reading's window, Fu Water's "Attempt a counteract
+    // check with a +9 counteract modifier … against one effect that imposes …", read.)
+    const end = sentences.findIndex((sentence, index) => index > at && /^Activat(?:e|ion)\b/.test(sentence));
+    const after = sentences.slice(at + 1, end < 0 ? undefined : end);
+    const extras = after.filter((sentence, index) => !(index < 2 && /\bcounteract\b/i.test(sentence)) && !/^(?:Critical Success|Success|Failure|Critical Failure|Trigger|Frequency|Requirements?)\b/.test(sentence) && EXTRA_RULE.test(sentence.replace(NUMBERS_ONLY, " ")) && !noted(sentence));
+    const all = [...(read.notes ?? []), ...extras];
+    const then = all.map((sentence) => [sentence, THEN_CONDITION.exec(String(sentence).trim())]).find(([, match]) => match);
+    const spell = all.map((sentence) => [sentence, THEN_SPELL.exec(String(sentence).trim())]).find(([, match]) => match);
+    const notes = all.filter((sentence) => sentence !== then?.[0] && sentence !== spell?.[0]);
+    const { notes: _, ...rest } = read;
+    const thenSpell = spell ? { name: spell[1][1], value: Number(spell[1][2]), unit: /^min/i.test(spell[1][3]) ? "minutes" : /^hour/i.test(spell[1][3]) ? "hours" : "rounds" } : null;
+    return { ...rest, ...(then ? { then: { slug: then[1][1].toLowerCase(), value: Number(then[1][2]) } } : {}), ...(thenSpell ? { thenSpell } : {}), ...(notes.length ? { notes } : {}) };
+}
+
+// The counteract's notes that are lines of its card, not rules it leaves: what to tick or give on it, the GM's numbers (the user's answer 5),
+// a limit to keep to, a timing, the spell a charm spends; a summoned creature controlled the GM's (the user's answer D of 2026-10-13).
+const CARD_NOTES = [/^Tick one:/, /^Only an active [\w ]+ spell: tick one that is\.$/, /^Its counteract rank is the stored spell's: give it on the card\.$/, /^Its counteract modifier \+\d+: .*\(the GM's call\)\.$/, /^Its DC and rank are those of what caused the condition\.$/, /^It doesn't undo Hit Point damage already taken, and can't end an ongoing affliction\.$/, /^This expends the spell held in the charm\.$/, /^Once you do, the stored spell's energy is spent, and the ring is empty\.$/, /^If it fails, it can't attempt to counteract the same [\w ]+ again\.$/, /^This takes longer for a disease\b/, /^If the spell would be counteracted, the bloodstone doll instead influences the summoned creature\.$/, /^You gain control of the summoned creature\b/, /^The triggering creature then regains control of their summoned creature\b/];
+export const counteractLeaves = (counteract) => (counteract?.notes ?? []).filter((note) => !CARD_NOTES.some((line) => line.test(String(note).trim())));
+
+// A counteract card's plan, last: partial while its notes leave a rule its card doesn't play — not a wait the plan's recharge holds (Cloth of
+// Nullification's "can't be activated again for 2d6 hours", src/compiler/cooldown.js), which an earlier reading may have counted it whole by.
+export function withCounteractLeaves(plan) {
+    if (plan?.builtin !== "counteract" || plan.partial) return plan;
+    const leaves = counteractLeaves(plan.item?.counteract).filter((note) => !(plan.trigger?.recharge && readCooldown(String(note).trim())));
+    return leaves.length ? { ...plan, partial: true, automation: { ...(plan.automation ?? {}), level: "guided" } } : plan;
+}
+
+function readCounteractOwn(html, { level = 0 } = {}) {
     const text = plainText(html).replace(/\bCraft Requirements\b.*$/i, "");
     const determination = DETERMINATION.exec(text);
     if (determination) {

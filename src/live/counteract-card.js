@@ -83,7 +83,12 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const who = state.drinkers[state.drinker] ?? state.user;
     const head = `<p class="aar-actions">${escape(counteractText(state.counteract))}</p>`;
-    const notes = open && (state.counteract.notes ?? []).length ? `<ul class="aar-notes">${state.counteract.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
+    // (A condition after it, Fu Water's Sickened 1: a line of its own.)
+    // (And a spell's effects on its user after it, Draconal Mask's Truesight for 1 minute.)
+    const spell = state.counteract.thenSpell;
+    const thenLine = [...(state.counteract.then ? [`Then ${state.counteract.then.slug} ${state.counteract.then.value}, whatever the result.`] : []), ...(spell ? [`Then its user gains the effects of ${spell.name} for ${spell.value} ${spell.value === 1 ? spell.unit.replace(/s$/, "") : spell.unit} (the spell module casts it).`] : [])];
+    const listed = [...thenLine, ...(state.counteract.notes ?? [])];
+    const notes = open && listed.length ? `<ul class="aar-notes">${listed.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     let body = "";
     let button = "";
     if (open && state.step === "find") {

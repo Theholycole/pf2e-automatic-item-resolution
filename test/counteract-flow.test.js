@@ -236,3 +236,16 @@ test("counteracts at a triggering spell or affliction in more words: Bloodstone 
     const state = foundry.messages.at(-1).flags[MODULE_ID].card;
     assert.deepEqual([state.kind, state.counteract.rank, state.counteract.modifier, state.rows.map((row) => row.name)], ["counteract", 5, 17, ["the misfortune effect"]]);
 });
+
+test("a counteract card's other rules (2026-10-27): its notes and partial — Fu Water's Sickened 1 and Draconal Mask's Truesight for 1 minute played after it; card lines and a recharge whole", async () => {
+    const { compileActivations } = await import("../src/compiler/permanent.js");
+    const fu = compileItem(source("Fu Water"));
+    assert.deepEqual([fu.builtin, fu.item.counteract.then, fu.partial], ["counteract", { slug: "sickened", value: 1 }, undefined]);
+    const mask = compileActivations(source("Draconal Mask"))[0].plan;
+    assert.deepEqual([mask.builtin, mask.item.counteract.thenSpell, mask.item.counteract.notes, mask.partial], ["counteract", { name: "truesight", value: 1, unit: "minutes" }, undefined, undefined]);
+    // (Etheric Essence Disruptor's line to tick an active spell, a card line: whole.)
+    assert.equal(compileItem(source("Etheric Essence Disruptor (Lesser)")).partial, undefined);
+    // (Cloth of Nullification's wait is its recharge; its absorbing the magic instead isn't played: partial.)
+    const cloth = compileActivations(source("Cloth of Nullification"))[0].plan;
+    assert.deepEqual([Boolean(cloth.trigger.recharge), cloth.partial], [true, true]);
+});

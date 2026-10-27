@@ -3,6 +3,7 @@
 // and afflictions, with the DC and rank PF2e knows); step 2 rolls the item's counteract check for each row ticked, with the
 // DC and rank the card shows (the GM's where PF2e didn't know), and removes what it counteracts.
 
+import { rememberCastDuration } from "./cast-duration.js";
 import { DEGREE_WORDS, counteractCandidates, counteractCardHTML, counteractResult, createCounteractCard } from "../src/live/counteract-card.js";
 import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
@@ -48,6 +49,20 @@ function snapshot(actor) {
 }
 
 // choices: { drinker } for step 1; { rows: [{ ticked, dc, rank }] } for step 2.
+// The spell by its name in PF2e's spells, cast on the card's user by the spell module (its castFromItem), its Effects for the item's time
+// (scripts/cast-duration.js). → the card's line.
+async function castAfter(thenSpell, state) {
+    const castFromItem = game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem;
+    const pack = game.packs.get("pf2e.spells-srd");
+    const entry = pack ? [...(await pack.getIndex())].find((one) => one.name.toLowerCase() === thenSpell.name.toLowerCase()) : null;
+    const { actor, token } = await creatureOf(state.user);
+    if (!castFromItem || !entry || !actor) return `Then ${actor?.name ?? state.user.name} gains the effects of ${thenSpell.name} for ${thenSpell.value} ${thenSpell.unit} (by hand${castFromItem ? "" : ": PF2e Automatic Spell Resolution isn't active"}).`;
+    const tokenObject = token?.object ?? token ?? null;
+    const cast = await castFromItem({ actor, token: tokenObject ?? undefined, spell: entry.uuid ?? `Compendium.pf2e.spells-srd.Item.${entry._id}`, targets: tokenObject ? [tokenObject] : [], item: { name: state.item.name, uuid: state.item.uuid ?? null } });
+    const lasts = await rememberCastDuration(cast, { value: thenSpell.value, unit: thenSpell.unit }, { actor, targets: tokenObject ? [tokenObject] : [] });
+    return `Then ${actor.name} gains the effects of ${entry.name}${lasts ? ` — ${lasts.replace(/^It lasts/, "it lasts").replace(/\.$/, "")}` : ""}.`;
+}
+
 export async function applyCounteractCard(message, { drinker = null, rows = null, ownRank = null } = {}) {
     let state = stateOf(message);
     if (!state || state.kind !== "counteract" || state.status !== "open") return null;
@@ -111,6 +126,15 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
             await actor.deleteEmbeddedDocuments("Item", [row.id]);
             lines.push(`${row.name}: ${outcome}, counteracted.`);
         }
+    }
+    // (A spell's effects on its user after it, Draconal Mask's Truesight for 1 minute: the spell module casts it, its Effects set to that time.)
+    const thenSpell = state.counteract.thenSpell;
+    if (thenSpell) lines.push(await castAfter(thenSpell, state));
+    // (A condition after it, whatever the result, Fu Water's "You're then Sickened 1": src/compiler/counteract.js counteract.then.)
+    const then = state.counteract.then;
+    if (then) {
+        await actor.increaseCondition(then.slug, { value: then.value });
+        lines.push(`${target.name} is then ${then.slug} ${then.value}.`);
     }
     const next = { ...state, rows: chosen, status: "applied", results: lines };
     return message.update({ content: counteractCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

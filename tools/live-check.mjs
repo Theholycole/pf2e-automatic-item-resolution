@@ -6307,6 +6307,57 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results, persistent: wearer.itemTypes.condition.filter((condition) => condition.slug === "persistent-damage").length };
     },
 
+    // Fu Water's Bitter Medicine: Frightened counteracted (a DC 5 the GM gives), then its drinker Sickened 1 whatever the result.
+    async fuWaterThen(scene) {
+        const { actor: drinker } = await creature(scene, "Fu Drinker", { x: 14, y: 18 });
+        await drinker.increaseCondition("frightened", { value: 2 });
+        const water = await give(drinker, "Fu Water");
+        const since = Date.now();
+        await water.consume();
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        assert(/Then sickened 1, whatever the result/.test(card.content), "the card's line");
+        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        await wait(500);
+        const rows = game.messages.get(card.id).getFlag(NS, "card").rows;
+        await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: row.slug === "frightened", dc: 5, rank: 1 })) });
+        await until(() => drinker.getCondition("sickened")?.value === 1, `Sickened 1 (${drinker.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 8000 });
+        return { results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
+    // Draconal Mask's Dragons See the Truth: the triggering illusion counteracted (the GM's DC and rank), then the spell module casts Truesight on
+    // its wearer, its Effects set to 1 minute.
+    async draconalTruesight(scene) {
+        assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
+        const { actor: wearer, token } = await creature(scene, "Draconal Wearer", { type: "character", x: 16, y: 18, level: 19 });
+        const mask = await give(wearer, "Draconal Mask");
+        await token.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(mask.uuid, 0);
+        const card = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        assert(/gains the effects of truesight for 1 minute/.test(card.content), "the card's Truesight line");
+        // (Not on a creature, the triggering illusion: its card starts at its row.)
+        if (card.getFlag(NS, "card").step === "find") {
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+            await wait(500);
+        }
+        const rows = game.messages.get(card.id).getFlag(NS, "card").rows;
+        await game.modules.get(NS).api.live.apply(card.id, { rows: rows.map((row) => ({ ticked: true, dc: 5, rank: 1 })) });
+        const cast = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-resolution"]?.castFromItem), { what: "the spell module's cast", timeout: 15000 });
+        await until(() => game.messages.get(cast.id)?.getFlag(NS, "castDuration"), "the cast's duration mark", { timeout: 8000 });
+        const mark = game.messages.get(cast.id).getFlag(NS, "castDuration");
+        const button = () => document.querySelector(`[data-message-id="${cast.id}"] .pf2e-auto-runtime-resolve`);
+        await until(() => button(), "the spell card's Resolve button", { timeout: 8000 });
+        button().click();
+        // (The spell module's own dialog of its caster's choices: applied as it stands.)
+        const choices = () => [...document.querySelectorAll(".application, .dialog, .window-app")].find((entry) => /caster choices/.test(entry.querySelector(".window-title")?.textContent ?? ""));
+        await until(() => choices(), "the spell's caster choices", { timeout: 8000 });
+        choices().querySelector('button[data-action="apply"]').click();
+        const effect = () => wearer.itemTypes.effect.find((entry) => entry.system?.context?.origin?.item === mark.spellUuid);
+        await until(() => effect(), `Truesight's Effect (${wearer.itemTypes.effect.map((entry) => entry.name).join(", ")})`, { timeout: 10000 });
+        await until(() => effect().system.duration.value === 1 && effect().system.duration.unit === "minutes", `1 minute (${JSON.stringify(effect().system.duration)})`, { timeout: 8000 });
+        return { effect: effect().name, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Medusa's Scream's Petrify at the shield's 30 feet: a creature 40 feet off refused, one 25 feet off cast at.
     async medusaRange(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");

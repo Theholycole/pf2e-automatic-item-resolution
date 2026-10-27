@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1307,
+  "entries": 1322,
   "results": {
-   "partial": 383,
+   "partial": 398,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -12,25 +12,25 @@
    "cast-changes": 25,
    "speeds": 23,
    "areas": 135,
-   "counteract": 23,
-   "afflictions": 57,
-   "moving": 90,
+   "counteract": 24,
+   "afflictions": 61,
+   "moving": 91,
    "visibility": 48,
    "choice": 31,
-   "lasting": 67,
+   "lasting": 68,
    "strike": 102,
    "spells": 36,
    "information": 23,
-   "out-of-combat": 35,
-   "no-rules": 10,
+   "out-of-combat": 36,
+   "no-rules": 12,
    "actions": 31,
    "immunity": 25,
-   "objects": 113,
-   "creatures": 63,
+   "objects": 114,
+   "creatures": 66,
    "mind": 6,
    "illusions": 50,
    "removed": 6,
-   "cooldown": 9,
+   "cooldown": 10,
    "vehicles": 21,
    "reader": 18,
    "triggers": 93,
@@ -52,32 +52,32 @@
    "speeds": 29,
    "areas": 198,
    "immunity": 86,
-   "objects": 391,
+   "objects": 392,
    "speech": 130,
-   "out-of-combat": 438,
-   "counteract": 95,
-   "afflictions": 103,
-   "lasting": 234,
-   "moving": 118,
-   "triggers": 123,
+   "out-of-combat": 439,
+   "counteract": 105,
+   "afflictions": 107,
+   "lasting": 235,
+   "moving": 119,
+   "triggers": 126,
    "visibility": 50,
    "dying": 75,
-   "choice": 110,
+   "choice": 111,
    "several": 106,
-   "strike": 196,
-   "reader": 209,
+   "strike": 199,
+   "reader": 210,
    "spells": 76,
    "information": 199,
    "actions": 63,
    "from-events": 29,
-   "no-rules": 10,
-   "situational": 82,
-   "creatures": 63,
+   "no-rules": 12,
+   "situational": 85,
+   "creatures": 66,
    "mind": 65,
    "illusions": 60,
    "removed": 7,
    "range": 6,
-   "cooldown": 10,
+   "cooldown": 11,
    "vehicles": 27,
    "senses": 28,
    "forms": 27,
@@ -1411,6 +1411,31 @@
    ]
   },
   {
+   "name": "Bloodstone Doll (Major)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summoned",
+   "needs": [
+    "creatures",
+    "triggers",
+    "strike",
+    "counteract",
+    "situational"
+   ]
+  },
+  {
+   "name": "Flame Navette",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "affliction",
+   "needs": [
+    "afflictions",
+    "counteract"
+   ]
+  },
+  {
    "name": "Gossip's Eye",
    "kind": "activation",
    "result": "note-only",
@@ -2209,6 +2234,17 @@
    "needs": [
     "lasting",
     "objects"
+   ]
+  },
+  {
+   "name": "Devil's Trap",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "moving",
+   "work": "teleportation",
+   "needs": [
+    "moving",
+    "counteract"
    ]
   },
   {
@@ -3087,6 +3123,16 @@
    ]
   },
   {
+   "name": "Aeon Stone (Pale Lavender Ellipsoid)",
+   "kind": "activation",
+   "result": "partial",
+   "main": "lasting",
+   "work": "each time you",
+   "needs": [
+    "lasting"
+   ]
+  },
+  {
    "name": "Freedom's Flame",
    "kind": "activation",
    "activation": "Break Free",
@@ -3770,6 +3816,17 @@
    ]
   },
   {
+   "name": "Contagion Metabolizer (Lesser)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "disease",
+   "needs": [
+    "afflictions",
+    "counteract"
+   ]
+  },
+  {
    "name": "Quickmelt Slick (Lesser)",
    "kind": "consumable",
    "result": "none",
@@ -4381,6 +4438,17 @@
    "needs": [
     "several",
     "mind"
+   ]
+  },
+  {
+   "name": "Contagion Metabolizer (Moderate)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "disease",
+   "needs": [
+    "afflictions",
+    "counteract"
    ]
   },
   {
@@ -5590,6 +5658,17 @@
     "immunity",
     "lasting",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Reflecting Shield",
+   "kind": "activation",
+   "activation": "Reflect Spell",
+   "result": "partial",
+   "main": "counteract",
+   "work": "counteracted",
+   "needs": [
+    "counteract"
    ]
   },
   {
@@ -7628,6 +7707,20 @@
    ]
   },
   {
+   "name": "Bloodstone Doll (Minor)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summoned",
+   "needs": [
+    "creatures",
+    "triggers",
+    "strike",
+    "counteract",
+    "situational"
+   ]
+  },
+  {
    "name": "Wind-Up Cart",
    "kind": "consumable",
    "result": "none",
@@ -7777,6 +7870,17 @@
    "work": "voice",
    "needs": [
     "speech",
+    "out-of-combat"
+   ]
+  },
+  {
+   "name": "Herald's Ring",
+   "kind": "activation",
+   "activation": "Reflect Sound",
+   "result": "partial",
+   "main": "out-of-combat",
+   "work": "rest",
+   "needs": [
     "out-of-combat"
    ]
   },
@@ -8266,6 +8370,15 @@
    ]
   },
   {
+   "name": "The Teamster",
+   "kind": "activation",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Soldier's Syrup (Moderate)",
    "kind": "consumable",
    "result": "note-only",
@@ -8333,6 +8446,20 @@
    "main": "choice",
    "work": "of your choice",
    "needs": [
+    "choice",
+    "reader"
+   ]
+  },
+  {
+   "name": "Cloth of Nullification",
+   "kind": "activation",
+   "activation": "Nullify Magic",
+   "result": "partial",
+   "main": "cooldown",
+   "work": "can't be activated again",
+   "needs": [
+    "cooldown",
+    "counteract",
     "choice",
     "reader"
    ]
@@ -9611,6 +9738,20 @@
     "lasting",
     "speech",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Bloodstone Doll (Moderate)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "creatures",
+   "work": "summoned",
+   "needs": [
+    "creatures",
+    "triggers",
+    "strike",
+    "counteract",
+    "situational"
    ]
   },
   {
@@ -12553,6 +12694,16 @@
    ]
   },
   {
+   "name": "Brilliant (Greater)",
+   "kind": "activation",
+   "activation": "Shine Bright!",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Immovable",
    "kind": "activation",
    "result": "partial",
@@ -12994,6 +13145,17 @@
    ]
   },
   {
+   "name": "Contagion Metabolizer (Greater)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "afflictions",
+   "work": "disease",
+   "needs": [
+    "afflictions",
+    "counteract"
+   ]
+  },
+  {
    "name": "Pit Illusion Snare",
    "kind": "consumable",
    "result": "partial",
@@ -13187,6 +13349,17 @@
    "work": "8 hours",
    "needs": [
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Violet Ray",
+   "kind": "activation",
+   "activation": "Electric Love",
+   "result": "partial",
+   "main": "objects",
+   "work": "don",
+   "needs": [
+    "objects"
    ]
   },
   {

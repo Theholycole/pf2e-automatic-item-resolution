@@ -14,7 +14,8 @@ const ALL = ["criticalSuccess", "success", "failure", "criticalFailure"];
 const COUNT = { a: 1, an: 1, one: 1 };
 
 // Its sentence: "temporarily immune …", or "immune to <its own> for N".
-const SENTENCE = /[^.]*\b(?:temporarily immune\b|immune to [^.]*?\bfor (?:the next )?(?:\d+|an?|one) (?:round|minute|hour|day|week)s?\b)[^.]*(?:\.|$)/gi;
+// (Or "you gain temporary immunity to its effects for 24 hours", Moon Radish Soup's, 2026-10-27.)
+const SENTENCE = /[^.]*\b(?:temporarily immune\b|immune to [^.]*?\bfor (?:the next )?(?:\d+|an?|one) (?:round|minute|hour|day|week)s?\b|temporary immunity to (?:its|this \w+'s) effects for (?:\d+|an?|one) (?:round|minute|hour|day|week)s?\b)[^.]*(?:\.|$)/gi;
 // (Not this item's: negated, another rule's time changed, the weather, PF2e's own action immunities.)
 // (Nor an immunity to another's attempts to end it, Mindrender Baton's "temporarily immune to that character's attempts to remove the effect":
 // a rule the GM keeps, a note — ATTEMPTS.)
@@ -88,7 +89,7 @@ export function readItemImmunity(text, { name = null, activation = null, heading
     // potions", "to Rise Up" — not a benefit, Velicarn's Cursed Coin's "you become immune to fear effects for 1 hour".)
     const words = family.split("-").filter((word) => word.length >= 4);
     const itself = (sentence) => {
-        if (/\btemporarily immune\b/i.test(sentence)) return true;
+        if (/\btemporarily immune\b|\btemporary immunity to (?:its|this \w+'s) effects\b/i.test(sentence)) return true;
         const to = /\bimmune to ([^,.;]+?)\s+for\b/i.exec(sentence)?.[1] ?? "";
         return /^(?:this|the|that|its|all|any|further|these|your)\b/i.test(to.trim()) || /^[A-Z]/.test(to.trim()) || words.some((word) => to.toLowerCase().includes(word));
     };
