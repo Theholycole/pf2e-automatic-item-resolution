@@ -152,6 +152,7 @@ import { withRuneSteps } from "./rune-steps.js";
 import { withTriggered } from "./triggered.js";
 import { withAfflictionActivations } from "./affliction-readings.js";
 import { withAsThough, withUserActions } from "./user-actions.js";
+import { withUniqueRules } from "./unique-rules.js";
 
 const PERMANENT_TYPES = new Set(["equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const GLYPHS = { 1: "1", a: "1", 2: "2", d: "2", 3: "3", t: "3", r: "reaction", f: "free" };
@@ -355,7 +356,8 @@ function withNamedOptions(item, entry, options) {
 function decideActivation(item, entry, read) {
     // (A trigger's own effect first, src/compiler/triggered.js: Lost Ember's Off-Guard or Confused suppressed.)
     // (Then its user's own action or rule as its sentences say, src/compiler/user-actions.js: Bastion of the Inheritor's entrench bonus.)
-    const plan = withUserActions(withTriggered(read, entry, item), entry, item);
+    // (And a unique item's or an artifact's own rules, src/compiler/unique-rules.js: Ancestral Embrace's feat use, ritual and avatar.)
+    const plan = withUniqueRules(withUserActions(withTriggered(read, entry, item), entry, item), entry, item);
     const { activation } = entry;
     const base = activationBasePlan(item, entry);
     const next = withDecided(plan, { text: plainText(activation.html), base, kind: "activation", trigger: Boolean(activation.trigger), name: base.source.name, special: isSpecialItem(item) });

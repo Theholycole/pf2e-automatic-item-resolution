@@ -43,6 +43,7 @@ import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
+import { applyFeatUseCard, postFeatUseCard } from "./feat-uses.js";
 import { checkSpend, payRegain, paySpend } from "./spend.js";
 import { placeLight } from "./placed-light.js";
 import { readProficiencyRequirement, requirementWarning } from "../src/compiler/requirement.js";
@@ -334,6 +335,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
     if (route === "take") return postTakeCard({ message, plan, used, actor, token });
+    if (route === "feat-use") return postFeatUseCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message?.rolls?.[0];
@@ -408,6 +410,8 @@ function choicesOf(state, root) {
     if (state.kind === "disbelief") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), check: Number(root.querySelector("[data-air-field='check']")?.value ?? 0) };
     // (An ally's condition taken: the ally targeted.)
     if (state.kind === "take") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    // (The feat picked for one more use: scripts/feat-uses.js.)
+    if (state.kind === "feat-use") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? state.pick ?? 0) };
     // (A bonus for the creature targeted: the presser's targets.)
     if (state.kind === "fortune") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
@@ -432,6 +436,7 @@ const APPLY = {
     objects: (message, choices) => applyObjectsCard(message, choices),
     disbelief: (message, choices) => applyDisbeliefCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
+    "feat-use": (message, choices) => applyFeatUseCard(message, choices),
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     "end-early": (message, choices) => applyEndEarlyCard(message, choices),
     // (What a creature drops of what it holds, Deadweight Snare's metal: scripts/drop-held.js.)
@@ -546,6 +551,7 @@ async function onRequest(data) {
         : state.kind === "toggle" || state.kind === "ways" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
         : state.kind === "table" ? {}
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "feat-use" ? { pick: Number.isInteger(data.pick) ? data.pick : 0 }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
         : state.kind === "objects" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(data.amount !== undefined && data.amount !== null ? { amount: String(data.amount) } : {}) }
