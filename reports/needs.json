@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1339,
+  "entries": 1345,
   "results": {
-   "partial": 415,
+   "partial": 421,
    "none": 554,
    "note-only": 251,
    "builtin:no-effect": 119
@@ -22,7 +22,7 @@
    "spells": 36,
    "information": 23,
    "out-of-combat": 36,
-   "no-rules": 12,
+   "no-rules": 18,
    "actions": 31,
    "immunity": 27,
    "objects": 114,
@@ -70,7 +70,7 @@
    "information": 199,
    "actions": 63,
    "from-events": 29,
-   "no-rules": 12,
+   "no-rules": 18,
    "situational": 86,
    "creatures": 66,
    "mind": 65,
@@ -1285,6 +1285,15 @@
     "lasting",
     "objects",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Admonishing Band",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -3019,6 +3028,16 @@
    ]
   },
   {
+   "name": "Ulfen Shieldbreaker",
+   "kind": "activation",
+   "activation": "Battering Blow",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Firefoot Popcorn",
    "kind": "consumable",
    "result": "note-only",
@@ -3678,6 +3697,15 @@
     "afflictions",
     "immunity",
     "lasting"
+   ]
+  },
+  {
+   "name": "Curled Cure Gel",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -4639,6 +4667,15 @@
     "strike",
     "objects",
     "speech"
+   ]
+  },
+  {
+   "name": "Crying Angel Pendant",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {
@@ -9874,6 +9911,15 @@
    ]
   },
   {
+   "name": "Binding Coil (Greater)",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
+   ]
+  },
+  {
    "name": "Jabali's Dice",
    "kind": "activation",
    "activation": "Jabali's Gamble",
@@ -12639,6 +12685,15 @@
     "lasting",
     "speech",
     "out-of-combat"
+   ]
+  },
+  {
+   "name": "Binding Coil",
+   "kind": "consumable",
+   "result": "partial",
+   "main": "no-rules",
+   "needs": [
+    "no-rules"
    ]
   },
   {

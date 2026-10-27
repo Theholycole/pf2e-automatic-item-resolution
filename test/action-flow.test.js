@@ -276,3 +276,18 @@ test("Medic's Shield's Adrenaline Boost: PF2e's Administer First Aid to stabiliz
     }
     assert.match(boost.action.after, /Stand as a free action/);
 });
+
+test("a degree the item changes, and what its lines leave (2026-10-27): Ensnaring Disk's critical failure acted on as a failure; Bracers of Hammers' 10d6 on its Trip's success; Binding Coil's Escape DC partial", async () => {
+    const disk = await useCard("Ensnaring Disk");
+    assert.deepEqual(disk.flags[MODULE_ID].card.plan.action.degree, { criticalFailure: "failure" });
+    foundry.nextOutcome.value = "criticalFailure";
+    await foundry.socket(SOCKET)({ action: "apply", messageId: disk.id, targets: [mark.token.document.uuid], userId: "player" });
+    await settle();
+    assert.match(disk.flags[MODULE_ID].card.results.join(" "), /a critical failure rolled, made a failure by Ensnaring Disk/);
+    foundry.nextOutcome.value = "success";
+    const [hammers] = compileActivations(source("Bracers of Hammers"));
+    assert.deepEqual([Object.keys(hammers.plan.action.damage), hammers.plan.action.damage.criticalSuccess.resolution.outcomes.success.damage.multiplier, hammers.plan.partial], [["success", "criticalSuccess"], 2, undefined]);
+    const coil = compileActivations(source("Binding Coil"))[0]?.plan ?? null;
+    const coilPlan = coil ?? (await import("../src/compiler/index.js")).compileItem(source("Binding Coil"));
+    assert.equal(coilPlan.partial, true);
+});

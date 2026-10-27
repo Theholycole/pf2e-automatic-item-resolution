@@ -201,7 +201,18 @@ export function readItemAction(html, item = null) {
 // damage at the creature, posted after PF2e's roll (scripts/item-actions.js).
 const SUCCESS_DAMAGE = /\bIf you succeed, [^.]*?\bdealing @Damage\[(\d+)\[(\w+)\]\](?:\{[^}]*\})? damage\b/i;
 const CRITICAL_DOUBLE = /\bIf you critically succeed(?:ed)?, the damage is equal to double\b/i;
+// (Or dice on a success, Bracers of Hammers' "On a success, the creature is knocked Prone and takes 10d6 bludgeoning damage (double on a critical
+// hit)", Constricting Meteor's "In addition to being Grabbed on a success, the target takes 1d10+7 bludgeoning damage", 2026-10-27: the same,
+// a critical success's doubled when it says so.)
+const SUCCESS_DICE = /\bon a success\b[^.]*?\btakes (\d+d\d+(?:\s*\+\s*\d+)?) (\w+) damage(?: \((double) on a critical (?:hit|success)\))?/i;
 function degreeDamage(html, base) {
+    const dice = SUCCESS_DICE.exec(plainText(html));
+    if (dice) {
+        const plan = directDamagePlan(`The target takes ${dice[1].replace(/\s+/g, "")} ${dice[2]} damage.`, { ...base, activation: base.activation ?? null });
+        if (!plan) return null;
+        const doubled = dice[3] ? { ...plan, resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success: { ...plan.resolution.outcomes.success, damage: { ...plan.resolution.outcomes.success.damage, multiplier: 2 } } } } } : plan;
+        return { success: plan, criticalSuccess: doubled };
+    }
     const success = SUCCESS_DAMAGE.exec(String(html ?? ""));
     if (!success) return null;
     const plan = (amount) => directDamagePlan(`The target takes ${amount} ${success[2]} damage.`, { ...base, activation: base.activation ?? null });
@@ -244,19 +255,55 @@ function withRiders(basic, riders = []) {
     return { ...basic, resolution: { ...basic.resolution, outcomes } };
 }
 
+// What the card's lines after the action say that it doesn't play (2026-10-27, an audit: they were never counted): not a line its user keeps to
+// — no hand free needed, no penalty for language, a larger target, the action said again, its multiple attack penalty —, nor what its riders,
+// its healing and conditions on a success, or its damage on a success play. Bracers of Hammers' 10d6 on its Trip, Binding Coil's Escape DC 20,
+// Ensnaring Disk's critical failure made a failure: left over, the plan partial.
+const AFTER_LINES = [/\b(?:do not|don't) need to have a hand free\b|\beven if you don't have a hand free\b/i, /\b(?:don't|do not) take (?:a|any) penalt(?:y|ies)\b|\btakes? no penalty\b/i, /\bcan affect even a mindless\b/i, /^You can Activate the item as part of the same activity\b/i, /\b(?:uses the same|counts toward your) multiple attack penalty\b/i, /^(?:Attempt|Make|Roll) an? \w+ check to [A-Z][\w ]*? (?:the|a|an)\b[^.]*\.$/, /^You (?:Administer First Aid|Seek|Grapple|Trip|Disarm|Shove|Demoralize|Feint)\b[^.]*\.$/, /^If you find a hidden creature or object, you can Point Out as a free action\.$/, /\byour target can be up to two sizes larger than you\b/i, /^The foe can be as far as\b/i, /^If you Strike with the weapon before the end of your turn\b/i,
+    // (Its user's own movement or Strikes, a line it keeps to: Onyx Panther's full Speed while Sneaking, Blast Boots' longer jumps, The Bear's
+    // Strike while grappling with a weapon.)
+    /^You can move your full Speed \(instead of half\) on this Sneak action\b/i, /\byou move your full Speed during the Climb\b/i, /\byou can increase the (?:vertical|horizontal) distance of your (?:High|Long) Jump by up to \d+ feet\b/i, /^If you Grapple using a weapon, you can Strike with the weapon only if\b/i];
+// (A degree the item changes, Ensnaring Disk's "If you roll a critical failure on this check, you get a failure instead", Jug of Fond
+// Remembrance's "If you fail but don't critically fail this check, you get a success instead": action.degree, the outcome the card acts on —
+// scripts/item-actions.js. And a condition on its user after it, the Jug's "You're then Stupefied 1 for 3 rounds": action.selfAfter.)
+const DEGREE_ADJUST = [[/^If you roll a critical failure(?: on (?:this|the) check)?, you get a failure instead\.$/i, { criticalFailure: "failure" }], [/^If you fail but don't critically fail this check, you get a success instead\.$/i, { failure: "success" }]];
+const SELF_AFTER = /^You're then (Stupefied|Fatigued|Sickened|Clumsy|Enfeebled|Drained) (\d+) for (\d+) (rounds?|minutes?)\.$/i;
+export function degreeAdjustOf(after) {
+    const sentences = String(after ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim());
+    return Object.assign({}, ...sentences.flatMap((sentence) => DEGREE_ADJUST.filter(([line]) => line.test(sentence)).map(([, change]) => change)));
+}
+export function selfAfterOf(after) {
+    const match = String(after ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => SELF_AFTER.exec(sentence.trim())).find(Boolean);
+    return match ? { slug: match[1].toLowerCase(), value: Number(match[2]), duration: { mode: "fixed", value: Number(match[3]), unit: /^min/i.test(match[4]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" } } : null;
+}
+export function actionLeaves(action) {
+    const sentences = String(action?.after ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    return sentences.filter((sentence) => {
+        if (AFTER_LINES.some((line) => line.test(sentence))) return false;
+        if (successGains(sentence) || degreeRider(sentence)) return false;
+        if (action.damage && (SUCCESS_DAMAGE.test(sentence) || SUCCESS_DICE.test(sentence) || CRITICAL_DOUBLE.test(sentence) || /^If you succeed, you crush the creature\b/i.test(sentence))) return false;
+        if (DEGREE_ADJUST.some(([line]) => line.test(sentence)) || SELF_AFTER.test(sentence)) return false;
+        if (action.bonus && /\bgain an? \+\d+ (?:item|circumstance|status) bonus\b/i.test(sentence) && !/\bif\b/i.test(sentence)) return false;
+        return true;
+    });
+}
+
 // options.basicActions: the ability module's compiled actions — their rows for the degree, applied after PF2e's roll.
 export function itemActionPlan(html, base, options = {}) {
     const read = readItemAction(html, options.item ?? null);
     if (!read) return null;
     const damage = degreeDamage(html, base);
-    const action = damage ? { ...read, damage } : read;
+    const degree = degreeAdjustOf(read.after);
+    const selfAfter = selfAfterOf(read.after);
+    const action = { ...read, ...(damage ? { damage } : {}), ...(Object.keys(degree).length ? { degree } : {}), ...(selfAfter ? { selfAfter } : {}) };
     const compiled = (slug) => {
         const basic = options.basicActions?.[slug] ?? null;
         return basic && !basic.builtin ? basic : null;
     };
     // (One of several: each one's rows, by slug.)
     const basics = action.slugs ? Object.fromEntries(action.slugs.map((slug) => [slug, compiled(slug)])) : null;
-    return { ...base, builtin: "item-action", automation: { level: "automatic" }, targeting: { target: action.targeted ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, action: { ...action, basic: withRiders(compiled(action.slug), action.riders), ...(basics ? { basics } : {}) } };
+    const leaves = actionLeaves(action);
+    return { ...base, builtin: "item-action", automation: { level: leaves.length ? "guided" : "automatic" }, targeting: { target: action.targeted ? "the creature targeted" : "self", range: null, area: null }, trigger: { event: "use" }, action: { ...action, basic: withRiders(compiled(action.slug), action.riders), ...(basics ? { basics } : {}) }, ...(leaves.length ? { partial: true } : {}) };
 }
 
 // The plan to keep: the action over nothing, a note alone or the GM's fallback.

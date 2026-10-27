@@ -71,11 +71,13 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     // (PF2e's action-system First Aid has no stabilize DC of its own: the rule's, 5 + the target's recovery DC + its dying value.)
     const difficultyClass = action.slug === "administer-first-aid" && variant === "stabilize" ? stabilizeDC(targetToken?.actor) : null;
     const results = await pf2eAction.use({ actors: [actor], ...(targetToken ? { target: targetToken.object ?? targetToken.actor } : {}), modifiers, ...(action.statistic ? { statistic: action.statistic } : {}), ...(variant ? { variant } : {}), ...(difficultyClass ? { difficultyClass } : {}), ...(event ? { event } : {}) });
-    const outcome = results?.[0]?.outcome ?? null;
+    const rolled = results?.[0]?.outcome ?? null;
+    // (A degree the item changes, Ensnaring Disk's critical failure made a failure: the outcome the card acts on, said.)
+    const outcome = rolled ? action.degree?.[rolled] ?? rolled : null;
     const lines = [];
     if (!outcome) lines.push(`${actionText(action)}: no result (cancelled).`);
     else {
-        lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}.`);
+        lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}${outcome !== rolled ? ` (a ${outcomeText(rolled)} rolled, made ${outcomeText(outcome)} by ${state.item.name})` : ""}.`);
         if (action.basic && targetToken) lines.push(...(await applyRiders({ plan: action.basic, degree: outcome, user: state.user, target: entryOf(targetToken.object ?? targetToken, targetToken.actor), item: state.item })));
         // (Its own damage for that degree — Bracers of Strength's crush on a success, double on a critical one: the ability module's
         // card at the creature, which rolls and applies it.)
@@ -111,6 +113,15 @@ export async function applyActionCard(message, { targets = [], choice = null } =
             lines.push(`${state.user.name}'s ${action.name} against ${name} (DC ${dc}): ${outcomeText(degree)}.`);
             if (action.basic) lines.push(...(await applyRiders({ plan: action.basic, degree, user: state.user, target: entryOf(other.object ?? other, other.actor), item: state.item })));
         }
+    }
+    // (A condition on its user after it, Jug of Fond Remembrance's Stupefied 1 for 3 rounds: the ability module's timed condition.)
+    if (outcome && action.selfAfter) {
+        const ability = game.modules.get(ABILITY_ID)?.api?.live;
+        const token = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+        const own = { plan: {}, ability: { name: state.item.name, uuid: state.item.uuid ?? null, slug: sluggify(state.item.name) }, source: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? null, name: actor.name }, targets: [{ id: "t0", actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? null, name: token?.name ?? actor.name }] };
+        const condition = action.selfAfter;
+        const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: condition.slug, value: condition.value, target: "t0", duration: condition.duration }, own) : null;
+        lines.push(line ?? `${actor.name} is then ${condition.slug} ${condition.value} for ${condition.duration.value} ${condition.duration.unit} (by hand).`);
     }
     const next = { ...state, status: outcome ? "applied" : "open", results: [...state.results, ...lines].slice(-6) };
     return message.update({ content: actionCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
