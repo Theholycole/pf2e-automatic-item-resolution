@@ -36,7 +36,7 @@
         "reason": "Items are resolved by the core's families.",
         "manifest": "https://github.com/Theholycole/PF2e-Automation-Core/releases/latest/download/module.json",
         "compatibility": {
-          "minimum": "0.7.5"
+          "minimum": "0.7.6"
         }
       },
       {
@@ -65,7 +65,7 @@
         "manifest": "https://github.com/Theholycole/pf2e-automatic-environment-resolution/releases/latest/download/module.json",
         "reason": "It applies what items do about its weather and falls: protection from heat and cold, falls made shorter or harmless, and fog, rain or wind ignored.",
         "compatibility": {
-          "minimum": "0.1.2"
+          "minimum": "0.2.0"
         }
       }
     ]
