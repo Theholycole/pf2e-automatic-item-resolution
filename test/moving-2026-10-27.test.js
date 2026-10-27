@@ -148,7 +148,8 @@ test("teleports with others along, a creature brought, smoke: Transposition Ammu
     assert.deepEqual([ammo.teleport.with, ammo.teleport.weaponRange, ammo.notes], [{ count: 2 }, true, undefined]);
     const spyglass = activation("Bring Me Near");
     assert.ok(done(spyglass));
-    assert.deepEqual([spyglass.teleport.within, spyglass.teleport.with], [26400, { count: 4 }]);
+    // (All or none of them since the live check's reading, 2026-10-27: "If there's not enough room for everyone, only you are transported".)
+    assert.deepEqual([spyglass.teleport.within, spyglass.teleport.with], [26400, { count: 4, allOrNone: true }]);
     assert.equal(teleportLines(spyglass.teleport).length, 4);
     const blade = compileActivations(item("Blink Blade"), options)[1].plan;
     assert.ok(done(blade));

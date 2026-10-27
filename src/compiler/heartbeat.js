@@ -33,8 +33,10 @@ export function withHeartbeatFloor(plan, item) {
     }));
     if (!read) return plan;
     const left = (plan.unread ?? []).length || Object.values(outcomes).some((row) => (row?.manualInstructions ?? []).length) || (plan.notes ?? []).length;
+    // (No range of its own: the ability compiler took the Reposition's 10 feet for one; its cone is from where the creature fell — 2026-10-27.)
     return {
         ...plan,
+        ...(plan.targeting ? { targeting: { ...plan.targeting, range: null } } : {}),
         resolution: { ...plan.resolution, outcomes },
         notes: [...(plan.notes ?? []), `Press it when its wielder reduces a living creature to 0 Hit Points with the weapon in the whetstone's ${hour[1]} ${unit.replace(/s$/, "")}: the wielder can Reposition it up to ${kill[1]} feet first (a free action, their own), then target the foes in the 30-foot cone they aim from where it dies.`],
         ...(plan.partial && !left ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {})

@@ -121,7 +121,8 @@ test("Minotaur Chair: against a prone foe, +1 circumstance damage per weapon die
     assert.deepEqual([chair.partial, chair.strike.notes, chair.strike.volley.each], [undefined, [], "enemy"]);
     const rules = strikeRules(chair, { label: "Minotaur Chair" });
     const prone = ["target:condition:prone"];
-    assert.deepEqual(rules.filter((rule) => rule.key === "DamageDice").map((rule) => [rule.diceNumber, rule.dieSize, rule.category, rule.damageType, rule.critical, rule.predicate]), [[1, "d12", "persistent", "bleed", false, prone], [3, "d6", "persistent", "bleed", true, prone]]);
+    // (The hit's 1d12 off on a critical hit, since the live check's reading of 2026-10-27: PF2e's critical false is only "not doubled".)
+    assert.deepEqual(rules.filter((rule) => rule.key === "DamageDice").map((rule) => [rule.diceNumber, rule.dieSize, rule.category, rule.damageType, rule.critical, rule.predicate]), [[1, "d12", "persistent", "bleed", false, [...prone, { not: "check:outcome:critical-success" }]], [3, "d6", "persistent", "bleed", true, prone]]);
     assert.deepEqual(rules.filter((rule) => rule.key === "FlatModifier").map((rule) => [rule.type, rule.value, rule.predicate]), [["circumstance", "@weapon.system.damage.dice", prone]]);
     assert.deepEqual(rules.filter((rule) => rule.key === "DamageAlteration").map((rule) => [rule.slug, rule.property, rule.value, rule.predicate]), [["wounding", "dice-number", 0, prone]]);
     assert.ok(strikeLines(chair).includes("+3d6 persistent bleed damage against a prone target on a critical hit"));

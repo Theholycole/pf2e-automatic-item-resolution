@@ -411,7 +411,9 @@ async function strikeInstead({ message, context, actor, effect, rider, what }) {
 
 // PF2e's damage roll of a Strike by a creature whose readied Strike carries extra dice: that Strike's damage is rolled, so
 // it's spent (with its Effect's rules in the roll). The item's own weapon must be the one rolled.
-const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.withoutRune || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash);
+// (And the damage bonuses and rune dice off of 2026-10-27, strike.flat and strike.runeDice — Morphing Weapon's Weigh, Minotaur Chair's prone foe —:
+// its readied Strike kept for the damage roll, so PF2e's roll gets them.)
+const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.withoutRune || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash || (plan.strike?.flat ?? []).length || (plan.strike?.runeDice ?? []).length);
 async function damageWithRider(message) {
     const context = message.flags.pf2e.context;
     if (context.sourceType !== "attack") return;

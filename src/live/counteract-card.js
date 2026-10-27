@@ -107,9 +107,13 @@ export function counteractCardHTML(state, { canApply = false } = {}) {
             : `<p class="aar-actions">On: ${escape(who.name)}</p>`;
         button = "Find what it counteracts";
     } else if (open && state.step === "pick") {
-        body = state.rows.length
+        // (A free one's creature, when what it keeps that creature from is its own line — Devil's Trap's devil: picked here.)
+        const whom = state.counteract.free && state.counteract.afterFree && canApply && state.drinkers.length > 1
+            ? `<p class="aar-actions">The creature: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
+            : "";
+        body = whom + (state.rows.length
             ? `${state.counteract.free ? `<p class="aar-actions">Its DC and rank${Number.isFinite(state.counteract.rank) ? "" : `, and the item's counteract rank <input type="number" data-air-ownrank value="${escape(state.ownRank ?? "")}" style="width:3em"${canApply ? "" : " disabled"}>`}:</p><ul class="aar-targets">` : `<p class="aar-actions">On ${escape(who.name)}${state.counteract.pick === "one" ? " (tick one)" : ""}:</p><ul class="aar-targets">`}${state.rows.map((row, index) => `<li class="aar-target"><label><input type="checkbox" data-air-row="${index}"${row.ticked ? " checked" : ""}${canApply ? "" : " disabled"}> ${escape(row.name)}</label>${row.ends ? " (ends outright)" : ` DC <input type="number" data-air-dc="${index}" value="${row.dc ?? ""}" style="width:3.5em"${canApply ? "" : " disabled"}> rank <input type="number" data-air-rank="${index}" value="${row.rank ?? ""}" style="width:3em"${canApply ? "" : " disabled"}>${state.counteract.outrightBelow && row.kind === "condition" ? ` <label><input type="checkbox" data-air-outright="${index}"${row.outright ? " checked" : ""}${canApply ? "" : " disabled"}> its source over ${state.counteract.outrightBelow.levels} levels below yours: countered outright</label>` : ""}`}</li>`).join("")}</ul>`
-            : `<p class="aar-hint">${escape(who.name)} has nothing this counteracts.</p>`;
+            : `<p class="aar-hint">${escape(who.name)} has nothing this counteracts.</p>`);
         button = state.rows.length ? "Counteract" : "";
     }
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";

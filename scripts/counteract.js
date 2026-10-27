@@ -99,7 +99,9 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         const next = { ...state, step: "pick", rows: counteractCandidates(snapshot(actor), state.counteract) };
         return message.update({ content: counteractCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
     }
-    // (Step 2: the rows as the card's controls give them.)
+    // (Step 2: the rows as the card's controls give them — and for a free one, which goes straight to it, the creature picked: Devil's Trap's
+    // devil, whom its after-line is for — the live check's reading, 2026-10-27.)
+    if (state.counteract.free && Number.isInteger(drinker) && state.drinkers[drinker]) state = { ...state, drinker };
     const chosen = state.rows.map((row, index) => {
         const given = Array.isArray(rows) ? rows[index] ?? {} : {};
         return { ...row, ticked: given.ticked ?? row.ticked, outright: Boolean(state.counteract.outrightBelow && row.kind === "condition" && given.outright), dc: Number.isFinite(Number(given.dc)) && given.dc !== "" && given.dc !== null ? Number(given.dc) : row.dc, rank: Number.isFinite(Number(given.rank)) && given.rank !== "" && given.rank !== null ? Number(given.rank) : row.rank };

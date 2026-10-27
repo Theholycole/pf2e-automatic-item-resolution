@@ -60,6 +60,19 @@ export function mayApply(state) {
 
 export const damageRollClass = () => (CONFIG.Dice?.rolls ?? []).find((roll) => roll?.name === "DamageRoll");
 
+// (A creature's persistent damage of a type, PF2e's condition; and a wait for one — its note then, within 5 minutes, or never.)
+const persistentOf = (actor, type) => (actor?.itemTypes?.condition ?? []).find((condition) => condition.slug === "persistent-damage" && condition.system?.persistent?.damageType === type) ?? null;
+function waitForPersistent(actor, type, then) {
+    let id = null;
+    const stop = setTimeout(() => Hooks.off("createItem", id), 300000);
+    id = Hooks.on("createItem", (item) => {
+        if (item?.parent?.uuid !== actor.uuid || item.slug !== "persistent-damage" || item.system?.persistent?.damageType !== type) return;
+        Hooks.off("createItem", id);
+        clearTimeout(stop);
+        Promise.resolve(then()).catch((error) => console.error(`${MODULE_ID} | a note while persistent ${type}`, error));
+    });
+}
+
 // A Strike's riders on the creature it hit (a bomb's, an item's Strike): the plan resolved by the core at the degree PF2e
 // rolled, each change through the ability module's api.live.applyChange. → the lines for the card.
 export async function applyRiders({ plan, degree, user, target, item }) {
@@ -78,6 +91,17 @@ export async function applyRiders({ plan, degree, user, target, item }) {
     const lines = [];
     for (const change of result.changes) {
         try {
+            // (A note for as long as a persistent damage lasts that PF2e's own damage roll gives it, Garrote Shot's 2d12 persistent slashing on a
+            // critical hit: not yet there at the attack roll, so the note waits for that condition — the live check's reading, 2026-10-27.)
+            const lasting = change.effect?.kind === "note" ? change.effect.note?.whilePersistent : null;
+            if (lasting && ability?.applyChange) {
+                const actor = await fromUuid(target.actorUuid).catch(() => null);
+                if (actor && !persistentOf(actor, lasting)) {
+                    waitForPersistent(actor, lasting, () => ability.applyChange(change, abilityState));
+                    lines.push(`${target.name}: ${change.effect.note.label ?? "its note"}, once its persistent ${lasting} damage is applied`);
+                    continue;
+                }
+            }
             const line = ability?.applyChange ? await ability.applyChange(change, abilityState) : `${target.name}: ${change.op} to apply by hand (the ability module isn't active).`;
             // (A floor: "can't reduce sickened below 1", as the ability module's own card says it — only when its floor Effect is there;
             // an ability module without floors leaves it to the GM.)

@@ -204,6 +204,23 @@ export async function bringAlong(token, start, at, targets, along) {
     if (near.length > along.count) lines.push(`Only ${along.count} can go along: ${near.slice(along.count).map((other) => other.name).join(", ")} stayed.`);
     const space = { x: at.x, y: at.y, w: before.w, h: before.h };
     const placed = [];
+    // (All or none, Bring Me Near's: a free space for each first, or only its user goes.)
+    if (along.allOrNone) {
+        const spots = [];
+        for (const other of near.slice(0, along.count)) {
+            const own = { w: (Number(other.width) || 1) * size, h: (Number(other.height) || 1) * size };
+            const occupied = [...canvas.scene.tokens.filter((one) => one.id !== other.id && one.id !== token.id && !one.hidden).map((one) => spaceOf(one)), ...spots.map(([, spot, size2]) => ({ ...spot, ...size2 }))];
+            const prefer = { x: at.x + before.w / 2 + (Number(other.x) + own.w / 2 - (start.x + before.w / 2)), y: at.y + before.h / 2 + (Number(other.y) + own.h / 2 - (start.y + before.h / 2)) };
+            const [spot] = freeSpacesBeside(space, own, occupied, { grid: size, bounds: canvas.dimensions.sceneRect, prefer });
+            if (!spot) return [...lines, `No room beside ${token.name} for them all: only ${token.name} goes.`];
+            spots.push([other, spot, own]);
+        }
+        for (const [other, spot] of spots) {
+            await other.update({ x: spot.x, y: spot.y }, { teleport: true, animate: false, [MODULE_ID]: { teleported: true } });
+            lines.push(`${other.name} goes along, beside ${token.name}.`);
+        }
+        return lines;
+    }
     for (const other of near.slice(0, along.count)) {
         const own = { w: (Number(other.width) || 1) * size, h: (Number(other.height) || 1) * size };
         const occupied = [...canvas.scene.tokens.filter((one) => one.id !== other.id && one.id !== token.id && !one.hidden).map((one) => spaceOf(one)), ...placed];

@@ -35,7 +35,11 @@ function before(actor, params) {
             // (Again before it's over: from now, the old one gone.)
             const old = (live.itemTypes?.effect ?? []).filter((other) => other.getFlag?.(MODULE_ID, "deactivated") === slug);
             if (old.length) await live.deleteEmbeddedDocuments("Item", old.map((other) => other.id)).catch(() => null);
-            await live.createEmbeddedDocuments("Item", [deactivatedEffectSource({ name, slug, types: by }, { worldTime: game.time.worldTime, initiative: startInitiative(live), moduleId: MODULE_ID })]);
+            // (Its wearer not yet acted this round: its next turn is this round's — the Effect's 0 rounds, ending at that turn's end.)
+            const combat = game.combat?.started ? game.combat : null;
+            const own = combat ? combat.turns.findIndex((combatant) => combatant.actor?.uuid === live.uuid || combatant.actorId === live.id) : -1;
+            const rounds = combat && own >= 0 && own > combat.turn ? 0 : 1;
+            await live.createEmbeddedDocuments("Item", [deactivatedEffectSource({ name, slug, types: by }, { worldTime: game.time.worldTime, initiative: startInitiative(live), rounds, moduleId: MODULE_ID })]);
             lines.push(`${escape(name)} is deactivated until the end of ${escape(live.name)}'s next turn (${escape(by.filter((type) => types.includes(type)).join(" and "))} damage)`);
         }
         const whisper = (game.users?.filter?.((user) => user.isGM || live.testUserPermission?.(user, "OWNER")) ?? []).map((user) => user.id);

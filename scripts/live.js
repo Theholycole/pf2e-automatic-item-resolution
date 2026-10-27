@@ -379,7 +379,7 @@ function choicesOf(state, root) {
     // (The counteract card: its drinker, then its rows' ticks, DCs and ranks.)
     if (state.kind === "counteract") return state.step === "find"
         ? { drinker: Number(root.querySelector("[data-air-field='drinker']")?.value ?? state.drinker ?? 0) }
-        : { rows: state.rows.map((row, index) => ({ ticked: Boolean(root.querySelector(`[data-air-row="${index}"]`)?.checked), dc: root.querySelector(`[data-air-dc="${index}"]`)?.value ?? null, rank: root.querySelector(`[data-air-rank="${index}"]`)?.value ?? null, outright: Boolean(root.querySelector(`[data-air-outright="${index}"]`)?.checked) })), ...(root.querySelector("[data-air-ownrank]") ? { ownRank: root.querySelector("[data-air-ownrank]").value } : {}) };
+        : { ...(root.querySelector("[data-air-field='drinker']") ? { drinker: Number(root.querySelector("[data-air-field='drinker']").value) } : {}), rows: state.rows.map((row, index) => ({ ticked: Boolean(root.querySelector(`[data-air-row="${index}"]`)?.checked), dc: root.querySelector(`[data-air-dc="${index}"]`)?.value ?? null, rank: root.querySelector(`[data-air-rank="${index}"]`)?.value ?? null, outright: Boolean(root.querySelector(`[data-air-outright="${index}"]`)?.checked) })), ...(root.querySelector("[data-air-ownrank]") ? { ownRank: root.querySelector("[data-air-ownrank]").value } : {}) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
     if (state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), ...(state.kind === "item-action" && state.plan.action?.slugs ? { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) } : {}), ...(state.kind === "expose" ? { damageChoice: Number(root.querySelector("[data-air-field='damageChoice']")?.value ?? state.damageChoice ?? 0), attackChoice: Number(root.querySelector("[data-air-field='attackChoice']")?.value ?? state.attackChoice ?? 0), checkChoice: Number(root.querySelector("[data-air-field='checkChoice']")?.value ?? state.checkChoice ?? 0), ...(root.querySelector("[data-air-field='scaled']") ? { scaled: root.querySelector("[data-air-field='scaled']").value } : {}) } : {}) };
     if (state.kind === "toggle" || state.kind === "ways") return { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) };
@@ -481,7 +481,9 @@ function wireCard(message, html) {
             if (state.kind === "teleport") {
                 if ((state.plan.teleport?.from === "target" || state.plan.teleport?.summon) && !choices.targets?.length) throw new Error("Target the creature first.");
                 // (A summon's space for the creature targeted, its size: Whistle of Calling's, 2026-10-27.)
-                const destination = await pickTeleportSpace(state, state.plan.teleport?.summon ? { moved: choices.targets[0] } : {});
+                // (The first targeted that isn't its user, as the GM's side moves — its user's own token targeted too, first, isn't the one called.)
+                const called = state.plan.teleport?.summon ? choices.targets.find((uuid) => uuid !== state.user.tokenUuid) ?? choices.targets[0] : null;
+                const destination = await pickTeleportSpace(state, called ? { moved: called } : {});
                 if (!destination) {
                     button.disabled = false;
                     return;

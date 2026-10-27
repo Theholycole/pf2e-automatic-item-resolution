@@ -72,7 +72,14 @@ export function etchedRuneActivations(item, index, options = {}) {
         // (Its text with the weapon's own numbers: "1d8 per weapon damage die of the etched weapon".)
         const text = item.type === "weapon" ? withWeaponPotency(perWeaponDie(source.system?.description?.value, weaponDice(item), item.system?.damage?.damageType ?? null), item) : item.type === "armor" ? withArmorPotency(source.system?.description?.value, item) : source.system?.description?.value;
         const rune = text === source.system?.description?.value ? source : { ...source, system: { ...source.system, description: { ...(source.system?.description ?? {}), value: text } } };
-        for (const entry of compileActivations(rune, options)) found.push({ ...entry, index: `rune:${key}:${entry.index}`, rune: { key, name: source.name, uuid: source.uuid ?? null } });
+        // (Its index the etched one's, inside its plan too: Animated's Set Free's Strike card writes its 10-minute wait under the index the sheet
+        // reads — the live check's reading, 2026-10-27.)
+        for (const entry of compileActivations(rune, options)) {
+            const renamed = `rune:${key}:${entry.index}`;
+            const fighting = entry.plan?.again?.plan?.selfFighting;
+            const plan = fighting ? { ...entry.plan, again: { ...entry.plan.again, plan: { ...entry.plan.again.plan, selfFighting: { ...fighting, index: renamed } } } } : entry.plan;
+            found.push({ ...entry, plan, index: renamed, rune: { key, name: source.name, uuid: source.uuid ?? null } });
+        }
     }
     return found;
 }

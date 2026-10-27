@@ -154,7 +154,10 @@ export function teleportPlan(html, base, whole = null) {
     const square = read.from === "target" ? ruled.find((sentence) => /^If you fire at a square, you can teleport to a space that contains that square or an unoccupied space adjacent to it\.$/i.test(sentence)) : null;
     const notes = ruled.filter((sentence) => !OWN_STRIKE(sentence) && sentence !== square);
     const lines = [...(read.lines ?? []), ...(along ? [`Up to ${countOf(along[1])} willing creatures adjacent to it go along: target them before Pick`] : []), ...sentences.filter((sentence) => (read.with || along) && withLine(sentence)).map((sentence) => withLine(sentence)[1]()), ...(summonFails ? ["Nothing happens if it's dead, on another plane or farther away"] : [])];
-    const others = read.with ?? (along ? { count: countOf(along[1]) } : null);
+    // (All or none of them, Bring Me Near's "If there's not enough room for everyone, only you are transported": with.allOrNone — the live check's
+    // reading, 2026-10-27.)
+    const allOrNone = sentences.some((sentence) => /^If there's not enough room for everyone, only you are transported\.$/i.test(sentence));
+    const others = read.with || along ? { ...(read.with ?? { count: countOf(along[1]) }), ...(allOrNone ? { allOrNone: true } : {}) } : null;
     const teleport = { ...(lines.length ? { lines } : {}), ...(read.move ? { move: read.move } : {}), ...(others ? { with: others } : {}), ...(read.summon ? { summon: true } : {}), ...(smoke ? { smoke: { lasts: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" }, notes: ["A strong wind disperses it at once."] } } : {}), within: read.within, speedTimes: read.speedTimes, ...(read.weaponRange ? { weaponRange: true } : {}), ...(square ? { orSquare: true } : {}), from: read.from, ...(critical && read.from === "self" ? { critical: { within: Number(critical[1]) } } : {}), ...(alone ? { alone: { used: Boolean(alone[1]) } } : {}), ...(line ? { line: { formula: line[1], type: line[2].toLowerCase() } } : {}), ...(lineOfEffect ? { lineOfEffect: true } : {}) };
     return {
         ...base,

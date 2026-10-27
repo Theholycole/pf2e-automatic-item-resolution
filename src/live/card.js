@@ -122,7 +122,8 @@ export function modifierText(modifier) {
     // (Its effects' traits, Admirer's Bouquet's "against emotion or mental effects": item:trait:… terms, alone or in an "or".)
     const traitsOf = (terms) => terms.filter((term) => typeof term === "string" && term.startsWith("item:trait:")).map((term) => term.slice(11));
     const traits = [...traitsOf(predicate), ...predicate.filter((term) => Array.isArray(term?.or)).flatMap((term) => traitsOf(term.or))];
-    const scope = [...actions, ...(marked ? ["against the marked creature"] : []), ...(traits.length ? [`against ${traits.join(" or ")} effects`] : [])];
+    // (Several marked, Rhyton of the Radiant Ifrit's toasted creatures: in the plural — the live check's reading, 2026-10-27.)
+    const scope = [...actions, ...(marked ? [modifier.markedMany ? "against the marked creatures" : "against the marked creature"] : []), ...(traits.length ? [`against ${traits.join(" or ")} effects`] : [])];
     return `${modifier.value > 0 ? "+" : "−"}${Math.abs(modifier.value)} ${modifier.type} to ${modifier.selector}${scope.length ? ` (${scope.join(", ")})` : ""}${forTime(modifier.duration)}`;
 }
 
@@ -207,7 +208,7 @@ export function previewLines(state) {
         else if (effect.kind === "temp-hp") lines.push(`${amount} temporary Hit Points${time ? ` ${time}` : ""}`);
         else if (effect.kind === "heal") lines.push(`Heals ${amount} Hit Points`);
     }
-    for (const modifier of row.modifiers ?? []) lines.push(modifierText(modifier));
+    for (const modifier of row.modifiers ?? []) lines.push(modifierText(plan?.item?.mark?.several ? { ...modifier, markedMany: true } : modifier));
     for (const note of row.noteEffects ?? []) lines.push(plan.partial ? `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""}: the rest is the GM's to apply` : `A note of its text${note.duration?.mode === "fixed" ? ` for ${timeText(note.duration)}` : ""} (nothing else to apply)`);
     // (A reduction's own notes are above, as "Also: …".)
     if (!plan?.reduce) for (const note of plan?.notes ?? []) lines.push(note);
@@ -904,7 +905,9 @@ export function installedEffectSource(installed, entry, { item = {}, user = {}, 
 // that Effect — to the end of its wearer's next turn (PF2e's "until the end of your next turn"), the FastHealing's predicate off while it
 // lasts. Returns a new source.
 export const deactivatedSlug = (item = {}) => `air-deactivated-${String(item.slug ?? item.name ?? "item").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
-export function deactivatedEffectSource({ name, slug, types }, { worldTime = 0, initiative = null, moduleId = "pf2e-automatic-item-resolution" } = {}) {
+// (rounds: 0 when its wearer hasn't acted yet this round — its next turn this round's, PF2e's Effect starting at its own initiative; 1 otherwise.
+// The live check's reading, 2026-10-27.)
+export function deactivatedEffectSource({ name, slug, types }, { worldTime = 0, initiative = null, rounds = 1, moduleId = "pf2e-automatic-item-resolution" } = {}) {
     return {
         name: `${name}: deactivated`,
         type: "effect",
@@ -913,7 +916,7 @@ export function deactivatedEffectSource({ name, slug, types }, { worldTime = 0, 
         system: {
             slug,
             description: { value: `<p>${escape(name)} is deactivated by ${escape(types.join(" or "))} damage until the end of its wearer's next turn: no healing at that turn's start.</p>` },
-            duration: { value: 1, unit: "rounds", expiry: "turn-end", sustained: false },
+            duration: { value: rounds, unit: "rounds", expiry: "turn-end", sustained: false },
             start: { value: worldTime, initiative },
             rules: []
         }

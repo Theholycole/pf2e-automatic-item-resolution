@@ -195,7 +195,14 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
     } else if (objects.op === "reload") {
         // (One round of its user's ammunition for it: PF2e's own attach, as the weapon's reload button does. Recalled, Persistent Lodestone's: the round
         // it missed with given back first, so none of its user's is spent.)
-        const ammo = ammoFor(actor, chosen) ?? (objects.recalled ? spentAmmoFor(actor, chosen) : null);
+        let ammo = ammoFor(actor, chosen) ?? (objects.recalled ? spentAmmoFor(actor, chosen) : null);
+        // (Its stack gone — the round it missed with was its last, PF2e deleting the empty stack —: that round, kept on the firearm as it was
+        // spent (setUpMadeWeapons' preUpdateItem), its stack again — the live check's reading, 2026-10-27.)
+        const last = !ammo && objects.recalled ? chosen.getFlag?.(MODULE_ID, "lastRound") : null;
+        if (last) {
+            const { _id, ...source } = foundry.utils.deepClone(last);
+            [ammo] = await actor.createEmbeddedDocuments("Item", [{ ...source, system: { ...(source.system ?? {}), quantity: 0 } }]);
+        }
         if (!ammo) throw new Error(`${state.user.name} has no ammunition for ${chosen.name}.`);
         if (objects.recalled) await ammo.update({ "system.quantity": (Number(ammo.quantity ?? ammo.system?.quantity) || 0) + 1 });
         await chosen.attach(ammo, { quantity: 1, stack: true });
@@ -332,6 +339,14 @@ export async function spendMadeAfterAttack(message) {
 }
 
 export function setUpMadeWeapons() {
+    // (The round a firearm spends, kept on it as PF2e's update takes it from its loaded rounds: its stack may be gone after — Persistent
+    // Lodestone's recalled round, scripts/objects.js reload. 2026-10-27.)
+    Hooks.on("preUpdateItem", (item, changes) => {
+        if (item?.type !== "weapon" || !foundry.utils.hasProperty(changes, "system.subitems")) return;
+        const after = foundry.utils.getProperty(changes, "system.subitems") ?? [];
+        const spent = (item._source?.system?.subitems ?? []).find((entry) => entry?.type === "ammo" && (Number(after.find((next) => next?._id === entry._id)?.system?.quantity) || 0) < (Number(entry.system?.quantity) || 0));
+        if (spent) foundry.utils.setProperty(changes, `flags.${MODULE_ID}.lastRound`, { ...foundry.utils.deepClone(spent), system: { ...foundry.utils.deepClone(spent.system ?? {}), quantity: 1 } });
+    });
     Hooks.on("createChatMessage", (message) => {
         if (!isActiveGM()) return;
         spendMadeAfterAttack(message).catch((error) => console.error(`${MODULE_ID} | a made weapon after its attack`, error));
