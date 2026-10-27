@@ -324,13 +324,13 @@ test("an unarmed attack its user gains, PF2e's Strike rule: Ring of the Tiger's 
     assert.equal(weaponText(chain.plan.item.weapon[0]), "The weapon gains nonlethal for 1 minute");
 });
 
-test("fast healing for a while, PF2e's FastHealing rule: Infernal Health's 25 at the start of each turn for 6 rounds, its spirit-damage exception a note", async () => {
+test("fast healing for a while, PF2e's FastHealing rule (its words and Effect); Infernal Health's 25 at each turn's start, which spirit damage stops, its own healing instead (2026-10-27)", async () => {
     const { fastHealingEffectSource, fastHealingText } = await import("../src/live/card.js");
-    const [health] = compileActivations(source("Infernal Health"));
-    const [healing] = health.plan.item.fastHealing;
+    const healing = { value: 25, duration: { mode: "fixed", value: 6, unit: "rounds", expiry: "turn-start", anchor: "effect-start" } };
     assert.equal(fastHealingText(healing), "Fast healing 25 for 6 rounds");
     assert.deepEqual(fastHealingEffectSource(healing, { item: { name: "Infernal Health" } }).system.rules, [{ key: "FastHealing", value: 25 }]);
-    assert.equal(health.plan.partial, true);
+    const [health] = compileActivations(source("Infernal Health"));
+    assert.deepEqual([health.plan.item.fastHealing, health.plan.item.ruleEffects[0].turnHeal, health.plan.partial], [undefined, { formula: "25", at: "start", unless: "spirit" }, undefined]);
 });
 
 test("a tattoo of one animal (Tooth and Claw Tattoo): the ways card's pick of the animal, its unarmed attack for 1 minute copying its user's best unarmed attack's die and traits", async () => {

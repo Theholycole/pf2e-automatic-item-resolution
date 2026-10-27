@@ -6496,6 +6496,36 @@ export const cases = {
         return { lines, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // Infernal Health (2026-10-27): 25 Hit Points at the start of each turn for 6 rounds; spirit damage stops the next one, then it heals again.
+    async infernalHealth(scene) {
+        const { actor: holder, token } = await creature(scene, "Infernal Holder", { x: 8, y: 18, hp: 60 });
+        await holder.update({ "system.attributes.hp.value": 10 });
+        const contract = await give(holder, "Infernal Health");
+        await contract.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1, "system.equipped.invested": true });
+        await token.object?.control?.();
+        const since = Date.now();
+        await game.modules.get(NS).api.live.activate(contract.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the contract's card" });
+        await game.modules.get(NS).api.live.apply(card.id, {});
+        const effect = () => holder.itemTypes.effect.find((entry) => entry.getFlag(NS, "turnHeal")?.at === "start");
+        await until(effect, "the start-of-turn healing Effect", { timeout: 8000 });
+        assert(effect().system.duration.value === 6 && effect().system.duration.expiry === "turn-end", `6 rounds (${JSON.stringify(effect().system.duration)})`);
+        const { turnStartHeal } = await import("../scripts/turn-heal.js");
+        const hp = () => holder.system.attributes.hp.value;
+        await turnStartHeal(holder, token);
+        await until(() => hp() === 35, `healed to 35 (${hp()})`, { timeout: 5000 });
+        const DamageRoll = CONFIG.Dice.rolls.find((roll) => roll.name === "DamageRoll");
+        await holder.applyDamage({ damage: await new DamageRoll("5[spirit]").evaluate(), token: holder.getActiveTokens(true, true)[0] });
+        await until(() => effect()?.getFlag(NS, "turnHeal")?.stopped === true, "stopped by the spirit damage", { timeout: 5000 });
+        const after = hp();
+        await turnStartHeal(holder, token);
+        await wait(800);
+        assert(hp() === after, `no healing after spirit damage (${after} → ${hp()})`);
+        await turnStartHeal(holder, token);
+        await until(() => hp() === after + 25, `healed again (${hp()})`, { timeout: 5000 });
+        return { hp: hp() };
+    },
+
     // Psyche Salts (Moderate): Clear Mind cast on the drinker, and PF2e's +2 item bonus to saves against mental effects for 10 minutes on them.
     async psycheSaltsBonus(scene) {
         assert(game.modules.get("pf2e-automatic-resolution")?.api?.castFromItem, "The spell module's castFromItem isn't there.");
@@ -7546,22 +7576,6 @@ export const cases = {
         assert(plan.resolution.check.statistic === "stealth" && plan.resolution.check.against?.statistic === "perception", `Stealth against Perception (${JSON.stringify(plan.resolution.check)})`);
         assert(!(plan.resolution.outcomes.success.effects ?? []).length, "no Hidden on the attacker");
         return { check: check.id };
-    },
-
-    // Infernal Health: its user's Effect with PF2e's FastHealing 25 for 6 rounds.
-    async infernalHealth(scene) {
-        const { actor: user } = await creature(scene, "Infernal Patient", { type: "character", x: 3, y: 15 });
-        const contract = await give(user, "Infernal Health");
-        await contract.update({ "system.equipped.invested": true }).catch(() => null);
-        const since = Date.now();
-        await game.modules.get(NS).api.live.activate(contract.uuid, 0);
-        const card = await messageAfter(since, itemCard("item"), { what: "the contract's card" });
-        await game.modules.get(NS).api.live.apply(card.id);
-        const effect = () => user.itemTypes.effect.find((entry) => entry.system.rules.some((rule) => rule.key === "FastHealing"));
-        await until(() => effect(), "the fast healing Effect", { timeout: 8000 });
-        const rule = effect().system.rules.find((entry) => entry.key === "FastHealing");
-        assert(Number(rule.value) === 25 && effect().system.duration.value === 6 && effect().system.duration.unit === "rounds", `fast healing 25 for 6 rounds (${JSON.stringify(rule)}, ${JSON.stringify(effect().system.duration)})`);
-        return { rule };
     },
 
     // Orb of Dragonkind's breath: the card's picker of its dragon's damage type; fire picked, the ability module's basic Reflex save card

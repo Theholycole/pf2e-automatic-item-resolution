@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1318,
+  "entries": 1317,
   "results": {
-   "partial": 419,
+   "partial": 418,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -16,7 +16,7 @@
    "moving": 84,
    "visibility": 48,
    "choice": 31,
-   "lasting": 68,
+   "lasting": 67,
    "strike": 100,
    "spells": 36,
    "information": 23,
@@ -57,7 +57,7 @@
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 110,
-   "lasting": 237,
+   "lasting": 236,
    "moving": 111,
    "triggers": 121,
    "visibility": 50,
@@ -7507,16 +7507,6 @@
    "work": "1d12",
    "needs": [
     "reader"
-   ]
-  },
-  {
-   "name": "Infernal Health",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "each round",
-   "needs": [
-    "lasting"
    ]
   },
   {

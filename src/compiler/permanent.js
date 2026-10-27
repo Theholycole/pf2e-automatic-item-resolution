@@ -80,6 +80,7 @@ import { coveredSquarePlan, raisedAreaPlan, raisedWallsPlan, sprayedSmokePlan, s
 import { perceptionCheckPlan } from "./perception-check.js";
 import { offGuardNextPlan } from "./off-guard-next.js";
 import { preventConditionPlan } from "./prevent-condition.js";
+import { withStartTurnHeal } from "./turn-heals.js";
 import { DRAGON_TYPES, readTypeChoice, withRowTypeChoice, withTypeChoices } from "./type-choice.js";
 import { counteractLeaves, readCounteract, withCounteractLeaves } from "./counteract.js";
 import { pickedSentence, skillPickOf } from "./skill-pick.js";
@@ -545,6 +546,8 @@ function compileEach(item, options = {}) {
         // (Healing its text gives its user beside a linked Effect, src/compiler/consumables.js: Kindler Cameo.)
         plan = withStatedHealing(plan, activation.html, html);
         plan = withWhilePersistent(plan, plainText(activation.html));
+        // (Healing at the start of each turn for a while unless a damage type came first, src/compiler/turn-heals.js: Infernal Health.)
+        plan = withStartTurnHeal(plan, plainText(activation.html));
         // (A poison or curse its hit gives, src/compiler/hit-delivery.js: Lionfish Spear's at the creature hit, Alghollthu Lash's on its next.)
         plan = withHitDelivery(plan, plainText(activation.html), { trigger: activation.trigger, itemType: item.type });
         // (Damage of its user's choice of two types, each row giving both: the card's picker, src/compiler/type-choice.js.)
