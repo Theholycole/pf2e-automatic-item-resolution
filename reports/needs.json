@@ -1,103 +1,92 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 794,
+  "entries": 399,
   "results": {
-   "partial": 244,
-   "none": 324,
-   "note-only": 162,
-   "builtin:no-effect": 64
+   "partial": 129,
+   "none": 182,
+   "note-only": 55,
+   "builtin:no-effect": 33
   },
   "main": {
-   "cast-changes": 21,
    "counteract": 7,
-   "afflictions": 54,
-   "visibility": 45,
-   "moving": 26,
-   "choice": 23,
-   "spells": 34,
-   "strike": 41,
-   "no-rules": 8,
-   "actions": 32,
-   "immunity": 12,
-   "creatures": 74,
-   "objects": 25,
-   "illusions": 50,
-   "removed": 6,
-   "areas": 117,
-   "lasting": 23,
-   "vehicles": 23,
+   "afflictions": 16,
+   "moving": 25,
+   "choice": 14,
+   "immunity": 11,
+   "no-rules": 2,
+   "creatures": 25,
+   "objects": 12,
+   "areas": 48,
+   "lasting": 21,
+   "strike": 30,
    "reader": 10,
-   "triggers": 38,
-   "dying": 30,
-   "speeds": 3,
+   "triggers": 37,
+   "cast-changes": 10,
+   "dying": 21,
+   "speeds": 2,
    "senses": 10,
-   "from-events": 4,
-   "cooldown": 4,
-   "several": 23,
-   "retaliation": 3,
+   "spells": 15,
+   "actions": 7,
+   "cooldown": 3,
+   "several": 11,
    "forms": 8,
-   "out-of-combat": 7,
+   "removed": 2,
+   "visibility": 8,
    "missing-number": 1,
    "fortune": 5,
    "situational": 6,
-   "information": 8,
-   "by-kind": 6,
+   "information": 4,
    "mind": 4,
-   "speech": 3
+   "illusions": 9,
+   "vehicles": 3,
+   "out-of-combat": 4,
+   "speech": 2,
+   "from-events": 2,
+   "by-kind": 3,
+   "retaliation": 1
   },
   "any": {
-   "cast-changes": 21,
-   "counteract": 67,
-   "afflictions": 92,
-   "lasting": 144,
-   "visibility": 47,
-   "areas": 154,
-   "dying": 71,
-   "moving": 45,
-   "reader": 136,
-   "out-of-combat": 282,
-   "choice": 76,
-   "objects": 215,
-   "spells": 70,
-   "strike": 94,
-   "actions": 50,
-   "from-events": 18,
-   "speech": 62,
-   "no-rules": 8,
-   "immunity": 61,
-   "information": 141,
-   "creatures": 74,
-   "situational": 58,
-   "illusions": 57,
-   "removed": 7,
-   "range": 5,
-   "several": 74,
-   "vehicles": 27,
-   "triggers": 63,
-   "speeds": 7,
-   "senses": 17,
-   "mind": 47,
-   "fortune": 6,
-   "cooldown": 6,
-   "retaliation": 3,
-   "forms": 9,
-   "missing-number": 2,
-   "by-kind": 6
+   "counteract": 31,
+   "afflictions": 33,
+   "lasting": 84,
+   "moving": 33,
+   "areas": 68,
+   "reader": 77,
+   "out-of-combat": 141,
+   "choice": 38,
+   "objects": 101,
+   "immunity": 36,
+   "information": 64,
+   "speech": 25,
+   "no-rules": 2,
+   "creatures": 25,
+   "spells": 42,
+   "situational": 34,
+   "range": 3,
+   "several": 38,
+   "strike": 60,
+   "triggers": 49,
+   "cast-changes": 10,
+   "dying": 46,
+   "speeds": 3,
+   "senses": 12,
+   "mind": 32,
+   "from-events": 11,
+   "actions": 15,
+   "cooldown": 5,
+   "forms": 8,
+   "removed": 2,
+   "visibility": 8,
+   "missing-number": 1,
+   "illusions": 13,
+   "fortune": 5,
+   "vehicles": 3,
+   "by-kind": 3,
+   "retaliation": 1
   }
  },
  "entries": [
-  {
-   "name": "Perfection's First Step",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
   {
    "name": "Four-Tiger Blade",
    "kind": "activation",
@@ -123,20 +112,6 @@
    "needs": [
     "afflictions",
     "lasting"
-   ]
-  },
-  {
-   "name": "Tlil Mask",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "concealment",
-   "needs": [
-    "visibility",
-    "areas",
-    "dying"
    ]
   },
   {
@@ -167,61 +142,6 @@
    "needs": [
     "choice",
     "objects"
-   ]
-  },
-  {
-   "name": "Detect Anathema Fulu",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "none",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells",
-    "lasting",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Octopus Potion (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "partial",
-   "main": "strike",
-   "work": "multiple attack penalty",
-   "needs": [
-    "strike",
-    "actions",
-    "from-events",
-    "lasting",
-    "reader",
-    "speech"
-   ]
-  },
-  {
-   "name": "Deck of illusions",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
-   "name": "Immovable Rod",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "actions",
-   "work": "force open",
-   "needs": [
-    "actions"
    ]
   },
   {
@@ -294,39 +214,6 @@
    "needs": [
     "objects",
     "speech"
-   ]
-  },
-  {
-   "name": "Camp Shroud (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusions",
-   "needs": [
-    "illusions",
-    "areas",
-    "counteract",
-    "objects",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Time Shield Potion",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 13,
-   "result": "note-only",
-   "main": "removed",
-   "work": "shunted",
-   "needs": [
-    "removed",
-    "immunity",
-    "objects",
-    "reader"
    ]
   },
   {
@@ -445,19 +332,6 @@
    ]
   },
   {
-   "name": "Marvelous Miniature (Campfire)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "builtin:no-effect",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Rime Jar",
    "kind": "activation",
    "tier": "adventure",
@@ -467,21 +341,6 @@
    "main": "reader",
    "work": "fatigued",
    "needs": [
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Potion of Disguise (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "partial",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
-    "situational",
     "reader",
     "out-of-combat"
    ]
@@ -510,20 +369,6 @@
    "needs": [
     "areas",
     "situational",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Splatrope Extruder",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "choice",
-   "work": "choose",
-   "needs": [
-    "choice",
-    "objects",
     "out-of-combat"
    ]
   },
@@ -607,20 +452,6 @@
    ]
   },
   {
-   "name": "Dust of Corpse Animation",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animate a",
-   "needs": [
-    "creatures",
-    "choice",
-    "objects"
-   ]
-  },
-  {
    "name": "Potion of Passing Fancy",
    "kind": "consumable",
    "tier": "adventure",
@@ -631,49 +462,6 @@
    "needs": [
     "dying",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Vital Earth",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "note-only",
-   "main": "actions",
-   "work": "administer first aid",
-   "needs": [
-    "actions",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Limning Gem",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "areas",
-   "work": "dim light",
-   "needs": [
-    "areas",
-    "strike"
-   ]
-  },
-  {
-   "name": "Dragon Pearl (Draconic Codex)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 16,
-   "activation": "Pearlescent Shell",
-   "result": "partial",
-   "main": "areas",
-   "work": "barrier",
-   "needs": [
-    "areas",
-    "afflictions",
-    "immunity",
-    "choice",
-    "information"
    ]
   },
   {
@@ -694,46 +482,6 @@
    ]
   },
   {
-   "name": "Insistent Door Knocker (Major)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 17,
-   "result": "none",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "objects"
-   ]
-  },
-  {
-   "name": "Feather Token (Fan)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "note-only",
-   "main": "vehicles",
-   "work": "sail",
-   "needs": [
-    "vehicles",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Urn of Ashes",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Doom the Urn",
-   "result": "partial",
-   "main": "dying",
-   "work": "doomed",
-   "needs": [
-    "dying",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Thumper Snare",
    "kind": "consumable",
    "tier": "adventure",
@@ -744,48 +492,6 @@
    "needs": [
     "senses",
     "information"
-   ]
-  },
-  {
-   "name": "Stone Circle",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "builtin:no-effect",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Shadowmist Cape",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "result": "partial",
-   "main": "visibility",
-   "work": "you're hidden",
-   "needs": [
-    "visibility",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Flask of Elemental Earth",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "partial",
-   "main": "areas",
-   "work": "hazardous terrain",
-   "needs": [
-    "areas",
-    "afflictions",
-    "reader",
-    "out-of-combat"
    ]
   },
   {
@@ -822,72 +528,6 @@
    ]
   },
   {
-   "name": "Ooze Skin",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "partial",
-   "main": "from-events",
-   "work": "damage equal to the",
-   "needs": [
-    "from-events"
-   ]
-  },
-  {
-   "name": "Sun Sight",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "partial",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "counteract"
-   ]
-  },
-  {
-   "name": "Blooming Lotus Seed Pod",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "note-only",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "immunity",
-    "several",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Marvelous Miniature (Ladder)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Dragonclaw Scutcheon",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "partial",
-   "main": "spells",
-   "work": "focus spell",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
    "name": "Grail of Twisted Desires",
    "kind": "activation",
    "tier": "special",
@@ -915,20 +555,6 @@
     "areas",
     "counteract",
     "choice"
-   ]
-  },
-  {
-   "name": "Admonishing Band",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "actions",
-   "work": "demoralize",
-   "needs": [
-    "actions",
-    "immunity",
-    "speech"
    ]
   },
   {
@@ -1006,51 +632,6 @@
    ]
   },
   {
-   "name": "Bloodstone Doll (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "triggers",
-    "strike",
-    "counteract",
-    "situational"
-   ]
-  },
-  {
-   "name": "Flame Navette",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "affliction",
-   "needs": [
-    "afflictions",
-    "counteract"
-   ]
-  },
-  {
-   "name": "Tales in Timber (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Statue Disguise",
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "lasting",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Horn of Rust",
    "kind": "activation",
    "tier": "special",
@@ -1089,51 +670,6 @@
    ]
   },
   {
-   "name": "Arboreal's Revenge",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "activation": "Arboreal's Grace",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "curse",
-   "needs": [
-    "afflictions",
-    "immunity"
-   ]
-  },
-  {
-   "name": "Lion Claw",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "partial",
-   "main": "visibility",
-   "work": "remain undetected",
-   "needs": [
-    "visibility",
-    "strike"
-   ]
-  },
-  {
-   "name": "Harrow Spellcards",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "none",
-   "main": "creatures",
-   "work": "spirits of",
-   "needs": [
-    "creatures",
-    "fortune",
-    "triggers",
-    "lasting",
-    "reader",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Soldier's Syrup (Lesser)",
    "kind": "consumable",
    "tier": "adventure",
@@ -1144,33 +680,6 @@
    "needs": [
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Self-Emptying Pocket",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Beguiling Presence",
-   "result": "partial",
-   "main": "actions",
-   "work": "as though by a successful",
-   "needs": [
-    "actions"
-   ]
-  },
-  {
-   "name": "Revealing Mist (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "undetected",
-   "needs": [
-    "visibility",
-    "areas",
-    "information"
    ]
   },
   {
@@ -1218,18 +727,6 @@
    ]
   },
   {
-   "name": "Malefic Mirror",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Peer Beyond",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
    "name": "Hallajin Key",
    "kind": "activation",
    "tier": "special",
@@ -1253,79 +750,6 @@
    "work": "creatures within",
    "needs": [
     "several"
-   ]
-  },
-  {
-   "name": "Alchemist's Haversack",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "result": "none",
-   "main": "spells",
-   "work": "versatile vial",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
-   "name": "Prismatic Plate",
-   "kind": "activation",
-   "tier": "general",
-   "level": 17,
-   "result": "builtin:no-effect",
-   "main": "retaliation",
-   "work": "any creature that touches you",
-   "needs": [
-    "retaliation",
-    "areas",
-    "counteract",
-    "lasting",
-    "choice"
-   ]
-  },
-  {
-   "name": "Rampart Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "none",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "strike",
-    "immunity",
-    "lasting",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Wandmender",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Recharge Wand",
-   "result": "none",
-   "main": "spells",
-   "work": "cast the spell",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
-   "name": "Illusory Backdrop",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Set the Scene",
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "objects",
-    "out-of-combat"
    ]
   },
   {
@@ -1357,42 +781,6 @@
    ]
   },
   {
-   "name": "Cloning Potion",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 18,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures",
-    "spells",
-    "immunity",
-    "lasting",
-    "objects",
-    "reader",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Healing Vapor (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "areas",
-   "work": "mist",
-   "needs": [
-    "areas",
-    "afflictions",
-    "situational",
-    "several",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Reaper's Lancet",
    "kind": "activation",
    "tier": "special",
@@ -1403,52 +791,6 @@
    "needs": [
     "triggers",
     "afflictions"
-   ]
-  },
-  {
-   "name": "Swamp Lily Quilt",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "spells",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Dreaming Round",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "result": "partial",
-   "main": "dying",
-   "work": "unconscious",
-   "needs": [
-    "dying",
-    "lasting",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Fossil Fragment (Amber Mosquito)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Fossil Metamorphosis",
-   "result": "partial",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures",
-    "afflictions",
-    "dying",
-    "immunity",
-    "reader"
    ]
   },
   {
@@ -1477,20 +819,6 @@
     "spells",
     "choice",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Spider Chair",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Web Swing",
-   "result": "none",
-   "main": "areas",
-   "work": "web",
-   "needs": [
-    "areas",
-    "information"
    ]
   },
   {
@@ -1523,102 +851,6 @@
    ]
   },
   {
-   "name": "Sawtooth Reaper",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "activation": "Bloodmist Whirl",
-   "result": "partial",
-   "main": "areas",
-   "work": "fog",
-   "needs": [
-    "areas",
-    "strike",
-    "actions",
-    "lasting",
-    "objects"
-   ]
-  },
-  {
-   "name": "Rod of Wonder",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "partial",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike"
-   ]
-  },
-  {
-   "name": "Wildwood Ink (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "partial",
-   "main": "out-of-combat",
-   "work": "1 hour",
-   "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Jar of Shifting Sands",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Spill Sand",
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
-   "name": "Demolition Fulu (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Deck of Mischief",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "activation": "Card Trick",
-   "result": "none",
-   "main": "illusions",
-   "work": "disbelieve",
-   "needs": [
-    "illusions",
-    "information"
-   ]
-  },
-  {
-   "name": "Instrument Harness",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "activation": "Ready to Play",
-   "result": "none",
-   "main": "actions",
-   "work": "interact to draw",
-   "needs": [
-    "actions"
-   ]
-  },
-  {
    "name": "Gyroscopic Stabilizer",
    "kind": "activation",
    "tier": "adventure",
@@ -1629,36 +861,6 @@
    "needs": [
     "strike",
     "dying"
-   ]
-  },
-  {
-   "name": "Anointing Oil",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "note-only",
-   "main": "objects",
-   "work": "corpse",
-   "needs": [
-    "objects",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Fulu of Fire Suppression",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "counteract",
-    "lasting",
-    "mind",
-    "out-of-combat"
    ]
   },
   {
@@ -1746,33 +948,6 @@
    ]
   },
   {
-   "name": "Dust of Appearance",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "builtin:no-effect",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "information"
-   ]
-  },
-  {
-   "name": "Battle Medic's Baton",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "actions",
-   "work": "battle medicine",
-   "needs": [
-    "actions",
-    "immunity",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "The Wanderer",
    "kind": "activation",
    "tier": "special",
@@ -1814,33 +989,6 @@
    ]
   },
   {
-   "name": "Corrosive Ammunition",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "none",
-   "main": "afflictions",
-   "work": "persistent acid damage",
-   "needs": [
-    "afflictions",
-    "objects",
-    "reader"
-   ]
-  },
-  {
-   "name": "Weapon Shot (Moderate)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjured",
-   "needs": [
-    "creatures",
-    "strike"
-   ]
-  },
-  {
    "name": "Slithermaw's Bane",
    "kind": "activation",
    "tier": "special",
@@ -1852,33 +1000,6 @@
    "needs": [
     "areas",
     "situational",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Silver Tripod",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "note-only",
-   "main": "dying",
-   "work": "stabilizes",
-   "needs": [
-    "dying",
-    "lasting",
-    "information"
-   ]
-  },
-  {
-   "name": "Biting Snare",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas",
     "out-of-combat"
    ]
   },
@@ -1929,35 +1050,6 @@
    ]
   },
   {
-   "name": "Rope of Climbing (Moderate)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "note-only",
-   "main": "actions",
-   "work": "can use an interact action",
-   "needs": [
-    "actions",
-    "choice",
-    "objects"
-   ]
-  },
-  {
-   "name": "Explorer's Yurt",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Unroll",
-   "result": "none",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Soulspeaker",
    "kind": "activation",
    "tier": "adventure",
@@ -1968,21 +1060,6 @@
    "needs": [
     "lasting",
     "speech"
-   ]
-  },
-  {
-   "name": "Vaccine (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 12,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "situational",
-    "out-of-combat"
    ]
   },
   {
@@ -1998,21 +1075,6 @@
     "actions",
     "dying",
     "situational"
-   ]
-  },
-  {
-   "name": "Mantle of Far Horizons",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "activation": "Gaze upon the Horizon",
-   "result": "note-only",
-   "main": "areas",
-   "work": "fog",
-   "needs": [
-    "areas",
-    "lasting",
-    "out-of-combat"
    ]
   },
   {
@@ -2033,20 +1095,6 @@
    ]
   },
   {
-   "name": "Lover's Ink",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "none",
-   "main": "visibility",
-   "work": "hidden",
-   "needs": [
-    "visibility",
-    "information",
-    "speech"
-   ]
-  },
-  {
    "name": "Marvelous Miniature, Swift Sparrow",
    "kind": "consumable",
    "tier": "adventure",
@@ -2057,24 +1105,6 @@
    "needs": [
     "choice",
     "information"
-   ]
-  },
-  {
-   "name": "Camp Shroud (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 13,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusions",
-   "needs": [
-    "illusions",
-    "areas",
-    "counteract",
-    "objects",
-    "information",
-    "speech",
-    "out-of-combat"
    ]
   },
   {
@@ -2090,33 +1120,6 @@
     "strike",
     "immunity",
     "objects"
-   ]
-  },
-  {
-   "name": "Ulfen Shieldbreaker",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "activation": "Battering Blow",
-   "result": "partial",
-   "main": "triggers",
-   "work": "triggering attack",
-   "needs": [
-    "triggers",
-    "actions"
-   ]
-  },
-  {
-   "name": "Aboutface Figurehead",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "About Face!",
-   "result": "none",
-   "main": "vehicles",
-   "work": "ship",
-   "needs": [
-    "vehicles"
    ]
   },
   {
@@ -2166,22 +1169,6 @@
    ]
   },
   {
-   "name": "Mirrorblade",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "activation": "Scryshield",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "invisible to",
-   "needs": [
-    "visibility",
-    "lasting",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Sphere of Annihilation",
    "kind": "activation",
    "tier": "special",
@@ -2205,63 +1192,6 @@
    "work": "mythic point",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Wondrous Figurine (Onyx Dog)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 2,
-   "result": "partial",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures",
-    "senses",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Pocket Stage",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "activation": "Play with Dolls",
-   "result": "none",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "afflictions",
-    "choice",
-    "information"
-   ]
-  },
-  {
-   "name": "Collar of the Eternal Bond",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Eidolon's Freedom",
-   "result": "note-only",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
-   "name": "Feather Token (Swan Boat) (Ammunition)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "none",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "objects",
-    "out-of-combat"
    ]
   },
   {
@@ -2321,22 +1251,6 @@
    ]
   },
   {
-   "name": "Emergency Disguise",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
-    "strike",
-    "objects",
-    "mind",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Purple Worm Repellent",
    "kind": "consumable",
    "tier": "adventure",
@@ -2347,46 +1261,6 @@
    "needs": [
     "areas",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Oil of Dynamism",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animated object",
-   "needs": [
-    "creatures",
-    "objects"
-   ]
-  },
-  {
-   "name": "Lady's Knife",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "builtin:no-effect",
-   "main": "several",
-   "work": "ally",
-   "needs": [
-    "several",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Inspiring Spotlight (Portable)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Light It Up",
-   "result": "partial",
-   "main": "areas",
-   "work": "darkness",
-   "needs": [
-    "areas",
-    "counteract"
    ]
   },
   {
@@ -2433,21 +1307,6 @@
    ]
   },
   {
-   "name": "Gift of the Poisoned Heart",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "none",
-   "main": "afflictions",
-   "work": "curse",
-   "needs": [
-    "afflictions",
-    "dying",
-    "spells",
-    "mind"
-   ]
-  },
-  {
    "name": "Armor Polishing Kit",
    "kind": "consumable",
    "tier": "adventure",
@@ -2461,35 +1320,6 @@
    ]
   },
   {
-   "name": "Silver Snake Cane",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "activation": "Silver Snake Sword",
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "lasting",
-    "objects"
-   ]
-  },
-  {
-   "name": "Silver Snake Cane",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "activation": "Silver Snake Serum",
-   "result": "none",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "choice"
-   ]
-  },
-  {
    "name": "Fan of Soothing Winds (Greater)",
    "kind": "activation",
    "tier": "general",
@@ -2499,22 +1329,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "Rose of Loves Lost",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "none",
-   "main": "afflictions",
-   "work": "curse",
-   "needs": [
-    "afflictions",
-    "dying",
-    "mind",
-    "information",
-    "out-of-combat"
    ]
   },
   {
@@ -2545,36 +1359,6 @@
    ]
   },
   {
-   "name": "Accolade Robe",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Review",
-   "result": "builtin:no-effect",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
-    "information"
-   ]
-  },
-  {
-   "name": "Tentacle Potion (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "none",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
-    "lasting",
-    "objects",
-    "mind",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Boughshatter",
    "kind": "activation",
    "tier": "adventure",
@@ -2600,19 +1384,6 @@
     "afflictions",
     "immunity",
     "lasting"
-   ]
-  },
-  {
-   "name": "Curled Cure Gel",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "partial",
-   "main": "actions",
-   "work": "as part of the same activity",
-   "needs": [
-    "actions",
-    "reader"
    ]
   },
   {
@@ -2656,64 +1427,6 @@
    ]
   },
   {
-   "name": "Marvelous Miniature (Chest)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Sandcastle",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Shape the Castle",
-   "result": "none",
-   "main": "areas",
-   "work": "walls",
-   "needs": [
-    "areas",
-    "choice",
-    "objects"
-   ]
-  },
-  {
-   "name": "Sidestepping",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Phase Through",
-   "result": "none",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "reader"
-   ]
-  },
-  {
-   "name": "Chameleon Suit (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 12,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "moving",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Blood Sight Elixir (Major)",
    "kind": "consumable",
    "tier": "adventure",
@@ -2727,19 +1440,6 @@
     "dying",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Contagion Metabolizer (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "counteract"
    ]
   },
   {
@@ -2779,36 +1479,6 @@
    "needs": [
     "speeds",
     "immunity",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Oil of Dynamism (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animated object",
-   "needs": [
-    "creatures",
-    "objects"
-   ]
-  },
-  {
-   "name": "Instant Fortress",
-   "kind": "activation",
-   "tier": "general",
-   "level": 16,
-   "result": "note-only",
-   "main": "cooldown",
-   "work": "can't be activated again",
-   "needs": [
-    "cooldown",
-    "visibility",
-    "areas",
-    "actions",
     "objects",
     "out-of-combat"
    ]
@@ -2854,20 +1524,6 @@
    ]
   },
   {
-   "name": "Ghostly Portal Paint",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "note-only",
-   "main": "removed",
-   "work": "shunted",
-   "needs": [
-    "removed",
-    "areas",
-    "objects"
-   ]
-  },
-  {
    "name": "Spider Lily Tattoo",
    "kind": "activation",
    "tier": "adventure",
@@ -2878,20 +1534,6 @@
    "work": "doomed",
    "needs": [
     "dying"
-   ]
-  },
-  {
-   "name": "Revealing Mist (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "undetected",
-   "needs": [
-    "visibility",
-    "areas",
-    "information"
    ]
   },
   {
@@ -2942,34 +1584,6 @@
    ]
   },
   {
-   "name": "Tlil Mask (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "concealment",
-   "needs": [
-    "visibility",
-    "areas",
-    "dying"
-   ]
-  },
-  {
-   "name": "Folding Boat (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "none",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "several",
-    "objects"
-   ]
-  },
-  {
    "name": "Moonkeep Orchid",
    "kind": "consumable",
    "tier": "adventure",
@@ -2982,20 +1596,6 @@
     "counteract",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Alicorn Lance",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "creatures",
-   "work": "spirit of",
-   "needs": [
-    "creatures",
-    "moving",
-    "strike"
    ]
   },
   {
@@ -3065,34 +1665,6 @@
    ]
   },
   {
-   "name": "Philosopher's Stone",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 20,
-   "result": "builtin:no-effect",
-   "main": "actions",
-   "work": "force open",
-   "needs": [
-    "actions",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Rope of Climbing (Lesser)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "actions",
-   "work": "can use an interact action",
-   "needs": [
-    "actions",
-    "choice",
-    "objects"
-   ]
-  },
-  {
    "name": "Redeemer's Pistol",
    "kind": "activation",
    "tier": "special",
@@ -3110,32 +1682,6 @@
    ]
   },
   {
-   "name": "Goz Mask",
-   "kind": "activation",
-   "tier": "general",
-   "level": 2,
-   "result": "note-only",
-   "main": "areas",
-   "work": "fog",
-   "needs": [
-    "areas",
-    "strike"
-   ]
-  },
-  {
-   "name": "Flurrying",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "partial",
-   "main": "lasting",
-   "work": "sustain",
-   "needs": [
-    "lasting",
-    "choice"
-   ]
-  },
-  {
    "name": "Spindle Key",
    "kind": "activation",
    "tier": "adventure",
@@ -3150,22 +1696,6 @@
    ]
   },
   {
-   "name": "Swarmform Collar",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "companion",
-   "needs": [
-    "creatures",
-    "forms",
-    "dying",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Admirer's Bouquet",
    "kind": "activation",
    "tier": "adventure",
@@ -3176,33 +1706,6 @@
    "needs": [
     "several",
     "mind"
-   ]
-  },
-  {
-   "name": "Contagion Metabolizer (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "counteract"
-   ]
-  },
-  {
-   "name": "Caustic Deteriorating Dust",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "note-only",
-   "main": "objects",
-   "work": "hardness",
-   "needs": [
-    "objects",
-    "reader",
-    "out-of-combat"
    ]
   },
   {
@@ -3222,19 +1725,6 @@
    ]
   },
   {
-   "name": "Peachwood Talisman",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "note-only",
-   "main": "several",
-   "work": "allies",
-   "needs": [
-    "several",
-    "reader"
-   ]
-  },
-  {
    "name": "Tome of Scintillating Sleet",
    "kind": "activation",
    "tier": "general",
@@ -3245,18 +1735,6 @@
    "needs": [
     "strike",
     "reader"
-   ]
-  },
-  {
-   "name": "Aether Appendage",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "objects",
-   "work": "objects",
-   "needs": [
-    "objects"
    ]
   },
   {
@@ -3319,49 +1797,6 @@
    ]
   },
   {
-   "name": "Gaze of the Mantis",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Target Sense",
-   "result": "builtin:no-effect",
-   "main": "afflictions",
-   "work": "afflictions",
-   "needs": [
-    "afflictions",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Crying Angel Pendant",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "partial",
-   "main": "dying",
-   "work": "stabilize",
-   "needs": [
-    "dying",
-    "reader"
-   ]
-  },
-  {
-   "name": "Razmiri Mask (Gold)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "activation": "Call Upon Razmir's Mercy",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "affliction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Hex Blaster",
    "kind": "activation",
    "tier": "special",
@@ -3417,65 +1852,6 @@
    ]
   },
   {
-   "name": "Mage's Hat (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Hat Spell",
-   "result": "none",
-   "main": "spells",
-   "work": "cast the spell",
-   "needs": [
-    "spells",
-    "objects"
-   ]
-  },
-  {
-   "name": "Camp Shroud (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusions",
-   "needs": [
-    "illusions",
-    "areas",
-    "counteract",
-    "objects",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Vaccine (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "situational",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Krasovnatype",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "information",
-   "work": "learn",
-   "needs": [
-    "information"
-   ]
-  },
-  {
    "name": "Ochre Fulcrum Lens",
    "kind": "activation",
    "tier": "special",
@@ -3485,19 +1861,6 @@
    "work": "attack roll",
    "needs": [
     "strike",
-    "objects"
-   ]
-  },
-  {
-   "name": "Insistent Door Knocker",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "none",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
     "objects"
    ]
   },
@@ -3517,18 +1880,6 @@
    ]
   },
   {
-   "name": "Bastion of the Inheritor",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "note-only",
-   "main": "actions",
-   "work": "additional action",
-   "needs": [
-    "actions"
-   ]
-  },
-  {
    "name": "Emerald Fulcrum Lens",
    "kind": "activation",
    "tier": "special",
@@ -3542,20 +1893,6 @@
    ]
   },
   {
-   "name": "Ivory Baton (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "result": "partial",
-   "main": "by-kind",
-   "work": "only constructs",
-   "needs": [
-    "by-kind",
-    "counteract",
-    "mind"
-   ]
-  },
-  {
    "name": "The Fiend",
    "kind": "activation",
    "tier": "special",
@@ -3566,21 +1903,6 @@
    "needs": [
     "immunity",
     "information"
-   ]
-  },
-  {
-   "name": "Razmiri Mask (Porcelain)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "activation": "Call Upon Razmir's Mercy",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "affliction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
    ]
   },
   {
@@ -3614,50 +1936,6 @@
    ]
   },
   {
-   "name": "Doomsweeper",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "activation": "Clear the Way",
-   "result": "builtin:no-effect",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "counteract",
-    "objects",
-    "information"
-   ]
-  },
-  {
-   "name": "Awakened Adamantine Shot",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "result": "note-only",
-   "main": "immunity",
-   "work": "weakness to",
-   "needs": [
-    "immunity",
-    "reader"
-   ]
-  },
-  {
-   "name": "Golden Goose",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Golden Goose",
-   "result": "none",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas",
-    "lasting",
-    "reader"
-   ]
-  },
-  {
    "name": "Potion of Annulment (Greater)",
    "kind": "consumable",
    "tier": "adventure",
@@ -3670,21 +1948,6 @@
     "spells",
     "counteract",
     "information"
-   ]
-  },
-  {
-   "name": "Banner of the Rising Star",
-   "kind": "activation",
-   "tier": "general",
-   "level": 20,
-   "activation": "Rise Up",
-   "result": "partial",
-   "main": "dying",
-   "work": "death",
-   "needs": [
-    "dying",
-    "several",
-    "reader"
    ]
   },
   {
@@ -3702,24 +1965,6 @@
    ]
   },
   {
-   "name": "Camp Shroud (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusions",
-   "needs": [
-    "illusions",
-    "areas",
-    "counteract",
-    "objects",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Flame of The Radiant Spark",
    "kind": "consumable",
    "tier": "special",
@@ -3730,20 +1975,6 @@
    "needs": [
     "areas",
     "dying"
-   ]
-  },
-  {
-   "name": "Vaccine (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 18,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "situational"
    ]
   },
   {
@@ -3780,23 +2011,6 @@
    ]
   },
   {
-   "name": "Veiled Figurehead",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Veil!",
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "vehicles",
-    "lasting",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Bonmuan Swapping Stone (Moderate)",
    "kind": "consumable",
    "tier": "adventure",
@@ -3809,19 +2023,6 @@
     "strike",
     "immunity",
     "objects"
-   ]
-  },
-  {
-   "name": "Accursed Fame",
-   "kind": "activation",
-   "tier": "general",
-   "level": 16,
-   "activation": "Entreat Crowd",
-   "result": "builtin:no-effect",
-   "main": "several",
-   "work": "ally",
-   "needs": [
-    "several"
    ]
   },
   {
@@ -3849,18 +2050,6 @@
    "needs": [
     "areas",
     "immunity"
-   ]
-  },
-  {
-   "name": "Colorful Coating (Yellow)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -3892,18 +2081,6 @@
    ]
   },
   {
-   "name": "Chronicler Wayfinder",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "none",
-   "main": "information",
-   "work": "recall knowledge",
-   "needs": [
-    "information"
-   ]
-  },
-  {
    "name": "Azarim",
    "kind": "activation",
    "tier": "special",
@@ -3913,34 +2090,6 @@
    "work": "lie",
    "needs": [
     "mind"
-   ]
-  },
-  {
-   "name": "Mariner’s Mien (Lesser)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "activation": "Set the Course",
-   "result": "partial",
-   "main": "vehicles",
-   "work": "vehicle",
-   "needs": [
-    "vehicles",
-    "lasting",
-    "reader"
-   ]
-  },
-  {
-   "name": "Iron Equalizer",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 12,
-   "result": "none",
-   "main": "strike",
-   "work": "certain strike",
-   "needs": [
-    "strike",
-    "actions"
    ]
   },
   {
@@ -3967,24 +2116,6 @@
    "work": "spell slots",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Memory Palace",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "result": "note-only",
-   "main": "dying",
-   "work": "dead",
-   "needs": [
-    "dying",
-    "lasting",
-    "choice",
-    "objects",
-    "mind",
-    "information",
-    "out-of-combat"
    ]
   },
   {
@@ -4053,33 +2184,6 @@
    "work": "radius",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Bleachguard Doll",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "none",
-   "main": "spells",
-   "work": "cantrips",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
-   "name": "Bleachguard Doll",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "none",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures",
-    "dying",
-    "spells",
-    "objects"
    ]
   },
   {
@@ -4156,18 +2260,6 @@
    ]
   },
   {
-   "name": "Wildwood Ink (Major)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 17,
-   "result": "partial",
-   "main": "out-of-combat",
-   "work": "8 hours",
-   "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Viridian Crown",
    "kind": "activation",
    "tier": "special",
@@ -4178,36 +2270,6 @@
    "work": "resist the",
    "needs": [
     "immunity",
-    "information"
-   ]
-  },
-  {
-   "name": "Pocket Gala",
-   "kind": "activation",
-   "tier": "general",
-   "level": 16,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "lasting",
-    "objects",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Hand-Hewed Face",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Fresh Face",
-   "result": "none",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
     "information"
    ]
   },
@@ -4226,22 +2288,6 @@
    ]
   },
   {
-   "name": "Olfactory Obfuscator (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "concealed",
-   "needs": [
-    "visibility",
-    "senses",
-    "objects",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Essence Forge (Greater)",
    "kind": "activation",
    "tier": "adventure",
@@ -4256,46 +2302,6 @@
     "choice",
     "mind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Helm of the Tides",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Raise the Tide",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Singing Stone",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Stone's Sight",
-   "result": "none",
-   "main": "several",
-   "work": "creatures within",
-   "needs": [
-    "several",
-    "objects",
-    "information"
-   ]
-  },
-  {
-   "name": "Whistle of Calling",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "none",
-   "main": "creatures",
-   "work": "companion",
-   "needs": [
-    "creatures",
-    "moving"
    ]
   },
   {
@@ -4336,33 +2342,6 @@
    "needs": [
     "immunity",
     "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Diver's Gloves (Moderate)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "areas",
-   "work": "barrier",
-   "needs": [
-    "areas",
-    "triggers"
-   ]
-  },
-  {
-   "name": "Private Workshop",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "none",
-   "main": "areas",
-   "work": "walls",
-   "needs": [
-    "areas",
-    "objects",
     "out-of-combat"
    ]
   },
@@ -4439,50 +2418,6 @@
    ]
   },
   {
-   "name": "Misdirecting Haversack",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "none",
-   "main": "illusions",
-   "work": "disguised",
-   "needs": [
-    "illusions",
-    "counteract",
-    "lasting",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Foe-Sensing Rod",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "note-only",
-   "main": "illusions",
-   "work": "disguised",
-   "needs": [
-    "illusions",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Rusting Snare",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas",
-    "afflictions",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Hollow Robes",
    "kind": "activation",
    "tier": "adventure",
@@ -4539,18 +2474,6 @@
    ]
   },
   {
-   "name": "Gate Attenuator (Major)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 17,
-   "activation": "Elemental Spell",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
    "name": "Wraithweave Patch (Type I)",
    "kind": "activation",
    "tier": "adventure",
@@ -4590,36 +2513,6 @@
    ]
   },
   {
-   "name": "Doctrine of Blissful Eternity",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "none",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures",
-    "triggers",
-    "dying",
-    "spells",
-    "reader"
-   ]
-  },
-  {
-   "name": "Secret-Keeper's Mask (Gray Master)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "builtin:no-effect",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "triggers",
-    "speech"
-   ]
-  },
-  {
    "name": "Token of Salt and Earth",
    "kind": "activation",
    "tier": "adventure",
@@ -4630,21 +2523,6 @@
    "work": "charm",
    "needs": [
     "mind"
-   ]
-  },
-  {
-   "name": "Chimera Flail",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Pouncing Whirl",
-   "result": "partial",
-   "main": "strike",
-   "work": "strike against",
-   "needs": [
-    "strike",
-    "several",
-    "reader"
    ]
   },
   {
@@ -4662,49 +2540,6 @@
    ]
   },
   {
-   "name": "Glasses of Sociability",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "activation": "Have We Met?",
-   "result": "none",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
-    "objects",
-    "mind",
-    "information"
-   ]
-  },
-  {
-   "name": "Ruby Capacitor (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 14,
-   "result": "none",
-   "main": "spells",
-   "work": "prepared the staff",
-   "needs": [
-    "spells",
-    "objects"
-   ]
-  },
-  {
-   "name": "Sun Orchid Elixir",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 20,
-   "result": "none",
-   "main": "afflictions",
-   "work": "curses",
-   "needs": [
-    "afflictions",
-    "mind",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Passage Charm",
    "kind": "activation",
    "tier": "adventure",
@@ -4718,33 +2553,6 @@
     "objects",
     "mind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ruby Capacitor (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 18,
-   "result": "none",
-   "main": "spells",
-   "work": "prepared the staff",
-   "needs": [
-    "spells",
-    "objects"
-   ]
-  },
-  {
-   "name": "Resonant Guitar",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Chord of Protection",
-   "result": "partial",
-   "main": "areas",
-   "work": "barrier",
-   "needs": [
-    "areas",
-    "speech"
    ]
   },
   {
@@ -4794,19 +2602,6 @@
    ]
   },
   {
-   "name": "Weapon Shot (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjured",
-   "needs": [
-    "creatures",
-    "strike"
-   ]
-  },
-  {
    "name": "Banner of Common Cause",
    "kind": "activation",
    "tier": "adventure",
@@ -4820,19 +2615,6 @@
    ]
   },
   {
-   "name": "Demilich Eye Gem",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "none",
-   "main": "lasting",
-   "work": "later",
-   "needs": [
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Jawbreaker Shield",
    "kind": "activation",
    "tier": "adventure",
@@ -4842,21 +2624,6 @@
    "work": "damage rolls",
    "needs": [
     "strike",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Potion of Disguise (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "partial",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
-    "situational",
     "reader",
     "out-of-combat"
    ]
@@ -4930,36 +2697,6 @@
    ]
   },
   {
-   "name": "Octopus Potion (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "partial",
-   "main": "strike",
-   "work": "multiple attack penalty",
-   "needs": [
-    "strike",
-    "actions",
-    "from-events",
-    "lasting",
-    "reader",
-    "speech"
-   ]
-  },
-  {
-   "name": "Exploitative Wealth",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "activation": "Enforce Competition",
-   "result": "partial",
-   "main": "several",
-   "work": "allies",
-   "needs": [
-    "several"
-   ]
-  },
-  {
    "name": "The Trader",
    "kind": "activation",
    "tier": "special",
@@ -4969,35 +2706,6 @@
    "work": "1 hour",
    "needs": [
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Moonlit Ink",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "invisibility",
-   "needs": [
-    "visibility",
-    "information",
-    "speech"
-   ]
-  },
-  {
-   "name": "Olfactory Obfuscator (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "concealed",
-   "needs": [
-    "visibility",
-    "senses",
-    "objects",
-    "information"
    ]
   },
   {
@@ -5027,22 +2735,6 @@
    ]
   },
   {
-   "name": "Magnetic Suit (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "note-only",
-   "main": "actions",
-   "work": "grapple",
-   "needs": [
-    "actions",
-    "situational",
-    "choice",
-    "several",
-    "objects"
-   ]
-  },
-  {
    "name": "Garrote Bolt",
    "kind": "activation",
    "tier": "adventure",
@@ -5055,32 +2747,6 @@
     "afflictions",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Gate Attenuator (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Elemental Spell",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Secret-Keeper's Mask (Blackfingers)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "builtin:no-effect",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "objects",
-    "information"
    ]
   },
   {
@@ -5098,47 +2764,6 @@
    ]
   },
   {
-   "name": "Reef Heart (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "partial",
-   "main": "creatures",
-   "work": "conjure",
-   "needs": [
-    "creatures",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Wondrous Figurine (Golden Lions)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "partial",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Camouflaging Chromatophores (Lesser)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "activation": "Background Adaptation",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "moving"
-   ]
-  },
-  {
    "name": "Fan of the Four Winds",
    "kind": "activation",
    "tier": "special",
@@ -5148,23 +2773,6 @@
    "work": "sail",
    "needs": [
     "vehicles",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Dreamer's Butterfly",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "activation": "Wake the Dream",
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "dying",
-    "several",
-    "information",
     "out-of-combat"
    ]
   },
@@ -5199,60 +2807,6 @@
    ]
   },
   {
-   "name": "Galvasphere",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animates a",
-   "needs": [
-    "creatures",
-    "choice",
-    "objects"
-   ]
-  },
-  {
-   "name": "Sun Slayer",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Sunset",
-   "result": "note-only",
-   "main": "areas",
-   "work": "dim light",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
-   "name": "Clockwork Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "result": "note-only",
-   "main": "actions",
-   "work": "extra reaction",
-   "needs": [
-    "actions",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Deteriorating Dust",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "note-only",
-   "main": "objects",
-   "work": "hardness",
-   "needs": [
-    "objects",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Horns of Naraga",
    "kind": "activation",
    "tier": "special",
@@ -5265,61 +2819,6 @@
     "actions",
     "lasting",
     "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Elemental Wayfinder (Air)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Highhelm Stronghold Plate",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "result": "partial",
-   "main": "areas",
-   "work": "wall of",
-   "needs": [
-    "areas",
-    "lasting",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Addiction Suppressant (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "addiction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Tablet of Chained Souls",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "activation": "Spirit Carving",
-   "result": "none",
-   "main": "afflictions",
-   "work": "cursed",
-   "needs": [
-    "afflictions",
-    "speech",
     "out-of-combat"
    ]
   },
@@ -5347,50 +2846,6 @@
    "work": "see invisible",
    "needs": [
     "senses",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Cooperative Waffles",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "none",
-   "main": "creatures",
-   "work": "spirit of",
-   "needs": [
-    "creatures",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Cunning",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "strike",
-   "work": "attack rolls",
-   "needs": [
-    "strike",
-    "objects",
-    "information"
-   ]
-  },
-  {
-   "name": "Anglerfish Lantern (Submersible)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "activation": "Dive!",
-   "result": "note-only",
-   "main": "vehicles",
-   "work": "vehicle",
-   "needs": [
-    "vehicles",
-    "lasting",
     "objects",
     "out-of-combat"
    ]
@@ -5440,37 +2895,6 @@
    ]
   },
   {
-   "name": "Bloodstone Doll (Minor)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "triggers",
-    "strike",
-    "counteract",
-    "situational"
-   ]
-  },
-  {
-   "name": "Wind-Up Cart",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "none",
-   "main": "vehicles",
-   "work": "cart",
-   "needs": [
-    "vehicles",
-    "dying",
-    "lasting",
-    "objects"
-   ]
-  },
-  {
    "name": "Starless Scope",
    "kind": "activation",
    "tier": "special",
@@ -5502,21 +2926,6 @@
    ]
   },
   {
-   "name": "Potion of Disguise (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "partial",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
-    "situational",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Verdant Poultice",
    "kind": "consumable",
    "tier": "adventure",
@@ -5526,21 +2935,6 @@
    "work": "persistent damage",
    "needs": [
     "afflictions"
-   ]
-  },
-  {
-   "name": "Faydhaan's Dallah",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "activation": "Faydhaan's Hospitality",
-   "result": "none",
-   "main": "several",
-   "work": "each creature",
-   "needs": [
-    "several",
-    "objects",
-    "speech"
    ]
   },
   {
@@ -5571,31 +2965,6 @@
    ]
   },
   {
-   "name": "Cordelia's Construct Key",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animated object",
-   "needs": [
-    "creatures",
-    "strike",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Blessed Reformer",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
    "name": "Blessed Reformer",
    "kind": "activation",
    "tier": "general",
@@ -5606,54 +2975,6 @@
    "needs": [
     "strike",
     "spells"
-   ]
-  },
-  {
-   "name": "Elixir of Rejuvenation",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 20,
-   "result": "partial",
-   "main": "dying",
-   "work": "dead",
-   "needs": [
-    "dying",
-    "spells"
-   ]
-  },
-  {
-   "name": "Kotodama Bells",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "activation": "Awaken the Soul",
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animates the",
-   "needs": [
-    "creatures",
-    "speeds",
-    "objects",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Healing Vapor (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 17,
-   "result": "partial",
-   "main": "areas",
-   "work": "mist",
-   "needs": [
-    "areas",
-    "afflictions",
-    "situational",
-    "several",
-    "objects",
-    "reader"
    ]
   },
   {
@@ -5699,18 +3020,6 @@
    ]
   },
   {
-   "name": "Powder",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 0,
-   "result": "none",
-   "main": "visibility",
-   "work": "invisibility",
-   "needs": [
-    "visibility"
-   ]
-  },
-  {
    "name": "Privacy Ward Fulu (Hallway)",
    "kind": "consumable",
    "tier": "adventure",
@@ -5724,19 +3033,6 @@
     "several",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Clarity Goggles (Lesser)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "counteract"
    ]
   },
   {
@@ -5765,47 +3061,6 @@
    "needs": [
     "from-events",
     "reader"
-   ]
-  },
-  {
-   "name": "Pipe of Dancing Smoke",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas",
-    "choice",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Aeon Stone (Western Star)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "activation": "Illusory Disguise",
-   "result": "partial",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions"
-   ]
-  },
-  {
-   "name": "Inexplicable Apparatus",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "activation": "Inexplicable Patch",
-   "result": "partial",
-   "main": "objects",
-   "work": "item returns",
-   "needs": [
-    "objects"
    ]
   },
   {
@@ -5840,22 +3095,6 @@
    ]
   },
   {
-   "name": "Bargainer's Instrument",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 15,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjure",
-   "needs": [
-    "creatures",
-    "spells",
-    "choice",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Sacred Valkyrie Helm",
    "kind": "activation",
    "tier": "adventure",
@@ -5879,63 +3118,6 @@
     "creatures",
     "strike",
     "objects"
-   ]
-  },
-  {
-   "name": "Undead Detection Dye",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "illusions",
-   "work": "disguised",
-   "needs": [
-    "illusions",
-    "objects",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Effervescent Ampoule",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "none",
-   "main": "areas",
-   "work": "pressure plate",
-   "needs": [
-    "areas",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Mutator Onyx",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "builtin:no-effect",
-   "main": "areas",
-   "work": "walls",
-   "needs": [
-    "areas",
-    "objects"
-   ]
-  },
-  {
-   "name": "Demolition Fulu (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 17,
-   "result": "none",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader",
-    "information",
-    "out-of-combat"
    ]
   },
   {
@@ -6002,35 +3184,6 @@
    ]
   },
   {
-   "name": "Mind-Swap Potion",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 15,
-   "result": "builtin:no-effect",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Feather Token (Anchor)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "none",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "counteract",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Shadow's Heart",
    "kind": "activation",
    "tier": "adventure",
@@ -6060,32 +3213,6 @@
    ]
   },
   {
-   "name": "Candle of Invocation",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "builtin:no-effect",
-   "main": "spells",
-   "work": "spell slots",
-   "needs": [
-    "spells",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Neophyte's Fipple",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "speech",
-   "work": "sound",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Marvelous Calliope",
    "kind": "activation",
    "tier": "adventure",
@@ -6098,31 +3225,6 @@
     "actions",
     "objects",
     "speech"
-   ]
-  },
-  {
-   "name": "Ring of Observation (Lesser)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "several",
-   "work": "creatures within",
-   "needs": [
-    "several"
-   ]
-  },
-  {
-   "name": "Masquerade Scarf (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Masquerade",
-   "result": "partial",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions"
    ]
   },
   {
@@ -6156,56 +3258,6 @@
    ]
   },
   {
-   "name": "Rusting Carapace",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "partial",
-   "main": "objects",
-   "work": "item takes",
-   "needs": [
-    "objects",
-    "reader"
-   ]
-  },
-  {
-   "name": "Faerie Queen's Bower",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Ring of Maniacal Devices (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "activation": "Fireball Trap",
-   "result": "none",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells"
-   ]
-  },
-  {
-   "name": "Marvelous Miniature (Boat)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "none",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "The Courtesan",
    "kind": "activation",
    "tier": "special",
@@ -6232,20 +3284,6 @@
    ]
   },
   {
-   "name": "Feather Token (Whip)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "moving",
-   "work": "jumps",
-   "needs": [
-    "moving",
-    "actions",
-    "objects"
-   ]
-  },
-  {
    "name": "Void Shackles",
    "kind": "activation",
    "tier": "adventure",
@@ -6256,22 +3294,6 @@
    "work": "grow in size",
    "needs": [
     "forms",
-    "objects"
-   ]
-  },
-  {
-   "name": "Magnetic Suit",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "note-only",
-   "main": "actions",
-   "work": "grapple",
-   "needs": [
-    "actions",
-    "situational",
-    "choice",
-    "several",
     "objects"
    ]
   },
@@ -6306,21 +3328,6 @@
    ]
   },
   {
-   "name": "Warning Snare",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "areas",
-   "work": "trip wire",
-   "needs": [
-    "areas",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Dreadsmoke Thurible",
    "kind": "activation",
    "tier": "general",
@@ -6330,19 +3337,6 @@
    "work": "smoke",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Diver's Gloves (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "none",
-   "main": "areas",
-   "work": "barrier",
-   "needs": [
-    "areas",
-    "triggers"
    ]
   },
   {
@@ -6360,40 +3354,6 @@
    ]
   },
   {
-   "name": "Ghostshot Wrapping",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "none",
-   "main": "visibility",
-   "work": "undetected",
-   "needs": [
-    "visibility",
-    "triggers",
-    "strike",
-    "objects",
-    "information",
-    "speech"
-   ]
-  },
-  {
-   "name": "Healing Vapor (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "partial",
-   "main": "areas",
-   "work": "mist",
-   "needs": [
-    "areas",
-    "afflictions",
-    "situational",
-    "several",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Scale of Igroon",
    "kind": "activation",
    "tier": "special",
@@ -6405,21 +3365,6 @@
     "triggers",
     "choice",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Candle of Revealing",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "note-only",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "range",
-    "objects",
-    "information"
    ]
   },
   {
@@ -6449,32 +3394,6 @@
    ]
   },
   {
-   "name": "Sighting Shot",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "none",
-   "main": "areas",
-   "work": "bright light",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
-   "name": "Artevil Suspension",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "actions",
-   "work": "as part of the same activity",
-   "needs": [
-    "actions",
-    "afflictions",
-    "reader"
-   ]
-  },
-  {
    "name": "Wondrous Figurine (Rubber Bear)",
    "kind": "activation",
    "tier": "adventure",
@@ -6484,6 +3403,7 @@
    "work": "minion",
    "needs": [
     "creatures",
+    "cooldown",
     "lasting",
     "out-of-combat"
    ]
@@ -6516,20 +3436,6 @@
     "objects",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Hunter's Bane",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "builtin:no-effect",
-   "main": "visibility",
-   "work": "hidden or undetected",
-   "needs": [
-    "visibility",
-    "triggers",
-    "information"
    ]
   },
   {
@@ -6604,24 +3510,6 @@
    ]
   },
   {
-   "name": "Camp Shroud (Minor)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusions",
-   "needs": [
-    "illusions",
-    "areas",
-    "counteract",
-    "objects",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Mirror of Sorshen",
    "kind": "activation",
    "tier": "special",
@@ -6633,49 +3521,6 @@
    "needs": [
     "mind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Fauna Guardian",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures"
-   ]
-  },
-  {
-   "name": "Rusting Ammunition (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "result": "partial",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
-    "afflictions",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Mirror Robe",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "builtin:no-effect",
-   "main": "visibility",
-   "work": "undetected",
-   "needs": [
-    "visibility",
-    "choice",
-    "several",
-    "reader",
-    "information"
    ]
   },
   {
@@ -6730,35 +3575,6 @@
    ]
   },
   {
-   "name": "Addiction Suppressant (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "addiction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Rhyton of the Radiant Ifrit",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "activation": "Ifrit's Command",
-   "result": "none",
-   "main": "several",
-   "work": "each target",
-   "needs": [
-    "several",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Hagbane Biscuit",
    "kind": "consumable",
    "tier": "adventure",
@@ -6770,33 +3586,6 @@
     "illusions",
     "situational",
     "reader",
-    "information"
-   ]
-  },
-  {
-   "name": "Preserving Shot",
-   "kind": "activation",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "areas",
-   "work": "smoke",
-   "needs": [
-    "areas",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Accolade Robe (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 17,
-   "activation": "Review",
-   "result": "builtin:no-effect",
-   "main": "choice",
-   "work": "of your choice",
-   "needs": [
-    "choice",
     "information"
    ]
   },
@@ -6829,21 +3618,6 @@
     "strike",
     "actions",
     "several"
-   ]
-  },
-  {
-   "name": "Fulu of Flood Suppression",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "counteract",
-    "lasting",
-    "out-of-combat"
    ]
   },
   {
@@ -6929,19 +3703,6 @@
    ]
   },
   {
-   "name": "Insistent Door Knocker (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "result": "none",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "objects"
-   ]
-  },
-  {
    "name": "Philter of Empty Dreams",
    "kind": "consumable",
    "tier": "adventure",
@@ -6957,49 +3718,6 @@
    ]
   },
   {
-   "name": "Mantle of Amazing Health",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "immunity",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Colorful Coating (Blue)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "actions",
-    "objects"
-   ]
-  },
-  {
-   "name": "Eldritch Flare",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 15,
-   "result": "partial",
-   "main": "from-events",
-   "work": "half its damage",
-   "needs": [
-    "from-events",
-    "afflictions",
-    "immunity"
-   ]
-  },
-  {
    "name": "Shoony Shovel",
    "kind": "activation",
    "tier": "adventure",
@@ -7010,37 +3728,6 @@
    "needs": [
     "areas",
     "information"
-   ]
-  },
-  {
-   "name": "Shaping Sweet",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "note-only",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "lasting",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Bloodstone Doll (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "triggers",
-    "strike",
-    "counteract",
-    "situational"
    ]
   },
   {
@@ -7059,78 +3746,6 @@
    ]
   },
   {
-   "name": "Stone Circle (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "result": "builtin:no-effect",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Binding Coil (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 13,
-   "result": "partial",
-   "main": "actions",
-   "work": "grapple",
-   "needs": [
-    "actions",
-    "lasting",
-    "objects"
-   ]
-  },
-  {
-   "name": "Jabali's Dice",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Jabali's Gamble",
-   "result": "partial",
-   "main": "removed",
-   "work": "shunted",
-   "needs": [
-    "removed",
-    "areas",
-    "immunity",
-    "several"
-   ]
-  },
-  {
-   "name": "Cooperative Waffles (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "creatures",
-   "work": "spirit of",
-   "needs": [
-    "creatures",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Phantom Roll",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "visibility",
-   "work": "avoid notice",
-   "needs": [
-    "visibility",
-    "situational",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Bomb Snare",
    "kind": "consumable",
    "tier": "general",
@@ -7141,82 +3756,6 @@
    "needs": [
     "areas",
     "several"
-   ]
-  },
-  {
-   "name": "Clockwork Shield (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "result": "note-only",
-   "main": "actions",
-   "work": "extra reaction",
-   "needs": [
-    "actions",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Guise of the Smirking Devil (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "activation": "Hideous Wail",
-   "result": "partial",
-   "main": "by-kind",
-   "work": "only living creatures",
-   "needs": [
-    "by-kind",
-    "missing-number",
-    "reader"
-   ]
-  },
-  {
-   "name": "Kimanéz Luminescent Toadstool",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "areas",
-   "work": "dim light",
-   "needs": [
-    "areas",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Madcap Top",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "activation": "Spin the Top",
-   "result": "partial",
-   "main": "removed",
-   "work": "banishment",
-   "needs": [
-    "removed",
-    "illusions",
-    "moving",
-    "strike",
-    "range",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Sandalwood Fan",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Cloud of Leaves",
-   "result": "note-only",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures",
-    "visibility",
-    "several",
-    "information"
    ]
   },
   {
@@ -7246,19 +3785,6 @@
     "cooldown",
     "lasting",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Fleshgem (Earthspeaker)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "builtin:no-effect",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "reader"
    ]
   },
   {
@@ -7308,66 +3834,6 @@
    ]
   },
   {
-   "name": "Collar of Empathy",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Empathic Link",
-   "result": "none",
-   "main": "creatures",
-   "work": "animal companion",
-   "needs": [
-    "creatures",
-    "lasting",
-    "objects",
-    "speech"
-   ]
-  },
-  {
-   "name": "Gas Mask of Clean Air",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "activation": "Breathe Clean",
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "poisons",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Trustworthy Round",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "illusions",
-   "work": "disguised",
-   "needs": [
-    "illusions",
-    "from-events",
-    "objects",
-    "information"
-   ]
-  },
-  {
-   "name": "Addiction Suppressant (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "addiction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Lesser Cube of Nex",
    "kind": "activation",
    "tier": "special",
@@ -7383,49 +3849,6 @@
    ]
   },
   {
-   "name": "Conch of Otherworldly Seas",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Sounds of the Deep",
-   "result": "partial",
-   "main": "choice",
-   "work": "choose",
-   "needs": [
-    "choice",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Twig of Knowledge and Memory",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "information",
-   "work": "recall knowledge",
-   "needs": [
-    "information"
-   ]
-  },
-  {
-   "name": "Feather Token (Holly Bush)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility",
-    "afflictions",
-    "dying",
-    "objects",
-    "reader"
-   ]
-  },
-  {
    "name": "Golem Stylus",
    "kind": "activation",
    "tier": "adventure",
@@ -7435,35 +3858,6 @@
    "work": "counteract",
    "needs": [
     "counteract"
-   ]
-  },
-  {
-   "name": "Laurel of the Empath",
-   "kind": "activation",
-   "tier": "general",
-   "level": 20,
-   "result": "none",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Venomed Tongue",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "partial",
-   "main": "actions",
-   "work": "create a diversion",
-   "needs": [
-    "actions",
-    "afflictions",
-    "choice",
-    "reader",
-    "mind"
    ]
   },
   {
@@ -7478,21 +3872,6 @@
     "several",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Guiding Starknife",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Points of Light",
-   "result": "partial",
-   "main": "visibility",
-   "work": "concealment",
-   "needs": [
-    "visibility",
-    "objects",
-    "reader"
    ]
   },
   {
@@ -7511,34 +3890,6 @@
    ]
   },
   {
-   "name": "Prankster's Perpetual Pieplate",
-   "kind": "activation",
-   "tier": "general",
-   "level": 1,
-   "activation": "Project Pastry",
-   "result": "none",
-   "main": "out-of-combat",
-   "work": "submerged",
-   "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Razmiri Mask (Silver)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Call Upon Razmir's Mercy",
-   "result": "partial",
-   "main": "afflictions",
-   "work": "affliction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Clockwork Sun",
    "kind": "activation",
    "tier": "special",
@@ -7549,22 +3900,6 @@
    "work": "that are vulnerable to",
    "needs": [
     "by-kind",
-    "reader"
-   ]
-  },
-  {
-   "name": "Feather Token (Holly Bush) (Ammunition)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility",
-    "afflictions",
-    "dying",
-    "objects",
     "reader"
    ]
   },
@@ -7592,20 +3927,6 @@
    "needs": [
     "areas",
     "objects"
-   ]
-  },
-  {
-   "name": "Calamity Glass",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Mirror, Mirror",
-   "result": "none",
-   "main": "afflictions",
-   "work": "poisonous",
-   "needs": [
-    "afflictions",
-    "out-of-combat"
    ]
   },
   {
@@ -7639,19 +3960,6 @@
     "spells",
     "counteract",
     "reader"
-   ]
-  },
-  {
-   "name": "Thundercrasher",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "lasting"
    ]
   },
   {
@@ -7696,59 +4004,6 @@
     "creatures",
     "moving",
     "immunity"
-   ]
-  },
-  {
-   "name": "Addiction Suppressant (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 14,
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "addiction",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Octopus Bottle",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "builtin:no-effect",
-   "main": "visibility",
-   "work": "undetected",
-   "needs": [
-    "visibility",
-    "areas",
-    "strike",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Potion of Shared Life",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
-   "name": "Clarity Goggles (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "counteract"
    ]
   },
   {
@@ -7810,75 +4065,6 @@
    ]
   },
   {
-   "name": "Razmiri Wayfinder",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "builtin:no-effect",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Goblin-Eye Orb",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "visibility",
-   "work": "hidden to",
-   "needs": [
-    "visibility",
-    "triggers",
-    "strike",
-    "objects"
-   ]
-  },
-  {
-   "name": "Alkenstar Ice Wine",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "afflictions",
-   "work": "drug",
-   "needs": [
-    "afflictions",
-    "immunity"
-   ]
-  },
-  {
-   "name": "Mourner's Dawnlight Fulu",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "creatures",
-   "work": "familiar",
-   "needs": [
-    "creatures",
-    "information"
-   ]
-  },
-  {
-   "name": "Self-Immolating Note",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "objects",
-   "work": "broken",
-   "needs": [
-    "objects",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Warmaster's Baton",
    "kind": "activation",
    "tier": "adventure",
@@ -7889,67 +4075,6 @@
    "work": "Trigger: the troop under …",
    "needs": [
     "triggers"
-   ]
-  },
-  {
-   "name": "Ring of Observation (Moderate)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "note-only",
-   "main": "several",
-   "work": "creatures within",
-   "needs": [
-    "several"
-   ]
-  },
-  {
-   "name": "Rope of Climbing (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "note-only",
-   "main": "actions",
-   "work": "can use an interact action",
-   "needs": [
-    "actions",
-    "choice",
-    "objects"
-   ]
-  },
-  {
-   "name": "Tales in Timber",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Statue Disguise",
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "lasting",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Veiled Figurehead (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "activation": "Veil!",
-   "result": "partial",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "vehicles",
-    "lasting",
-    "choice",
-    "several",
-    "information",
-    "out-of-combat"
    ]
   },
   {
@@ -8068,77 +4193,6 @@
    ]
   },
   {
-   "name": "Guardian Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "result": "partial",
-   "main": "creatures",
-   "work": "conjure",
-   "needs": [
-    "creatures",
-    "actions",
-    "from-events",
-    "lasting",
-    "choice",
-    "several",
-    "objects"
-   ]
-  },
-  {
-   "name": "Cloud Pouch",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "activation": "Disperse",
-   "result": "partial",
-   "main": "areas",
-   "work": "mist",
-   "needs": [
-    "areas",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Headwrap of Wisdom",
-   "kind": "activation",
-   "tier": "general",
-   "level": 17,
-   "activation": "Consider the Consequences",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Magnetic Suit (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "note-only",
-   "main": "actions",
-   "work": "grapple",
-   "needs": [
-    "actions",
-    "situational",
-    "choice",
-    "several",
-    "objects"
-   ]
-  },
-  {
-   "name": "Psychic Warding Bracelet",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Guiding Star Orb",
    "kind": "activation",
    "tier": "special",
@@ -8155,31 +4209,6 @@
    ]
   },
   {
-   "name": "Lucky Draw Bandolier (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
-   "name": "Sanguine Ammunition",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike",
-    "afflictions",
-    "situational"
-   ]
-  },
-  {
    "name": "Pyrefeather Token",
    "kind": "consumable",
    "tier": "adventure",
@@ -8192,96 +4221,6 @@
     "from-events",
     "dying",
     "reader"
-   ]
-  },
-  {
-   "name": "Captivating Score",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "note-only",
-   "main": "choice",
-   "work": "choose",
-   "needs": [
-    "choice",
-    "several",
-    "mind",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Siege Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "activation": "Plant Cover",
-   "result": "none",
-   "main": "visibility",
-   "work": "standard cover",
-   "needs": [
-    "visibility"
-   ]
-  },
-  {
-   "name": "Octopus Potion (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 13,
-   "result": "partial",
-   "main": "strike",
-   "work": "multiple attack penalty",
-   "needs": [
-    "strike",
-    "actions",
-    "from-events",
-    "lasting",
-    "reader",
-    "speech"
-   ]
-  },
-  {
-   "name": "Poracha Fulu",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "lasting",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Viper Arrow",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "afflictions",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Calligraphic Illumination",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "activation": "Inscribed Insight",
-   "result": "none",
-   "main": "spells",
-   "work": "prepared spell",
-   "needs": [
-    "spells",
-    "information",
-    "speech"
    ]
   },
   {
@@ -8325,20 +4264,6 @@
    ]
   },
   {
-   "name": "Ruby String",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 14,
-   "result": "none",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
-    "spells",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Sky-Piercing Bow",
    "kind": "activation",
    "tier": "adventure",
@@ -8349,19 +4274,6 @@
    "needs": [
     "spells",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Weapon Shot (Major)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 16,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjured",
-   "needs": [
-    "creatures",
-    "strike"
    ]
   },
   {
@@ -8387,35 +4299,6 @@
    "work": "illusory",
    "needs": [
     "illusions"
-   ]
-  },
-  {
-   "name": "Clockwork Disguise",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "activation": "Deploy Disguise",
-   "result": "none",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions"
-   ]
-  },
-  {
-   "name": "Kizidhar's Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Secure Site",
-   "result": "note-only",
-   "main": "areas",
-   "work": "wall of",
-   "needs": [
-    "areas",
-    "several",
-    "speech",
-    "out-of-combat"
    ]
   },
   {
@@ -8548,33 +4431,6 @@
    ]
   },
   {
-   "name": "Caltrop Snare",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "areas",
-   "work": "trip wire",
-   "needs": [
-    "areas",
-    "choice"
-   ]
-  },
-  {
-   "name": "Bottled Roc",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "actions",
-   "work": "grapple",
-   "needs": [
-    "actions",
-    "several",
-    "reader"
-   ]
-  },
-  {
    "name": "Shadowed Scale, the Jungle Secret",
    "kind": "activation",
    "tier": "special",
@@ -8596,19 +4452,6 @@
    "work": "summon",
    "needs": [
     "creatures"
-   ]
-  },
-  {
-   "name": "Weapon Shot (Lesser)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjured",
-   "needs": [
-    "creatures",
-    "strike"
    ]
   },
   {
@@ -8642,21 +4485,6 @@
    ]
   },
   {
-   "name": "Earthsight Box",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Replicate Earth",
-   "result": "none",
-   "main": "areas",
-   "work": "walls",
-   "needs": [
-    "areas",
-    "lasting",
-    "information"
-   ]
-  },
-  {
    "name": "Beloved's Bracelets",
    "kind": "activation",
    "tier": "adventure",
@@ -8671,21 +4499,6 @@
     "spells",
     "choice",
     "information"
-   ]
-  },
-  {
-   "name": "Mariner’s Mien (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "activation": "Set the Course",
-   "result": "partial",
-   "main": "vehicles",
-   "work": "vehicle",
-   "needs": [
-    "vehicles",
-    "lasting",
-    "reader"
    ]
   },
   {
@@ -8704,19 +4517,6 @@
    ]
   },
   {
-   "name": "Ruby Capacitor",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "none",
-   "main": "spells",
-   "work": "prepared the staff",
-   "needs": [
-    "spells",
-    "objects"
-   ]
-  },
-  {
    "name": "Soulheart (Pure)",
    "kind": "activation",
    "tier": "special",
@@ -8728,22 +4528,6 @@
    "needs": [
     "dying",
     "spells"
-   ]
-  },
-  {
-   "name": "Talespinner's Lyre",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "lasting",
-    "mind",
-    "information",
-    "speech"
    ]
   },
   {
@@ -8773,51 +4557,6 @@
    ]
   },
   {
-   "name": "Serpent Oil (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures",
-    "objects"
-   ]
-  },
-  {
-   "name": "Lambent Perfume",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "activation": "Light Incense",
-   "result": "note-only",
-   "main": "areas",
-   "work": "mist",
-   "needs": [
-    "areas",
-    "afflictions",
-    "immunity",
-    "lasting",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Rusting Ammunition (Moderate)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "result": "partial",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
-    "afflictions",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Phoenix Fighting Fan",
    "kind": "activation",
    "tier": "special",
@@ -8828,22 +4567,6 @@
    "needs": [
     "strike",
     "lasting"
-   ]
-  },
-  {
-   "name": "Twilight Tattoo",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "activation": "Fade",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "invisible",
-   "needs": [
-    "visibility",
-    "lasting",
-    "information",
-    "out-of-combat"
    ]
   },
   {
@@ -8860,19 +4583,6 @@
    ]
   },
   {
-   "name": "Familiar Morsel",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "builtin:no-effect",
-   "main": "creatures",
-   "work": "familiar",
-   "needs": [
-    "creatures",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Kraken Bottle",
    "kind": "consumable",
    "tier": "general",
@@ -8882,33 +4592,6 @@
    "work": "cloud of",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Prismatic Dust",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "builtin:no-effect",
-   "main": "areas",
-   "work": "bright light",
-   "needs": [
-    "areas",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Binding Coil",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "partial",
-   "main": "actions",
-   "work": "grapple",
-   "needs": [
-    "actions",
-    "lasting",
-    "objects"
    ]
   },
   {
@@ -8922,19 +4605,6 @@
    "needs": [
     "visibility",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Clarity Goggles (Moderate)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "counteract"
    ]
   },
   {
@@ -8970,20 +4640,6 @@
    ]
   },
   {
-   "name": "Animate Dreamer",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "activation": "Unleash Spell",
-   "result": "builtin:no-effect",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike",
-    "spells"
-   ]
-  },
-  {
    "name": "Lance of Sun's Radiance",
    "kind": "activation",
    "tier": "adventure",
@@ -8999,20 +4655,6 @@
    ]
   },
   {
-   "name": "Ectoplasmic Tracer",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "several",
-   "work": "creatures within",
-   "needs": [
-    "several",
-    "reader",
-    "information"
-   ]
-  },
-  {
    "name": "Raven Band",
    "kind": "activation",
    "tier": "adventure",
@@ -9022,20 +4664,6 @@
    "work": "speak",
    "needs": [
     "speech"
-   ]
-  },
-  {
-   "name": "Waverider Barding",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "partial",
-   "main": "creatures",
-   "work": "companion",
-   "needs": [
-    "creatures",
-    "speeds",
-    "moving"
    ]
   },
   {
@@ -9049,19 +4677,6 @@
    "work": "knows",
    "needs": [
     "information"
-   ]
-  },
-  {
-   "name": "Ring of Maniacal Devices",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Fireball Trap",
-   "result": "none",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells"
    ]
   },
   {
@@ -9106,19 +4721,6 @@
    ]
   },
   {
-   "name": "Affliction Suppressant (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 14,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "affliction",
-   "needs": [
-    "afflictions",
-    "situational"
-   ]
-  },
-  {
    "name": "Mat of Resilience (Greater)",
    "kind": "activation",
    "tier": "adventure",
@@ -9147,35 +4749,6 @@
    ]
   },
   {
-   "name": "Origin Unguent",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "none",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "objects"
-   ]
-  },
-  {
-   "name": "Electromuscular Stimulator",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "note-only",
-   "main": "strike",
-   "work": "or strike",
-   "needs": [
-    "strike",
-    "afflictions",
-    "lasting",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "In the Shadows of Toil",
    "kind": "activation",
    "tier": "special",
@@ -9188,32 +4761,6 @@
    ]
   },
   {
-   "name": "Kraken Figurehead (Wracking)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "activation": "Lash Out!",
-   "result": "note-only",
-   "main": "vehicles",
-   "work": "ship",
-   "needs": [
-    "vehicles"
-   ]
-  },
-  {
-   "name": "Kraken Figurehead (Wracking)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "activation": "Grab Them!",
-   "result": "partial",
-   "main": "vehicles",
-   "work": "ships",
-   "needs": [
-    "vehicles"
-   ]
-  },
-  {
    "name": "Rowan Rifle",
    "kind": "activation",
    "tier": "special",
@@ -9223,93 +4770,6 @@
    "main": "out-of-combat",
    "work": "travel",
    "needs": [
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Vaccine (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "situational",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ouroboros Buckles",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "result": "partial",
-   "main": "creatures",
-   "work": "swarm of",
-   "needs": [
-    "creatures",
-    "senses",
-    "speeds",
-    "immunity"
-   ]
-  },
-  {
-   "name": "Herd Mask",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "builtin:no-effect",
-   "main": "illusions",
-   "work": "disguised",
-   "needs": [
-    "illusions",
-    "objects"
-   ]
-  },
-  {
-   "name": "Chameleon Suit (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "moving",
-    "information"
-   ]
-  },
-  {
-   "name": "Oil of Revelation",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "undetected",
-   "needs": [
-    "visibility",
-    "areas",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Tales in Timber (Major)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "activation": "Statue Disguise",
-   "result": "note-only",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "lasting",
-    "speech",
     "out-of-combat"
    ]
   },
@@ -9330,119 +4790,6 @@
    ]
   },
   {
-   "name": "Hosteling Statuette",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "creatures",
-   "work": "companion",
-   "needs": [
-    "creatures",
-    "objects",
-    "reader"
-   ]
-  },
-  {
-   "name": "Hosteling Statuette",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "builtin:no-effect",
-   "main": "creatures",
-   "work": "companion",
-   "needs": [
-    "creatures"
-   ]
-  },
-  {
-   "name": "Folding Boat",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "none",
-   "main": "vehicles",
-   "work": "boat",
-   "needs": [
-    "vehicles",
-    "several",
-    "objects"
-   ]
-  },
-  {
-   "name": "Fossil Fragment (Brontosaurus Phalange)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "activation": "Fossil Metamorphosis",
-   "result": "partial",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures",
-    "afflictions",
-    "dying",
-    "immunity",
-    "objects",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Illusory Program",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "illusions",
-   "work": "illusory",
-   "needs": [
-    "illusions",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Silent Bell",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Ring in the Quiet",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "invisible",
-   "needs": [
-    "visibility",
-    "areas",
-    "speech"
-   ]
-  },
-  {
-   "name": "Glimmering Missive",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "concealed",
-   "needs": [
-    "visibility",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Contagion Metabolizer (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 19,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "counteract"
-   ]
-  },
-  {
    "name": "Grimoire of Unknown Necessities",
    "kind": "activation",
    "tier": "special",
@@ -9454,34 +4801,6 @@
     "objects",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Barding Saddle",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Ready for Battle",
-   "result": "none",
-   "main": "creatures",
-   "work": "mount",
-   "needs": [
-    "creatures",
-    "moving",
-    "objects"
-   ]
-  },
-  {
-   "name": "Reactive Flash",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "strike",
-   "work": "reactive strike",
-   "needs": [
-    "strike",
-    "reader"
    ]
   },
   {
@@ -9511,33 +4830,6 @@
    ]
   },
   {
-   "name": "Bottled Night",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "note-only",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
-   "name": "Demolition Fulu (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "none",
-   "main": "objects",
-   "work": "crumbles",
-   "needs": [
-    "objects",
-    "reader",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Privacy Ward Fulu (Chamber)",
    "kind": "consumable",
    "tier": "adventure",
@@ -9551,34 +4843,6 @@
     "several",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Violet Ray",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Electric Love",
-   "result": "partial",
-   "main": "objects",
-   "work": "don",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
-   "name": "Ghost Lantern",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "note-only",
-   "main": "areas",
-   "work": "bright light",
-   "needs": [
-    "areas",
-    "situational",
-    "choice",
-    "objects"
    ]
   },
   {
@@ -9609,33 +4873,6 @@
    ]
   },
   {
-   "name": "Chameleon Suit",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "moving",
-    "information"
-   ]
-  },
-  {
-   "name": "Anchor of Aquatic Exploration",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoning",
-   "needs": [
-    "creatures",
-    "vehicles"
-   ]
-  },
-  {
    "name": "Phoenix Cinder",
    "kind": "consumable",
    "tier": "general",
@@ -9654,91 +4891,6 @@
     "reader",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Aroma Concealer",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "partial",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "senses",
-    "situational",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Taster's Folly",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "counteract",
-    "information"
-   ]
-  },
-  {
-   "name": "Unending Itch",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 14,
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "poison",
-   "needs": [
-    "afflictions",
-    "reader",
-    "information"
-   ]
-  },
-  {
-   "name": "Rime Foil",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
-   "name": "Tentacle Potion (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "none",
-   "main": "illusions",
-   "work": "disguise",
-   "needs": [
-    "illusions",
-    "lasting",
-    "objects",
-    "mind",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Echo Token",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "areas",
-   "work": "mist",
-   "needs": [
-    "areas",
-    "lasting",
-    "mind",
-    "information"
    ]
   },
   {
@@ -9780,19 +4932,6 @@
    ]
   },
   {
-   "name": "Lady's Blessing Oil",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "actions",
-   "work": "administer first aid",
-   "needs": [
-    "actions",
-    "dying"
-   ]
-  },
-  {
    "name": "Soldier's Syrup (Greater)",
    "kind": "consumable",
    "tier": "adventure",
@@ -9803,75 +4942,6 @@
    "needs": [
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Cube of Recall",
-   "kind": "activation",
-   "tier": "general",
-   "level": 19,
-   "result": "none",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
-    "choice",
-    "information"
-   ]
-  },
-  {
-   "name": "Ghost Ink",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "information",
-   "work": "detect",
-   "needs": [
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Watchful Portrait",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "choice",
-   "work": "decide",
-   "needs": [
-    "choice",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Parchment of Secrets",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "illusions",
-    "choice",
-    "information",
-    "speech"
-   ]
-  },
-  {
-   "name": "Yarrow-Root Bandage",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "actions",
-   "work": "administer first aid",
-   "needs": [
-    "actions",
-    "dying"
    ]
   },
   {
@@ -9886,20 +4956,6 @@
    "needs": [
     "several",
     "speech"
-   ]
-  },
-  {
-   "name": "Cordelia's Greater Construct Key",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animated object",
-   "needs": [
-    "creatures",
-    "strike",
-    "out-of-combat"
    ]
   },
   {
@@ -9956,19 +5012,6 @@
    ]
   },
   {
-   "name": "Body Recovery Kit",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "dying",
-   "work": "raise dead",
-   "needs": [
-    "dying",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "The Dance",
    "kind": "activation",
    "tier": "special",
@@ -9980,70 +5023,6 @@
     "fortune",
     "triggers",
     "choice"
-   ]
-  },
-  {
-   "name": "Extended Deteriorating Dust",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "note-only",
-   "main": "objects",
-   "work": "hardness",
-   "needs": [
-    "objects",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Healing Vapor (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 12,
-   "result": "partial",
-   "main": "areas",
-   "work": "mist",
-   "needs": [
-    "areas",
-    "afflictions",
-    "situational",
-    "several",
-    "objects",
-    "reader"
-   ]
-  },
-  {
-   "name": "Hongbao of Many Things",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "vehicles",
-   "work": "wagon",
-   "needs": [
-    "vehicles",
-    "lasting",
-    "objects",
-    "reader",
-    "speech"
-   ]
-  },
-  {
-   "name": "Limestone Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Limestone Wall",
-   "result": "note-only",
-   "main": "areas",
-   "work": "wall",
-   "needs": [
-    "areas",
-    "strike",
-    "immunity",
-    "lasting",
-    "objects"
    ]
   },
   {
@@ -10123,20 +5102,6 @@
    ]
   },
   {
-   "name": "Cantrip Deck (5-pack)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "spells",
-   "work": "cantrips",
-   "needs": [
-    "spells",
-    "choice",
-    "objects"
-   ]
-  },
-  {
    "name": "Golden Branding Iron (Greater)",
    "kind": "consumable",
    "tier": "adventure",
@@ -10149,18 +5114,6 @@
     "strike",
     "several",
     "information"
-   ]
-  },
-  {
-   "name": "Bound Guardian",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "none",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures"
    ]
   },
   {
@@ -10199,22 +5152,6 @@
    ]
   },
   {
-   "name": "Toshigami Blossom",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "none",
-   "main": "visibility",
-   "work": "become concealed",
-   "needs": [
-    "visibility",
-    "areas",
-    "strike",
-    "several",
-    "reader"
-   ]
-  },
-  {
    "name": "Void Fragment",
    "kind": "consumable",
    "tier": "general",
@@ -10242,29 +5179,6 @@
    ]
   },
   {
-   "name": "Spectacles of Piercing Sight",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "result": "note-only",
-   "main": "areas",
-   "work": "sheet of",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
-   "name": "Wildwood Ink",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
    "name": "Elixir of the Peaks (Greater)",
    "kind": "consumable",
    "tier": "adventure",
@@ -10289,33 +5203,6 @@
    "needs": [
     "by-kind",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Inspiring Spotlight (Mounted)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "activation": "Light It Up",
-   "result": "partial",
-   "main": "areas",
-   "work": "darkness",
-   "needs": [
-    "areas",
-    "counteract"
-   ]
-  },
-  {
-   "name": "Wasp Guard",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "persistent damage",
-   "needs": [
-    "afflictions",
-    "several"
    ]
   },
   {
@@ -10369,23 +5256,6 @@
    ]
   },
   {
-   "name": "Palanquin of Night",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "builtin:no-effect",
-   "main": "creatures",
-   "work": "servant",
-   "needs": [
-    "creatures",
-    "removed",
-    "cooldown",
-    "moving",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Kaldemash's Lament",
    "kind": "activation",
    "tier": "special",
@@ -10428,46 +5298,6 @@
    ]
   },
   {
-   "name": "Reef Heart",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "partial",
-   "main": "creatures",
-   "work": "conjure",
-   "needs": [
-    "creatures",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Camouflaging Chromatophores (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Background Adaptation",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "moving"
-   ]
-  },
-  {
-   "name": "Sack of Hydra's Teeth",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Sow a Tooth",
-   "result": "partial",
-   "main": "creatures",
-   "work": "minion",
-   "needs": [
-    "creatures"
-   ]
-  },
-  {
    "name": "Ember Dust",
    "kind": "consumable",
    "tier": "adventure",
@@ -10479,48 +5309,6 @@
     "lasting",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Zuhra's Gloves",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Zuhra's Stratagem",
-   "result": "partial",
-   "main": "areas",
-   "work": "wall of",
-   "needs": [
-    "areas",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Gunner's Bandolier",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "none",
-   "main": "actions",
-   "work": "interact to draw",
-   "needs": [
-    "actions",
-    "objects"
-   ]
-  },
-  {
-   "name": "Ally's Kerchief",
-   "kind": "activation",
-   "tier": "general",
-   "level": 2,
-   "activation": "Identify Allies",
-   "result": "none",
-   "main": "visibility",
-   "work": "invisible to",
-   "needs": [
-    "visibility",
-    "triggers",
-    "several"
    ]
   },
   {
@@ -10551,34 +5339,6 @@
    ]
   },
   {
-   "name": "Possibility Tome",
-   "kind": "activation",
-   "tier": "general",
-   "level": 18,
-   "activation": "Skim",
-   "result": "none",
-   "main": "choice",
-   "work": "choose one",
-   "needs": [
-    "choice",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Reaper's Spellgun",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 13,
-   "result": "partial",
-   "main": "dying",
-   "work": "dies",
-   "needs": [
-    "dying",
-    "reader"
-   ]
-  },
-  {
    "name": "Vambrace of Gorum",
    "kind": "activation",
    "tier": "special",
@@ -10604,19 +5364,6 @@
     "dying",
     "objects",
     "reader"
-   ]
-  },
-  {
-   "name": "Diver's Gloves (Lesser)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "areas",
-   "work": "barrier",
-   "needs": [
-    "areas",
-    "triggers"
    ]
   },
   {
@@ -10651,44 +5398,6 @@
    ]
   },
   {
-   "name": "Ring of Observation (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "note-only",
-   "main": "several",
-   "work": "creatures within",
-   "needs": [
-    "several",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Alchemical Atomizer",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "builtin:no-effect",
-   "main": "several",
-   "work": "ally",
-   "needs": [
-    "several",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Alchemical Atomizer",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "result": "none",
-   "main": "areas",
-   "work": "forms a cloud",
-   "needs": [
-    "areas"
-   ]
-  },
-  {
    "name": "Soulcutter",
    "kind": "activation",
    "tier": "special",
@@ -10698,36 +5407,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "Armorskin Robes of Fire",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Elemental Sheath",
-   "result": "partial",
-   "main": "retaliation",
-   "work": "any creature that touches you",
-   "needs": [
-    "retaliation",
-    "immunity",
-    "reader"
-   ]
-  },
-  {
-   "name": "Spectacles of Understanding",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "partial",
-   "main": "objects",
-   "work": "unfolding",
-   "needs": [
-    "objects",
-    "information",
-    "speech",
-    "out-of-combat"
    ]
   },
   {
@@ -10744,20 +5423,6 @@
    ]
   },
   {
-   "name": "Snake Oil",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "note-only",
-   "main": "afflictions",
-   "work": "affliction",
-   "needs": [
-    "afflictions",
-    "dying",
-    "information"
-   ]
-  },
-  {
    "name": "Wintershot (Heroic)",
    "kind": "activation",
    "tier": "special",
@@ -10770,33 +5435,6 @@
     "areas",
     "strike",
     "counteract"
-   ]
-  },
-  {
-   "name": "Goz Mask (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "note-only",
-   "main": "areas",
-   "work": "fog",
-   "needs": [
-    "areas",
-    "strike"
-   ]
-  },
-  {
-   "name": "Cantrip Deck (Full Pack)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "none",
-   "main": "spells",
-   "work": "cantrips",
-   "needs": [
-    "spells",
-    "choice",
-    "objects"
    ]
   },
   {
@@ -10858,20 +5496,6 @@
    ]
   },
   {
-   "name": "Violin of the Waves",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "result": "note-only",
-   "main": "vehicles",
-   "work": "ship",
-   "needs": [
-    "vehicles",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "The Crows",
    "kind": "activation",
    "tier": "special",
@@ -10909,18 +5533,6 @@
    ]
   },
   {
-   "name": "Remote Trigger",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "none",
-   "main": "choice",
-   "work": "choose",
-   "needs": [
-    "choice"
-   ]
-  },
-  {
    "name": "Crimson Fulcrum Lens",
    "kind": "activation",
    "tier": "special",
@@ -10944,45 +5556,6 @@
    "work": "cantrip",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Kraken Figurehead",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Lash Out!",
-   "result": "note-only",
-   "main": "vehicles",
-   "work": "ship",
-   "needs": [
-    "vehicles"
-   ]
-  },
-  {
-   "name": "Kraken Figurehead",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Grab Them!",
-   "result": "none",
-   "main": "speeds",
-   "work": "swim speed",
-   "needs": [
-    "speeds",
-    "vehicles"
-   ]
-  },
-  {
-   "name": "Undertaker's Manifest",
-   "kind": "activation",
-   "tier": "general",
-   "level": 6,
-   "result": "note-only",
-   "main": "areas",
-   "work": "cloud of",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -11039,32 +5612,6 @@
     "areas",
     "afflictions",
     "reader"
-   ]
-  },
-  {
-   "name": "Dust of Corpse Animation (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "animate a",
-   "needs": [
-    "creatures",
-    "choice",
-    "objects"
-   ]
-  },
-  {
-   "name": "Lucky Draw Bandolier",
-   "kind": "activation",
-   "tier": "general",
-   "level": 9,
-   "activation": "Secret Ace",
-   "result": "partial",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
    ]
   },
   {
@@ -11130,19 +5677,6 @@
    ]
   },
   {
-   "name": "Fulu of Concealment",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "partial",
-   "main": "visibility",
-   "work": "invisibility",
-   "needs": [
-    "visibility",
-    "situational"
-   ]
-  },
-  {
    "name": "Corpsecaller Round",
    "kind": "activation",
    "tier": "adventure",
@@ -11174,48 +5708,6 @@
    ]
   },
   {
-   "name": "Vaccine (Minor)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 1,
-   "result": "partial",
-   "main": "afflictions",
-   "work": "disease",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "situational",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Ivory Baton",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "result": "partial",
-   "main": "by-kind",
-   "work": "only constructs",
-   "needs": [
-    "by-kind",
-    "counteract",
-    "mind"
-   ]
-  },
-  {
-   "name": "Busine of Divine Reinforcements",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "partial",
-   "main": "creatures",
-   "work": "conjure",
-   "needs": [
-    "creatures",
-    "lasting"
-   ]
-  },
-  {
    "name": "Shining Wayfinder",
    "kind": "activation",
    "tier": "general",
@@ -11225,49 +5717,6 @@
    "work": "emanation centered",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Wooden Nickel",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 9,
-   "result": "note-only",
-   "main": "illusions",
-   "work": "disbelieve",
-   "needs": [
-    "illusions",
-    "choice",
-    "objects",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Wind At Your Back",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "result": "note-only",
-   "main": "vehicles",
-   "work": "vehicle",
-   "needs": [
-    "vehicles",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Arclord Eye",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "activation": "Open the Eye",
-   "result": "builtin:no-effect",
-   "main": "illusions",
-   "work": "illusion",
-   "needs": [
-    "illusions",
-    "information"
    ]
   },
   {
@@ -11310,20 +5759,6 @@
    ]
   },
   {
-   "name": "Lion's Call",
-   "kind": "activation",
-   "tier": "general",
-   "level": 10,
-   "activation": "Find the Pride",
-   "result": "builtin:no-effect",
-   "main": "choice",
-   "work": "one of the following",
-   "needs": [
-    "choice",
-    "information"
-   ]
-  },
-  {
    "name": "Anointing Oil (Greater)",
    "kind": "consumable",
    "tier": "general",
@@ -11336,33 +5771,6 @@
     "objects",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Detector Stone",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "none",
-   "main": "visibility",
-   "work": "hidden from",
-   "needs": [
-    "visibility",
-    "illusions",
-    "information"
-   ]
-  },
-  {
-   "name": "Detector Stone",
-   "kind": "activation",
-   "tier": "general",
-   "level": 7,
-   "result": "none",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "information"
    ]
   }
  ]
