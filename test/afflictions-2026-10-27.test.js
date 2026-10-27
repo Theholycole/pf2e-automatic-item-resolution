@@ -258,3 +258,46 @@ test("one-offs, their card's lines: Alkenstar Ice Wine (PF2e's Alcohol), Poracha
     for (const name of ["Alkenstar Ice Wine", "Poracha Fulu"]) assert.deepEqual([compileItem(item(name)).decided, done(compileItem(item(name)))], ["one-off", true], name);
     assert.deepEqual([compileItem(item("Body Recovery Kit")).decided, done(compileItem(item("Body Recovery Kit")))], ["checked", true]);
 });
+
+test("live: Crying Angel Pendant's success at a dying creature heals it 1 Hit Point while it's dying, so Dying ends and it wakes; at a bleeding one its persistent bleed ends outright", async () => {
+    const pendant = compileItem(item("Crying Angel Pendant"));
+    assert.ok(done(pendant));
+    assert.deepEqual([pendant.action.after, pendant.action.onSuccess], [undefined, { stabilize: { hp: 1 }, "stop-bleeding": { ends: ["bleed"] } }]);
+    const medic = foundry.makeActor({ id: "b2-medic", name: "Medic", owners: ["player"] });
+    const fallen = foundry.makeActor({ id: "b2-fallen", name: "Fallen", hp: 0, conditions: ["dying", "unconscious"] });
+    foundry.place(medic, 0, 67300 + 1000 * spot++);
+    foundry.place(fallen, 100, 67300 + 1000 * (spot - 1));
+    const original = game.pf2e.actions.get;
+    game.pf2e.actions.get = (slug) => ({ ...original(slug), variants: new Map([["stabilize", {}], ["stop-bleeding", {}]]) });
+    try {
+        const used = foundry.giveItem(medic, source("Crying Angel Pendant"));
+        const data = used.toObject();
+        const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: used.uuid, sourceId: data._stats.compendiumSource, type: used.type } } }, speaker: { actor: medic.id }, actor: medic, token: medic.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+        const card = foundry.messages[foundry.messages.indexOf(message) + 1];
+        foundry.nextOutcome.value = "success";
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [fallen.token.uuid], userId: "player" });
+        await settle();
+        assert.equal(fallen.system.attributes.hp.value, 1);
+        assert.equal(fallen.hasCondition("dying"), false);
+        assert.match(card.content, /Fallen regains 1 Hit Points?/);
+    } finally {
+        game.pf2e.actions.get = original;
+    }
+});
+
+test("dying: Banner of the Rising Star's Rise Up its card's lines beside its healing (Wounded kept, a day's immunity); Dreaming Round's sleep and Urn of Ashes' own doom note Effects; Reaper's Spellgun a one-off", () => {
+    const rise = activation("Banner of the Rising Star", "Rise Up");
+    assert.ok(done(rise));
+    assert.deepEqual([rise.item.keepWounded, rise.item.immunity.duration, rise.notes.length, rise.resolution.outcomes.success.noteEffects.length], [true, { value: 1, unit: "days" }, 2, 0]);
+    const [round] = compileActivations(item("Dreaming Round")).map((entry) => entry.plan);
+    assert.ok(done(round));
+    assert.deepEqual(["criticalSuccess", "success", "failure", "criticalFailure"].map((degree) => (round.resolution.outcomes[degree].noteEffects ?? []).length), [0, 0, 1, 1]);
+    assert.match(round.resolution.outcomes.failure.noteEffects[0].text, /Unconscious/);
+    const urn = activation("Urn of Ashes", "Doom the Urn");
+    assert.ok(done(urn));
+    assert.deepEqual([urn.notes, urn.resolution.outcomes.success.noteEffects[0].label, urn.item.ruleEffects[0].prevents], [undefined, "The urn's ashes are doomed", ["doomed"]]);
+    const reaper = compileItem(item("Reaper's Spellgun"));
+    assert.deepEqual([reaper.decided, done(reaper), reaper.notes.length], ["one-off", true, 3]);
+});

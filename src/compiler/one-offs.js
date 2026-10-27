@@ -63,6 +63,7 @@ export const ONE_OFFS = new Map([
     ["Incense Bundle of Annual Blessings", { rule: "after its twelve sticks are offered at their deities' shrines within a week, a misfortune effect on its user is disrupted automatically, once a month for the next 12 months", build: "a card with 12 monthly uses that ends a misfortune Effect (PF2e's RollTwice keeping the lower) on its user" }],
     // (2026-10-27, the afflictions group: one item's affliction that is another PF2e item's, and persistent damage undone as it's taken.)
     ["Alkenstar Ice Wine", { rule: "drunk, it is alcohol: PF2e's Alcohol and its stages, though undead are immune to its effects; finer vintages are of higher level", build: "the poison card with the stages of PF2e's own Alcohol item, read from that item" }],
+    ["Reaper's Spellgun", { rule: "a target under half its maximum Hit Points after the void damage is Drained one more (3 on a critical success, 2 on a success); one that Drained's Hit Point loss takes to 0 Hit Points dies", build: "after the damage, the target's Hit Points against half its maximum: the row's Drained raised by 1, and dead at 0 after it" }],
     ["Poracha Fulu", { rule: "up to nine worn as one talisman: each time its wearer takes persistent damage, one fulu negates it and crumbles; a free action (envision) keeps them all from answering that damage", build: "a hook on PF2e's persistent damage at its wearer: that damage undone and one fulu used up, unless its wearer opted out" }]
 ]);
 
