@@ -769,6 +769,35 @@ export const cases = {
         return { results: results(), spellCardTargets: spellCard?.flags?.["pf2e-automatic-resolution"]?.castFromItem?.targets ?? null };
     },
 
+    // Aurochs Jerky (2026-10-27): eaten — Effect: Aurochs Jerky and a card kept for later; fatigued, that card's use gives PF2e's Effect: Aurochs'
+    // Endurance (its fatigue suppressed).
+    async aurochsEndurance(scene) {
+        const { actor: eater, token: eaterToken } = await creature(scene, "Jerky Eater", { x: 3, y: 12 });
+        const jerky = await give(eater, "Aurochs Jerky");
+        let since = Date.now();
+        await jerky.consume();
+        const card = await messageAfter(since, (message) => Boolean(message.getFlag(NS, "card")), { what: "the jerky's card" });
+        since = Date.now();
+        if (card.getFlag(NS, "card").status === "open") await game.modules.get(NS).api.live.apply(card.id).catch(() => null);
+        const later = await messageAfter(since, itemCard("expose"), { what: "the card kept for later", timeout: 10000 });
+        await until(() => eater.itemTypes.effect.some((effect) => effect.name === "Effect: Aurochs Jerky"), `Effect: Aurochs Jerky (${eater.itemTypes.effect.map((effect) => effect.name)})`, { timeout: 8000 });
+        await eater.increaseCondition("fatigued");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(later.id, { targets: [eaterToken.uuid] });
+        const ability = await messageAfter(since, (message) => Boolean(message.flags?.["pf2e-automatic-ability-resolution"]?.card), { what: "the Endurance card", timeout: 10000 }).catch(() => null);
+        if (ability) {
+            let button = null;
+            for (const stop = Date.now() + 8000; Date.now() < stop && !button; ) {
+                const found = document.querySelector(`[data-message-id="${ability.id}"] [data-aar-action="apply"]`);
+                if (found && !found.disabled) button = found;
+                else await wait(200);
+            }
+            if (button) button.click();
+        }
+        await until(() => eater.itemTypes.effect.some((effect) => effect.name === "Effect: Aurochs' Endurance"), `Effect: Aurochs' Endurance (${eater.itemTypes.effect.map((effect) => effect.name)})`, { timeout: 10000 });
+        return { effects: eater.itemTypes.effect.map((effect) => effect.name), laterOpen: game.messages.get(later.id).getFlag(NS, "card").status };
+    },
+
     // Grim Ring: its user's drained 2 lowered to 1, and the undead targeted gets the ability module's 2d6 vitality card.
     async grimRing(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Grim Wearer", { type: "character", x: 16, y: 16 });

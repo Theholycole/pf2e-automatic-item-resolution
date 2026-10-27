@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1236,
+  "entries": 1235,
   "results": {
-   "partial": 342,
+   "partial": 341,
    "none": 528,
    "note-only": 247,
    "builtin:no-effect": 119
@@ -44,7 +44,6 @@
    "retaliation": 3,
    "missing-number": 6,
    "fortune": 6,
-   "linked-effect": 1,
    "by-kind": 7
   },
   "any": {
@@ -84,7 +83,6 @@
    "fortune": 9,
    "retaliation": 3,
    "missing-number": 7,
-   "linked-effect": 1,
    "by-kind": 7
   }
  },
@@ -3271,16 +3269,6 @@
    "needs": [
     "triggers",
     "strike"
-   ]
-  },
-  {
-   "name": "Aurochs Jerky",
-   "kind": "consumable",
-   "result": "partial",
-   "main": "linked-effect",
-   "work": "linked too",
-   "needs": [
-    "linked-effect"
    ]
   },
   {

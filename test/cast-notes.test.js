@@ -841,3 +841,12 @@ test("a grab that works as the Grab creature ability (2026-10-27): Scizore of th
     assert.equal(fillOwnerDCs(plan, { athletics: 24 }).plan.resolution.outcomes.success.effects[0].duration.escape.dc, 24);
     assert.match(plan.resolution.outcomes.success.noteEffects[0].text, /moves away/);
 });
+
+test("a consumable's later activation, its own PF2e Effect (2026-10-27): Aurochs Jerky's Aurochs' Endurance — the card for it kept for the jerky's hour, its eater's own, used each time it begins its turn fatigued", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const plan = compileItem(item("Aurochs Jerky"), options);
+    assert.equal(plan.partial, undefined);
+    assert.deepEqual([plan.again.later, plan.again.repeat, plan.again.own, plan.again.time], [true, true, true, { value: 1, unit: "hours" }]);
+    assert.deepEqual(plan.again.plan.resolution.outcomes.success.nativeEffects, [{ uuid: "Compendium.pf2e.equipment-effects.Item.mIZVE5kyzxScpaS5", label: "Effect: Aurochs' Endurance" }]);
+    assert.match(plan.again.when, /begins its turn fatigued/);
+});

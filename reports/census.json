@@ -15,12 +15,12 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 145,
-   "resolves": 843,
+   "resolves": 844,
    "builtin:readied-bonus": 23,
    "builtin:zone": 121,
    "builtin:ways": 29,
    "builtin:item-action": 16,
-   "partial": 64,
+   "partial": 63,
    "note-only": 111,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
@@ -39,9 +39,9 @@
    "results": {
     "builtin:cast-spell": 14,
     "builtin:zone": 28,
-    "resolves": 248,
+    "resolves": 249,
     "builtin:ways": 22,
-    "partial": 30,
+    "partial": 29,
     "note-only": 57,
     "builtin:readied-bonus": 8,
     "none": 77,
@@ -331,7 +331,7 @@
   },
   "linked-effect": {
    "count": 393,
-   "resolves": 366,
+   "resolves": 367,
    "gaps": 0,
    "none": 0
   },
@@ -367,7 +367,7 @@
   },
   "trigger": {
    "count": 156,
-   "resolves": 71,
+   "resolves": 72,
    "gaps": 0,
    "none": 17
   },
@@ -385,13 +385,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 283,
+   "resolves": 284,
    "gaps": 0,
    "none": 18
   },
   "duration": {
    "count": 943,
-   "resolves": 649,
+   "resolves": 650,
    "gaps": 0,
    "none": 13
   }
@@ -6730,8 +6730,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
+   "result": "resolves",
    "kind": "effect",
+   "gaps": [],
    "live": "item"
   },
   {
