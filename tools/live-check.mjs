@@ -6706,6 +6706,35 @@ export const cases = {
         return { critical, results: game.messages.get(ending.id).getFlag(NS, "card").results };
     },
 
+    // Beacon Shot (2026-10-27): a hit on an Invisible creature — its 1-minute note Effect making it Hidden while it's Invisible; then the end-early
+    // card's Athletics check (DC 20, a natural 20 on the die) pulls the arrow out, the Effect and the Hidden gone.
+    async beaconShotPull(scene) {
+        const { actor: archer, token: archerToken } = await creature(scene, "Beacon Archer", { type: "character", x: 8, y: 22 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Beacon Target", { x: 9, y: 22, ac: -20, hp: 200, alliance: "opposition" });
+        await foe.increaseCondition("invisible");
+        const bow = await give(archer, "Shortbow");
+        await archerToken.object?.control?.();
+        await target(foeToken);
+        const arrows = await give(archer, "Beacon Shot");
+        await arrows.update({ "system.baseItem": "arrows" });
+        await bow.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 2, "system.selectedAmmoId": arrows.id });
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(arrows.uuid, 0);
+        const card = await messageAfter(since, itemCard("strike"), { what: "the Strike card" });
+        await game.modules.get(NS).api.live.apply(card.id);
+        await wait(600);
+        since = Date.now();
+        await strike(archer, bow);
+        const sparks = () => foe.itemTypes.effect.find((effect) => /^Beacon Shot/.test(effect.name));
+        await until(() => sparks() && foe.hasCondition("hidden"), `the sparks' Effect and Hidden (${foe.itemTypes.effect.map((effect) => effect.name).join(", ")}; ${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
+        const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+        assert(/DC 20 Athletics check/.test(ending.content), `its try (${ending.content.replace(/<[^>]+>/g, " ").slice(0, 300)})`);
+        // (A natural 20 on the die: a success at least.)
+        await withDie(20, () => game.modules.get(NS).api.live.apply(ending.id, { entry: 0 }));
+        await until(() => !sparks() && !foe.hasCondition("hidden"), `pulled out (${JSON.stringify(game.messages.get(ending.id).getFlag(NS, "card").results)})`, { timeout: 8000 });
+        return { results: game.messages.get(ending.id).getFlag(NS, "card").results };
+    },
+
     // Admirer's Bouquet handed over: the triggering ally targeted gets +1 item to saves against emotion and mental effects, from the item
     // card's Apply.
     async admirersBouquet(scene) {

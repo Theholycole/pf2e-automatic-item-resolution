@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1279,
+  "entries": 1278,
   "results": {
-   "partial": 382,
+   "partial": 381,
    "none": 529,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -17,7 +17,7 @@
    "visibility": 47,
    "lasting": 65,
    "choice": 30,
-   "strike": 97,
+   "strike": 96,
    "spells": 36,
    "information": 23,
    "out-of-combat": 35,
@@ -64,7 +64,7 @@
    "dying": 75,
    "choice": 107,
    "several": 105,
-   "strike": 191,
+   "strike": 190,
    "reader": 210,
    "spells": 75,
    "information": 197,
@@ -13905,16 +13905,6 @@
     "moving",
     "areas",
     "triggers"
-   ]
-  },
-  {
-   "name": "Beacon Shot",
-   "kind": "activation",
-   "result": "partial",
-   "main": "strike",
-   "work": "on a hit",
-   "needs": [
-    "strike"
    ]
   },
   {

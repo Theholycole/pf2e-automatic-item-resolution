@@ -195,6 +195,8 @@ export async function strikeWithRider(message) {
     // (Its Prone only for a creature on the ground, Drake Shot's: src/live/if-target.js.)
     const elevation = Number(targetToken.document?.elevation ?? targetToken.elevation) || 0;
     const lines = await applyRiders({ plan: withoutAloftProne(rider.plan, elevation), degree: context.outcome, user: rider.user, target, item: rider.item });
+    // (Pulled out of the creature it hit, Beacon Shot's Athletics check: the end-early card, scripts/end-early.js.)
+    if (rider.plan.strike?.endEarly && ["success", "criticalSuccess"].includes(context.outcome)) await postEndEarlyAt({ endEarly: rider.plan.strike.endEarly, item: { name: rider.item.name, uuid: rider.item.uuid ?? null }, user: rider.user, creatures: [{ actorUuid: targetToken.actor.uuid, tokenUuid: targetToken.uuid, name: target.name }] }).catch((error) => console.error(`${MODULE_ID} | end early`, error));
     if (rider.plan.strike?.groundedProne && elevation > 0) lines.push(`${target.name} isn't on the ground: it doesn't fall Prone`);
     // (A critical hit's harder save, Blister Ammunition's: its DC then.)
     const plain = rider.plan.strike?.save;

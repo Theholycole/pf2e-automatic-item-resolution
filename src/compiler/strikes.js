@@ -295,7 +295,7 @@ export function compileStrike(item, base, options = {}) {
     // (The maneuver after it: its own card, not the Strike's riders — Iron Cube's "If this knocks the target Prone" isn't the hit's.)
     const empty = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
     if (follow) return strikePlan({ base, item, strike, text, riders: { success: empty(), criticalSuccess: empty() }, save, extras: { ...extras, notes: extras.notes.filter((note) => !(follow.notes ?? []).includes(note) && !FOLLOW.test(note) && !/^If this knocks the target Prone\b/i.test(note)) }, cast, follow });
-    const plan = withLightsOut(withOwnRuleDamage(withSaveOnly(strikePlan({ base, item, strike, riders, save, extras, cast, text }), text), item));
+    const plan = withBeacon(withLightsOut(withOwnRuleDamage(withSaveOnly(strikePlan({ base, item, strike, riders, save, extras, cast, text }), text), item)));
     // (A plan of hit notes alone: below any other reading, src/compiler/strikes.js strikeOver.)
     return noted && plan?.strike ? { ...plan, strike: { ...plan.strike, fromNotes: true } } : plan;
 }
@@ -335,6 +335,32 @@ function withLightsOut(plan) {
     const left = notes.filter((note) => note !== found[0]);
     const leftAll = [...left, ...(plan.notes ?? []), ...(plan.unread ?? [])];
     return { ...plan, strike: { ...plan.strike, notes: left, lines: [...(plan.strike.lines ?? []), `Non-magical light sources within ${found[1][1]} feet go out as it's used (turn those lights off on the map)`] }, ...(plan.partial && !leftAll.length ? { partial: undefined, automation: { level: "automatic" } } : {}) };
+}
+
+// (A missile that stays in the creature hit and reveals it, Beacon Shot's: "On a hit, it embeds itself into that target and spews sparks for 1 minute.
+// If the target is Invisible, it becomes merely Hidden to creatures who would otherwise be unable to see it. The sparks also negate the Concealed
+// condition if the target was otherwise concealed. A creature can remove the arrow or bolt by using an Interact basic action and succeeding at a
+// @Check[athletics|dc:20|…] check." — the hit's note Effect for that time, Hidden in place of Invisible (PF2e's GrantItem while it's Invisible),
+// its concealment gone in its words; pulled out, the end-early card's Athletics check (strike.endEarly, scripts/strikes.js). 2026-10-27.)
+const EMBEDS = /^On a hit, it embeds itself into that target and spews (\w+) for (\d+|one|a) (minutes?|rounds?)\.$/i;
+const HIDDEN_NOT_INVISIBLE = /^If the target is Invisible, it becomes merely Hidden to creatures who would otherwise be unable to see it\.$/i;
+const NOT_CONCEALED = /^The \w+ also negate the Concealed condition if the target was otherwise concealed\.$/i;
+const REMOVED_BY = /^A creature can remove the (?:arrow or bolt|[\w ]+?) by using an Interact basic action and succeeding at a @Check\[(athletics|acrobatics|thievery)\|dc:(\d+)[^\]]*\] check\.$/i;
+function withBeacon(plan) {
+    const notes = (plan?.strike?.notes ?? []).map((note) => String(note).trim());
+    const embeds = notes.map((note) => EMBEDS.exec(note)).find(Boolean);
+    const removed = notes.map((note) => REMOVED_BY.exec(note)).find(Boolean);
+    const outcomes = plan?.resolution?.outcomes;
+    if (!embeds || !removed || !outcomes || !notes.some((note) => HIDDEN_NOT_INVISIBLE.test(note))) return plan;
+    const value = /^\d+$/.test(embeds[2]) ? Number(embeds[2]) : 1;
+    const duration = { mode: "fixed", value, unit: /^min/i.test(embeds[3]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" };
+    const concealed = notes.some((note) => NOT_CONCEALED.test(note));
+    const note = { label: "Revealed (Hidden)", text: `Its ${embeds[1].toLowerCase()} give it away: Hidden, not Undetected, while it's Invisible${concealed ? "; and it isn't Concealed by anything else" : ""}. Pulled out (an Interact action and a DC ${removed[2]} ${removed[1].charAt(0).toUpperCase()}${removed[1].slice(1)} check), it ends.`, duration, rules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.iU0fEDdBp3rXpTMC", predicate: ["self:condition:invisible"], reevaluateOnUpdate: true, allowDuplicate: false }] };
+    const rows = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => [degree, ["success", "criticalSuccess"].includes(degree) ? { ...row, noteEffects: [note] } : row]));
+    const left = notes.filter((one) => !EMBEDS.test(one) && !HIDDEN_NOT_INVISIBLE.test(one) && !NOT_CONCEALED.test(one) && !REMOVED_BY.test(one));
+    const leftAll = [...left, ...(plan.notes ?? []), ...(plan.unread ?? [])];
+    const endEarly = { how: { kind: "check", skill: removed[1].toLowerCase(), dc: Number(removed[2]) }, conditions: [], said: [removed[0]] };
+    return { ...plan, resolution: { ...plan.resolution, outcomes: rows }, strike: { ...plan.strike, notes: left, endEarly }, ...(plan.partial && !leftAll.length ? { partial: undefined, automation: { level: "automatic" } } : {}) };
 }
 
 const RUNE_DC = /^If this (?:arrow|bolt|bullet|ammunition) is (?:shot|fired) from a weapon with an? (\w+) property rune, the save DC increases to (\d+), though the attack doesn't benefit from the \1 property rune itself\.$/i;

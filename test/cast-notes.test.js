@@ -247,6 +247,12 @@ test("a cast spell ended early by a save, and its first save worse after a criti
     assert.equal(tryWords(cast.endEarly, { step: 0 }), "an Interact action: a DC 25 Will save");
 });
 
+test("a missile that reveals the creature it stays in (2026-10-27): Beacon Shot — its hit's note Effect, Hidden while Invisible for 1 minute; pulled out by the end-early card's DC 20 Athletics", async () => {
+    const [{ plan: shot }] = compileActivations(item("Beacon Shot"), options);
+    const note = shot.resolution.outcomes.success.noteEffects[0];
+    assert.deepEqual([note.duration.value, note.duration.unit, note.rules[0].predicate, shot.strike.endEarly.how, shot.strike.notes, shot.partial], [1, "minutes", ["self:condition:invisible"], { kind: "check", skill: "athletics", dc: 20 }, [], undefined]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);
