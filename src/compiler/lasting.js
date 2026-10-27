@@ -333,8 +333,11 @@ export function activationBase(item, entry) {
 
 // The plan (null, note-only or the GM's no-effect — or any, for a reading over it) and its effect's words → the reading's card, or the same
 // plan. name: its source name; base, info, frequency: its own (activationBase, or a consumable's basePlan and itemInfo).
-export function withLastingReading(plan, { name, words, base, info, frequency = null }) {
-    const readings = READINGS.filter((entry) => entry.name === name && (entry.over || !plan || plan.noteOnly || plan.builtin === "no-effect"));
+export const withLastingReading = (plan, given) => withSentenceReadings(READINGS, plan, given);
+
+// The same for any table of readings of this shape (src/compiler/visibility.js's too, 2026-10-27).
+export function withSentenceReadings(table, plan, { name, words, base, info, frequency = null }) {
+    const readings = table.filter((entry) => entry.name === name && (entry.over || !plan || plan.noteOnly || plan.builtin === "no-effect"));
     const sentences = words ? sentencesOf(words) : [];
     for (const reading of readings) {
         const found = matched(reading, sentences);

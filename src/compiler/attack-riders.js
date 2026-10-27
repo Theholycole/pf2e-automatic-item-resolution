@@ -118,8 +118,8 @@ export function attackRidersText(riders, weaponName = null) {
         const weapon = weaponName ?? "the weapon picked";
         if (rider.weapon && rider.heal) return `Hit Point damage ${weapon} deals to a living creature heals you half as much`;
         if (rider.weapon && rider.rules) return `With ${weapon}: ${rider.words}`;
-        // (A note Effect on the creature it hits, Limning Gem's outline: 2026-10-27.)
-        if (rider.weapon && rider.note) return `On a ${rider.on.includes("success") ? "hit" : "critical hit"} with ${weapon}: ${rider.words}`;
+        // (A note Effect on the creature it hits, Limning Gem's outline; or on each it damages, Oil of Revelation's glowing wound — 2026-10-27.)
+        if (rider.weapon && rider.note) return (rider.on ?? []).includes("dealt") ? `The ${rider.once ? "first creature" : "creatures"} ${weapon} damages: ${rider.note.text.charAt(0).toLowerCase()}${rider.note.text.slice(1).replace(/\.$/, "")}` : `On a ${rider.on.includes("success") ? "hit" : "critical hit"} with ${weapon}: ${rider.words}`;
         if (rider.weapon && rider.learn) return `On the first hit with ${weapon} at each creature: one of its weaknesses or resistances, whispered to the GM to tell you`;
         if (rider.weapon && rider.self) return `On a hit with ${weapon}: you are ${rider.self.slug}${rider.self.value ? ` ${rider.self.value}` : ""} for 1 round${rider.self.only ? ` (its extra action only to ${rider.self.only})` : ""}`;
         const when = rider.on.includes("success") ? "a melee hit" : rider.on.includes("criticalSuccess") ? "a melee critical hit" : "a melee miss";

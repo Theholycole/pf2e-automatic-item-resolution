@@ -137,8 +137,10 @@ test("zones for those inside: Healing Vapor's save bonus against diseases and po
 });
 
 test("Alchemical Atomizer's cloud in a square until its user's next turn, and Biting Snare's critical failure: the Speed penalty until healed", () => {
+    // (Read by the visibility group too, merged 2026-10-27: its held consumable picked and played through Potion Patch's way, its own card for
+    // the creature that enters — kept over the zone here, as it plays the consumable; the square a line of its card.)
     const cloud = activations("Alchemical Atomizer")[1];
-    assert.deepEqual([cloud.builtin, done(cloud), cloud.zone.range, cloud.zone.lasts.value, cloud.zone.saves[0].when], ["zone", true, 30, 1, ["enter"]]);
+    assert.deepEqual([done(cloud), Boolean(cloud.item?.patch), cloud.notes.some((note) => /fired as a cloud filling a square within 30 feet/.test(note))], [true, true, true]);
     const snare = compileItem(item("Biting Snare"));
     const critical = snare.zone.saves[0].plan.resolution.outcomes.criticalFailure;
     assert.deepEqual([done(snare), critical.manualInstructions, critical.noteEffects[0].rules, critical.noteEffects[0].duration], [true, undefined, [{ key: "FlatModifier", selector: "all-speeds", type: "status", value: -10 }], null]);

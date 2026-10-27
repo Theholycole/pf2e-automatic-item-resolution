@@ -435,26 +435,6 @@ const READINGS = [
         }))
     },
     {
-        // Alchemical Atomizer: its held consumable fired as a cloud into a square within 30 feet, until the start of its user's next turn; the
-        // first willing creature it's valid for to enter gets its effect — the note at its entering, that consumable's own card on it.
-        names: ["Alchemical Atomizer"],
-        sentences: [
-            /^You cause the atomizer to mix its reagents and fire its held consumable at a square within (\d+) feet\.$/,
-            /^The consumable forms a cloud that fills the space\.$/,
-            /^The first willing valid target to enter the space automatically gains the effect of the consumable\.$/,
-            /^If there are multiple valid targets, such as with multiple weapons for aligned oil, the creature entering the space determines how the effect is applied\.$/,
-            /^The cloud is consumed upon contact with a willing valid target or at the start of your next turn, whichever comes first\.$/
-        ],
-        card: ([fired]) => zoneCard(zoneOf({
-            area: { type: "square", value: 5 },
-            centre: "placed",
-            range: Number(fired[1]),
-            lasts: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" },
-            saves: [{ when: ["enter"], plan: null, note: "If it's willing and the held elixir, oil or potion is valid for it, it gains that consumable's effect (its own card, used on it; with several valid targets, such as weapons for an oil, it picks); the cloud is used up then (end the zone)." }],
-            notes: ["The held consumable's cloud lasts until the start of its user's next turn."]
-        }))
-    },
-    {
         // Biting Snare: its critical failure's –10-foot status penalty to Speed until the creature regains a Hit Point — PF2e's FlatModifier
         // on a note Effect with no time, its end (healed) in its words.
         names: ["Biting Snare"],

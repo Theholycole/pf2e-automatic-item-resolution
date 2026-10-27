@@ -351,8 +351,9 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         installed: plan.item?.installed ? installedOf(actor, plan.item.installed) : [],
         // (A condition of its user's choice it has now, Armbands of the Gorgon's: PF2e's conditions on its user.)
         held: (plan.item?.reduce ?? []).some((entry) => entry.held) ? [...new Set((actor.conditions?.active ?? actor.itemTypes?.condition ?? []).map((condition) => condition.slug))] : null,
-        // (A potion it holds, Potion Patch's: its user's potions, up to its level.)
-        potions: plan.item?.patch ? (actor.items?.contents ?? [...(actor.items ?? [])]).filter((entry) => entry.type === "consumable" && entry.system?.category === "potion" && entry.id !== used.data._id && !(plan.item.patch.maxLevel && Number(entry.system?.level?.value) > plan.item.patch.maxLevel)).map((entry) => ({ id: entry.id, name: entry.name, level: Number(entry.system?.level?.value) || 0 })) : [],
+        // (A potion it holds, Potion Patch's: its user's potions, up to its level — or its elixirs and oils too, Alchemical Atomizer's
+        // patch.categories, 2026-10-27.)
+        potions: plan.item?.patch ? (actor.items?.contents ?? [...(actor.items ?? [])]).filter((entry) => entry.type === "consumable" && (plan.item.patch.categories ?? ["potion"]).includes(entry.system?.category) && entry.id !== used.data._id && !(plan.item.patch.maxLevel && Number(entry.system?.level?.value) > plan.item.patch.maxLevel)).map((entry) => ({ id: entry.id, name: entry.name, level: Number(entry.system?.level?.value) || 0 })) : [],
         weapons: picksWeapon(plan) ? (actor.itemTypes?.weapon ?? []).filter((weapon) => !weapon.isOfType?.("bomb") && weapon.system?.group !== "bomb" && !(plan.item?.proficiency?.maxLevel && Number(weapon.system?.level?.value) > plan.item.proficiency.maxLevel)).map((weapon) => ({ id: weapon.id, name: weapon.name })) : []
     });
     const card = await ChatMessage.create({
@@ -662,7 +663,7 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     if (state.plan.item?.rune && !state.plan.item.rune.own && !state.weapons?.length) throw new Error(`${state.user.name} has no weapon for ${state.item.name}.`);
     // (A potion it holds, as picked: one its user has.)
     if (Number.isInteger(potionPick) && state.potions?.[potionPick]) state = { ...state, potionPick };
-    if (state.plan.item?.patch && !state.potions?.[state.potionPick ?? 0]) throw new Error(`${state.user.name} has no potion for ${state.item.name}${state.plan.item.patch.maxLevel ? ` (level ${state.plan.item.patch.maxLevel} or lower)` : ""}.`);
+    if (state.plan.item?.patch && !state.potions?.[state.potionPick ?? 0]) throw new Error(`${state.user.name} has no ${(state.plan.item.patch.categories ?? ["potion"]).join(" or ")} for ${state.item.name}${state.plan.item.patch.maxLevel ? ` (level ${state.plan.item.patch.maxLevel} or lower)` : ""}.`);
     // (The alchemical item installed in it, as picked: one its user has, enough of them.)
     if (Number.isInteger(installedPick) && state.installed?.[installedPick]) state = { ...state, installedPick };
     const installing = state.plan.item?.installed;
@@ -1114,7 +1115,7 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         if (!potion?.consume) lines.push(`${state.user.name}: ${entry.name} isn't there to use any more.`);
         else {
             await potion.consume();
-            lines.push(`${state.user.name}: ${entry.name} used through the patch (its card follows)`);
+            lines.push(`${state.user.name}: ${entry.name} used through ${patch.categories ? "it" : "the patch"} (its card follows)`);
         }
     }
     // (Another of its activations recharged, Smoldering Armor's Fire Shield: that one's uses given back on the item's record.)
