@@ -29,13 +29,16 @@ export function formulaAs(formula, type) {
     return terms.length ? `(${terms.join(" + ")})[${type}]` : null;
 }
 
-// (Each instance with its own type kept: "{(1d8 + 4)[piercing],1d6[fire]}" → [{ formula: "1d8 + 4", type: "piercing" }, { formula: "1d6", type: "fire" }] —
-// for a Strike redirected with its own damage, Turnabout Shield's, 2026-10-27.)
-export function formulaInstances(formula) {
+// Each instance with its own type kept, PF2e's "{(1d8 + 4)[piercing],1d6[persistent,fire]}" → [{ formula: "1d8 + 4", type: "piercing", category: null },
+// { formula: "1d6", type: "fire", category: "persistent" }]: a Strike's damage kept as it is — Turnabout Shield's redirected Strike, Dinosaur
+// Boots' Trample (2026-10-27). A typeless instance's type the fallback (null: kept typeless).
+const NOT_TYPES = new Set(["persistent", "precision", "splash"]);
+export function formulaInstances(formula, fallback = null) {
     return instancesOf(formula).map((instance) => {
-        const flavor = /\[([^\]]*)\]\s*\)?\s*$/.exec(instance)?.[1]?.split(",").map((word) => word.trim()) ?? [];
-        return { formula: termsOf(instance), type: flavor.find((word) => !["persistent", "precision", "splash"].includes(word)) ?? null, category: flavor.includes("persistent") ? "persistent" : null };
-    }).filter((entry) => entry.formula);
+        const flavor = /\[([^\]]*)\]\s*\)?\s*$/.exec(instance)?.[1] ?? "";
+        const words = flavor.split(",").map((word) => word.trim().toLowerCase()).filter(Boolean);
+        return { formula: termsOf(instance), type: words.filter((word) => !NOT_TYPES.has(word)).at(-1) ?? fallback, category: words.includes("persistent") ? "persistent" : null };
+    }).filter((part) => part.formula);
 }
 
 // The latest Strike that missed its user, Turnabout Shield's trigger: the chat's recent rolls, newest last — [{ type, outcome, ranged, targetActorUuid,
@@ -45,12 +48,13 @@ export function triggeringMiss(rolls, userUuid) {
 }
 
 // The plan and the Strike's formula → the plan with that damage on its rows (shared, at each row's multiplier, beside the row's own formulas).
+// (Its types kept when it gives none to turn it all into, strikeDamage.as null: each instance a component of its own.)
 export function withStrikeFormula(plan, formula) {
-    // (Its types kept, plan.strikeDamage.as null: a component for each instance.)
+    // (Its types kept, plan.strikeDamage.as null: a component for each instance — a typeless one's its fallback, else untyped.)
     if (plan?.strikeDamage && !plan.strikeDamage.as) {
-        const parts = formulaInstances(formula);
+        const parts = formulaInstances(formula, plan.strikeDamage.fallback ?? "untyped");
         if (!parts.length) return plan;
-        const components = parts.map((part, index) => ({ id: `strike${index}`, formula: part.formula, type: part.type ?? "untyped", category: part.category }));
+        const components = parts.map((part, index) => ({ id: `strike${index}`, formula: part.formula, type: part.type, category: part.category }));
         const outcomes = Object.fromEntries(Object.entries(plan.resolution.outcomes).map(([degree, row]) => {
             const multiplier = plan.strikeDamage.rows[degree];
             return [degree, multiplier && row ? { ...row, damage: { mode: "shared", multiplier, sourceComponentIds: components.map((component) => component.id) } } : row];

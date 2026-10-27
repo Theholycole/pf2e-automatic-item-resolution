@@ -6,6 +6,7 @@
 import { rememberCastDuration } from "./cast-duration.js";
 import { DEGREE_WORDS, counteractCandidates, counteractCardHTML, counteractResult, counteracts, createCounteractCard } from "../src/live/counteract-card.js";
 import { itemNoteSource } from "../src/live/card.js";
+import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
 export async function postCounteractCard({ message, plan, used, actor, token }) {
@@ -156,6 +157,13 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
                 const own = await creatureOf(state.user);
                 await own.actor?.createEmbeddedDocuments?.("Item", [itemNoteSource({ name: kept.label, words: kept.text, duration: null }, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
                 lines.push(`${state.user.name}: ${kept.label.toLowerCase()} (a note Effect).`);
+            }
+            // (Its flash once it's counteracted, Dawnlight's: the save card for the creatures its presser targets, those with darkvision.)
+            const flash = state.counteract.flash;
+            if (flash) {
+                const card = createExposureCard({ plan: flash, item: state.item, user: state.user });
+                await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: message.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
+                lines.push("A flash of light: its save card follows, for the creatures with darkvision in the spell's area or targeted by it.");
             }
             continue;
         }

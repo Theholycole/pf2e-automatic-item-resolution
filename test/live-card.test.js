@@ -71,7 +71,8 @@ test("what Apply will do", () => {
     assert.deepEqual(previewLines(card("Oak Potion")), ["Spell Effect: Oaken Resilience (rank 2, 10 minutes)", "You gain the effects of a 2nd-rank Oaken Resilience for 10 minutes."]);
     assert.deepEqual(previewLines(card("Potion of Quickness")), ["Spell Effect: Haste (1 minute)"]);
     assert.deepEqual(previewLines(card("Mistform Elixir (Greater)")), ["concealed for 5 minutes"]);
-    assert.deepEqual(previewLines(card("Hovering Potion")), ["A note of its text for 5 minutes (nothing else to apply)"]);
+    // (2026-10-27: Potion of Passing Fancy for Hovering Potion, whose climb Speed is read now.)
+    assert.deepEqual(previewLines(card("Potion of Passing Fancy")), ["A note of its text for 1 hour (nothing else to apply)"]);
 });
 
 test("an Effect shared by every grade is made for the grade used, with no prompt", () => {

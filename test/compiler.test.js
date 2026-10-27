@@ -139,7 +139,8 @@ test("an item granting a spell's effects gets PF2e's Spell Effect at its rank an
     assert.deepEqual([compileItem(item("Elemental Gem")).spell.name, compileItem(item("Elemental Gem")).rank], ["Summon Elemental", 5]);
     const enigma = compileItem(item("Enigma-Sight Potion"));
     assert.equal(enigma.builtin, "cast-spell");
-    assert.match(enigma.notes[0], /except that you use your Perception modifier/);
+    // (2026-10-27: its "except that you use your Perception modifier" is its note Effect beside the cast now, src/compiler/cast-note.js.)
+    assert.match(enigma.castNote.text, /use its Perception modifier/);
     // A talisman that casts a spell on its user: the same, at its rank (Snarling Badger's Heroism) or for its time (Stormfeather's Fly).
     assert.deepEqual(compileItem(item("Snarling Badger (Moderate)")).resolution.applications.map((entry) => [entry.label, entry.level, entry.recipients]), [["Spell Effect: Heroism", 6, "self"]]);
     assert.deepEqual(compileItem(item("Stormfeather")).resolution.applications.map((entry) => [entry.label, entry.duration]), [["Spell Effect: Fly", { value: 1, unit: "minutes" }]]);
@@ -256,16 +257,18 @@ test("bonuses against what a creature makes, what an effect gives, or ranged att
 });
 
 test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {
-    const plan = compileItem(item("Hovering Potion"));
+    // (2026-10-27: Potion of Passing Fancy for Hovering Potion, whose climb Speed is read now — src/compiler/aloft.js.)
+    const plan = compileItem(item("Potion of Passing Fancy"));
     assert.equal(plan.noteOnly, true);
     const [note] = plan.resolution.outcomes.success.noteEffects;
-    assert.equal(note.label, undefined, "the ability module calls it \"Hovering Potion: note\"");
-    assert.deepEqual([note.duration.value, note.duration.unit], [5, "minutes"]);
+    assert.equal(note.label, undefined, "the ability module calls it \"Potion of Passing Fancy: note\"");
+    assert.deepEqual([note.duration.value, note.duration.unit], [1, "hours"]);
     assert.doesNotMatch(note.text, /^Activate/);
     const result = registry.resolveSync(plan, context(), io());
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.effect?.kind]), [["effect", "drinker", "note"]]);
-    // With no time, nothing (the GM's).
-    assert.equal(compileItem(item("Ration Tonic")), null);
+    // With no time, nothing (the GM's). (2026-10-27: Swamp Lily Quilt for Ration Tonic, whose nourishment is now its card's line —
+    // src/compiler/needs.js no longer reads its "fruity scent" as a sense.)
+    assert.equal(compileItem(item("Swamp Lily Quilt")), null);
 });
 
 test("a snare: the ability module's zone, a 5-foot square set off once by the first creature to enter it", () => {
@@ -506,7 +509,12 @@ test("bonuses narrower than PF2e's rolls, on the whole roll for their time: Phan
         return [bonus.selector, bonus.value, bonus.type, bonus.predicate ?? null, `${bonus.duration.value} ${bonus.duration.unit}`, plan.partial, plan.unread[0]];
     };
     assert.deepEqual(summary("Phantom Roll"), ["stealth", 1, "item", null, "24 hours", true, "The bonus is only for Stealth checks during the Avoid Notice exploration activity."]);
-    assert.deepEqual(summary("Infiltrator's Elixir"), ["deception-dc", 4, "status", null, "10 minutes", true, "The bonus is only to avoid others seeing through your disguise, and you add your level to this DC even if untrained."]);
+    // (2026-10-27: Infiltrator's Elixir's narrower words are now words on its note Effect for the 10 minutes, its disguise with them — the user's
+    // note-Effect rule, src/compiler/rule-words.js; its bonus still on the whole Deception DC.)
+    const elixir = compileItem(item("Infiltrator's Elixir"));
+    const [disguise] = elixir.resolution.outcomes.success.modifiers;
+    assert.deepEqual([disguise.selector, disguise.value, disguise.type, disguise.predicate ?? null, `${disguise.duration.value} ${disguise.duration.unit}`, elixir.partial, elixir.unread], ["deception-dc", 4, "status", null, "10 minutes", undefined, undefined]);
+    assert.match(elixir.resolution.outcomes.success.noteEffects[0].text, /only against others seeing through that disguise, and its level counts toward that DC even if it's untrained/);
     assert.deepEqual(summary("Armor Polishing Kit"), ["diplomacy", 1, "circumstance", ["action:make-an-impression"], "24 hours", true, "The bonus is only on soldiers, guards, Gorumites, and other martially minded characters, for whoever wears the armor maintained by this kit."]);
 });
 

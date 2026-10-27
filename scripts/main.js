@@ -49,6 +49,7 @@ import { setUpShieldTemp } from "./shield-temp.js";
 import { setUpLater } from "./later.js";
 import { setUpAfflictedTurns } from "./afflicted-turns.js";
 import { setUpFelled } from "./felled.js";
+import { setUpImplosion } from "./implosion.js";
 import { setUpOwnSplash } from "./own-splash.js";
 import { setUpReadiedRefund } from "./strikes.js";
 
@@ -202,6 +203,8 @@ Hooks.once("ready", async () => {
     // (Half the triggering attack's damage, Laurel of the Empath's: scripts/half-damage.js.)
     setUpHalfDamage();
     setUpHealAfter();
+    // (A shrink whose steps a save at each of its creature's turns moves, Implosion Dust's: scripts/implosion.js.)
+    setUpImplosion();
     setUpEndsOn();
     // (Penalties for a while after a persistent damage ends, Secret-Keeper's Mask (Father Skinsaw)'s: scripts/then-for.js.)
     setUpThenFor();

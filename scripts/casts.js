@@ -1,13 +1,16 @@
 // Live play for items that cast a spell PF2e has no Effect for (src/live/cast-card.js): the spell module casts it
 // through PF2e (its api.castFromItem), so its own cast handling resolves it as any cast.
 
-import { castCardHTML, castRequest, chosenSpell, createCastCard, needsTargets, selfOf } from "../src/live/cast-card.js";
+import { castCardHTML, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
+import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
 import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
-import { castDegreeEffectSource, castPenaltySource } from "../src/live/card.js";
+import { arrivalAfterMove } from "./cast-arrival.js";
+import { castDegreeEffectSource, castPenaltySource, itemNoteSource } from "../src/live/card.js";
+import { castNoteText } from "../src/compiler/cast-note.js";
 import { rememberTurnHeal } from "./turn-heal.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -90,6 +93,8 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         if (far.length) throw new Error(`${far.join(", ")} ${far.length === 1 ? "is" : "are"} beyond ${state.item.name}'s range.`);
         // (Smoke where its user was and where it arrives, Charlatan's Cape's Translocate: watched for before the cast moves it, scripts/cast-smoke.js.)
         const smoke = state.plan.castSmoke ? smokeAfterMove(state.plan.castSmoke, { actor, token, item: state.item }) : null;
+        // (Damage beside where it was and where it arrives, Fiendish Teleportation's brimstone: scripts/cast-arrival.js, watched for the same way.)
+        const arrival = state.plan.castArrival ? arrivalAfterMove(state.plan.castArrival, { actor, token, item: state.item }) : null;
         // (A worse save for targets of a kind, Radiant Spark's celestials: PF2e's AdjustDegreeOfSuccess on each before the cast, till its save.)
         if (state.plan.castDegree) {
             for (const target of targetTokens) {
@@ -118,12 +123,27 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)
-        const lasts = state.plan.castDuration ? await rememberCastDuration(cast, state.plan.castDuration, { actor, targets: targetTokens }) : null;
+        // (Or the chosen spell's own, Cloak of the False Foe's Medium cryptid's hour and Large cryptid's 10 minutes.)
+        const duration = chosenSpell(state).castDuration ?? state.plan.castDuration;
+        const lasts = duration ? await rememberCastDuration(cast, duration, { actor, targets: targetTokens }) : null;
         if (lasts) lines.push(lasts);
         // (Healing at the end of each of its user's turns for the item's time: scripts/turn-heal.js.)
         const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
         if (heals) lines.push(heals);
         if (smoke) lines.push(smoke);
+        if (arrival) lines.push(arrival);
+        // (A note Effect beside the spell with its user's numbers, Enigma-Sight Potion's Truesight checks: src/compiler/cast-note.js.)
+        if (state.plan.castNote) {
+            const words = castNoteText(state.plan.castNote, { perception: Number(actor.perception?.mod ?? actor.system?.perception?.mod), level: Number(actor.level) });
+            await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: state.plan.castNote.label, words, duration: state.plan.castNote.duration, img: "icons/svg/eye.svg" }, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${actor.name}: ${words}`);
+        }
+        // (A light spell against darkness, Dawnlight's: its counteract card, the spell's rank and 1 more — src/live/cast-card.js darkLightCounteract.)
+        const dark = darkLightCounteract(state.plan, chosenSpell(state), cast?.rank ?? request.rank);
+        if (dark) {
+            await postCounteractAt({ counteract: dark, item: state.item, user: state.user, drinkers: [] });
+            lines.push(`If it meets magical darkness: its counteract card follows (rank ${dark.rank ?? "the spell's + 1"}, +${dark.modifier}).`);
+        }
         // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
         if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
         // (A condition on its user with the cast, Locket of Sealed Nightmares' fatigued: PF2e's condition on the item's user.)

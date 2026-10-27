@@ -29,7 +29,12 @@ export const NOTES_CHECKED = new Map([
     ["Instant Spy", "an hour of sound recorded and played back once within a day, what it hears the GM's: sound and an object"],
     ["Colorful Coating (Indigo)", "a surface or object's Hardness 2 lower and 1d4 acid damage to it each round for a minute: an object's, the GM's"],
     ["Banquet of Hungry Ghosts", "four willing undead fed: friendly to its user for 24 hours unless angered, their hunger sated, and talk with them after a morsel: their attitude and speech"],
-    ["Feast of Hungry Ghosts", "one willing undead fed: friendly to its user for 24 hours unless angered, its hunger sated, and talk with it after a morsel: its attitude and speech"]
+    ["Feast of Hungry Ghosts", "one willing undead fed: friendly to its user for 24 hours unless angered, its hunger sated, and talk with it after a morsel: its attitude and speech"],
+    // (2026-10-27: running up walls during its Strides for a minute — its user's own move, which no PF2e rule plays: a climb Speed would let it
+    // Climb, not Stride up a wall, and its falls are its user's. The note Effect holds it for the minute.)
+    ["Boots of Free Running (Lesser)", "running up vertical surfaces at full Speed with each Stride for 1 minute (and up waterfalls with water walking): its user's own move"],
+    ["Boots of Free Running (Moderate)", "running up vertical surfaces at full Speed with each Stride for 1 minute (and up waterfalls with water walking): its user's own move"],
+    ["Boots of Free Running (Greater)", "running up vertical surfaces at full Speed with each Stride for 1 minute (and up waterfalls with water walking): its user's own move"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

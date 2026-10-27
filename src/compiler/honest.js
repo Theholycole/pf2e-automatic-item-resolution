@@ -298,12 +298,15 @@ export function withZoneUntraced(plan, text) {
     const { saves: _, burst: __, ...own } = plan.zone;
     // (A sentence one of its cards traces isn't left by the others: Piercing Whistle Snare's longer deafness, its setter's card's, not its burst's.)
     const entries = [...(plan.zone.saves ?? []), ...(plan.zone.burst?.plan ? [plan.zone.burst] : [])];
+    // (Not a set-off that only sends the GM its note — an alarm's noise, Clockwork Chirper's chirps and numbers: no card of its own to trace,
+    // 2026-10-27.)
     const checks = entries.map((save) => {
+        if (!save.plan && save.note) return { checked: null, added: [], note: true };
         if (save.plan?.partial) partial = true;
         const checked = withUntracedRules({ ...save.plan, zoneOwn: own }, text);
         return { checked, added: (checked?.notes ?? []).filter((entry) => !(save.plan?.notes ?? []).includes(entry)) };
     });
-    const untraced = (entry) => checks.every(({ added }) => added.includes(entry));
+    const untraced = (entry) => checks.filter((check) => !check.note).every(({ added }) => added.includes(entry));
     const traced = (save, at) => {
         const { checked } = checks[at];
         const added = checks[at].added.filter(untraced);
@@ -365,7 +368,9 @@ export function withGmCalls(plan) {
 // the spell", an intelligent item's statistics. Those left out of the words looked at; a note the GM's call (withGmCalls) is a card line.
 const CAST_RULE = /\b\d+d\d+\b|\bdamage\b|\bcounteract\b|\bbonus\b|\bpenalty\b|\b(?:frightened|slowed|stunned|immobilized|grabbed|restrained|prone|dazzled|blinded|deafened|clumsy|enfeebled|sickened|fascinated|controlled|confused|paralyzed|unconscious|fatigued|drained|quickened|off-guard|concealed|invisible|hidden)\b|\brange\b|\b\d+ (?:feet|foot|miles?)\b|\b\d+ (?:rounds?|minutes?|hours?|days?)\b|\binstead\b|\bexcept\b|\bdegree of success\b|\bStrike\b|\bweakness\b|\bresistance\b|\bimmune\b|\bdoesn't require\b|\bas a (?:one|two|three)-action\b|\bsave DC is your\b|\bheightened\b|\bmore targets?\b|\bon another creature\b|\barea\b/i;
 // (Or the spell's own end said again: Phantom Shroud's "When the activation ends, you return to material form" for Ethereal Jaunt.)
-const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b|When the activation ends, you return to material form\.$)/i;
+// (Or what the spell itself does, in the item's words: Animate Dreamer's "focuses on a single unattended inanimate object in an area it can see
+// and exerts its will over the object, temporarily levitating it around" for Telekinetic Hand, 2026-10-27.)
+const NOT_A_RULE = /^(?:As normal with the spell\b|Its statistics improve\b|When the activation ends, you return to material form\.$|The [\w' -]+? focuses on a single unattended inanimate object in an area it can see and exerts its will over the object, temporarily levitating it around\.$)/i;
 const literal = (words) => words.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const castWords = (note, plan, spell) => {
     let text = said(note);

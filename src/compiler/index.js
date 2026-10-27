@@ -27,6 +27,15 @@ import { asAbility } from "./ability-shape.js";
 import { forTargets, othersTargeting, targetedRecipient, allyAreaPlan, checkGated, fitPlan, ownPlan, pf2eRoll, recipientOf, withStatedHealing } from "./consumables.js";
 import { allyAreaRow, dropsToOne, itemDuration, keepsWounded, noteRow, ownRow, plainText } from "./rows.js";
 import { alarmZone, isSnare, snareChoices, snareThen, snareZone } from "./snares.js";
+import { sentryPlan } from "./sentry.js";
+import { dousedRead } from "./doused.js";
+import { scoutPlan } from "./scout.js";
+import { rebirthPlan } from "./rebirth.js";
+import { animalBrewPlan } from "./animal-brew.js";
+import { withAloft } from "./aloft.js";
+import { withRuleWords } from "./rule-words.js";
+import { withCastNote } from "./cast-note.js";
+import { withImplosion } from "./implosion.js";
 import { auraZonePlan } from "./aura-zones.js";
 import { belchedCloudPlan, bubbleCloudPlan, coatedSquarePlan, exhaledSquarePlan, placedChimePlan } from "./covered-square.js";
 import { compileStrike, strikeOver } from "./strikes.js";
@@ -64,7 +73,7 @@ import { withoutFlavor, withoutFlavorNotes } from "./flavor.js";
 import { damageMaterial, withMaterialRider } from "./materials.js";
 import { waysPlan } from "./ways.js";
 import { elementWaysPlan, dragonWaysPlan } from "./bane.js";
-import { firstDegreeOf, firstDegreeSentence } from "./first-degree.js";
+import { firstDegreeOf, firstDegreeSentence, withOnceBetter } from "./first-degree.js";
 import { readRestore, restoreNotes, restorePlan } from "./restore.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
@@ -282,7 +291,7 @@ export function compileItem(given, options = {}) {
     // (And after, a PF2e action its user has while its effect lasts, src/compiler/granted-action.js: Potion of Grounding's Divert Lightning; a
     // Strike card's notes that are its user's to do, its lines, src/compiler/strike-lines.js: Iron Cube's two-handed weapon and Slam Down; a ward
     // against summoned creatures, src/compiler/warding-seal.js: Portable Seal.)
-    return withWardingSeal(withStrikeLines(withGrantedAction(lastingOf(decide(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(instead ?? compileOne(given, options)), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), given, options), given), given?.system?.description?.value)), given?.system?.description?.value);
+    return withWardingSeal(withStrikeLines(withGrantedAction(lastingOf(decide(withImplosion(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withCastNote(withRuleWords(withAloft(withOnceBetter(instead ?? compileOne(given, options), text), text), text), given?.system?.description?.value, options.spells ?? {})), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), text), given, options), given), given?.system?.description?.value)), given?.system?.description?.value);
 }
 
 // (Sustained, repeating and later effects the readers before left whole, src/compiler/lasting.js: a note Effect and the card's lines — last,
@@ -394,8 +403,21 @@ function compileOne(given, options = {}) {
     // (A square that only makes a noise when set off, src/compiler/snares.js: Alarm Snare, Popdust — the set-off a note to the GM.)
     const alarm = alarmZone(item, base);
     if (alarm) return { ...alarm, item: itemInfo(item) };
+    // (A guard that watches an area for hours, src/compiler/sentry.js: Sentry Fulu — each creature that enters a note to the GM.)
+    const sentry = sentryPlan(item, base);
+    if (sentry) return { ...sentry, item: itemInfo(item) };
+    // (An object that comes back with what it saw, src/compiler/scout.js: Shortbread Spy — information, whispered.)
+    const scout = scoutPlan(item, base);
+    if (scout) return { ...scout, item: itemInfo(item) };
+    // (A change of ancestry over a rest, src/compiler/rebirth.js: Rebirth Potion — its conditions for the 8 hours.)
+    const rebirth = rebirthPlan(item, base);
+    if (rebirth) return { ...rebirth, item: itemInfo(item) };
+    // (A brew that turns its drinker into one of Animal Form's animals, src/compiler/animal-brew.js: the Bloodhammer Reserves.)
+    const brew = animalBrewPlan(item, base, options);
+    if (brew) return { ...brew, item: itemInfo(item) };
     // (A snare: the ability module's zone, set off once by the first creature to enter its square.)
-    const snare = snareZone(item, read);
+    // (A snare whose save the ability compiler doesn't read, src/compiler/doused.js: Appetizing Flavor Snare's dousing.)
+    const snare = snareZone(item, dousedRead(item, base) ?? read);
     // (Its condition for as long as a persistent damage lasts: Freezing Embrace Snare's clumsy.)
     // (Its save's rows guarded as an item's are, src/compiler/guards.js: Fang Snare's damage in plain words.)
     if (snare) return withWhilePersistent({ ...guardedSaves(snare, plainText(item?.system?.description?.value)), item: itemInfo(item) }, plainText(item?.system?.description?.value));

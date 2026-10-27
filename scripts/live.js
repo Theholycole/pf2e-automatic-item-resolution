@@ -30,6 +30,7 @@ import { scaledByCondition, withConditionDC } from "../src/live/scaled.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
+import { reshapeForm } from "./reshape.js";
 import { attackRidersEffectSource, attackRidersRolled, weaponDamageDealt } from "./attack-riders.js";
 import { withUserDCs } from "./item-dcs.js";
 import { attackRidersText } from "../src/compiler/attack-riders.js";
@@ -848,6 +849,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         await ChatMessage.create({ content: exposureCardHTML(card, { canApply: true }), speaker: ChatMessage.getSpeaker({ actor: target.actor }), flags: { [MODULE_ID]: { [FLAG]: card } } });
         lines.push(`${recipient.name}: ${again.own ? "its own save's card" : later ? "its save card for later" : "its save card"} follows`);
     }
+    // (Another form of its user's polymorph for half its time left, Bestiary of Metamorphosis's Shifting Form: scripts/reshape.js.)
+    if (state.plan.item?.reshape && target.actor) lines.push(await reshapeForm(target.actor));
     // (The item itself changed for good once used, Sluggish Bracelet's fusing: scripts/becomes.js.)
     if (state.plan.item?.becomes) {
         const became = await becomeItem(state.item.uuid, state.plan.item.becomes);
