@@ -321,3 +321,11 @@ test("its user's own doing as lines and words (2026-10-27): Conrasu Coin (Bythos
     const potion = compileItem(item("Sure-Step Potion"), options);
     assert.deepEqual([potion.partial, potion.item.ruleEffects[0].name, potion.item.ruleEffects[0].duration.unit], [undefined, "sure footing", "hours"]);
 });
+
+test("a snare's own area and trait (2026-10-27): Spirit Trap's 10-foot square, set off only by a creature with the spirit trait (only.traits)", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { zoneActions } = await import("../../pf2e-automatic-ability-resolution/src/live/zones.js");
+    const trap = compileItem(item("Spirit Trap"), options);
+    assert.deepEqual([trap.zone.area, trap.zone.saves[0].only, trap.partial], [{ type: "square", value: 10 }, { traits: ["spirit"] }, undefined]);
+    assert.deepEqual([zoneActions(trap.zone, "tokenEnter", { traits: ["humanoid"] }).length, zoneActions(trap.zone, "tokenEnter", { traits: ["spirit", "undead"] }).map((action) => action.kind)], [0, ["save"]]);
+});

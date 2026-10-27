@@ -5308,60 +5308,65 @@ export const cases = {
 
     // Popdust (2026-10-27): its square, set off by the first creature to step in — the GM's note of its cracks, the square gone.
     async popdustCracks(scene) {
-        const { actor: setter, token: setterToken } = await creature(scene, "Popdust Setter", { type: "character", x: 0, y: 6 });
-        const { token: walkerToken } = await creature(scene, "Popdust Walker", { x: 4, y: 6, alliance: "opposition" });
-        const popdust = await give(setter, "Popdust");
-        await setterToken.object?.control?.();
-        const placing = canvas.regions.placeRegion;
-        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
-        try {
-            await popdust.consume();
-            const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Popdust/.test(region.name));
-            await until(() => square(), "the popdust's Region", { timeout: 8000 });
-            const shape = square().shapes[0];
-            const since = Date.now();
-            await walkerToken.update({ x: shape.x, y: shape.y });
-            const note = await messageAfter(since, (message) => /Popdust/.test(message.content) && /thunderous cracks/.test(message.content), { what: "the GM's note of its cracks" });
-            assert(note.whisper?.length, "whispered to the GM");
-            await until(() => !square(), "the square gone once set off", { timeout: 8000 });
-            return { whisper: note.whisper.length };
-        } finally {
-            canvas.regions.placeRegion = placing;
-            for (const region of scene.regions.filter((entry) => /Popdust/.test(entry.name))) await region.delete().catch(() => null);
-        }
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Popdust Setter", { type: "character", x: 0, y: 6 });
+            const { token: walkerToken } = await creature(scene, "Popdust Walker", { x: 4, y: 6, alliance: "opposition" });
+            const popdust = await give(setter, "Popdust");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await popdust.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Popdust/.test(region.name));
+                await until(() => square(), "the popdust's Region", { timeout: 8000 });
+                const shape = square().shapes[0];
+                const since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y });
+                const note = await messageAfter(since, (message) => /Popdust/.test(message.content) && /thunderous cracks/.test(message.content), { what: "the GM's note of its cracks" });
+                assert(note.whisper?.length, "whispered to the GM");
+                await until(() => !square(), "the square gone once set off", { timeout: 8000 });
+                return { whisper: note.whisper.length };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Popdust/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
     },
 
     // Alarm Snare (2026-10-27): a Tiny creature stepping in doesn't set it off (the ability module's only.minSize); a Medium one does — the GM's
     // note of its noise, the square gone.
     async alarmSnareSize(scene) {
-        const { actor: setter, token: setterToken } = await creature(scene, "Alarm Setter", { type: "character", x: 0, y: 12 });
-        const { actor: rat, token: ratToken } = await creature(scene, "Alarm Rat", { x: 4, y: 12, alliance: "opposition" });
-        await rat.update({ "system.traits.size.value": "tiny" });
-        const { token: walkerToken } = await creature(scene, "Alarm Walker", { x: 6, y: 12, alliance: "opposition" });
-        const snare = await give(setter, "Alarm Snare");
-        await setterToken.object?.control?.();
-        const placing = canvas.regions.placeRegion;
-        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
-        try {
-            await snare.consume();
-            const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Alarm Snare/.test(region.name));
-            await until(() => square(), "the snare's Region", { timeout: 8000 });
-            const shape = square().shapes[0];
-            let since = Date.now();
-            await ratToken.update({ x: shape.x, y: shape.y });
-            await wait(2500);
-            assert(square(), "still set after the Tiny rat");
-            assert(!game.messages.contents.some((message) => message.timestamp >= since && /Alarm Snare/.test(message.content) && /noise loud enough/.test(message.content)), "no noise for the rat");
-            await ratToken.update({ x: shape.x + 300, y: shape.y });
-            since = Date.now();
-            await walkerToken.update({ x: shape.x, y: shape.y });
-            await messageAfter(since, (message) => /Alarm Snare/.test(message.content) && /noise loud enough/.test(message.content), { what: "the GM's note of its noise" });
-            await until(() => !square(), "the square gone once a Medium creature set it off", { timeout: 8000 });
-            return { tiny: "kept", medium: "set off" };
-        } finally {
-            canvas.regions.placeRegion = placing;
-            for (const region of scene.regions.filter((entry) => /Alarm Snare/.test(entry.name))) await region.delete().catch(() => null);
-        }
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Alarm Setter", { type: "character", x: 0, y: 12 });
+            const { actor: rat, token: ratToken } = await creature(scene, "Alarm Rat", { x: 4, y: 12, alliance: "opposition" });
+            await rat.update({ "system.traits.size.value": "tiny" });
+            const { token: walkerToken } = await creature(scene, "Alarm Walker", { x: 6, y: 12, alliance: "opposition" });
+            const snare = await give(setter, "Alarm Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Alarm Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const shape = square().shapes[0];
+                let since = Date.now();
+                await ratToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                await wait(2500);
+                assert(square(), "still set after the Tiny rat");
+                assert(!game.messages.contents.some((message) => message.timestamp >= since && /Alarm Snare/.test(message.content) && /noise loud enough/.test(message.content)), "no noise for the rat");
+                await ratToken.update({ x: shape.x + 300, y: shape.y }, { animate: false });
+                await until(() => ratToken.x === shape.x + 300, "the rat out again", { timeout: 8000 });
+                since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                await messageAfter(since, (message) => /Alarm Snare/.test(message.content) && /noise loud enough/.test(message.content), { what: "the GM's note of its noise" });
+                await until(() => !square(), "the square gone once a Medium creature set it off", { timeout: 8000 });
+                return { tiny: "kept", medium: "set off" };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Alarm Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
     },
 
     // Immortal Bastion (2026-10-27): readied, its user's next Wounded increase (1 → 2) is cancelled and the Effect used up; the one after goes
@@ -5392,6 +5397,46 @@ export const cases = {
         await wait(1000);
         assert(!user.hasCondition("doomed"), "no Doomed made");
         return { held: 1, after: value(), doomed: false };
+    },
+
+    // Spirit Trap (2026-10-27): its 10-foot square left set by a creature without the spirit trait; one with it gets the Fortitude save's card.
+    async spiritTrapTrait(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Spirit Setter", { type: "character", x: 0, y: 15 });
+            const { token: walkerToken } = await creature(scene, "Spirit Passerby", { x: 6, y: 15, alliance: "opposition" });
+            const { actor: ghost, token: ghostToken } = await creature(scene, "Spirit Haunt", { x: 8, y: 15, alliance: "opposition" });
+            await ghost.update({ "system.traits.value": [...new Set([...(ghost.system.traits?.value ?? []), "spirit"])] });
+            const trap = await give(setter, "Spirit Trap");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await trap.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Spirit Trap/.test(region.name));
+                await until(() => square(), "the trap's Region", { timeout: 8000 });
+                const shape = square().shapes[0];
+                assert(Math.round(shape.width) === 200 && Math.round(shape.height) === 200, `a 10-foot square (${shape.width}×${shape.height})`);
+                // (A square inside it on the grid: Foundry 14 moves a token only to a grid position, and the stand-in placement leaves the 10-foot
+                // square on a square's centre, half a square off the grid.)
+                const inside = { x: Math.ceil(shape.x / 100) * 100, y: Math.ceil(shape.y / 100) * 100 };
+                let since = Date.now();
+                // (Not animated: an animated move waits on the canvas, slow in a background pane.)
+                await walkerToken.update(inside, { animate: false });
+                await until(() => walkerToken.x === inside.x && walkerToken.y === inside.y, "the passerby in the square", { timeout: 8000 });
+                await wait(2500);
+                assert(square() && !game.messages.contents.some((message) => message.timestamp >= since && message.flags?.["pf2e-automatic-ability-resolution"]?.card), "still set after the passerby");
+                await walkerToken.update({ x: inside.x + 600, y: inside.y }, { animate: false });
+                await until(() => walkerToken.x === inside.x + 600, "the passerby out again", { timeout: 8000 });
+                since = Date.now();
+                await ghostToken.update(inside, { animate: false });
+                await messageAfter(since, abilitySaveCard, { what: "the trap's save card" });
+                await until(() => !square(), "the trap spent", { timeout: 8000 });
+                return { size: shape.width };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Spirit Trap/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
     },
 
     // Mercurial Mantle's Cunning Dodge: the triggering enemy's Perception check against DC 38 (its Perception at −30): Off-Guard.

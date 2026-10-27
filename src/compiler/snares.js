@@ -95,8 +95,15 @@ export function snareZone(item, read) {
     // (How a creature ends it early, Fire-Douse Snare's flat checks, Grease Snare's three Interact actions: plan.endEarly, the item module's
     // end-early card once the save card has applied — src/compiler/end-early.js.)
     const endEarly = readEndEarly(plainText(item.system?.description?.value));
-    const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}) };
+    // (A larger area, and only a creature of a trait, Spirit Trap's "You set this snare up in a 10-foot-by-10-foot area. The first creature with the
+    // spirit trait that steps into the area must attempt …": the zone that size, its save only for that trait — the ability module's only.traits,
+    // 2026-10-27.)
+    const whole = plainText(item.system?.description?.value);
+    const setArea = /\bYou set this snare up in an? (\d+)-foot-by-\1-foot area\./i.exec(whole);
+    const traitGate = /\bThe first creature with the ([a-z]+) trait that steps into the area\b/i.exec(whole)?.[1]?.toLowerCase() ?? null;
+    const plan = { ...read, trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
+    const only = gate || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};
     // (Again for a while after it's set off, Bleeding Spines Snare's "After the initial trigger, the spines retract and protrude again repeatedly
     // for 1 minute, forcing any creature that enters the space or ends its turn in the space to take damage from the spines (attempting the same
     // basic Reflex save)": the area it leaves — zone.then — with the same save for that time, 2026-10-27.)
@@ -107,7 +114,7 @@ export function snareZone(item, read) {
         source: read.source,
         actions: null,
         zone: {
-            area: { type: "square", value: 5 },
+            area: { type: "square", value: setArea ? Number(setArea[1]) : 5 },
             centre: "placed",
             range: 5,
             lasts: null,
@@ -116,12 +123,12 @@ export function snareZone(item, read) {
             terrain: [],
             others: false,
             hazard: null,
-            saves: [{ when: ["enter"], plan, ...(gate ? { only: { minSize: gate } } : {}) }],
+            saves: [{ when: ["enter"], plan, ...only }],
             damage: [],
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: [then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
+            notes: [then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...leftOnTheGround(item)],
             once: true,
             ...(then ? { then } : {})
         }
