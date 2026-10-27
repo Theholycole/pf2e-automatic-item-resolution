@@ -191,3 +191,33 @@ test("the glow on the creature damaged, the oil gone after: weaponDamageDealt on
     await weaponDamageDealt(damage("blade1", 4));
     assert.equal(foe.created.length, 1, "the first creature only");
 });
+
+test("Alchemical Atomizer: one of its user's elixirs, oils or potions, picked, used through it (its own card follows), Potion Patch's way", async () => {
+    const [spray, cloud] = activations("Alchemical Atomizer");
+    for (const plan of [spray, cloud]) {
+        assert.deepEqual([plan.item.patch, routeOf(plan), done(plan)], [{ maxLevel: null, categories: ["elixir", "oil", "potion"] }, "item", true]);
+        assert.ok(plan.notes.some((line) => /10 uses/.test(line)));
+    }
+    assert.match(cloud.notes[0], /within 30 feet/);
+    const foundry = await fakeFoundry();
+    foundry.actAs("gm");
+    const alchemist = foundry.makeActor({ id: "atomizer-alchemist", name: "Alchemist", owners: ["player"] });
+    foundry.place(alchemist, 0, 53000);
+    const atomizer = foundry.giveItem(alchemist, equipment.find((doc) => doc.name === "Alchemical Atomizer"));
+    const elixir = foundry.giveItem(alchemist, equipment.find((doc) => doc.name === "Elixir of Life (Minor)"));
+    foundry.giveItem(alchemist, equipment.find((doc) => doc.name === "Healing Potion (Minor)"));
+    foundry.giveItem(alchemist, equipment.find((doc) => doc.name === "Acid Flask (Lesser)"));
+    const used = [];
+    elixir.consume = async () => used.push(elixir.id);
+    const count = foundry.messages.length;
+    await foundry.socket("module.pf2e-automatic-item-resolution")({ action: "activate", itemUuid: atomizer.uuid, activation: 0, userId: "player" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    const card = foundry.messages.slice(count).find((message) => message.flags?.["pf2e-automatic-item-resolution"]?.card?.potions);
+    assert.deepEqual(card.flags["pf2e-automatic-item-resolution"].card.potions.map((entry) => entry.name).sort(), ["Elixir of Life (Minor)", "Healing Potion (Minor)"]);
+    assert.match(card.content, /Uses one of your elixirs, oils or potions through it/);
+    const pick = card.flags["pf2e-automatic-item-resolution"].card.potions.findIndex((entry) => entry.name === "Elixir of Life (Minor)");
+    await foundry.socket("module.pf2e-automatic-item-resolution")({ action: "apply", messageId: card.id, userId: "player", potionPick: pick });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.deepEqual(used, [elixir.id]);
+    assert.match(foundry.messages.find((message) => message.id === card.id).content, /Elixir of Life \(Minor\) used through it/);
+});

@@ -293,6 +293,23 @@ const READINGS = [
             return { builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways: [way("Medium or smaller: standard cover", "standard", 2, "Medium or smaller"), way("Large: lesser cover", "lesser", 1, "Large")] };
         }
     },
+    ...[0, 1].map((way) => ({
+        // (The elixir, oil or potion it holds used through it, Potion Patch's way — one of its user's, picked: its own card follows, where
+        // the creature it's for is chosen. Its reagents' 10 uses a line.)
+        name: "Alchemical Atomizer",
+        sentences: way === 0
+            ? [/^You spray the contents of the atomizer\b.*\badjacent willing ally or unattended object\.$/, /^The target gains the effects\b.*\belixir, oil, or potion\.$/, /^The target must be a valid\b.*\bthe consumable is lost\.$/]
+            : [/^You cause the atomizer to mix\b.*\ba square within (\d+) feet\.$/, /^The consumable forms a cloud\b.*\.$/, /^The first willing valid target\b.*\bgains the effect of the consumable\.$/, /^If there are multiple valid targets\b.*\.$/, /^The cloud is consumed upon contact\b.*\bwhichever comes first\.$/],
+        card: (found) => ownRow({
+            notes: [
+                way === 0
+                    ? "Pick the elixir, oil or potion it holds: its own card follows, for its user or an adjacent willing ally (or an unattended object) — one it suits, or it's lost."
+                    : `Pick the consumable it holds: it's fired as a cloud filling a square within ${found[0][1]} feet. Its own card follows: give it to the first willing creature it suits that enters the square, which decides how it applies (the map's); the cloud is gone then, or at the start of its user's next turn.`,
+                "Its reagents last 10 uses; a new batch costs 5 gp and an Interact action."
+            ],
+            item: { patch: { maxLevel: null, categories: ["elixir", "oil", "potion"] } }
+        })
+    })),
     // (What it tells, whispered.)
     {
         name: "Detector Stone",

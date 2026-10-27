@@ -133,7 +133,8 @@ export function previewLines(state) {
     // (A weapon its user treats as their best, src/compiler/proficiency-loan.js.)
     if (plan?.item?.proficiency) lines.push(proficiencyText(plan.item.proficiency));
     // (A potion it holds, src/compiler/patch.js: used through it.)
-    if (plan?.item?.patch) lines.push(`Uses one of your potions${plan.item.patch.maxLevel ? ` (level ${plan.item.patch.maxLevel} or lower)` : ""} through it: the potion's own card follows`);
+    // (Or an elixir, oil or potion, Alchemical Atomizer's patch.categories: 2026-10-27.)
+    if (plan?.item?.patch) lines.push(`Uses one of your ${orList((plan.item.patch.categories ?? ["potion"]).map((category) => `${category}s`))}${plan.item.patch.maxLevel ? ` (level ${plan.item.patch.maxLevel} or lower)` : ""} through it: ${plan.item.patch.categories ? "its" : "the potion's"} own card follows`);
     // (The alchemical item installed in it, src/compiler/installed.js: what its numbers give, the item used up.)
     if (plan?.item?.installed) lines.push(installedText(plan.item.installed));
     // (A spell slot it costs, src/compiler/slot-cost.js: spent when it's applied.)
