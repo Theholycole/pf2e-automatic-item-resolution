@@ -15,6 +15,7 @@ import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/c
 import { litAreaPlan } from "./lit-area.js";
 import { weakenedAroundPlan } from "./weakened-around.js";
 import { withActionLimit, withCastNotes, withGmCalls, withHonestPartial, withUntracedRules, withZoneUntraced } from "./honest.js";
+import { withCastChanges } from "./cast-changes.js";
 import { withSaveEnds } from "./save-ends.js";
 import { withKindSaves } from "./kind-saves.js";
 import { withEscapeEnds } from "./escape-ends.js";
@@ -44,6 +45,9 @@ import { castMentionOnly, guardText, guardValues } from "./guards.js";
 import { withDegreeEffects } from "./degree-effects.js";
 import { readTypeChoice, withTypeChoices } from "./type-choice.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
+import { spellPickPlan } from "./spell-picks.js";
+import { anathemaBurnPlan } from "./anathema-burn.js";
+import { vehicleEffectPlan, vehiclePlan, withVehicleQuickened } from "./vehicles.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
@@ -299,7 +303,7 @@ export function compileItem(given, options = {}) {
     // (And after, a PF2e action its user has while its effect lasts, src/compiler/granted-action.js: Potion of Grounding's Divert Lightning; a
     // Strike card's notes that are its user's to do, its lines, src/compiler/strike-lines.js: Iron Cube's two-handed weapon and Slam Down; a ward
     // against summoned creatures, src/compiler/warding-seal.js: Portable Seal.)
-    return areasOf(creaturesOf(illusionsOf(visibilityOf(withAfflictionReadings(withWardingSeal(withStrikeLines(withGrantedAction(lastingOf(withConsumableRules(decide(withImplosion(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withCastNote(withRuleWords(withAloft(withOnceBetter(instead ?? compileOne(given, options), text), text), text), given?.system?.description?.value, options.spells ?? {})), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), text), given, options), given, () => ({ ...basePlan(given), item: itemInfo(given) })), given), given?.system?.description?.value)), given?.system?.description?.value), given, (html) => compileItem({ ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: html } } }, options), () => ({ ...basePlan(given), item: itemInfo(given) })), given), given), given), given);
+    return areasOf(creaturesOf(illusionsOf(visibilityOf(withAfflictionReadings(withWardingSeal(withStrikeLines(withGrantedAction(lastingOf(withConsumableRules(decide(withImplosion(withRootsShield(withLaterOwnEffect(withCamouflage(withCastBlock(withPinningWays(withRowWays(withDropHeld(withOpenedTrap(withSpitOut(withCounteractLeaves(withCastNotes(withGmCalls(withLowerLevelRecovery(withAfflictedTurns(withZoneUntraced(withUntracedRules(withHonestPartial(withoutCounteractRestated(withPlacedCheck(withPlacedSave(withPlacedLight(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withImmunity(withBurnTime(retaliateAfter(burningZone(sparkColumnPlan(withSecondary(withoutDamageRestated(withoutFlavorNotes(withAreaTraitNote(withLightAura(withAttackRiders(withMythicUpgrade(withSpend(withActionWays(withWeatherIgnores(withDisbelief(withArmed(withDrinkerKind(withUserConditions(withRowReadings(ownerDCs(withCastNote(withRuleWords(withAloft(withOnceBetter(withCastChanges(instead ?? compileOne(given, options), given, options), text), text), text), given?.system?.description?.value, options.spells ?? {})), given?.system?.description?.value, given), text))), given?.system?.description?.value), given?.system?.description?.value), given), text, options), text, given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value), given?.system?.description?.value)), given, options, (use) => compileItem(use, options)), given?.system?.description?.value), text)), text), given?.system?.description?.value, { name: given?.name }), text), text)), given?.system?.description?.value), text)))), itemDuration(text)), text), text), given?.system?.description?.value), text, given?.system?.description?.value)), options, given)), given), given)))), text), text), given), text), text), given, options), given, () => ({ ...basePlan(given), item: itemInfo(given) })), given), given?.system?.description?.value)), given?.system?.description?.value), given, (html) => compileItem({ ...given, system: { ...given.system, description: { ...(given.system?.description ?? {}), value: html } } }, options), () => ({ ...basePlan(given), item: itemInfo(given) })), given), given), given), given);
 }
 
 // (Who sees whom and several creatures at once, src/compiler/visibility.js: its readings, as lasting's.)
@@ -527,8 +531,12 @@ function compileOne(given, options = {}) {
     plan = weakenedAroundPlan(plainText(html), base) ?? plan;
     // (A creature it becomes, src/compiler/conjured.js: Beetle Gel, Marvelous Miniature (Horse).)
     plan = conjuredPlan(html, base, item) ?? plan;
+    // (A vehicle it becomes or acts on, src/compiler/vehicles.js: Marvelous Miniature (Boat)'s Cutter, Feather Token (Anchor)'s stopped boat.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = vehiclePlan(html, base) ?? vehicleEffectPlan(html, base, options.spells ?? {}) ?? plan;
     // (Or one whose numbers it gives, src/compiler/conjured.js statedCreaturePlan: a third-party bottled ooze, a canister's zombie.)
     if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = statedCreaturePlan(html, base, item) ?? plan;
+    // (One of a kind of PF2e's spells, its user's pick, src/compiler/spell-picks.js: Cantrip Deck's cantrips.)
+    if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && options.spells) plan = spellPickPlan(item, options) ?? plan;
     // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
     if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(item, options) ?? plan;
     // (The ability compiler's cast, with what its words say and it left out: on its user, a DC, a modifier.)
@@ -550,6 +558,8 @@ function compileOne(given, options = {}) {
     // (A spellgun's attack with its user's spell or firearm attack modifier, src/compiler/spellguns.js — over any other reading:
     // Bewildering Spellgun's attack isn't the Will save its success row names.)
     plan = spellgunPlan(item?.system?.description?.value, base) ?? plan;
+    // (A talisman burning its wearer at an act anathema to its deity, src/compiler/anathema-burn.js: Detect Anathema Fulu.)
+    if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = anathemaBurnPlan(plainText(item?.system?.description?.value), base, item) ?? plan;
     // (Damage outright to the creature it names, src/compiler/direct-damage.js: Murderer's Knot.)
     // (A save plan one save can't hold goes first, src/compiler/guards.js, so the target's outright part can be read.)
     plan = directDamageOver(guardText(plan, plainText(item?.system?.description?.value)), directDamagePlan(plainText(item?.system?.description?.value), base, { item }));

@@ -6,6 +6,7 @@ import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
 import { castRankAt } from "../src/compiler/cast-owner.js";
+import { impulseNumbers } from "../src/compiler/cast-changes.js";
 import { rememberCastDuration } from "./cast-duration.js";
 import { smokeAfterMove } from "./cast-smoke.js";
 import { arrivalAfterMove } from "./cast-arrival.js";
@@ -82,6 +83,18 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             const from = state.plan.castDC.from;
             const best = Math.max(0, ...[from !== "spell" ? dcs.class : null, from !== "class" ? dcs.spell : null].filter((value) => Number(value) > 0));
             if (best > 0) request.dc = best;
+        }
+        // (A kineticist's impulse DC and attack modifier for a spell of one of its kinetic elements, Gate Attenuator's: the better of them and
+        // the item's — src/compiler/cast-changes.js, PF2e's flags.system.kineticist.elements and impulse statistic.)
+        if (state.plan.castImpulse) {
+            const impulse = actor.getStatistic?.("impulse") ?? null;
+            const elements = (actor.flags?.system?.kineticist?.elements ?? []).map((entry) => entry?.value ?? entry);
+            const better = impulseNumbers({ dc: request.dc, attack: request.counteract }, chosenSpell(state), { elements, dc: impulse?.dc?.value ?? ownerDCsOf(actor)?.class ?? null, attack: impulse?.check?.mod ?? null });
+            if (better.impulse) {
+                request.dc = better.dc;
+                request.counteract = better.attack;
+                lines.push(`${actor.name}'s impulse numbers: DC ${better.dc}, attack +${better.attack}.`);
+            }
         }
         const token = request.casterTokenUuid ? await fromUuid(request.casterTokenUuid).catch(() => null) : null;
         const targetTokens = (await Promise.all(request.targetUuids.map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);

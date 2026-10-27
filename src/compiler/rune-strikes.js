@@ -11,6 +11,7 @@
 import { compileAbility } from "../../../pf2e-automatic-ability-resolution/src/compiler/index.js";
 import { etchedKeys } from "./runes.js";
 import { ownerDCs } from "./item-data.js";
+import { wielderCritRiders } from "./wielder-riders.js";
 
 // The sentence's critical-hit opening, and who it's for.
 // (A weapon's own, its name or kind in it: Mindlance's "When you critically succeed at an attack roll with a mindlance", Deathseeker's
@@ -90,7 +91,9 @@ export function runeCritRiders(rune) {
         if (rolledByPF2e(rune) && damageOnly(plan)) return;
         riders.push({ plan, optional, only, text: sentence });
     });
-    return riders;
+    // (And those only for some wielders, in a section after an activation: Blessed Reformer's Redeemer Wielder — src/compiler/wielder-riders.js,
+    // 2026-10-27.)
+    return [...riders, ...wielderCritRiders(rune)];
 }
 
 // The item's own PF2e rules that add damage on a critical hit; a plan that only deals damage.

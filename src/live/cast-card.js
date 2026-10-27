@@ -76,6 +76,9 @@ export function darkLightCounteract(plan, chosen, rank) {
 // The cast card's line for it.
 export const darkLightWords = (plan) => (plan?.darkLight ? `Its ${plan.darkLight.spells.length > 1 ? "light spells count" : "light spell counts"} ${plan.darkLight.rankUp} rank higher to counteract darkness: its counteract card follows the cast${plan.darkLight.flash ? `, and a success flashes — a DC ${plan.darkLight.flash.resolution.check.against.value} Fortitude save or Dazzled for ${plan.darkLight.flash.resolution.outcomes.failure.effects[0].duration.value} round, only for creatures with darkvision` : ""}.` : null);
 
+// The cast card's line for a kineticist's own numbers (src/compiler/cast-changes.js castImpulse).
+export const impulseWords = "A kineticist whose kinetic elements include the spell's casts it with its impulse DC and attack modifier where they're better.";
+
 export function castCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const plan = state.plan;
@@ -83,18 +86,20 @@ export function castCardHTML(state, { canApply = false } = {}) {
     // (Its rank and DC from its caster, The Inquisitor's: in words until it's cast.)
     const numbers = [chosen.rank ? `rank ${chosen.rank}` : plan.castRank ? `rank half its caster's level, rounded ${plan.castRank.round} (at least ${plan.castRank.min})` : null, plan.dc ? `DC ${plan.dc}` : plan.castDC ? (plan.castDC.from === "class-spell" ? "DC its caster's class DC or spell DC, the higher" : `DC its caster's ${plan.castDC.from} DC`) : null, Number.isFinite(plan.attack) ? `counteract +${plan.attack}` : null, lastsWords(plan.castDuration), rangeWords(plan.castRange), plan.castTargets ? `up to ${plan.castTargets.max} targets` : null].filter(Boolean).join(", ");
     // (A condition on its user with the cast, Locket of Sealed Nightmares': a line of its own, with several spells too.)
-    const self = `${plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : ""}${open && plan.darkLight ? `<p class="aar-actions">${escape(darkLightWords(plan))}</p>` : ""}${open && plan.castArrival ? `<p class="aar-actions">${escape(`Where it leaves and where it arrives: ${plan.castArrival.words} (its card follows the move).`)}</p>` : ""}${open && plan.castNote ? `<p class="aar-actions">${escape(`With it, a note on its caster: ${castNoteText(plan.castNote)}`)}</p>` : ""}`;
+    const self = `${plan.castSelf ? `<p class="aar-actions">With it, its user becomes ${escape(plan.castSelf.slug)}${plan.castSelf.value ? ` ${escape(plan.castSelf.value)}` : ""}.</p>` : ""}${open && plan.darkLight ? `<p class="aar-actions">${escape(darkLightWords(plan))}</p>` : ""}${open && plan.castArrival ? `<p class="aar-actions">${escape(`Where it leaves and where it arrives: ${plan.castArrival.words} (its card follows the move).`)}</p>` : ""}${open && plan.castNote ? `<p class="aar-actions">${escape(`With it, a note on its caster: ${castNoteText(plan.castNote)}`)}</p>` : ""}${open && plan.castImpulse ? `<p class="aar-actions">${escape(impulseWords)}</p>` : ""}`;
     const caster = casterOf(state);
     // (Several spells to choose from: a picker while it's open.)
     const pick = plan.choices?.length > 1 && open && canApply
-        ? `<p class="aar-actions">Spell: <select data-air-field="choice">${plan.choices.map((entry, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(entry.spell.name)}${entry.rank ? ` (rank ${entry.rank})` : ""}${entry.self === false && state.plan.self ? " on another creature" : ""}${entry.touch ? " by touch" : ""}${entry.minLevel ? ` (from level ${entry.minLevel})` : ""}${entry.when ? ` (${escape(entry.when)})` : ""}</option>`).join("")}</select></p>`
+        ? `<p class="aar-actions">Spell: <select data-air-field="choice">${plan.choices.map((entry, index) => `<option value="${index}"${index === (state.choice ?? 0) ? " selected" : ""}>${escape(entry.spell.name)}${entry.rank ? ` (rank ${entry.rank})` : ""}${entry.self === false && state.plan.self ? " on another creature" : ""}${entry.touch ? " by touch" : ""}${entry.minLevel ? ` (from level ${entry.minLevel})` : ""}${entry.dc ? `, DC ${escape(entry.dc)}` : ""}${entry.when ? ` (${escape(entry.when)})` : ""}</option>`).join("")}</select></p>`
         : "";
     const who = state.drinker === null || state.drinker === undefined
         ? `<p class="aar-actions">${selfOf(state) ? `On ${escape(caster.name)}` : needsTargets(plan, chosen) ? "At the targets of whoever applies it" : "Placed or aimed as the spell says"}</p>`
         : open && canApply && state.drinkers.length > 1
             ? `<p class="aar-actions">Drinker: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">Drinker: ${escape(caster.name)}</p>`;
-    const notes = open && (plan.notes ?? []).length ? `<ul class="aar-notes">${plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
+    // (And its lines, what's its user's, the map's or the GM's to do — src/compiler/cast-changes.js castLines — before its notes.)
+    const said = [...(plan.castLines ?? []), ...(plan.notes ?? [])];
+    const notes = open && said.length ? `<ul class="aar-notes">${said.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const label = plan.choices?.length > 1 && open ? "the chosen spell" : chosen.spell.name ?? "the spell";
     const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Cast ${escape(label)}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM to cast it.</p>` : "";

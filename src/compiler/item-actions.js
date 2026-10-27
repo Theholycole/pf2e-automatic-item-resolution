@@ -33,6 +33,9 @@ const FORMS = [
     new RegExp(String.raw`(?:^|[.;]\s+|\bEffect\s+)You (${NAMES}) to (?:stabilize|stop (?:the )?bleeding)\b`, "i"),
     // "attempt to Administer First Aid using Medicine with a +1 item bonus to the check"
     new RegExp(String.raw`\battempt to (${NAMES}) using \w+ ${BONUS}`, "i"),
+    // "Attempt to Recall Knowledge about any one creature or object that you can see with a +2 item bonus to the check" (Calligraphic
+    // Illumination, 2026-10-27)
+    new RegExp(String.raw`\battempt to (${NAMES}) about (?:any )?one creature or object\b[^.]*? ${BONUS}`, "i"),
     // "allowing you to attempt to Disarm it from its wielder with a +2 item bonus" (Ensnaring Disk)
     new RegExp(String.raw`\battempt to (${NAMES}) (?:it|them|the (?:triggering )?(?:creature|weapon|foe|attacker)) from its wielder ${BONUS}`, "i"),
     // "When you activate the bracelet, attempt to Escape", "When you activate it, make a Leap"
