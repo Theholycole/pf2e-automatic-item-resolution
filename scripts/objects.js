@@ -6,9 +6,10 @@
 
 import { storable } from "../src/compiler/stored-spell.js";
 import { ruleEffectSource } from "../src/live/card.js";
-import { createObjectsCard, objectsCardHTML } from "../src/live/objects-card.js";
+import { createObjectsCard, douseable, objectsCardHTML } from "../src/live/objects-card.js";
+import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { chargesOf } from "../src/live/charges.js";
-import { FLAG, MODULE_ID, creaturesNear, entryOf, isActiveGM, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, creaturesNear, entryOf, isActiveGM, spaceOf, stateOf } from "./foundry.js";
 import { pauseEffectSource, pauseWords } from "../src/live/shield-repair.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
@@ -54,6 +55,66 @@ export function objectChoices(actor, objects, holderId) {
                     : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && (ammoFor(actor, item) || (objects.recalled && (spentAmmoFor(actor, item) || item.getFlag?.(MODULE_ID, "lastRound")))))
                         : [];
     return list.map((item) => ({ id: item.id, name: item.name }));
+}
+
+// The lights within its user's reach it can put out (op "douse"): each creature's light Effects that fit (src/live/objects-card.js douseable), a
+// token's own light, and the scene's placed lights — { kind, id, name, actorUuid?, tokenUuid? }.
+function lightChoices(token, actor, objects) {
+    const placeable = token?.object ?? token ?? null;
+    if (!placeable || !canvas?.ready) return [];
+    const reach = Math.max(5, Number(actor?.system?.attributes?.reach?.base) || 5);
+    const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
+    const from = spaceOf(placeable);
+    const near = [placeable, ...canvas.tokens.placeables.filter((other) => other !== placeable && !other.document.hidden && distanceFeet(from, spaceOf(other), grid) <= reach)];
+    const choices = [];
+    for (const other of near) {
+        for (const effect of other.actor?.itemTypes?.effect ?? []) {
+            const facts = { level: effect.system?.level?.value, spell: fromSpell(effect), rules: effect.system?.rules ?? [] };
+            if (douseable(facts, objects)) choices.push({ kind: "effect", id: effect.id, actorUuid: other.actor.uuid, name: `${other.name}: ${effect.name}` });
+        }
+        const light = other.document?.light ?? {};
+        if ((Number(light.bright) || 0) > 0 || (Number(light.dim) || 0) > 0) choices.push({ kind: "token", id: other.document.id, tokenUuid: other.document.uuid, name: `${other.name}'s light` });
+    }
+    for (const light of canvas.lighting?.placeables ?? []) {
+        const data = light.document;
+        if (data.hidden || !((Number(data.config?.dim) || 0) > 0 || (Number(data.config?.bright) || 0) > 0)) continue;
+        if (distanceFeet(from, { x: Number(data.x), y: Number(data.y), w: 1, h: 1, elevation: 0 }, grid) > reach) continue;
+        choices.push({ kind: "ambient", id: data.id, sceneId: data.parent?.id ?? canvas.scene?.id, name: `A light on the scene (${Number(data.config?.bright) || 0}/${Number(data.config?.dim) || 0} feet)` });
+    }
+    return choices;
+}
+
+// (A spell's Effect: PF2e's "spell-effect-" slug, or its origin item a spell.)
+function fromSpell(effect) {
+    if (/^spell-effect-/.test(String(effect.slug ?? effect.system?.slug ?? ""))) return true;
+    try {
+        return fromUuidSync(effect.system?.context?.origin?.item ?? "")?.type === "spell";
+    } catch {
+        return false;
+    }
+}
+
+// The picked light put out. → the card's line.
+async function douseLight(choice) {
+    if (!choice) throw new Error("No light within reach to put out.");
+    if (choice.kind === "effect") {
+        const owner = await fromUuid(choice.actorUuid).catch(() => null);
+        const effect = owner?.items?.get?.(choice.id);
+        if (!effect) throw new Error(`${choice.name} isn't there any more.`);
+        await effect.delete();
+        return `${choice.name}: put out.`;
+    }
+    if (choice.kind === "token") {
+        const document = await fromUuid(choice.tokenUuid).catch(() => null);
+        if (!document) throw new Error(`${choice.name} isn't there any more.`);
+        await document.update({ "light.bright": 0, "light.dim": 0 });
+        return `${choice.name}: put out.`;
+    }
+    const scene = game.scenes?.get?.(choice.sceneId) ?? canvas.scene;
+    const light = scene?.lights?.get?.(choice.id);
+    if (!light) throw new Error("That light isn't there any more.");
+    await light.update({ hidden: true });
+    return `${choice.name}: put out (hidden; the GM shows it again if it's relit).`;
 }
 
 // The items of the creatures within its user's reach the op can take: { id, name, actorUuid }.
@@ -119,7 +180,7 @@ export async function postObjectsCard({ message, plan, used, actor, token }) {
     const held = storedOf(actor?.items?.get?.(holderId));
     const own = plan.objects.op === "reshape" ? await reshapeChoices(actor?.items?.get?.(holderId), plan.objects) : plan.objects.op === "create" && plan.objects.choose ? await charmChoices(plan.objects) : objectChoices(actor, plan.objects, holderId);
     // (And the items of the creatures within its user's reach, Forgefather's Seal's "an item within reach": each named with its owner, 2026-10-27.)
-    const choices = plan.objects.reach ? [...own, ...reachChoices(token, actor, plan.objects)] : own;
+    const choices = plan.objects.op === "douse" ? lightChoices(token, actor, plan.objects) : plan.objects.reach ? [...own, ...reachChoices(token, actor, plan.objects)] : own;
     const state = createObjectsCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, id: holderId }, user: entryOf(token, actor), choices, stored: held ? { name: held.name, rank: held.rank } : null });
     return ChatMessage.create({ content: objectsCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
@@ -141,6 +202,12 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
     }
     // (Another creature's item damaged, Rustbringer's disarmed weapon: src/compiler/objects.js op "damage".)
     if (objects.op === "damage") return damageTheirItem(message, state, { pick: Number(pick) || 0, targets });
+    // (A light within its user's reach put out, Spellcutter's: src/compiler/unique-rules.js withDoused, 2026-10-27.)
+    if (objects.op === "douse") {
+        const line = await douseLight(state.choices[Number(pick) || 0]);
+        const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
+        return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+    }
     // (Its own shape changed, Anchor Spear's and the Shifting rune's: the picked base weapon's numbers on it.)
     if (objects.op === "reshape") {
         const shape = state.choices[Number(pick) || 0];

@@ -212,3 +212,23 @@ test("Viridian Crown's View Subject: the spell module's Scrying at DC 43, whom i
     assert.equal(view.castLines.length, 2);
     assert.match(view.castLines[0], /an elf who has accepted/);
 });
+
+test("Spellcutter: a light within its user's reach put out — PF2e's TokenLight Effects up to level 12 (a light spell's up to rank 6), a token's, a placed one", async () => {
+    const { douseable, objectsText } = await import("../src/live/objects-card.js");
+    const douse = plans("Spellcutter")[1];
+    assert.deepEqual([douse.builtin, douse.objects, douse.partial, routeOf(douse)], ["objects", { op: "douse", maxLevel: 12, maxRank: 6 }, undefined, "objects"]);
+    assert.match(douse.notes[0], /5-foot burst/);
+    const light = [{ key: "TokenLight", value: { bright: 20, dim: 40 } }];
+    assert.equal(douseable({ level: 6, spell: true, rules: light }, douse.objects), true);
+    assert.equal(douseable({ level: 7, spell: true, rules: light }, douse.objects), false);
+    assert.equal(douseable({ level: 12, spell: false, rules: light }, douse.objects), true);
+    assert.equal(douseable({ level: 13, spell: false, rules: light }, douse.objects), false);
+    assert.equal(douseable({ level: 1, spell: false, rules: [] }, douse.objects), false);
+    assert.match(objectsText(douse.objects, { name: "Spellcutter" }), /level 12 or lower \(a light spell of rank 6 or lower\)/);
+});
+
+test("Rowan Rifle's Briarbough Brachiaport: the spell module's Nature's Pathway on its user, within Briarbough a line", () => {
+    const travel = plans("Rowan Rifle")[2];
+    assert.deepEqual([travel.builtin, travel.spell.name, travel.self, travel.trigger.frequency.per, routeOf(travel)], ["cast-spell", "Nature's Pathway", true, "10-minutes", "cast"]);
+    assert.match(travel.castLines[0], /within Briarbough/);
+});

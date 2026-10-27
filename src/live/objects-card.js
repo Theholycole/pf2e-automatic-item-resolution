@@ -30,6 +30,8 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "repair" && objects.affixed && objects.less) return `${objects.amount} of the damage the item it's affixed to just took taken back (${objects.amount} Hit Points restored, no more than it took): pick that item once the damage lands`;
     if (objects.op === "repair" && objects.affixed && objects.negates) return `The damage negated: the item it's affixed to repaired to its full Hit Points, no longer broken — pick that item once the damage lands`;
     if (objects.op === "repair" && objects.amount) return `${objects.amount} Hit Points restored, up to its maximum: one of its user's damaged items${objects.damagedBy ? ` (what the ${objects.damagedBy} did)` : ""}${limit}`;
+    // (A light within its user's reach put out, Spellcutter's: up to a level, a light spell up to a rank — 2026-10-27.)
+    if (objects.op === "douse") return `Put out: a light within its user's reach, of level ${objects.maxLevel} or lower (a light spell of rank ${objects.maxRank} or lower)`;
     // (Within its user's reach, its own or another's, up to a level, even a destroyed one — Forgefather's Seal's Seal of Mending, 2026-10-27.)
     if (objects.op === "repair" && objects.reach) return `Repaired to its full Hit Points${objects.destroyed ? ", even if destroyed" : ""}, no longer broken: an item of its user's or of a creature within its reach${Number.isFinite(objects.maxLevel) ? `, of level ${objects.maxLevel} or lower` : ""}${objects.pauses ? `; then ${pauseWords(objects.pauses)}` : ""}`;
     if (objects.op === "repair") return `Repaired to its full Hit Points, no longer broken: one of its user's items${limit}`;
@@ -65,7 +67,7 @@ export function objectsCardHTML(state, { canApply = false } = {}) {
     // (Another creature's item, Rustbringer's: its owner targeted first, its items listed after the first Apply when it has several.)
     const theirs = objects.whose === "target";
     const picker = own ? ""
-        : !state.choices.length ? (open ? `<p class="aar-hint">${theirs ? `Target the creature whose ${escape(objects.of)} it is, then Apply.` : `${escape(state.user.name)} has no item it can take.`}</p>` : "")
+        : !state.choices.length ? (open ? `<p class="aar-hint">${theirs ? `Target the creature whose ${escape(objects.of)} it is, then Apply.` : objects.op === "douse" ? `No light within ${escape(state.user.name)}'s reach to put out.` : `${escape(state.user.name)} has no item it can take.`}</p>` : "")
             : open && canApply ? `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose ? "Weapon" : theirs && state.owner ? `${escape(state.owner.name)}'s ${escape(objects.of)}` : "Item"}: <select data-air-field="pick">${state.choices.map((choice, index) => `<option value="${index}"${index === (state.pick ?? 0) ? " selected" : ""}>${escape(choice.name)}</option>`).join("")}</select></p>`
                 : `<p class="aar-actions">${objects.op === "reshape" ? "Shape" : objects.choose ? "Weapon" : "Item"}: ${escape(state.choices[state.pick ?? 0]?.name ?? "")}</p>`;
     // (An amount its user types, Sanguine Klar's bleed damage.)
@@ -74,4 +76,12 @@ export function objectsCardHTML(state, { canApply = false } = {}) {
     const ready = own || state.choices.length || theirs;
     const controls = open && canApply && ready ? `<footer class="aar-controls"><button type="button" data-air-action="apply">Apply</button></footer>` : open && ready ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     return `<section class="pf2e-aar-card pf2e-air-card" data-air-status="${escape(state.status)}"><header><strong>${escape(state.item.name)}</strong><span class="aar-check">used by ${escape(state.user.name)}</span></header>${line}${notes}${picker}${typed}${results}${controls}</section>`;
+}
+
+// Whether a creature's Effect is a light it can put out (op "douse", Spellcutter's): one with PF2e's TokenLight rule, a light spell's (its
+// level the spell's rank) up to objects.maxRank, another's (its item level) up to objects.maxLevel. effect: { level, spell, rules }.
+export function douseable(effect, objects) {
+    if (!(effect?.rules ?? []).some((rule) => rule?.key === "TokenLight")) return false;
+    const level = Number(effect.level) || 0;
+    return effect.spell ? level <= objects.maxRank : level <= objects.maxLevel;
 }

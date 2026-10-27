@@ -83,6 +83,13 @@
 //   Crown cast Scrying to your specifications. The target can resist the scrying effect with a DC 43 Will save if they wish." → the spell
 //   module's cast (builtin "cast-spell") at that DC; whom it may scry (an elf who accepted its user's rule, known by name or met) and a willing
 //   target's choice not to resist, lines of the cast card.
+// - A light put out by a touch (withDoused): Spellcutter's "Touching Spellcutter to any light source of 12th level or lower (including
+//   6th-rank spells with the light trait) instantly extinguishes the effect." → the objects card's op "douse": the lights within its user's
+//   reach picked on it — a creature's light Effects (PF2e's TokenLight; a light spell's up to that rank), a token's own light, a light placed
+//   on the scene — and put out (scripts/objects.js). A large flame's 5-foot burst from the point touched: the map's, a line.
+// - A spell's travel within one place (withPlaceTravel): Rowan Rifle's Briarbough Brachiaport, "You hold aloft the Rowan Rifle and step into a
+//   tree in Briarbough, and you use Nature's Pathway to travel to another tree in Briarbough." → the spell module's cast on its user; only
+//   from one of that place's trees to another, a line (the map's).
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -448,13 +455,36 @@ function withScryingAs(plan, { activation, index }, item) {
     };
 }
 
+// --- A light put out by a touch -----------------------------------------------------------------------------------------------------------------
+
+const DOUSE = [/^Touching [\w' -]+? to any light source of (\d+)(?:st|nd|rd|th) level or lower \(including (\d+)(?:st|nd|rd|th)-rank spells with the light trait\) instantly extinguishes the effect\.$/, /^If the source of the light is a large flame, such as a forest fire or bonfire, it only extinguishes the light source in a (\d+)-foot radius burst from the point of contact\.$/];
+function withDoused(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(DOUSE, sentences)) return plan;
+    const [, level, rank] = DOUSE[0].exec(sentences[0]);
+    const burst = DOUSE[1].exec(sentences[1])[1];
+    return { ...keptBase(plan, item, { activation, index }), builtin: "objects", automation: { level: "automatic" }, targeting: { target: null, range: "touch", area: null }, objects: { op: "douse", maxLevel: Number(level), maxRank: Number(rank) }, notes: [`A large flame (a bonfire, a forest fire) goes out only in a ${burst}-foot burst from where it's touched: the map's.`, `A light with no level (a token's own, one placed on the scene): the GM says whether it's of level ${level} or lower.`] };
+}
+
+// --- A spell's travel within one place ------------------------------------------------------------------------------------------------------------
+
+const PLACE_TRAVEL = /^You hold aloft the [\w' -]+? and step into a (tree) in ([A-Z][\w' -]+?), and you use ([A-Z][\w' -]+?) to travel to another tree in \2\.$/;
+function withPlaceTravel(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const said = sentences.length === 1 ? PLACE_TRAVEL.exec(sentences[0]) : null;
+    const spell = said ? new RegExp(String.raw`@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{${said[3]}\}`).exec(String(activation.html ?? "")) : null;
+    if (!unread(plan) || !spell) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    return { builtin: "cast-spell", source: base.source, spell: { uuid: spell[1], name: said[3] }, rank: null, dc: null, attack: null, tradition: null, self: true, targets: false, trigger: base.trigger, item: base.item, automation: { level: "automatic" }, castLines: [`Only within ${said[2]}: from one of its ${said[1]}s to another (the map's).`] };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs, withDoused, withPlaceTravel]) {
         const next = reader(plan, entry, item);
         if (next !== plan) return next;
     }
