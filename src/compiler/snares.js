@@ -4,7 +4,7 @@
 // plan }], once: true, … } } — its startZone plays it (asked of its session: once, and a used-up item). Pure.
 
 import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants.js";
-import { readEndEarly } from "./end-early.js";
+import { readEndEarly, readRowWays } from "./end-early.js";
 import { plainText } from "./rows.js";
 
 const ROW_KEYS = ["criticalSuccess", "success", "failure", "criticalFailure"];
@@ -123,7 +123,8 @@ export function snareZone(item, read) {
     if (!ROW_KEYS.some((degree) => read.resolution.outcomes?.[degree])) return null;
     // (How a creature ends it early, Fire-Douse Snare's flat checks, Grease Snare's three Interact actions: plan.endEarly, the item module's
     // end-early card once the save card has applied — src/compiler/end-early.js.)
-    const endEarly = readEndEarly(plainText(item.system?.description?.value));
+    // (Or a way for each row its modifiers say, Glittering Snare's Interact action or longer activities: endEarly.byDegree.)
+    const endEarly = readEndEarly(plainText(item.system?.description?.value)) ?? readRowWays(read.resolution?.outcomes);
     // (A larger area, and only a creature of a trait, Spirit Trap's "You set this snare up in a 10-foot-by-10-foot area. The first creature with the
     // spirit trait that steps into the area must attempt …": the zone that size, its save only for that trait — the ability module's only.traits,
     // 2026-10-27.)
@@ -149,7 +150,10 @@ export function snareZone(item, read) {
     // basic Reflex save)": the area it leaves — zone.then — with the same save for that time, 2026-10-27.)
     const again = /\bAfter the initial trigger, [^.]*?\brepeatedly for (\d+) (minutes?|rounds?), forcing any creature that enters the space or ends its turn in the space to take damage from the [\w ]+? \(attempting the same basic \w+ save\)\./i.exec(plainText(item.system?.description?.value));
     const then = again ? { area: { type: "square", value: 5 }, lasts: { mode: "fixed", value: Number(again[1]), unit: /^min/i.test(again[2]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" }, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [{ when: ["enter", "end"], plan: { ...plan, targeting: { target: "a creature that enters the space or ends its turn there", range: null, area: null } } }], damage: [], effect: null, modifiers: [], notes: ["The spines strike again at any creature that enters the space or ends its turn there."] } : null;
-    return {
+    // (Or hidden in a container, Glittering Snare's "The first creature to enter the square or open the container": its line says so — the
+    // one who opens it put on the square.)
+    const container = /\bThe first creature to enter the square or open the container\b/i.test(whole);
+    return withContainerLine({
         builtin: "zone",
         source: read.source,
         actions: null,
@@ -173,7 +177,13 @@ export function snareZone(item, read) {
             once: true,
             ...(then ? { then } : {})
         }
-    };
+    }, container);
+}
+
+function withContainerLine(plan, container) {
+    if (!container) return plan;
+    const notes = (plan.zone.notes ?? []).map((note, at) => (at === 0 ? String(note).replace(/ to enter the square sets it off\b/, " to enter the square (or to open the container it's hidden in: put that creature on the square) sets it off") : note));
+    return { ...plan, zone: { ...plan.zone, notes } };
 }
 
 // A square that only makes a noise when set off (2026-10-27): Alarm Snare's "When a Small or larger creature enters the square, the snare

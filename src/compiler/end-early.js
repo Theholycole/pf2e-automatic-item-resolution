@@ -54,3 +54,25 @@ export function readPullFree(notes, degrees) {
     const said = [stuck[0], ...(critical ? [critical[0]] : [])];
     return { endEarly: { how: { kind: "check", skill: stuck[2].toLowerCase(), dc: Number(stuck[1]), ...(critical ? { criticalDC: Number(critical[1]) } : {}) }, conditions: ["immobilized"], degrees, said }, said };
 }
+
+// (Or a way for each row, read from its modifiers' "until" — Glittering Snare's "for 1 minute or until it uses an Interact action to remove the
+// glitter", "or until it spends a 2-action activity, which has the manipulate trait, to remove the glitter", the critical failure's 3-action one:
+// endEarly.byDegree { degree: how }, the card's try for each creature by the degree it rolled; all its Effects on that creature gone. 2026-10-27.)
+const UNTIL_ACTION = /^it uses an? Interact action to remove (?:the [\w ]+|it)$/i;
+const UNTIL_ACTIVITY = /^it spends an? (\d)-action activity, which has the (\w+) trait, to remove (?:the [\w ]+|it)$/i;
+export function readRowWays(outcomes) {
+    const byDegree = {};
+    const said = [];
+    for (const [degree, row] of Object.entries(outcomes ?? {})) {
+        const until = (row?.modifiers ?? []).map((modifier) => String(modifier.until ?? "").trim()).find(Boolean);
+        if (!until) continue;
+        const activity = UNTIL_ACTIVITY.exec(until);
+        if (UNTIL_ACTION.test(until)) byDegree[degree] = { kind: "actions", count: 1 };
+        else if (activity) byDegree[degree] = { kind: "actions", count: Number(activity[1]), trait: activity[2].toLowerCase() };
+        else return null;
+        said.push(until);
+    }
+    const degrees = Object.keys(byDegree);
+    if (!degrees.length) return null;
+    return { how: byDegree[degrees[0]], byDegree, conditions: [], degrees, said };
+}

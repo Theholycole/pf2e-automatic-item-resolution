@@ -1282,6 +1282,44 @@ export const cases = {
         });
     },
 
+    // Glittering Snare (2026-10-27): a failed Reflex save, -2 to Stealth; the end-early card's try for that creature is its failure row's own —
+    // a 2-action manipulate activity — and pressed, the penalty's gone.
+    async glitteringRowWay(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Glitter Setter", { type: "character", x: 0, y: 9 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Glitter Walker", { x: 6, y: 9, alliance: "opposition", save: 5 });
+            const snare = await give(setter, "Glittering Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Glittering Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                let since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const save = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+                since = Date.now();
+                // (A 10 on the die: 15 against DC 20, a failure.)
+                await withDie(10, () => rollAndApply(save));
+                const penalty = () => walker.itemTypes.effect.find((effect) => /Glittering Snare/.test(effect.name) && (effect.system.rules ?? []).some((rule) => Number(rule.value) === -2));
+                await until(() => penalty(), `-2 to Stealth (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+                const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+                assert(/2 manipulate actions spent/.test(ending.content), `its failure row's way (${ending.content.replace(/<[^>]+>/g, " ").slice(0, 300)})`);
+                await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+                await until(() => !walker.itemTypes.effect.some((effect) => /Glittering Snare/.test(effect.name)), `the glitter removed (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 8000 });
+                return { results: game.messages.get(ending.id).getFlag(NS, "card").results };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Glittering Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Scale of Igroon (2026-10-27): its +4 Stealth Effect ended by its user's next activation (the scale's other one), and again by a Shield
     // Block (PF2e's applyDamage with shieldBlockRequest).
     async scaleIgroonEnds(scene) {

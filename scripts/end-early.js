@@ -3,7 +3,7 @@
 // ends outright), or its Interact actions spent. Ending it deletes the item's Effects on that creature that grant the conditions it names (all
 // the item's Effects on it when it names none) — the ability module's timed conditions, which take their conditions with them.
 
-import { checkDC, createEndEarlyCard, endEarlyCardHTML, tryWords } from "../src/live/end-early-card.js";
+import { checkDC, createEndEarlyCard, endEarlyCardHTML, howFor, tryWords } from "../src/live/end-early-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, stateOf } from "./foundry.js";
 
 export function setUpEndEarly() {
@@ -31,7 +31,7 @@ export async function postEndEarly({ state, targets }) {
         const actor = target.actorUuid ? await fromUuid(target.actorUuid).catch(() => null) : null;
         // (Or the condition itself when the card gave it with no time, Antler Arrow's Immobilized.)
         if (!actor || !(endedBy(actor, itemName, endEarly.conditions).length || (endEarly.conditions ?? []).some((slug) => actor.hasCondition?.(slug)))) continue;
-        creatures.push({ actorUuid: actor.uuid, tokenUuid: target.tokenUuid ?? null, name: target.name ?? actor.name });
+        creatures.push({ actorUuid: actor.uuid, tokenUuid: target.tokenUuid ?? null, name: target.name ?? actor.name, ...(target.degree ? { degree: target.degree } : {}) });
     }
     if (!creatures.length) return null;
     const card = createEndEarlyCard({ endEarly, item: { name: itemName, uuid: state.ability?.uuid ?? null }, user: { actorUuid: state.source?.actorUuid ?? null, tokenUuid: state.source?.tokenUuid ?? null, name: state.source?.name ?? itemName }, creatures });
@@ -47,7 +47,8 @@ export async function applyEndEarlyCard(message, { entry = null, critical = null
     if (!one || one.done) throw new Error("Pick a creature it still affects.");
     const actor = await fromUuid(one.actorUuid).catch(() => null);
     if (!actor) throw new Error(`${one.name} isn't there any more.`);
-    const endEarly = state.plan.endEarly;
+    // (Its degree's own way, Glittering Snare's rows: src/live/end-early-card.js howFor.)
+    const endEarly = { ...state.plan.endEarly, how: howFor(state.plan.endEarly, one) };
     const lines = [];
     let ends = endEarly.how.kind === "actions";
     let step = one.step;

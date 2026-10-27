@@ -221,6 +221,16 @@ test("pulling free with a skill check (2026-10-27): Antler Arrow — its save's 
     assert.deepEqual([tryWords(endEarly, { step: 0 }), tryWords(endEarly, { step: 0 }, true)], ["an Interact action: a DC 10 Athletics check", "an Interact action: a DC 15 Athletics check"]);
 });
 
+test("a way to end it for each row (2026-10-27): Glittering Snare — an Interact action on a success, a 2-action manipulate activity on a failure, a 3-action one on a critical failure; its container a line", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { tryWords } = await import("../src/live/end-early-card.js");
+    const snare = compileItem(item("Glittering Snare"), options);
+    const endEarly = snare.zone.saves[0].plan.endEarly;
+    assert.deepEqual([endEarly.degrees, snare.partial], [["success", "failure", "criticalFailure"], undefined]);
+    assert.deepEqual(["success", "failure", "criticalFailure"].map((degree) => tryWords(endEarly, { step: 0, degree })), ["1 Interact action spent", "2 manipulate actions spent", "3 manipulate actions spent"]);
+    assert.match(snare.zone.notes[0], /or to open the container it's hidden in/);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);
