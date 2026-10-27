@@ -10,7 +10,8 @@ export function createFocusCard({ plan, item, user }) {
 
 // What it gives, in words: "1 Focus Point, only to cast a witch hex spell; lost at the end of the turn if not spent".
 // (word: the point's name, "Focus Point" — or a Mythic Point's, "Mythic Point" or "Hero Point" as the world setting has it.)
-export const pointWord = (focus, word = null) => word ?? (focus?.resource === "mythic" ? "Mythic Point" : "Focus Point");
+// (Or an alchemist's versatile vial, Alchemist's Haversack's: "versatile vial".)
+export const pointWord = (focus, word = null) => word ?? (focus?.resource === "mythic" ? "Mythic Point" : focus?.resource === "versatile-vials" ? "versatile vial" : "Focus Point");
 export function focusText(focus, word = null) {
     const points = `${focus.amount} ${pointWord(focus, word)}${focus.amount === 1 ? "" : "s"}`;
     return [focus.only ? `${points}, only to ${focus.only}` : points, focus.lost === "turn-end" ? "lost at the end of the turn if not spent" : null].filter(Boolean).join("; ");

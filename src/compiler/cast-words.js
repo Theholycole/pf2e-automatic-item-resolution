@@ -30,7 +30,14 @@ export function spellIndex(spells) {
             sustained: Boolean(spell.system?.duration?.sustained),
             range: String(spell.system?.range?.value ?? "").trim() || null,
             // (Its traits, for a rule on spells of a trait: Dawnlight's light spells against darkness, src/compiler/dark-light.js.)
-            traits: [...(spell.system?.traits?.value ?? [])]
+            traits: [...(spell.system?.traits?.value ?? [])],
+            // (Its rarity, book, save and target's words, for an item that casts one of a kind of spells — Cantrip Deck's Player Core cantrips,
+            // Bleachguard Doll's with no attack roll or save: src/compiler/spell-picks.js, 2026-10-27.)
+            rarity: spell.system?.traits?.rarity ?? null,
+            book: spell.system?.publication?.title ?? null,
+            save: spell.system?.defense?.save?.statistic ?? null,
+            target: String(spell.system?.target?.value ?? "").trim() || null,
+            traditions: [...(spell.system?.traits?.traditions ?? [])]
         };
     }
     return index;

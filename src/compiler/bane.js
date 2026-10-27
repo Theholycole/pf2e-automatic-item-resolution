@@ -145,9 +145,11 @@ export function dragonWaysPlan(html, base, item, options = {}) {
         }
     }
     if (ways.length < 2) return null;
-    // (The three talismans of one dragon together: their Dragon Breath, the GM's.)
+    // (The three talismans of one dragon together: their Dragon Breath — a one-off, its words a line of the card.)
     const set = /\bIf you have a dragonclaw scutcheon, dragonscale cameo, and dragontooth trophy\b[^.]*\.[^.]*\./i.exec(text.replace(/<[^>]+>/g, " ").replace(/@\w+\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\(@Check\[(\w+)\|dc:(\d+)\|basic\]\)/g, (all, save, dc) => `(DC ${dc} basic ${save.charAt(0).toUpperCase()}${save.slice(1)} save)`));
-    return { ...base, builtin: "ways", automation: { level: set ? "guided" : "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways, once: true, ...(set ? { notes: [`${set[0].trim()} (by hand)`], partial: true } : {}) };
+    // (A one-off since 2026-10-27, src/compiler/one-offs.js: the set's words a line of each way's card, which shows its plan's notes.)
+    const lined = set ? ways.map((way) => ({ ...way, plan: { ...way.plan, notes: [...(way.plan.notes ?? []), set[0].trim()] } })) : ways;
+    return { ...base, builtin: "ways", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways: lined, once: true };
 }
 
 // A shot whose rider depends on the gun's modular configuration: Hydrocannon's Tinker Shot, "A successful attack has an additional effect

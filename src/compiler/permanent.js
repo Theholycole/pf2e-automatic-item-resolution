@@ -14,6 +14,7 @@ import { MODEL_VERSION } from "../../../pf2e-resolution-core/src/model/constants
 import { actionTypeOf, triggerOn } from "./activation.js";
 import { forTargets, othersTargeting, targetedRecipient, allyAreaPlan, castPlan, checkGated, effectLinks, fitPlan, ownPlan, withStatedHealing } from "./consumables.js";
 import { castWordsPlan, fillCast } from "./cast-words.js";
+import { spellPickPlan } from "./spell-picks.js";
 import { rollTwiceOver, rollTwicePlan } from "./fortune.js";
 import { readiedBonusOver, readiedBonusPlan, withEscalatingBonus } from "./readied-bonus.js";
 import { rageOver, ragePlan } from "./rage.js";
@@ -594,6 +595,8 @@ function compileEach(item, options = {}) {
             if (row && !row.noteOnly) plan = row;
         }
         if (!plan && options.spellEffects) plan = castPlan(part);
+        // (One of a kind of PF2e's spells, its user's pick, src/compiler/spell-picks.js: Mage's Hat (Greater)'s summon spell.)
+        if ((!plan || plan.noteOnly || plan.builtin === "no-effect") && options.spells) plan = spellPickPlan(part, options, item.system?.description?.value) ?? plan;
         // (A cast in other words, by the spell's name: src/compiler/cast-words.js.)
         if ((!plan || plan.noteOnly) && options.spells) plan = castWordsPlan(part, options) ?? plan;
         // (One spell of several its words name, Spark Dancer's "casts either Fireball or Lightning Bolt, depending on …": the words' choices,

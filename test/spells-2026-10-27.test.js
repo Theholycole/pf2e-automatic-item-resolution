@@ -109,3 +109,57 @@ test("one-off: Elemental Wayfinder (Air)'s Gentle Landing beside its Lightning B
     const wayfinder = activations("Elemental Wayfinder (Air)")[0];
     assert.deepEqual([wayfinder.builtin, wayfinder.decided, Boolean(wayfinder.partial)], ["cast-spell", "one-off", false]);
 });
+
+test("one of a kind of PF2e's spells, picked on the cast card: Cantrip Deck's cantrips at 1st rank, DC 15, +5; Mage's Hat (Greater)'s arcane summons at 4th", () => {
+    const full = compileItem(item("Cantrip Deck (Full Pack)"), options);
+    assert.ok(done(full));
+    assert.deepEqual([full.builtin, full.choices.length, full.dc, full.attack], ["cast-spell", 25, 15, 5]);
+    assert.ok(full.choices.every((choice) => choice.rank === 1));
+    assert.ok(full.choices.some((choice) => choice.spell.name === "Electric Arc") && full.castLines.some((line) => /same number of actions/.test(line)));
+    const pack = compileItem(item("Cantrip Deck (5-pack)"), options);
+    assert.ok(done(pack) && pack.choices.length > full.choices.length);
+    assert.ok(pack.choices.some((choice) => choice.spell.name === "Light"));
+    const hat = activation("Mage's Hat (Greater)", "Hat Spell");
+    assert.ok(done(hat));
+    assert.deepEqual(hat.choices.slice(0, 2).map((choice) => [choice.spell.name, choice.rank]), [["Summon Animal", 4], ["Summon Elemental", 4]]);
+    assert.ok(hat.choices.every((choice) => choice.rank === 4));
+    assert.equal(hat.trigger.frequency.per, "day");
+});
+
+test("Bleachguard Doll's cantrips picked (Light at 3rd rank, Prestidigitation, its other cantrip with no attack or save); its daily spell the creator's, partial", () => {
+    const doll = activations("Bleachguard Doll")[0];
+    assert.equal(doll.builtin, "cast-spell");
+    assert.deepEqual(doll.choices.slice(0, 2).map((choice) => [choice.spell.name, choice.rank]), [["Light", 3], ["Prestidigitation", null]]);
+    assert.ok(doll.choices.slice(2).every((choice) => choice.when === "its other cantrip" && choice.rank === 3));
+    assert.ok(!doll.choices.some((choice) => ["Electric Arc", "Daze"].includes(choice.spell.name)));
+    // (Light's target an object: none to target first.)
+    assert.equal(doll.choices[0].targets, false);
+    assert.equal(doll.partial, true);
+});
+
+test("Calligraphic Illumination: PF2e's Recall Knowledge with a +2 item bonus; Alchemist's Haversack: a versatile vial, PF2e's special resource one higher", async () => {
+    const book = activation("Calligraphic Illumination", "Inscribed Insight");
+    assert.deepEqual([book.builtin, book.action.slug, book.action.bonus], ["item-action", "recall-knowledge", { value: 2, type: "item" }]);
+    const sack = activations("Alchemist's Haversack")[0];
+    assert.deepEqual([sack.builtin, sack.focus], ["focus-point", { amount: 1, only: null, lost: null, resource: "versatile-vials" }]);
+    const { focusText } = await import("../src/live/focus-card.js");
+    assert.equal(focusText(sack.focus), "1 versatile vial");
+});
+
+test("Detect Anathema Fulu: 4d6 fire at its wearer, the brand a note Effect with no end, its going off the GM's call", () => {
+    const fulu = compileItem(item("Detect Anathema Fulu"), options);
+    assert.ok(done(fulu));
+    assert.deepEqual(fulu.directDamage, { formula: "4d6", type: "fire", category: null });
+    assert.deepEqual(fulu.resolution.outcomes.success.noteEffects.map((note) => [note.label, note.duration]), [["Branded", null]]);
+    assert.ok(fulu.notes.some((note) => /\(the GM's call\)\.$/.test(note)));
+});
+
+test("one-offs of the spells group: their words the card's lines, counted done and kept to build later (the dragon talismans' set on each way's card)", () => {
+    const plans = [activation("Wandmender", "Recharge Wand"), activation("Ring of Maniacal Devices", "Fireball Trap"), activation("Ring of Maniacal Devices (Greater)", "Fireball Trap"), activations("Stone Circle")[0], activations("Stone Circle (Greater)")[0], activations("Laurel of the Empath")[2]];
+    assert.deepEqual(plans.map((plan) => [plan.decided, done(plan)]), plans.map(() => ["one-off", true]));
+    for (const name of ["Ruby Capacitor", "Ruby Capacitor (Greater)", "Ruby Capacitor (Major)", "Mind-Swap Potion", "Candle of Invocation"]) assert.equal(compileItem(item(name), options).decided, "one-off", name);
+    // (Laurel of the Empath's first two activations stay its own cards.)
+    assert.deepEqual(activations("Laurel of the Empath").slice(0, 2).map((plan) => plan.builtin), ["readied-bonus", "reroll"]);
+    const scutcheon = compileItem(item("Dragonclaw Scutcheon"), options);
+    assert.ok(done(scutcheon) && scutcheon.ways.every((way) => /Dragon Breath/.test(way.plan.notes.at(-1))));
+});

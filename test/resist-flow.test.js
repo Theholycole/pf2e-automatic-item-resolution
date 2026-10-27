@@ -362,7 +362,9 @@ test("a talisman of one dragon: Dragonclaw Scutcheon's immunity to the picked ty
     const fire = scutcheon.ways.find((way) => way.name === "Fire").plan.item.resist;
     assert.equal(resistanceText(fire), "Immunity to fire until the end of the next turn");
     assert.deepEqual(resistanceEffectSource(fire, { item: { name: "Dragonclaw Scutcheon" } }).system.rules, [{ key: "Immunity", type: "fire" }]);
-    assert.match(scutcheon.notes[0], /8th-rank Dragon Breath focus spell \(DC 35 basic Reflex save\).*\(by hand\)$/);
+    // (2026-10-27: the three talismans' set a one-off, src/compiler/one-offs.js — its words a line of each way's card, the ways plan whole.)
+    assert.match(scutcheon.ways.find((way) => way.name === "Fire").plan.notes.at(-1), /8th-rank Dragon Breath focus spell \(DC 35 basic Reflex save\)/);
+    assert.deepEqual([scutcheon.notes, scutcheon.partial], [undefined, undefined]);
     const trophy = compileItem(source("Dragontooth Trophy"));
     const cold = trophy.ways.find((way) => way.name === "Cold").plan;
     assert.deepEqual([routeOf(cold), cold.strike.alteration, cold.strike.hit], ["strike", "cold", true]);

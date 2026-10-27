@@ -13,7 +13,8 @@ const GRANT = "focusGrant";
 const USER_ID = "source";
 
 // The resource the point is: a Focus Point, or a Mythic Point — a Hero Point under the world setting (scripts/spend.js). → { key, word }.
-const resourceOf = (focus) => (focus?.resource === "mythic" ? costResource() : { key: "focus", word: "Focus Point" });
+// (Or an alchemist's versatile vials, PF2e's special resource: { key, word, slug }, its slug for PF2e's updateResource.)
+const resourceOf = (focus) => (focus?.resource === "mythic" ? costResource() : focus?.resource === "versatile-vials" ? { key: "versatileVials", word: "versatile vial", slug: "versatile-vials" } : { key: "focus", word: "Focus Point" });
 
 export async function postFocusCard({ message, plan, used, actor, token }) {
     const state = { ...createFocusCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: entryOf(token, actor) }), word: resourceOf(plan.focus).word };
@@ -26,7 +27,7 @@ export async function applyFocusCard(message) {
     const { actor } = await creatureOf(state.user);
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const focus = state.plan.focus;
-    const { key, word } = resourceOf(focus);
+    const { key, word, slug } = resourceOf(focus);
     const pool = actor.system?.resources?.[key] ?? null;
     const after = poolAfter(pool, focus.amount);
     const lines = [];
@@ -34,7 +35,9 @@ export async function applyFocusCard(message) {
     else if (after.reason === "full") lines.push(key === "focus" ? `${state.user.name}'s focus pool is full (${after.value} of ${after.max}): no Focus Point gained.` : `${state.user.name}'s ${word}s are full (${after.value} of ${after.max}): no ${word} gained.`);
     else {
         const before = Number(pool.value) || 0;
-        await actor.update({ [`system.resources.${key}.value`]: after.value });
+        // (A special resource, the versatile vials, through PF2e's own updateResource: its value isn't the actor's data to update.)
+        if (slug && typeof actor.updateResource === "function") await actor.updateResource(slug, after.value);
+        else await actor.update({ [`system.resources.${key}.value`]: after.value });
         lines.push(`${state.user.name} gains ${after.gained} ${word}${after.gained === 1 ? "" : "s"} (${after.value} of ${after.max})${focus.only ? `, only to ${focus.only}` : ""}.`);
         // (The started encounter the creature is in, whichever one the GM is viewing.)
         const found = focus.lost === "turn-end" ? encounterOf(actor) : null;
