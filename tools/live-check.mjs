@@ -807,6 +807,27 @@ export const cases = {
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
+    // The Teamster (2026-10-27): its counteract card on its user's Stupefied, its row ticked "its source over 4 levels below yours" — countered
+    // outright, with no DC, rank or roll.
+    async teamsterOutright(scene) {
+        const { actor: user } = await creature(scene, "Teamster Bearer", { type: "character", x: 12, y: 13, level: 20 });
+        await user.increaseCondition("stupefied", { value: 2 });
+        const card = await give(user, "The Teamster");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(card.uuid, 0);
+        const counter = await messageAfter(since, itemCard("counteract"), { what: "the counteract card" });
+        await game.modules.get(NS).api.live.apply(counter.id, { drinker: 0 });
+        await wait(500);
+        const rows = game.messages.get(counter.id).getFlag(NS, "card").rows;
+        assert(rows.some((row) => row.slug === "stupefied"), `stupefied found (${JSON.stringify(rows)})`);
+        assert(/countered outright/.test(game.messages.get(counter.id).content), "the outright tick");
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(counter.id, { rows: rows.map((row) => ({ ticked: row.slug === "stupefied", outright: row.slug === "stupefied" })) });
+        await until(() => !user.hasCondition("stupefied"), "stupefied countered outright", { timeout: 8000 });
+        assert(!game.messages.contents.some((message) => message.timestamp >= since && /counteract Stupefied/.test(message.flavor ?? "")), "no counteract roll");
+        return { results: game.messages.get(counter.id).getFlag(NS, "card").results };
+    },
+
     // Longnight Tea with the Tea Ceremony ticked: its Effect lasts 8 hours and the drinker's fatigued goes.
     async teaCeremony(scene) {
         const { actor: drinker } = await creature(scene, "Tea Drinker", { type: "character", x: 2, y: 3 });

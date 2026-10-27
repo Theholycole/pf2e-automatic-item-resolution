@@ -308,6 +308,14 @@ test("an opening sentence saying what the item is made of, flavor (2026-10-27): 
     assert.deepEqual([damper.strike.suppress, damper.strike.notes, damper.partial], [["kickback"], [], undefined]);
 });
 
+test("countered outright when its source is far lower (2026-10-27): The Teamster — counteract.outrightBelow 4, the card's tick for each condition row", async () => {
+    const { counteractCardHTML } = await import("../src/live/counteract-card.js");
+    const [{ plan: teamster }] = compileActivations(item("The Teamster"), options);
+    assert.deepEqual([teamster.item.counteract.outrightBelow, teamster.item.counteract.notes, teamster.partial], [{ levels: 4 }, undefined, undefined]);
+    const html = counteractCardHTML({ kind: "counteract", status: "open", step: "pick", counteract: teamster.item.counteract, item: { name: "The Teamster" }, user: { name: "A" }, drinkers: [{ name: "A" }], drinker: 0, rows: [{ id: "x", name: "Stupefied", kind: "condition", slug: "stupefied", rank: null, dc: null, ticked: true }], results: [] }, { canApply: true });
+    assert.match(html, /data-air-outright="0".*countered outright/);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

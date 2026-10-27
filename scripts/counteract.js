@@ -76,13 +76,14 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
     // (Step 2: the rows as the card's controls give them.)
     const chosen = state.rows.map((row, index) => {
         const given = Array.isArray(rows) ? rows[index] ?? {} : {};
-        return { ...row, ticked: given.ticked ?? row.ticked, dc: Number.isFinite(Number(given.dc)) && given.dc !== "" && given.dc !== null ? Number(given.dc) : row.dc, rank: Number.isFinite(Number(given.rank)) && given.rank !== "" && given.rank !== null ? Number(given.rank) : row.rank };
+        return { ...row, ticked: given.ticked ?? row.ticked, outright: Boolean(state.counteract.outrightBelow && row.kind === "condition" && given.outright), dc: Number.isFinite(Number(given.dc)) && given.dc !== "" && given.dc !== null ? Number(given.dc) : row.dc, rank: Number.isFinite(Number(given.rank)) && given.rank !== "" && given.rank !== null ? Number(given.rank) : row.rank };
     });
     let ticked = chosen.filter((row) => row.ticked);
     if (!ticked.length) throw new Error("Tick what to counteract.");
     if (state.counteract.pick !== "each" && ticked.length > 1) ticked = ticked.slice(0, 1);
     // (A condition that ends outright, Determination's, needs neither.)
-    const missing = ticked.filter((row) => !row.ends && (!Number.isFinite(row.dc) || !Number.isFinite(row.rank)));
+    // (Nor one countered outright, its source far below its user's level: The Teamster's.)
+    const missing = ticked.filter((row) => !row.ends && !row.outright && (!Number.isFinite(row.dc) || !Number.isFinite(row.rank)));
     if (missing.length) throw new Error(`Give the DC and rank for ${missing.map((row) => row.name).join(", ")}.`);
     // (Its own rank when the text leaves it to its stored spell: the card's.)
     const ours = Number.isFinite(state.counteract.rank) ? state.counteract.rank : Number(ownRank);
@@ -95,6 +96,11 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         if (row.ends) {
             await actor.decreaseCondition(row.slug, { forceRemove: true });
             lines.push(`${row.name}: ended.`);
+            continue;
+        }
+        if (row.outright) {
+            await actor.decreaseCondition(row.slug, { forceRemove: true });
+            lines.push(`${row.name}: countered outright (its source more than ${state.counteract.outrightBelow.levels} levels below its user's).`);
             continue;
         }
         const roll = await new Roll(`1d20 + ${state.counteract.modifier}`).evaluate();

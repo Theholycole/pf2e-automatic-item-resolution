@@ -131,7 +131,8 @@ test("Violet Ray's Electric Love: one condition on an adjacent creature (+22, ra
     const [teamster] = compileActivations(source("The Teamster"));
     assert.deepEqual([teamster.plan.builtin, teamster.plan.item.counteract.modifier, teamster.plan.item.counteract.pick, teamster.plan.item.counteract.within ?? null], ["counteract", 31, "one", null]);
     assert.ok(["paralyzed", "petrified", "grabbed", "doomed"].every((slug) => teamster.plan.item.counteract.conditions.includes(slug)));
-    assert.match(teamster.plan.item.counteract.notes[0], /more than 4 levels lower/);
+    // (Its "more than 4 levels lower" outright counter, since 2026-10-27: the card's tick, counteract.outrightBelow.)
+    assert.deepEqual([teamster.plan.item.counteract.outrightBelow, teamster.plan.item.counteract.notes], [{ levels: 4 }, undefined]);
 });
 
 test("a counteract aimed at what isn't on a creature (Antimagic Armor's triggering spell at +26, rank 7; Countering Charm's rank the stored spell's): straight to its one row, the GM's DC and rank, the result reported, nothing removed", async () => {
