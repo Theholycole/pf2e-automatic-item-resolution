@@ -76,8 +76,9 @@ export default (h) => {
             await h.until(() => paused() && option(), `the deactivated Effect and PF2e's self:effect:${PAUSED} (${describe()})`, { timeout: 8000 });
             const line = await h.messageAfter(since, (message) => /is deactivated until the end of/.test(message.content ?? "") && /fire damage/.test(message.content ?? ""), { what: "the whispered line" });
             h.assert((line.whisper ?? []).length > 0, "the line whispered");
+            // (Its wearer not yet acted this round — the foe first —: 0 rounds, its next turn this round's; else 1, the lead's fix of 2026-10-27.)
             const duration = paused().system.duration;
-            h.assert(paused().name === "Troll Hide: deactivated" && paused().system.slug === PAUSED && Number(duration.value) === 1 && duration.unit === "rounds" && duration.expiry === "turn-end", `'Troll Hide: deactivated', 1 round to a turn's end (${paused().name}: ${JSON.stringify(duration)})`);
+            h.assert(paused().name === "Troll Hide: deactivated" && paused().system.slug === PAUSED && Number(duration.value) === (wearerFirst ? 1 : 0) && duration.unit === "rounds" && duration.expiry === "turn-end", `'Troll Hide: deactivated', 1 round to a turn's end (${paused().name}: ${JSON.stringify(duration)})`);
             h.assert(fastHealing()?.test?.() === false, "FastHealing's predicate off while it lasts");
             log.push(`round ${combat.round}, foe: fire, deactivated ${describe()}`);
             // (The wearer's next turn: no healing at its start.)
@@ -219,7 +220,11 @@ export default (h) => {
                     const rolled = await h.messageAfter(at, (message) => message.flags?.pf2e?.context?.type === "damage-roll" && message.speaker?.token === viperToken.id, { what: "its damage roll" });
                     formula = String(rolled.rolls?.[0]?.formula ?? "");
                 }
-                h.assert(/silver/.test(formula), `its ${fangs().label} damage silver (${formula})`);
+                // (PF2e's readable formula shows no material: its damage rolled with no message, each instance's materials read — the lead's
+                // reading of 2026-10-27.)
+                const roll = await fangs().damage({ event: h.shift(), createMessage: false }).catch(() => null);
+                const materials = (roll?.instances ?? []).flatMap((instance) => [...(instance.materials ?? [])]);
+                h.assert(materials.includes("silver") || /silver/.test(formula), `its ${fangs().label} damage silver (${formula}; materials ${JSON.stringify(materials)})`);
                 return { viper: viper().name, initiative: turn().initiative, strike: fangs().label, formula };
             } finally {
                 // (Its own: the token it made and its world actor.)

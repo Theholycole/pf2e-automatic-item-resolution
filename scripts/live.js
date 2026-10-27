@@ -222,7 +222,14 @@ async function triggeringMissFormula(actor) {
     const missed = triggeringMiss(rolls, actor.uuid);
     const attacker = missed?.message?.actor ?? null;
     const strike = (attacker?.system?.actions ?? []).find((action) => action?.type === "strike" && action.item?.id === missed.itemId && typeof action.damage === "function");
-    return strike ? await strike.damage({ getFormula: true }).catch(() => null) : null;
+    if (!strike) return null;
+    // (Its types kept: PF2e's own damage roll for that Strike, made with no message, each instance its formula and type — the readable formula
+    // drops them when it has several, "(1d8 + 3) + 1d6": the live check's reading, 2026-10-27. Else that readable one.)
+    const event = typeof MouseEvent === "function" ? new MouseEvent("click", { shiftKey: true }) : undefined;
+    const roll = await Promise.resolve(strike.damage({ event, createMessage: false })).catch(() => null);
+    const instances = (roll?.instances ?? []).filter((instance) => instance?.formula && instance.type);
+    if (instances.length) return `{${instances.map((instance) => `(${instance.formula})[${[instance.persistent ? "persistent" : null, instance.type].filter(Boolean).join(",")}]`).join(",")}}`;
+    return await strike.damage({ getFormula: true }).catch(() => null);
 }
 
 // (A consumable's after PF2e's Use; a permanent item's activation from its button on the sheet, scripts/activations.js.)

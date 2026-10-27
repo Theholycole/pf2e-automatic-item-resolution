@@ -294,7 +294,8 @@ export default (h) => {
             const own = await pendant(user, "worn");
             await pendant(officer, "worn");
             await pendant(carrier, "dropped");
-            const players = game.users.filter((one) => !one.isGM);
+            // (Players who can own something: not a user with no role, whom Foundry grants nothing — the lead's run of 2026-10-27.)
+            const players = game.users.filter((one) => !one.isGM && one.role >= CONST.USER_ROLES.PLAYER);
             const OWNER = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
             if (players[0]) await officer.update({ [`ownership.${players[0].id}`]: OWNER });
             if (players[1]) await carrier.update({ [`ownership.${players[1].id}`]: OWNER });

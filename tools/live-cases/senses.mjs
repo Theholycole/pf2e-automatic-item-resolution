@@ -22,7 +22,8 @@ export default (h) => {
 
     // PF2e's ChoiceSet prompt (its PickAThingPrompt, an ApplicationV2) open now: answered with the first of the values wanted it offers, else
     // its first choice, as a click on it does (its selection set, then closed). → the value picked, or null with no prompt open.
-    const promptOpen = () => [...foundry.applications.instances.values()].find((app) => app.rendered && Array.isArray(app.choices) && typeof app.resolveSelection === "function");
+    // (Not its rendered flag: in a hidden browser its frame is never drawn, so it never counts as rendered — the lead's run of 2026-10-27.)
+    const promptOpen = () => [...foundry.applications.instances.values()].find((app) => Array.isArray(app.choices) && typeof app.resolveSelection === "function" && app.state !== app.constructor.RENDER_STATES?.CLOSED);
     async function answerPrompt(prefer = []) {
         const app = promptOpen();
         if (!app) return null;
@@ -50,6 +51,13 @@ export default (h) => {
             if (apply && !clicked.has(apply)) {
                 clicked.add(apply);
                 apply.click();
+            }
+            // (And the spell module's "Apply Spell Effect: … to …?" confirmation, its OK — the lead's run of 2026-10-27.)
+            const confirm = [...foundry.applications.instances.values()].find((app) => app.constructor.name === "DialogV2" && /— Apply Effect$/.test(app.title ?? ""));
+            const ok = confirm?.element?.querySelector('button[data-action="ok"]');
+            if (ok && !clicked.has(confirm)) {
+                clicked.add(confirm);
+                ok.click();
             }
             const value = await answerPrompt(prefer);
             if (value !== null) answered.push(value);
@@ -430,7 +438,7 @@ export default (h) => {
             const marked = (effect) => (effect.system.rules ?? []).some((rule) => rule.key === "RollOption" && /^air-implosion:fortitude:20$/.test(String(rule.option ?? "")));
             const imploded = () => ooze.itemTypes.effect.find(marked);
             const steps = () => (imploded()?.system.rules ?? []).filter((rule) => rule.key === "CreatureSize").length;
-            const penalty = () => Number((imploded()?.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && rule.selector === "melee-damage")?.value ?? 0);
+            const penalty = () => Number((imploded()?.system.rules ?? []).find((rule) => rule.key === "FlatModifier" && [].concat(rule.selector).includes("melee-damage"))?.value ?? 0);
             const size = () => ooze.system.traits.size.value;
             const now = () => `${steps()} steps, ${size()}, ${penalty()}`;
             const combat = await Combat.create({ scene: scene.id, active: true, flags: { [h.NS]: { [FIXTURE]: true } } });
@@ -491,9 +499,10 @@ export default (h) => {
             const { actor: user, token: userToken } = await h.creature(scene, "Animated Wielder", { type: "character", x: 10, y: 10, level: 13 });
             const { token: foeToken } = await h.creature(scene, "Animated Foe", { x: 11, y: 10, alliance: "opposition", hp: 100 });
             const sword = await h.give(user, "Longsword");
-            await sword.update({ "system.runes": { potency: 2, striking: 2, property: ["flaming", "animated"] }, "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+            await sword.update({ "system.runes": { potency: 2, striking: 2, property: ["flaming", "dancing"] }, "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
             await userToken.object?.control?.();
-            const index = "rune:animated:0";
+            // (PF2e still keys the Animated rune "dancing", its name before the remaster.)
+            const index = "rune:dancing:0";
             let since = Date.now();
             await api().activate(sword.uuid, index);
             const card = await h.messageAfter(since, h.itemCard("item"), { what: "Set Free's card" });

@@ -49,7 +49,7 @@ export function objectChoices(actor, objects, holderId) {
         : objects.op === "retrieve" ? items.filter((item) => item.system?.containerId === holderId)
             : objects.op === "hand" ? items.filter((item) => !held(item) && fits(item, objects) && (!objects.weapon || item.type === "weapon"))
                 : objects.op === "repair" ? items.filter((item) => Number(item.system?.hp?.max) > 0 && Number(item.system?.hp?.value) < Number(item.system?.hp?.max) && fits(item, objects))
-                    : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && (ammoFor(actor, item) || (objects.recalled && spentAmmoFor(actor, item))))
+                    : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && (ammoFor(actor, item) || (objects.recalled && (spentAmmoFor(actor, item) || item.getFlag?.(MODULE_ID, "lastRound")))))
                         : [];
     return list.map((item) => ({ id: item.id, name: item.name }));
 }
