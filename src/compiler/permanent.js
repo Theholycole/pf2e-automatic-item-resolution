@@ -34,9 +34,12 @@ import { conjuredPlan } from "./conjured.js";
 import { baneWaysPlan, modularWaysPlan, tattooWaysPlan, victoryWaysPlan } from "./bane.js";
 import { teleportPlan } from "./teleport.js";
 import { withMove } from "./move.js";
+import { withOwnMoves } from "./own-moves.js";
+import { farMovesPlan, withPlaneSent, withTravelCast } from "./far-moves.js";
+import { hoovesPlan, movingNotesPlan } from "./moving-notes.js";
 import { isSpecialItem, withDecided } from "./decided.js";
 import { withTemperature } from "./temperature.js";
-import { withFalls } from "./falls.js";
+import { heightWaysPlan, withFalls } from "./falls.js";
 import { withRaiseShield } from "./raise-shield.js";
 import { withRowReadings } from "./row-readings.js";
 import { appearancePlan, withDisbelief } from "./disbelief.js";
@@ -260,7 +263,7 @@ export function compileActivations(item, options = {}) {
     // (Partial when a result row leaves the GM something to do, src/compiler/honest.js.)
     // (Last, the user's rulings for what has no game numbers — speech, minds, information — src/compiler/decided.js.)
     // (And outermost, the Strike group's readings of 2026-10-27: strikeGroupReadings.)
-    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: strikeGroupReadings(withGrabAbility(withGrowingBleed(withEffectAround(withCastSmoke(withEscalatingBonus(withFatigueIgnored(withFuses(withStrikeCounteract(withLodgedThroat(withPinningWays(withActionPenalty(withStrikeDamage(withPausedPassive(decideActivation(item, entry, withCounteractLeaves(withCastNotes(withGmCalls(withZoneUntraced(withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withExtraWay(withInsteadWay(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(withFelledReward(withCastFlatCheck(withSaveAfterApplied(withAfterApplied(withAfterEnds(withSlain(ownerDCs(entry.plan), entry.activation.html)), entry.activation.html), entry.activation.html)), entry.activation.html), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)), plainText(entry.activation.html))), options, item))), item), plainText(entry.activation?.html)))))), plainText(entry.activation?.html))))), entry.activation?.html))), entry, item) })).map((entry) => withNamedOptions(item, entry, options)).filter((entry) => !playedBySpellModule(entry, share, item)));
+    return sharedRecharges(sharedAttacks(compileEach(item, options)).map((entry) => ({ ...entry, plan: strikeGroupReadings(withGrabAbility(withGrowingBleed(withEffectAround(withCastSmoke(withEscalatingBonus(withFatigueIgnored(withFuses(withStrikeCounteract(withLodgedThroat(withPinningWays(withActionPenalty(withStrikeDamage(withPausedPassive(decideActivation(item, entry, withTravelCast(withCounteractLeaves(withCastNotes(withGmCalls(withZoneUntraced(withUntracedRules(withHonestPartial(withStrikeGate(withUserConditions(withEscapeEnds(withActionLimit(withKindSaves(withSaveEnds(withRuneSteps(withImmunity(withAreaTraitNote(withAttackRiders(withMythicUpgrade(withExtraWay(withInsteadWay(withSpend(withMark(withCooldown(withWeatherIgnores(withDisbelief(withRowReadings(withFelledReward(withCastFlatCheck(withSaveAfterApplied(withAfterApplied(withAfterEnds(withSlain(ownerDCs(entry.plan), entry.activation.html)), entry.activation.html), entry.activation.html)), entry.activation.html), entry.activation.html, item), entry.activation.html), entry.activation.html), entry.activation.html, entry.activation.name), plainText(entry.activation.html), item), plainText(entry.activation.html), options), plainText(entry.activation.html), entry.activation.html), entry.activation.html), plainText(entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html), entry.activation.html, { name: item.name, activation: entry.activation.name }), plainText(entry.activation.html), item), plainText(entry.activation.html)), plainText(entry.activation.html))), entry.activation.html), plainText(entry.activation.html)), plainText(entry.activation.html)), itemDuration(plainText(entry.activation.html))), plainText(entry.activation.html)), plainText(entry.activation.html))), options, item)))), item), plainText(entry.activation?.html)))))), plainText(entry.activation?.html))))), entry.activation?.html))), entry, item) })).map((entry) => withNamedOptions(item, entry, options)).filter((entry) => !playedBySpellModule(entry, share, item)));
 }
 
 // (A wait its activations share, Retrieval Belt's "Neither Store Item nor Retrieve Item can be activated again for 1 minute" said in one of
@@ -742,8 +745,20 @@ function compileEach(item, options = {}) {
         plan = withMove(plan, activation.html, base);
         // (Protection from heat or cold for its time, src/compiler/temperature.js: Rime Jar's, Slithermaw's Bane's pick.)
         plan = withTemperature(plan, activation.html, base);
+        // (A fall eased by how high it's deployed, src/compiler/falls.js: Parachute Mail's — the height picked on the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = heightWaysPlan(activation.html, base, { own: { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }, whole: html, level: Number(item.system?.level?.value) || 0, type: item.type }) ?? plan;
         // (A fall it eases, src/compiler/falls.js: Tumbler's Belt's 120 feet shorter — the environment module's to apply.)
         plan = withFalls(plan, activation.html, base);
+        // (Its user's own moves as card lines, src/compiler/own-moves.js: Eagle Wing's glide, Pocket Watch of Stethelos' paused time.)
+        plan = withOwnMoves(plan, activation.html, base);
+        // (Off the map, or only objects moved: lines of the card, or whispered — src/compiler/far-moves.js: Homeward Wayfinder, the Paired runes.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = farMovesPlan(activation.html, base) ?? plan;
+        // (A creature sent to another plane on a row, src/compiler/far-moves.js: Maw of Hungry Shadows' critical failure.)
+        plan = withPlaneSent(plan);
+        // (What holds a creature or a way in place, words on its user's note Effect, and stepping stones' lines, src/compiler/moving-notes.js:
+        // Magnetizing, Immovable Arm, Warding Escutcheon's door, Stepping Stone Shot; Guangu of the Steppe's two Effects, the ways card.)
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = movingNotesPlan(activation.html, base, item) ?? plan;
+        if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = hoovesPlan(activation.html, base, { own: { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }, level: Number(item.system?.level?.value) || 0, type: item.type }) ?? plan;
         // (Its user's shield raised, src/compiler/raise-shield.js: Shield of Snakes' Snap Up — PF2e's own Raise a Shield on Apply.)
         plan = withRaiseShield(plan, activation.html, base);
         // (One of its user's items moved or changed, or itself, src/compiler/objects.js: Retrieval Belt, The Forge, Lady's Knife.)

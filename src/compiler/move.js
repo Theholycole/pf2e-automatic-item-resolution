@@ -40,6 +40,11 @@ const LINES = [
     [/^For each additional action you spend, you can (?:Step|Stride|Leap|Fly|Burrow|Swim|Climb)(?: or (?:Step|Stride|Leap|Fly|Burrow|Swim|Climb))? again with the same benefits\.$/i, "Again for each action more, with the same benefits"],
     [/^You can move easily through solid objects and creatures during this movement, but you can't end this movement within a solid object or in a creature's space\.$/i, "Through solid objects and creatures, ending in neither"]
 ];
+// (A trail its move leaves, Hellfire Boots' "Each square you move through during your Stride is scorched with hellish flames, becoming hazardous
+// terrain for 1 minute. A creature that moves through one of these spaces takes 3d6 fire damage": move.trail { formula, lasts } — the ability
+// module's zone over the squares it crossed once the token's moved, scripts/teleport.js, 2026-10-27.)
+const TRAIL = /^Each square you move through during your (?:Stride|Step|Leap|Fly|Burrow|Swim|Climb) is [^,.]*?, becoming hazardous terrain for (\d+) (minutes?|rounds?)\.$/i;
+const TRAIL_DAMAGE = /^A creature that moves through one of these spaces takes @Damage\[((?:[^[\]]|\[[^\]]*\])*)\](?:\{[^}]*\})? damage\.$/i;
 const MOVING = /\b(?:terrain|movement|move|straight line|direction|adjacent|reactions?|Leap|Stride|Step|Fly|Burrow|Swim|Climb|tunnels?|passing|horizontally|vertically|feet)\b/i;
 const RULE = /\b(?:Strike|attack|damage|save|DC|bonus|penalty|condition|action|reaction|spell|creature|If|must|terrain)\b/;
 
@@ -85,7 +90,11 @@ export function readMove(body) {
         if (line[1]) lines.push(typeof line[1] === "function" ? line[1](sentence) : line[1]);
     }
     const userEffects = after ? [{ slug: after[1].toLowerCase(), value: null, duration: { mode: "fixed", value: Number(after[2]), unit: "rounds", expiry: "turn-start", anchor: "source-turn" } }] : null;
-    return { verb: kind, ...range, ...(plus ? { plus: Number(plus[1]) } : {}), lines, said, sentences, ...(userEffects ? { userEffects } : {}), ...(strikes.length ? { strikes: strikes.map((clause) => `${clause}.`) } : {}), ...(others.length ? { others: others.map((clause) => `${clause}.`) } : {}) };
+    const trailAt = sentences.findIndex((sentence) => TRAIL.test(sentence));
+    const trailDamage = trailAt >= 0 ? TRAIL_DAMAGE.exec(sentences[trailAt + 1] ?? "") : null;
+    const trail = trailDamage ? { formula: trailDamage[1], lasts: { mode: "fixed", value: Number(TRAIL.exec(sentences[trailAt])[1]), unit: /^min/i.test(TRAIL.exec(sentences[trailAt])[2]) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" } } : null;
+    if (trail) said.push(sentences[trailAt], sentences[trailAt + 1]);
+    return { ...(trail ? { trail } : {}), verb: kind, ...range, ...(plus ? { plus: Number(plus[1]) } : {}), lines, said, sentences, ...(userEffects ? { userEffects } : {}), ...(strikes.length ? { strikes: strikes.map((clause) => `${clause}.`) } : {}), ...(others.length ? { others: others.map((clause) => `${clause}.`) } : {}) };
 }
 
 // The reading → the teleport card's range for it, with its move.
@@ -94,7 +103,7 @@ export function moveOf(read) {
     // ("Your movement must end adjacent to an ally", Squire's Tabard's: checked where it ends, scripts/teleport.js.)
     const beside = read.lines.some((line) => /\bmust end adjacent to an ally\b/i.test(line));
     const again = read.lines.some((line) => /^Again for each action more\b/.test(line));
-    return { ...range, ...(Number.isFinite(read.plus) ? { plus: read.plus } : {}), from: "self", move: { verb: read.verb, lines: read.lines, ...(beside ? { endsBeside: "ally" } : {}), ...(again ? { again: true } : {}) } };
+    return { ...range, ...(Number.isFinite(read.plus) ? { plus: read.plus } : {}), from: "self", move: { verb: read.verb, lines: read.lines, ...(beside ? { endsBeside: "ally" } : {}), ...(again ? { again: true } : {}), ...(read.trail ? { trail: read.trail } : {}) } };
 }
 
 // Its Effect's plain text, on: not its Trigger — Demon-Hunting Bands' "Trigger You Stride" is when it's used, not a move.

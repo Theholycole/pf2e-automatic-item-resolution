@@ -242,7 +242,30 @@ function cautiousRows(read) {
 }
 
 // The snare's save as the zone's: the ability compiler's plan, on the creature that enters. (Or its outright damage, or its attack.)
-export function snareZone(item, read) {
+// (Drenched, Puddle Shove Snare's critical failure, "The creature takes double damage, is pushed 15 feet in the determined direction, and is
+// drenched with water, taking a –1 circumstance penalty to saving throws against electricity effects for 1 minute": that penalty on the row,
+// PF2e's FlatModifier on its saves against that trait (the ability module's row modifier predicate), its double damage and push the row's own
+// already — the GM's line gone, 2026-10-27.)
+const DRENCHED = /^\{target\} \((critical failure|failure), the rest by hand\): The creature takes (double|full) damage, is pushed (\d+) feet in the determined direction, and is drenched with water, taking a [–-](\d+) (circumstance|status) penalty to saving throws against ([a-z]+) effects for (\d+) (minutes?|rounds?)\.$/i;
+function drenchedRows(read) {
+    const outcomes = read?.resolution?.outcomes;
+    if (!outcomes) return read;
+    let changed = false;
+    const rows = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => {
+        const line = (row?.manualInstructions ?? []).map((entry) => [entry, DRENCHED.exec(String(entry))]).find(([, match]) => match);
+        if (!line) return [degree, row];
+        const [, , damage, feet, value, type, trait, time, unit] = line[1];
+        if (row.damage?.multiplier !== (damage.toLowerCase() === "double" ? 2 : 1) || Number(row.forcedMovement?.distance) !== Number(feet)) return [degree, row];
+        changed = true;
+        const manualInstructions = row.manualInstructions.filter((entry) => entry !== line[0]);
+        const { manualInstructions: _, ...rest } = row;
+        return [degree, { ...rest, ...(manualInstructions.length ? { manualInstructions } : {}), modifiers: [...(row.modifiers ?? []), { selector: "saving-throw", value: -Number(value), type: type.toLowerCase(), duration: { mode: "fixed", value: Number(time), unit: /^min/i.test(unit) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" }, predicate: [`item:trait:${trait.toLowerCase()}`] }] }];
+    }));
+    return changed ? { ...read, resolution: { ...read.resolution, outcomes: rows } } : read;
+}
+
+export function snareZone(item, given) {
+    const read = drenchedRows(given);
     // (Not a square stepped into: Fire Box's "Anyone who opens the box triggers …" — its save card at those its cone reaches, src/compiler/opened.js.)
     if (OPENED.test(plainText(item?.system?.description?.value))) return null;
     if (isSnare(item) && read?.resolution?.kind !== "save") {
@@ -311,7 +334,7 @@ export function snareZone(item, read) {
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate, cap)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate, cap)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save${setter ? ` (that creature on a card of its own, ${setter.slug} for longer)` : ""}; then it's spent.` : then ? `${firstTo(gate, cap)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate, cap)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
+            notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate, cap)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate, cap)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save${setter ? ` (that creature on a card of its own, ${setter.slug} for longer)` : ""}; then it's spent.` : then ? `${firstTo(gate, cap)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate, cap)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...(/\bYou determine the direction of the blast of water when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the blast of water goes: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
             once: true,
             ...(then ?? greased?.then ? { then: then ?? greased.then } : {})
         }

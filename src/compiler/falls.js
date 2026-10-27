@@ -16,7 +16,9 @@ const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).m
 const SHORTER = /\b(?:you )?treat (?:your fall|all falls|falls) as (?:if it were )?(\d+) feet shorter\b/i;
 // (And PF2e's Gentle Landing, no falling damage: Cape of the Open Sky's "whenever you fall while wearing the cape …, the cape automatically
 // casts Gentle Landing on you", Soft-Landing's "You gain the effects of Gentle Landing for 1 minute".)
-const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling damage|whenever you fall\b[^.]*?\bcasts? Gentle Landing on you|You gain the effects of Gentle Landing)\b/i;
+// (And Emerald Grasshopper's "you flutter in the air until the end of your turn, then fall harmlessly at a rate of 60 feet per round until you
+// reach the ground", 2026-10-27: no damage, its rate and its flutter words on the Effect, until the end of its next turn.)
+const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling damage|whenever you fall\b[^.]*?\bcasts? Gentle Landing on you|You gain the effects of Gentle Landing|fall harmlessly at a rate of \d+ feet per round)\b/i;
 // (Tumbler's Belt's "Regardless of whether you take damage or not from the fall, you land on your feet": landsOnFeet, no Prone — the
 // environment module's, 2026-10-26.)
 const ON_FEET = /\bRegardless of whether you take damage or not from the fall, you land on your feet\b/i;
@@ -26,7 +28,8 @@ const FOR = /\b[Ff]or (\d+|one|an?) (round|minute|hour)s?\b/;
 // fall slows to 60 feet per round" (rate); Jade Cat's "you are not Off-Guard when you Balance, and narrow surfaces and uneven ground are not
 // difficult terrain for you" — a roll note on its Balance, as PF2e's own Steady Balance has it (balance: the note's words).)
 const GLIDE = /,? and glide to a space of your choice at the bottom of your fall, which must be within (\d+) feet of where you would've landed\b/i;
-const RATE = /\bYour fall slows to (\d+) feet per round\b/i;
+const RATE = /\b(?:Your fall slows to|fall harmlessly at a rate of) (\d+) feet per round\b/i;
+const FLUTTER = /\byou flutter in the air until the end of your turn, then\b/i;
 const BALANCE = /,? you are not Off-Guard when you Balance, and narrow surfaces and uneven ground are not difficult terrain for you\b/i;
 export const BALANCE_NOTE = "You aren't off-guard when you Balance, and narrow surfaces and uneven ground aren't difficult terrain for you.";
 
@@ -55,6 +58,11 @@ export function readFall(text, { reaction = false } = {}) {
         if (rate) extra.rate = Number(rate[1]);
         if (BALANCE.test(sentence)) extra.balance = BALANCE_NOTE;
         said.push(sentence);
+        // (A flutter till its turn's end, then the fall: until the end of its next turn.)
+        if (FLUTTER.test(sentence)) {
+            extra.flutter = true;
+            duration ??= { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" };
+        }
         const time = FOR.exec(sentence);
         if (time && !duration) duration = { mode: "fixed", value: WORDS[time[1].toLowerCase()] ?? Number(time[1]), unit: UNITS[time[2].toLowerCase()], expiry: "turn-start" };
     }
@@ -64,14 +72,14 @@ export function readFall(text, { reaction = false } = {}) {
 
 // The fall in words: "Its falls count as 120 feet shorter; it lands on its feet", "It takes no damage from a fall".
 export function fallText(fall) {
-    const parts = [fall.rate ? `it falls ${fall.rate} feet a round` : null, fall.noDamage ? "it takes no damage from a fall" : null, fall.shorter && !fall.noDamage ? `its falls count as ${fall.shorter} feet shorter` : null, fall.landsOnFeet ? "it lands on its feet" : null, fall.glide ? `it can land in a space of its choice within ${fall.glide} feet of where it would have` : null, fall.balance ? "it isn't off-guard when it Balances, and narrow surfaces and uneven ground aren't difficult terrain for it" : null].filter(Boolean);
+    const parts = [fall.flutter ? "it flutters in the air until the end of its turn" : null, fall.rate ? `${fall.flutter ? "then " : ""}it falls ${fall.rate} feet a round` : null, fall.noDamage ? "it takes no damage from a fall" : null, fall.halved && !fall.noDamage ? "it takes half the damage from a fall" : null, fall.shorter && !fall.noDamage ? `its falls count as ${fall.shorter} feet shorter` : null, fall.landsOnFeet ? "it lands on its feet" : null, fall.glide ? `it can land in a space of its choice within ${fall.glide} feet of where it would have` : null, fall.balance ? "it isn't off-guard when it Balances, and narrow surfaces and uneven ground aren't difficult terrain for it" : null].filter(Boolean);
     const words = parts.join("; ");
     return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 // (A sentence that says only the fall: no longer a note. One that says more, Jade Cat's Balance and terrain, stays one.)
 const MORE = /\b(?:Off-Guard|Balance|difficult terrain|glide|space|bonus|penalty|check|Speed|slows?)\b/i;
-const onlyFall = (sentence) => !MORE.test(sentence.replace(GLIDE, " ").replace(BALANCE, " ").replace(RATE, " ").replace(SHORTER, " ").replace(NO_DAMAGE, " ").replace(FOR, " "));
+const onlyFall = (sentence) => !MORE.test(sentence.replace(GLIDE, " ").replace(BALANCE, " ").replace(RATE, " ").replace(SHORTER, " ").replace(NO_DAMAGE, " ").replace(FOR, " ").replace(FLUTTER, " "));
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|Off-Guard|terrain|space|feet)\b/i;
@@ -132,4 +140,25 @@ export function foamUsed({ feet = 0, reductions = [] } = {}, worn = []) {
     if (!chassis) return null;
     const amount = Math.max(0, Number(reduced?.amount) || 0);
     return { uuid: chassis.uuid, amount, left: Math.max(0, chassis.hp - amount) };
+}
+
+// A fall eased by how high it's deployed (2026-10-27, docs/needs.md): Parachute Mail's Deploy Parachute, "Once activated, the parachute will
+// fully deploy within 1 round. If it is deployed at a height greater than 100 feet, the parachute will prevent you from receiving falling damage.
+// If deployed at a height of less than 100 feet, it will reduce the damage taken from falling by half." The ways card's two buttons, its user's
+// word for the height: each the item card's fall Effect for the reaction's round — no damage (the environment module's noDamage), or half the
+// damage (fall.halved: words on the Effect, a flag the environment module can read). Its deploying and its repacking, "It takes 10 minutes and
+// a successful DC 15 Crafting check to successfully repack the parachute", lines of each way's card. Pure.
+const DEPLOYED = /^Once activated, the parachute will fully deploy within (\d+) rounds?\. If it is deployed at a height greater than (\d+) feet, the parachute will prevent you from receiving falling damage\. If deployed at a height of less than \2 feet, it will reduce the damage taken from falling by half\.$/i;
+const REPACK = /\bIt takes (\d+) minutes and a successful (?:@Check\[crafting\|dc:(\d+)\]|DC (\d+) Crafting) check to successfully repack the parachute\./i;
+// own: the activation's { index, name, time, frequency, trigger }; whole: the item's description.
+export function heightWaysPlan(html, base, { own = null, whole = "", level = 0, type = null } = {}) {
+    const body = plainOf(html).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, "");
+    const deployed = DEPLOYED.exec(body);
+    if (!deployed) return null;
+    const [, rounds, height] = deployed;
+    const repack = REPACK.exec(String(whole ?? ""));
+    const notes = [`It deploys fully within ${rounds} round${rounds === "1" ? "" : "s"}.`, ...(repack ? [`Used, it deploys again only once repacked: ${repack[1]} minutes and a DC ${repack[2] ?? repack[3]} Crafting check (its user's own).`] : [])];
+    const round = { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-end" };
+    const way = (name, fall) => ({ name, html: `<p><strong>Effect</strong> ${name}.</p>`, plan: { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, fall: { ...fall, duration: round }, notes, item: { type, level, recipient: "user", activation: own } } });
+    return { ...base, builtin: "ways", once: true, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, ways: [way(`Deployed higher than ${height} feet: no falling damage`, { noDamage: true }), way(`Deployed lower than ${height} feet: half the falling damage`, { halved: true })] };
 }

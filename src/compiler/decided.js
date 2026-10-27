@@ -77,7 +77,7 @@ function asCardLines(plan, { result, base, body, decided }) {
 // special: a unique item's or an artifact's (no card-line ruling).
 export function withDecided(plan, { text = "", base = null, kind = "consumable", trigger = false, name = null, special = false } = {}) {
     const result = resultOf(plan);
-    // (A one-off rule of a card of its own — a zone, a counteract, a readied bonus, a cast, partial —: its notes are that card's lines already
+    // (A one-off rule of a card of its own — a zone, a counteract, a readied bonus, a cast (Crown of the Companion's, with its later healing), partial —: its notes are that card's lines already
     // (the zone card's, the counteract card's, the fortune and cast cards' plan.notes), done the same, 2026-10-27.)
     // (Not one whose top-level notes or unread lines no card of its kind shows: a zone's, a counteract's.)
     const shown = ["readied-bonus", "cast-spell"].includes(plan?.builtin) || !((plan?.notes ?? []).length || (plan?.unread ?? []).length);

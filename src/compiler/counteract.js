@@ -42,6 +42,8 @@ const THEN_SPELL = /^You then gain the effects of ([a-z][a-z' -]+?) for (\d+) (r
 // (A flat check each time it's used, the item spent on a failure: Aeon Stone (Pale Lavender Ellipsoid)'s DC 5 check after each activation,
 // which failed turns the stone into a dull gray one for good — PF2e's Aeon Stone (Consumed), the remaster's dull gray stone:
 // counteract.burnout { dc, becomes }, scripts/counteract.js after the card, 2026-10-27.)
+const SQUARE_NEAR = /\bIf an? ([a-z]+) attempts to translocate to a destination within (\d+) feet of this square\b/i;
+const AFTER_FREE = /^Regardless of the result, the [\w' -]+? is consumed, but if it succeeds at the counteract attempt, the affected ([a-z]+) can't use actions with the ([a-z]+) trait for (\d+) (minutes?|rounds?)\.$/i;
 const OUTRIGHT_BELOW = /^If the source of the condition is more than (\d+) levels lower than your current level, [\w' -]+? automatically counters the condition\.$/i;
 const BURNOUT = /^Each time you activate this [\w' -]+?\s*, attempt a @Check\[flat\|dc:(\d+)\]\.$/i;
 const BURNT = /^On a failure, the stone permanently turns into a dull gray aeon stone\s*\.$/i;
@@ -76,7 +78,7 @@ export function readCounteract(html, { level = 0, extras: withExtras = true } = 
 
 // The counteract's notes that are lines of its card, not rules it leaves: what to tick or give on it, the GM's numbers (the user's answer 5),
 // a limit to keep to, a timing, the spell a charm spends; a summoned creature controlled the GM's (the user's answer D of 2026-10-13).
-const CARD_NOTES = [/^Tick one:/, /^Only an active [\w ]+ spell: tick one that is\.$/, /^Its counteract rank is the stored spell's: give it on the card\.$/, /^Its counteract modifier \+\d+: .*\(the GM's call\)\.$/, /^Its DC and rank are those of what caused the condition\.$/, /^It doesn't undo Hit Point damage already taken, and can't end an ongoing affliction\.$/, /^This expends the spell held in the charm\.$/, /^Once you do, the stored spell's energy is spent, and the ring is empty\.$/, /^If it fails, it can't attempt to counteract the same [\w ]+ again\.$/, /^This takes longer for a disease\b/, /^If the spell would be counteracted, the bloodstone doll instead influences the summoned creature\.$/, /^You gain control of the summoned creature\b/, /^The triggering creature then regains control of their summoned creature\b/];
+const CARD_NOTES = [/^Tick one:/, /^Scattered in an unoccupied adjacent square: when an? [a-z]+ translocates to within \d+ feet of it, pick that [a-z]+ and tick the spell\.$/, /^Only an active [\w ]+ spell: tick one that is\.$/, /^Its counteract rank is the stored spell's: give it on the card\.$/, /^Its counteract modifier \+\d+: .*\(the GM's call\)\.$/, /^Its DC and rank are those of what caused the condition\.$/, /^It doesn't undo Hit Point damage already taken, and can't end an ongoing affliction\.$/, /^This expends the spell held in the charm\.$/, /^Once you do, the stored spell's energy is spent, and the ring is empty\.$/, /^If it fails, it can't attempt to counteract the same [\w ]+ again\.$/, /^This takes longer for a disease\b/, /^If the spell would be counteracted, the bloodstone doll instead influences the summoned creature\.$/, /^You gain control of the summoned creature\b/, /^The triggering creature then regains control of their summoned creature\b/];
 // (And what the rune's own PF2e data already plays, beside its activation: Greater Brilliant's "Damage dealt by this weapon ignores the target's
 // resistances to fire, spirit, and vitality" — PF2e's greaterBrilliant rune ignores those resistances on every Strike, 2026-10-27.)
 const RUNE_OWN = [/^Damage dealt by this weapon ignores the target's resistances to fire, spirit, and vitality\.$/];
@@ -158,7 +160,15 @@ function readCounteractOwn(html, { level = 0 } = {}) {
         // GM's by the result the card reports.)
         const degrees = sentences.slice(at + 1).map((sentence) => /^(Critical Success|Success|Failure|Critical Failure) (.+)$/.exec(sentence.trim())).filter(Boolean).map(([, degree, what]) => `${degree.charAt(0)}${degree.slice(1).toLowerCase()}: ${what.replace(/\.$/, "")} (by hand).`);
         after.push(...degrees);
-        return { modifier: modifierOf ? Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]) : null, rank, ...(Object.keys(fromUser).length ? { fromUser } : {}), conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...after] };
+        // (A spell aimed near the square it's scattered in, Devil's Trap's "If a devil attempts to translocate to a destination within 30 feet of
+        // this square, the powder attempts to counteract the spell": the creatures within that and 5 feet more of its user to pick the devil from,
+        // a line of the card; what a success keeps that devil from, "the affected devil can't use actions with the teleportation trait for 1
+        // minute": afterFree, a note Effect on it for that time, scripts/counteract.js — 2026-10-27.)
+        const square = SQUARE_NEAR.exec(said);
+        const afterFree = after.map((sentence) => [sentence, AFTER_FREE.exec(String(sentence).trim())]).find(([, match]) => match);
+        const kept = after.filter((sentence) => sentence !== afterFree?.[0]);
+        const squareLine = square ? [`Scattered in an unoccupied adjacent square: when ${/^[aeiou]/i.test(square[1]) ? "an" : "a"} ${square[1]} translocates to within ${square[2]} feet of it, pick that ${square[1]} and tick the spell.`] : [];
+        return { modifier: modifierOf ? Number(modifierOf[1] ?? modifierOf[2] ?? modifierOf[3]) : null, rank, ...(Object.keys(fromUser).length ? { fromUser } : {}), conditions: [], traits: [], afflictions: [], free: { name }, pick: "one", ...(square ? { within: Number(square[2]) + 5 } : {}), ...(afterFree ? { afterFree: { name: `no ${afterFree[1][2].toLowerCase()} actions`, words: `It can't use actions with the ${afterFree[1][2].toLowerCase()} trait`, duration: { mode: "fixed", value: Number(afterFree[1][3]), unit: /^min/i.test(afterFree[1][4]) ? "minutes" : "rounds", expiry: "turn-start" } } } : {}), notes: [...(stored ? ["Its counteract rank is the stored spell's: give it on the card."] : []), ...squareLine, ...kept] };
     }
     // (Aimed at the drinker: "on you", "affecting you", "afflicting you", "within yourself", or a creature the salve is applied to.)
     if (!near && !adjacent && !listed && !/\b(?:on you|affecting you|afflicting you|you are currently suffering|within yourself|of your choice|counteract (?:the|its) (?:paralysis|petrification)|the effect causing your condition)\b/i.test(said) && !/\bApplying this [\w ]+ to a creature\b|\bWhen you (?:consume|drink|eat)\b[^.]*\bcounteract\b/i.test(text)) return null;

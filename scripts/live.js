@@ -445,8 +445,9 @@ function wireCard(message, html) {
             // (On the presser's own client: a card that acts on targets needs some.)
             // (A teleport's space: clicked on this client's canvas, then sent.)
             if (state.kind === "teleport") {
-                if (state.plan.teleport?.from === "target" && !choices.targets?.length) throw new Error("Target the creature first.");
-                const destination = await pickTeleportSpace(state);
+                if ((state.plan.teleport?.from === "target" || state.plan.teleport?.summon) && !choices.targets?.length) throw new Error("Target the creature first.");
+                // (A summon's space for the creature targeted, its size: Whistle of Calling's, 2026-10-27.)
+                const destination = await pickTeleportSpace(state, state.plan.teleport?.summon ? { moved: choices.targets[0] } : {});
                 if (!destination) {
                     button.disabled = false;
                     return;

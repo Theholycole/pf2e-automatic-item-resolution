@@ -113,7 +113,8 @@ test("a cast in words: the spell by its name, its rank, DC, counteract modifier,
     // Not casts: a random table, innate spells for a while, a spell named in passing, a cast after a failed save.
     assert.equal(readCastWords(source("Pistol of Wonder").system.description.value, { spells }), null);
     assert.equal(castWordsPlan(source("Elder Seed"), { spells }), null);
-    assert.equal(compileActivations(source("Compass of Transpositional Awareness"), { spells }).find((entry) => entry.activation.name === "Track Teleportation").plan?.builtin ?? null, null);
+    // (2026-10-27: Track Teleportation whispered to the GM and its user, src/compiler/far-moves.js — still no cast.)
+    assert.notEqual(compileActivations(source("Compass of Transpositional Awareness"), { spells }).find((entry) => entry.activation.name === "Track Teleportation").plan?.builtin ?? null, "cast-spell");
     assert.equal(castOf("Whip of Compliance")?.builtin ?? null, null);
     // "The creature is targeted with Death Knell (DC 20)", "You generate the effects of a Vitality Lash cantrip, heightened to 3rd rank",
     // "You're the subject of the Sanctuary spell", "Cast Bless or Heal, each once per day."

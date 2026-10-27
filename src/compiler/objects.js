@@ -40,6 +40,17 @@ const CHARM_AFTER = /\bAfter 1 minute, the weapon transforms into (?:a non-magic
 const CHARM_GROUPS = /\bone charm each for the groups ([a-z]+(?:, [a-z]+)*),? and ([a-z]+)\./i;
 const CHARM_AMMO = /\bIf the weapon requires ammunition, it appears with a quiver or pouch with (\d+) pieces of ammunition for the weapon\./i;
 const strikingOf = (words) => (!words ? 0 : /major/i.test(words) ? 3 : /greater/i.test(words) ? 2 : 1);
+// (Or one of a list, Twining Staff's "You cause the twigs to rapidly grow or contract, reshaping into a +1 striking staff, a +1 striking bo staff,
+// or its disk form": its two weapon forms, picked; its disk form and the jump or Force Open its expanding allows lines of the card — FORM_LINES,
+// 2026-10-27.)
+const RESHAPE_LIST = /\breshaping into an? (?:\+\d (?:(?:greater|major) )?striking )?([a-z-]+(?: [a-z-]+)?) ?, an? (?:\+\d (?:(?:greater|major) )?striking )?([a-z-]+(?: [a-z-]+)?) ?, or its (\w+) form\./i;
+const FORM_LINES = [
+    [/^In its (\w+) form, it has negligible Bulk and must be held in one hand to be activated\.$/i, (match) => `Or its ${match[1]} form, no weapon: negligible Bulk, held in one hand to be activated (its user's to set)`],
+    [/^In the other forms, it has the same Bulk as a normal weapon of its type\.$/i, () => null],
+    [/^You can switch your grip as part of the activation\.$/i, () => "Its user can switch its grip as part of it"],
+    [/^When you expand the item, you can use the force of the expansion to High Jump or to try to Force Open a door or the like by wedging the disk into a gap before activation\.$/i, () => null],
+    [/^The staff makes the Athletics check with an? (\d+d20\+\d+|\+\d+) modifier\.$/i, (match) => `Expanding it, its user can High Jump, or Force Open a door or the like with the disk wedged in a gap first: the staff's own Athletics check, ${/^\+/.test(match[1]) ? `1d20${match[1]}` : match[1]} (its own action)`]
+];
 const RESHAPE_ANY = /\bThe weapon takes the shape of another melee weapon that requires the same number of hands to wield\./i;
 const ATTUNED_BULK = /\battune it to a single item of (\d+|light) Bulk or less\b/i;
 const DON = /\bThe armor wraps around you, allowing you to don it\b/i;
@@ -74,6 +85,8 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
         const ammo = CHARM_AMMO.exec(text);
         return { op: "create", self: true, choose: { groups: [...groups[1].split(/,\s*/), groups[2]].map((group) => group.toLowerCase()), common: true }, potency: Number(charmRunes[1]), striking: strikingOf(charmRunes[2]), ...(after ? { then: { after: { value: 1, unit: "minutes" }, potency: Number(after[1] ?? 0), striking: strikingOf(after[2]) }, untilRest: true } : {}), ...(ammo ? { ammo: Number(ammo[1]) } : {}), said: charm[0] };
     }
+    const listed = RESHAPE_LIST.exec(text);
+    if (listed) return { op: "reshape", self: true, forms: [listed[1].toLowerCase(), listed[2].toLowerCase()], said: listed[0] };
     const two = RESHAPE_TWO.exec(text);
     if (two) return { op: "reshape", self: true, forms: [two[1].toLowerCase(), two[2].toLowerCase()], said: two[0] };
     if (RESHAPE_ANY.test(text)) return { op: "reshape", self: true, sameHands: true, said: RESHAPE_ANY.exec(text)[0] };
@@ -110,12 +123,15 @@ export function objectsPlan(html, base, item = {}) {
     const whole = String(item?.system?.description?.value ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
     const read = readObjects(body, { name: item?.name ?? "", type: item?.type ?? null, whole });
     if (!read) return null;
-    const notes = SENTENCES(body).filter((sentence) => !sentence.includes(read.said) && !(read.also && sentence.includes(read.also)) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+    // (Its forms' own words, Twining Staff's: lines of the card, or said with the line after them.)
+    const formLine = (sentence) => FORM_LINES.find(([pattern]) => pattern.test(sentence));
+    const formLines = read.op === "reshape" ? SENTENCES(body).map((sentence) => formLine(sentence)?.[1](formLine(sentence)[0].exec(sentence))).filter(Boolean) : [];
+    const notes = SENTENCES(body).filter((sentence) => !sentence.includes(read.said) && !(read.also && sentence.includes(read.also)) && !(read.op === "reshape" && formLine(sentence)) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
     const { said, also, ...objects } = read;
     // (The GM's share of a number the card applies — Rust Scrub's "The GM determines what portion of damage to an item was caused by rust if
     // that value isn't known": your ruling for numbers left to the GM, the text's applied and the GM may change it — a card line.)
     const share = /^The GM determines what portion of damage to an item was caused by (\w+) if that value isn't known\.$/i;
-    const lines = notes.filter((note) => share.test(note)).map((note) => `The GM may lower it to what the ${share.exec(note)[1]} did, when that isn't known.`);
+    const lines = [...notes.filter((note) => share.test(note)).map((note) => `The GM may lower it to what the ${share.exec(note)[1]} did, when that isn't known.`), ...formLines.map((line) => `${line}.`)];
     const rules = notes.filter((note) => !share.test(note));
     return {
         ...base,

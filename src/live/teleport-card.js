@@ -28,14 +28,62 @@ export function teleportText(teleport, { speed = null, weaponRange = null } = {}
     if (Number.isFinite(teleport?.speedTimes)) return `Up to ${TIMES[teleport.speedTimes] ?? `${teleport.speedTimes} times `}its user's Speed${plus}${Number.isFinite(range) ? ` (${range} feet)` : ""}`;
     // (Or a square fired at, Dimension Shot's: with no creature targeted, that square's space or one next to it.)
     const square = teleport?.orSquare ? "; or, fired at a square with no creature targeted, a space with that square or next to it (within its weapon's range)" : "";
+    // (A creature brought to its user, Whistle of Calling's.)
+    if (teleport?.summon) return `The creature targeted, to a space within ${range} feet of its user`;
     return teleport?.from === "target" ? `${range === 5 ? "To a space adjacent to the creature targeted" : `Within ${range} feet of the creature targeted`}${square}` : `Up to ${range} feet`;
+}
+
+// The free spaces beside a creature's space, for another creature set down there (2026-10-27, teleport.with: Bring Me Near's, Blink Blade's,
+// Transposition Ammunition's others along): space { x, y, w, h } in pixels, size { w, h } the other's, occupied [{ x, y, w, h }], grid the
+// grid's size in pixels, bounds the scene's rectangle, prefer a point → [{ x, y }] top-left corners touching the space and overlapping nothing,
+// the nearest to prefer (else the space's middle) first.
+export function freeSpacesBeside(space, size, occupied = [], { grid, bounds = null, prefer = null } = {}) {
+    const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    const spots = [];
+    for (let x = space.x - size.w; x <= space.x + space.w; x += grid) {
+        for (let y = space.y - size.h; y <= space.y + space.h; y += grid) {
+            const spot = { x, y, w: size.w, h: size.h };
+            if (overlaps(spot, space) || occupied.some((other) => overlaps(spot, other))) continue;
+            if (bounds && (x < bounds.x || y < bounds.y || x + size.w > bounds.x + bounds.width || y + size.h > bounds.y + bounds.height)) continue;
+            spots.push({ x, y });
+        }
+    }
+    const centre = prefer ?? { x: space.x + space.w / 2, y: space.y + space.h / 2 };
+    const far = (spot) => Math.hypot(spot.x + size.w / 2 - centre.x, spot.y + size.h / 2 - centre.y);
+    return spots.sort((a, b) => far(a) - far(b));
+}
+
+// The squares a token crosses moving in a straight line from start to end (2026-10-27, teleport.move.trail: Hellfire Boots'): start and end its
+// top-left corners, size { w, h } its space in pixels, grid the grid's size → [{ x, y }] the top-left corners of the squares its space passes
+// over on the way, not those it started on, in order.
+export function squaresAlong(start, end, size, grid) {
+    const cells = new Map();
+    const footprint = (x, y) => {
+        const list = [];
+        for (let dx = 0; dx < size.w; dx += grid) for (let dy = 0; dy < size.h; dy += grid) list.push({ x: Math.round((x + dx) / grid) * grid, y: Math.round((y + dy) / grid) * grid });
+        return list;
+    };
+    const first = new Set(footprint(start.x, start.y).map((cell) => `${cell.x},${cell.y}`));
+    const steps = Math.max(1, Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / (grid / 4)));
+    for (let step = 1; step <= steps; step++) {
+        const at = step / steps;
+        for (const cell of footprint(start.x + (end.x - start.x) * at, start.y + (end.y - start.y) * at)) {
+            const key = `${cell.x},${cell.y}`;
+            if (!first.has(key) && !cells.has(key)) cells.set(key, cell);
+        }
+    }
+    return [...cells.values()];
 }
 
 // Its other lines: the farther range after a critical success, its user alone, the damage along the way, line of effect.
 export function teleportLines(teleport) {
     return [
+        // (Its own words for where or how, src/compiler/teleport.js: Headbands of Translocation's other wearer, Fire-Jump Ring's fires.)
+        ...(teleport?.lines ?? []),
         // (Its user's own move, src/compiler/move.js: what it ignores, how it ends.)
         ...(teleport?.move?.lines ?? []),
+        // (The trail it leaves, Hellfire Boots'.)
+        teleport?.move?.trail ? `Each square it moves through is hazardous terrain for ${teleport.move.trail.lasts.value} ${teleport.move.trail.lasts.value === 1 ? teleport.move.trail.lasts.unit.replace(/s$/, "") : teleport.move.trail.lasts.unit}: ${teleport.move.trail.formula.replace(/\[(\w+)\]/g, " $1")} damage to a creature that moves through it` : null,
         // (A creature moved to a space its user picks, src/compiler/placed.js: how near its user, its own lines.)
         Number.isFinite(teleport?.place?.nearSource) ? `Into a space within ${teleport.place.nearSource} feet of ${teleport.place.by?.name ?? "its user"}` : null,
         teleport?.place?.optional ? `${teleport.place.by?.name ?? "Its user"} can leave it where it is` : null,
@@ -43,7 +91,9 @@ export function teleportLines(teleport) {
         teleport?.critical ? `Within ${teleport.critical.within} feet instead if the triggering save was a critical success (tick it before Pick)` : null,
         teleport?.alone ? `Its user alone, with what they wear and hold: with another creature along, even in an extradimensional container, it fails${teleport.alone.used ? " and the activation is used" : ""}` : null,
         teleport?.line ? `${teleport.line.formula} ${teleport.line.type} damage to its user and each creature in the line between where it was and where it lands` : null,
-        teleport?.lineOfEffect ? "Its user must have line of effect to the space: no wall in the way" : null
+        teleport?.lineOfEffect ? "Its user must have line of effect to the space: no wall in the way" : null,
+        // (Smoke where it leaves and arrives, Blink Blade's.)
+        teleport?.smoke ? `Puffs of smoke fill the space it leaves and the one it lands in: Concealed inside, until the end of its user's next turn${(teleport.smoke.notes ?? []).length ? ` (${teleport.smoke.notes.map((note) => note.replace(/\.$/, "").toLowerCase()).join("; ")})` : ""}` : null
     ].filter(Boolean);
 }
 
@@ -62,7 +112,7 @@ export function teleportCardHTML(state, { canApply = false } = {}) {
     const said = lines.length ? `<ul class="aar-lines">${lines.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const tick = open && canApply && state.plan.teleport.critical ? `<label class="aar-choice"><input type="checkbox" data-air-field="critical"> The triggering save was a critical success (within ${escape(state.plan.teleport.critical.within)} feet)</label>` : "";
     const notes = open && (state.plan.notes ?? []).length ? `<ul class="aar-notes">${state.plan.notes.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
-    const aim = state.plan.teleport.from === "target" ? (state.plan.teleport.orSquare ? "Target the creature it hit (none, for a square), then press Pick and click" : "Target the creature first, then press Pick and click") : "Press Pick and click";
+    const aim = state.plan.teleport.summon ? "Target the creature first, then press Pick and click" : state.plan.teleport.from === "target" ? (state.plan.teleport.orSquare ? "Target the creature it hit (none, for a square), then press Pick and click" : "Target the creature first, then press Pick and click") : "Press Pick and click";
     const hint = open && canApply ? `<p class="aar-hint">${aim} the space ${state.plan.teleport.place ? `${escape(state.user.name)} is moved to` : `it ${state.plan.teleport.move ? "moves to" : "lands in"}`} (right-click or Escape cancels).</p>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const again = state.plan.teleport.move?.again && state.results.length;
