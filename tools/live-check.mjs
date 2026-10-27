@@ -12061,7 +12061,7 @@ export const cases = {
 };
 
 // (The group files' cases: imported with this file's own version, so the browser doesn't keep an old one.)
-export const GROUPS = ["strike", "moving", "triggers", "lasting", "senses", "rules"];
+export const GROUPS = ["strike", "moving", "triggers", "lasting", "senses", "rules", "b2-areas", "b2-creatures", "b2-illusions", "b2-visibility", "b2-afflictions", "b2-actions", "b2-spells", "b2-misc"];
 const version = new URL(import.meta.url).search;
 for (const group of GROUPS) {
     const more = await import(`./live-cases/${group}.mjs${version}`).then((module) => module.default(helpers)).catch((error) => {
