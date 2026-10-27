@@ -35,7 +35,8 @@ const zoneCard = (zone) => ({ builtin: "zone", actions: null, targeting: { targe
 
 // Each reading: the source names it's for (an activation's "Item: Activation"; any when none), whether it reads over the plan read before
 // (by default only none, note-only, or the GM's no-effect), a pattern for each of its effect's sentences — every sentence must be one, in
-// order — and the card they make (from its matches and the plan before; keep: changes to that plan instead of a card of its own).
+// order — and the card they make (from its matches and the plan before; keep: changes to that plan instead of a card of its own). Or read:
+// a reading of its own over the plan before and the html, for words the plan has already taken apart (Rusting Ammunition's rows).
 const READINGS = [
     {
         // (Diver's Gloves' fall is src/compiler/falls.js's.)
