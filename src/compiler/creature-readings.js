@@ -642,6 +642,42 @@ const READINGS = [
                 ]
             });
         }
+    },
+    {
+        // (The helm becomes its dragon, an Ancient Black Dragon named Naraga, for an hour at most: her own turns, as her user commands; slain, a
+        // week before she can be summoned again; and the helm's other benefits gone while she's out — plan.pauseItem, the helm uninvested until
+        // she reverts (scripts/paused-item.js). 2026-10-27, an artifact's whole effect.)
+        name: "Horns of Naraga",
+        sentences: [
+            /^The Horns of Naraga transform into (\w+), an ([\w ]+)\.$/,
+            /^\w+ appears in an adjacent appropriate space, and if no such space is available, she does not appear\.$/,
+            /^\w+ follows your commands without question\.$/,
+            /^She remains for up to (\d+) (hours?|minutes?) or until you use an Interact action to dismiss her, after which she reverts back to the helm\.$/,
+            /^If \w+ is slain, she immediately reverts back to the helm and can't be summoned for (\d+|one) (week|day)s?\.$/,
+            /^You don't receive any of the helm's other benefits while it is transformed\.$/
+        ],
+        card: ([becomes, , , remains, slain], plan, { html }) => {
+            const uuid = linkOf(html, becomes[2]);
+            if (!uuid) return null;
+            const lasts = timeOf(remains[1], remains[2]);
+            const wait = { value: slain[1] === "one" ? 1 : Number(slain[1]), unit: `${slain[2]}s` };
+            return {
+                ...conjure({
+                    creatures: [creature({ name: becomes[1], from: { uuid }, initiative: "roll" })],
+                    lasts,
+                    notes: [
+                        `${becomes[1]}, an ${becomes[2]}, in a space beside her user; with no space there that fits her, she doesn't appear (dismiss her).`,
+                        "She follows her user's commands without question: they say what she does on her turns.",
+                        `Her user can dismiss her with an Interact action (the Dismiss button): she reverts to the helm.`,
+                        `Slain, she reverts to the helm and can't be summoned again for ${wait.value} ${slain[2]}: set as she falls.`,
+                        "While she's out, the helm gives its user none of its other benefits: it's uninvested until she reverts.",
+                        ...hours(lasts)
+                    ]
+                }),
+                slainWait: wait,
+                pauseItem: true
+            };
+        }
     }
 ];
 

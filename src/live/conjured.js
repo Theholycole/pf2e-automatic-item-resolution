@@ -51,3 +51,11 @@ const WAIT_SECONDS = { days: 86_400, weeks: 604_800 };
 export const slainUntil = (slainWait, worldTime) => (Number(worldTime) || 0) + (Number(slainWait?.value) || 0) * (WAIT_SECONDS[slainWait?.unit] ?? 0);
 export const stillSlain = (slain, worldTime) => (slain ?? []).filter((entry) => (Number(entry?.until) || 0) > (Number(worldTime) || 0));
 export const countNow = (count, slain, worldTime) => Math.max(0, (Number(count) || 1) - stillSlain(slain, worldTime).length);
+
+// The item a creature it became pauses while it's out (plan.pauseItem, Horns of Naraga's "You don't receive any of the helm's other benefits
+// while it is transformed"): kept on the item as { actorIds, invested } — the made actors, and whether it was invested before. One of them
+// gone (present: whether an actor is still there) → { keep } the pause for the others, or { restore } its invested state once none is left.
+export function pausedAfter(paused, goneId, present = () => true) {
+    const left = (paused?.actorIds ?? []).filter((id) => id !== goneId && present(id));
+    return left.length ? { keep: { ...paused, actorIds: left } } : { restore: paused?.invested !== false };
+}

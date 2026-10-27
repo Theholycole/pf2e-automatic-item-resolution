@@ -25,6 +25,15 @@ export function withConditionDC(plan, valueOf) {
     return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...against, value } } } };
 }
 
+// A save's DC higher for each item of a name near its user (plan.dcNear { name, within, each }, src/compiler/hostile-ends.js: Flawed Orb of Gold
+// Dragonkind's Orb Shards, each within 60 feet +1): count, how many there are → the plan with that DC; the plan as it was without dcNear.
+export function withNearbyDC(plan, count) {
+    const near = plan?.dcNear;
+    const against = plan?.resolution?.check?.against;
+    if (!near || !Number.isFinite(Number(against?.value)) || !(Number(count) > 0)) return plan;
+    return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { ...against, value: Number(against.value) + Number(count) * (Number(near.each) || 1) } } } };
+}
+
 // Its hit's damage gone, an ignition failed (Oil's flat check, plan.ownCheck.ignite): the plan with its success rows dealing none.
 export function withoutHitDamage(plan) {
     const none = { mode: "none", multiplier: 0, sourceComponentIds: [] };

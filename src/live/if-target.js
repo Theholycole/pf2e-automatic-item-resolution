@@ -23,7 +23,10 @@ const living = (actor) => (actor?.modeOfBeing ? actor.modeOfBeing === "living" :
 export const weaknessOf = (actor, type) => Math.max(0, ...((actor?.attributes ?? actor?.system?.attributes ?? {}).weaknesses ?? []).filter((weakness) => String(weakness?.type ?? "").toLowerCase() === type).map((weakness) => Number(weakness.value) || 0));
 // (Or a creature without it, lacks: Dawnlight's flash only for creatures with darkvision, the rest immune — 2026-10-27.)
 const fits = (entry, actor) => (entry.lacks ? !fitsKind({ ...entry, lacks: false }, actor) : fitsKind(entry, actor));
-const fitsKind = (entry, actor) => (entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
+// (A kind PF2e gives no trait of its own by its creatures' name, Flawed Orb of Gold Dragonkind's gold dragons — "Gold Dragon (Ancient)": named,
+// 2026-10-27.)
+const named = (actor, words) => new RegExp(`\\b${String(words).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(String(actor?.name ?? ""));
+const fitsKind = (entry, actor) => (entry.named ? named(actor, entry.named) : entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
 
 // The plan for that creature: its riders added to their degree's effects when it fits; a save's bonus or penalty for its kind (Lamentation of
 // the Faithless's holy creatures' –2); null for a kind immune to it (its unholy ones).

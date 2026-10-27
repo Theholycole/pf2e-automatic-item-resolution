@@ -9,6 +9,7 @@ import { lightZone } from "./placed-light.js";
 import { pickConjured } from "./creature-pick.js";
 import { conjuredChanges, countNow, pickedPlan } from "../src/live/conjured.js";
 import { SLAIN } from "./slain-wait.js";
+import { pauseItem } from "./paused-item.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -74,6 +75,8 @@ export async function startItemConjure({ plan, used, actor, token }) {
         }
         const made = await startConjure({ item, plan, sourceToken: token?.document ?? token });
         await finishConjured(made, plan);
+        // (The item's other benefits off while it's out, Horns of Naraga's helm: scripts/paused-item.js.)
+        if (plan.pauseItem && made?.length) await pauseItem(used.data.uuid, made);
         return made;
     }
     const names = (plan.creatures ?? []).map((creature) => `${creature.count > 1 ? `${creature.count} ` : ""}${creature.name}`).join(", ");
