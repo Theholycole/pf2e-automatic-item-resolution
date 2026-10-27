@@ -8,6 +8,9 @@
 
 const LAST_STRIKE = /\bRequirements? Your (?:last|most recent|previous) action(?: this turn)? was a successful (?:(ranged|melee) )?(Strike(?:, Grapple, or Trip)?)(?: against your foe)? with (?:this weapon|the [\w' -]+?|(?:greater |major |true )?[\w' -]+?)(?=\.|,| and\b| Effect\b|$)/i;
 const TWO_UNARMED = /\bRequirements? You hit the same creature with two unarmed Strikes in the same round\b/i;
+// (A kill with any of its user's melee Strikes, Shadowed Scale, the Jungle Secret's "Your last action was a melee Strike that killed a living creature
+// or destroyed an undead creature": { strike: { range, any, killed } } — live play also wants that Strike's creature dead now, 2026-10-27.)
+const KILLED = /\bRequirements? Your (?:last|most recent|previous) action was an? (melee|ranged) Strike that killed a living creature or destroyed an undead creature\b/i;
 // (One with another way in, Scizore of the Crab's "…, or you have a creature Grabbed with this weapon": not refused, the GM's.)
 const OR_ELSE = /\bRequirements? [^.]*\bor you have\b/i;
 
@@ -16,6 +19,8 @@ export function readStrikeGate(text) {
     const plain = String(text ?? "");
     if (OR_ELSE.test(plain)) return null;
     if (TWO_UNARMED.test(plain)) return { twoUnarmed: true };
+    const killed = KILLED.exec(plain);
+    if (killed) return { strike: { range: killed[1].toLowerCase(), maneuvers: [], any: true, killed: true } };
     const match = LAST_STRIKE.exec(plain);
     if (!match) return null;
     return { strike: { ...(match[1] ? { range: match[1].toLowerCase() } : {}), maneuvers: /Grapple/.test(match[2]) ? ["grapple", "trip"] : [] } };
@@ -41,8 +46,8 @@ export function gateMet(gate, messages, { actorUuid, itemUuid, round = null } = 
     }
     if (!gate?.strike) return { ok: true, struck: null };
     const latest = mine.at(-1);
-    const strike = latest && latest.type === "attack-roll" && latest.itemUuid === itemUuid && (!gate.strike.range || (gate.strike.range === "ranged") === Boolean(latest.ranged));
+    const strike = latest && latest.type === "attack-roll" && (gate.strike.any || latest.itemUuid === itemUuid) && (!gate.strike.range || (gate.strike.range === "ranged") === Boolean(latest.ranged));
     const maneuver = latest && gate.strike.maneuvers.includes(latest.slug);
-    if (!latest || !(strike || maneuver) || !hit(latest)) return { ok: false, why: `a successful ${gate.strike.range ? `${gate.strike.range} ` : ""}Strike${gate.strike.maneuvers.length ? ", Grapple or Trip" : ""} with it as its last roll` };
+    if (!latest || !(strike || maneuver) || !hit(latest)) return { ok: false, why: `a successful ${gate.strike.range ? `${gate.strike.range} ` : ""}Strike${gate.strike.maneuvers.length ? ", Grapple or Trip" : ""}${gate.strike.any ? "" : " with it"} as its last roll${gate.strike.killed ? ", that killed its creature" : ""}` };
     return { ok: true, struck: latest.targetUuid ?? null };
 }

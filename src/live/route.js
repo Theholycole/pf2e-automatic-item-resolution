@@ -27,7 +27,9 @@ const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolut
         // (Or a push alone: Avalanche Boots' Shove pushed farther, src/compiler/shove-farther.js.)
         || Boolean(plan.resolution.outcomes?.success?.forcedMovement)
         // (Or a note Effect alone on the vehicle its user targets, Feather Token (Anchor)'s stopped boat: src/compiler/vehicles.js, 2026-10-27.)
-        || (/\bvehicle\b/i.test(String(plan.targeting.target)) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0));
+        || (/\bvehicle\b/i.test(String(plan.targeting.target)) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0)
+        // (Or a note Effect alone on the creature it's at, plan.atTarget — Shadowed Scale, the Jungle Secret's body decomposed: 2026-10-27.)
+        || (Boolean(plan.atTarget) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0));
 
 // Its user's own skill check against a creature's DC (The Crows' Thievery against the Reflex DC, Whip-Tongue Sling's Athletics against
 // the Fortitude DC): the ability module's card at the creatures the presser targets, its user's skill rolled (the core's check family).

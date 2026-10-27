@@ -37,7 +37,7 @@ import { withUserDCs } from "./item-dcs.js";
 import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
-import { reviveCreature } from "./revive.js";
+import { isDead, reviveCreature } from "./revive.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
@@ -298,6 +298,11 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
         const met = gateMet(plan.gate, rolls, { actorUuid: actor?.uuid, itemUuid: used.data.uuid ?? used.data._stats?.compendiumSource ?? null });
         if (!met.ok) throw new Error(`${used.data.name}: its Requirements need ${met.why}.`);
         if (met.struck) plan = { ...plan, struckToken: met.struck };
+        // (And that Strike killed it, Shadowed Scale, the Jungle Secret's: its creature dead now — 2026-10-27.)
+        if (plan.gate.strike?.killed) {
+            const struck = met.struck ? await fromUuid(met.struck).catch(() => null) : null;
+            if (!struck?.actor || !isDead(struck.actor)) throw new Error(`${used.data.name}: its Requirements need its user's last Strike to have killed its creature.`);
+        }
     }
     // (A condition its user takes beside the save, Pharasmin Visor's Dazzled: given as it's used, src/compiler/user-conditions.js.)
     if (plan?.userEffects?.length && actor) await giveUserConditions(plan.userEffects, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user conditions`, error));

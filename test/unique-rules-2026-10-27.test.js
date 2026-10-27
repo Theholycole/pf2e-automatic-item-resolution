@@ -99,3 +99,36 @@ test("Forgefather's Seal's passive: its wearer's held shields recover 10 Hit Poi
     const shields = [{ id: "a", name: "Steel Shield", hp: { value: 15, max: 20 } }, { id: "b", name: "Tower Shield", hp: { value: 0, max: 20 } }, { id: "c", name: "Buckler", hp: { value: 6, max: 6 } }, { id: "d", name: "Sturdy", hp: { value: 30, max: 100 } }];
     assert.deepEqual(shieldRepairs(shields, repair).map((entry) => [entry.id, entry.to]), [["a", 20], ["d", 40]]);
 });
+
+test("Cane of the Maelstrom's Creation: unlimited, and a second choice with its user's Crafting check for a delicate or complex object", () => {
+    const creation = plans("Cane of the Maelstrom")[2];
+    assert.deepEqual([creation.builtin, creation.partial, creation.notes, creation.castDuration.unit, creation.choices.length], ["cast-spell", undefined, undefined, "unlimited", 2]);
+    assert.equal(creation.choices[0].castCheck, undefined);
+    assert.deepEqual(creation.choices[1].castCheck, { statistic: "crafting", why: "to make it a delicate or complex object", dc: null });
+    assert.match(creation.choices[1].when, /Crafting check/);
+    assert.equal(routeOf(creation), "cast");
+});
+
+test("Shadowed Scale, the Jungle Secret: a body its user's last melee Strike killed turned to soil — the gate, its note Effect on that body, marked", async () => {
+    const { gateMet } = await import("../src/compiler/strike-gate.js");
+    const [soil] = plans("Shadowed Scale, the Jungle Secret");
+    assert.deepEqual(soil.gate, { strike: { range: "melee", maneuvers: [], any: true, killed: true } });
+    assert.deepEqual([soil.atTarget, soil.partial, soil.noteOnly, soil.builtin], [true, undefined, undefined, undefined]);
+    assert.equal(routeOf(soil), "save");
+    const [note] = success(soil).noteEffects;
+    assert.deepEqual([note.label, note.duration, note.rules[0].option], ["Decomposed into soil", null, "decomposed-into-soil"]);
+    assert.match(note.text, /Miracle or Wish/);
+    // (Any of its user's melee Strikes, not the mask's own: a hit with a sword counts, a ranged one doesn't.)
+    const roll = { actorUuid: "Actor.a", type: "attack-roll", outcome: "success", itemUuid: "Item.sword", targetUuid: "Token.t", ranged: false };
+    assert.deepEqual(gateMet(soil.gate, [roll], { actorUuid: "Actor.a", itemUuid: "Item.mask" }), { ok: true, struck: "Token.t" });
+    assert.equal(gateMet(soil.gate, [{ ...roll, ranged: true }], { actorUuid: "Actor.a", itemUuid: "Item.mask" }).ok, false);
+});
+
+test("Shadowed Scale, the Jungle Secret: Summon Plant or Fungus at half the decomposed body's level, rounded up", async () => {
+    const { rankFromLevel } = await import("../src/compiler/unique-rules.js");
+    const summon = plans("Shadowed Scale, the Jungle Secret")[1];
+    assert.deepEqual([summon.builtin, summon.spell.name, summon.partial, summon.notes, summon.requirementUnread], ["cast-spell", "Summon Plant or Fungus", undefined, undefined, undefined]);
+    assert.deepEqual(summon.castRankBy, { mark: "decomposed-into-soil", within: 5, half: true, target: "the decomposed body" });
+    assert.deepEqual([rankFromLevel(summon.castRankBy, 15), rankFromLevel(summon.castRankBy, 0), rankFromLevel(summon.castRankBy, 8)], [8, 1, 4]);
+    assert.equal(summon.castLines.length, 2);
+});

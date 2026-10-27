@@ -29,10 +29,24 @@
 //   repair shields becomes inactive until the next time you make your daily preparations": objects.pauses, an Effect on its user until then
 //   that its shields' repair at each turn's start waits for (src/compiler/shield-repair.js, scripts/shield-repair.js). Most of the item
 //   there to mend: the GM's call, a line.
+// - A cast with a check for more (withCheckedCreation): Cane of the Maelstrom's "casts a 5th-rank Creation spell, except the duration is
+//   unlimited and you can create delicate or complex objects by succeeding at an applicable Crafting skill check" → its unlimited time as read
+//   (src/compiler/cast-duration.js), and the cast card's two choices: the spell as it is, or the spell with plan.choices[1].castCheck — its
+//   user's PF2e Crafting check rolled with the cast (scripts/casts.js), its DC the object's, the GM's.
+// - A body slain turned to soil (withSoiledBody): Shadowed Scale, the Jungle Secret's "Requirements Your last action was a melee Strike that
+//   killed a living creature … You cause the body to decompose into a pile of fertile soil … it can only be returned to life with the use of
+//   powerful magic such as Miracle or Wish" → its gate (src/compiler/strike-gate.js: that Strike its user's last, its creature dead now), and a
+//   note Effect on that body for good (plan.atTarget: the ability module's card at the creature struck), its RollOption the mark its other
+//   activation looks for.
+// - A summon by the body's level (withSoilSummon): its "Requirements You are adjacent to the body of a creature you killed that has decomposed
+//   into soil … You cast Summon Plant or Fungus; the spell is heightened to a level equal to one-half of the slain creature's level, rounded
+//   up" → plan.castRankBy { mark, within, half }: the cast at half the targeted body's level (rounded up), refused unless that body has the
+//   mark and is adjacent (scripts/casts.js). What the plant becomes when the spell ends, rooted flora: the map's, a line.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
 import { plainText } from "./rows.js";
+import { readStrikeGate } from "./strike-gate.js";
 
 const sentencesOf = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z@(])/).map((sentence) => sentence.trim()).filter(Boolean);
 // Its Effect's words: after "Effect", without its Craft Requirements.
@@ -166,10 +180,54 @@ function withMended(plan, { activation, index }, item) {
     };
 }
 
+// --- A cast with a check for more ---------------------------------------------------------------------------------------------------------
+
+const CHECKED = /^The [\w' -]+? casts an? (\d+)(?:st|nd|rd|th)-rank ([A-Z][\w' -]+?) spell, except the duration is unlimited and you can create (delicate or complex objects) by succeeding at an applicable (Crafting) skill check when you activate this ability\.$/;
+function withCheckedCreation(plan) {
+    const note = (plan?.notes ?? []).find((entry) => CHECKED.test(String(entry).trim()));
+    const said = note ? CHECKED.exec(String(note).trim()) : null;
+    if (plan?.builtin !== "cast-spell" || !said || plan.spell?.name !== said[2] || Number(plan.rank) !== Number(said[1]) || plan.castDuration?.unit !== "unlimited" || plan.choices) return plan;
+    const notes = plan.notes.filter((entry) => entry !== note);
+    const one = { spell: plan.spell, rank: plan.rank };
+    const checked = { ...one, when: `${said[3].replace(/s$/, "").replace(/objects$/, "object")}: a ${said[4]} check`, castCheck: { statistic: said[4].toLowerCase(), why: `to make it a ${said[3].replace(/ objects$/, " object")}`, dc: null } };
+    const { partial, ...rest } = plan;
+    return { ...rest, choices: [one, checked], ...(notes.length ? { notes, partial } : { notes: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+}
+
+// --- A body slain turned to soil, and a summon by its level ----------------------------------------------------------------------------------
+
+const SOILED = [/^You cause the body to decompose into a pile of fertile soil\.$/, /^The creature's body is completely destroyed at the start of your next turn, and it can only be returned to life with the use of powerful magic such as (Miracle) or (Wish)\.$/];
+const SOIL_MARK = "decomposed-into-soil";
+function withSoiledBody(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    const gate = readStrikeGate(plainText(activation.html));
+    if (!matches(SOILED, sentences) || !gate?.strike?.killed) return plan;
+    const [, first, second] = SOILED[1].exec(sentences[1]);
+    const text = `Its body decomposes into fertile soil and is wholly destroyed as its slayer's next turn starts; from then on only powerful magic such as ${first} or ${second} can return it to life.`;
+    const base = keptBase(plan, item, { activation, index });
+    return { ...ownCard({ ...base, targeting: { target: "the creature it killed", range: null, area: null } }, { noteEffects: [{ label: "Decomposed into soil", text, duration: null, rules: [{ key: "RollOption", domain: "all", option: SOIL_MARK }] }] }), atTarget: true, gate: { ...(plan?.gate ?? {}), ...gate }, noteOnly: undefined };
+}
+
+const SOIL_SUMMON = /^You cast ([A-Z][\w' -]+?); the spell is heightened to a level equal to one-half of the slain creature's level, rounded up\.$/;
+const ROOTED = /^When the spell's duration ends, the [\w' -]+? returns to the soil, where it roots itself and becomes a non-creature piece of flora\.$/;
+const BY_SOIL = /^You are adjacent to the body of a creature you killed that has decomposed into soil$/i;
+function withSoilSummon(plan, { activation }) {
+    const note = (plan?.notes ?? []).find((entry) => SOIL_SUMMON.test(String(entry).trim()));
+    if (plan?.builtin !== "cast-spell" || !note || plan.spell?.name !== SOIL_SUMMON.exec(String(note).trim())[1] || !BY_SOIL.test(String(activation.requirements ?? ""))) return plan;
+    const rooted = plan.notes.find((entry) => ROOTED.test(String(entry).trim()));
+    const notes = plan.notes.filter((entry) => entry !== note && entry !== rooted);
+    const lines = ["Target the decomposed body: the spell's rank is half that creature's level, rounded up.", ...(rooted ? ["When the spell ends, the plant roots in that soil as ordinary flora."] : [])];
+    const { partial, requirementUnread, ...rest } = plan;
+    return { ...rest, castRankBy: { mark: SOIL_MARK, within: 5, half: true, target: "the decomposed body" }, castLines: [...(plan.castLines ?? []), ...lines], ...(notes.length ? { notes, partial } : { notes: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } }) };
+}
+
+// The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
+export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
+
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon]) {
         const next = reader(plan, entry, item);
         if (next !== plan) return next;
     }
