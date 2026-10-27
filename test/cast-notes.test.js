@@ -182,7 +182,7 @@ test("a light's radius its user picks (2026-10-27): Twilight Lantern's dim moonl
 
 test("its user's own actions as the whole of an activation (2026-10-27): Swiftmount Saddle's Mount, Spangled Rider's Suit's dismount, Maestro's Chair's Stride and Sustain, Sandals of the Stag's jump — a line of the card", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
-    const lines = ["Swiftmount Saddle", "Spangled Rider's Suit", "Maestro's Chair", "Sandals of the Stag"].map((name) => activations(item(name), options).find((entry) => entry.plan?.notes?.length)?.plan);
+    const lines = ["Swiftmount Saddle", "Spangled Rider's Suit", "Maestro's Chair", "Sandals of the Stag", "Clockwork Diving Suit"].map((name) => activations(item(name), options).find((entry) => entry.plan?.notes?.length)?.plan);
     assert.ok(lines.every((plan) => plan && /\(its own (?:actions?|action on the map|move on the map)\)\.$/.test(plan.notes[0]) && !plan.partial && !plan.noteOnly));
     assert.equal(lines[0].notes[0], "Mount the creature wearing it (its own action on the map).");
 });

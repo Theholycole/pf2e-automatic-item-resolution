@@ -63,12 +63,16 @@ const OWN_ACTS = [
     // (The Cricket's "Stride up to three times your Speed. You can Burrow, Climb, Fly, or Swim instead …. This movement doesn't trigger reactions
     // and you can move through creatures' spaces …", after its glowing feet.)
     [[/^Your feet begin to glow\b[^.]*\.$/i, /^Stride up to three times your Speed\.$/i, /^You can Burrow, Climb, Fly, or Swim instead of Striding if you have the corresponding movement type\.$/i, /^This movement doesn't trigger reactions and you can move through creatures' spaces as if they weren't there during this movement\.$/i],
-        () => "Stride (or Burrow, Climb, Fly or Swim, with that Speed) up to three times its Speed, triggering no reactions and moving through creatures' spaces (its own move on the map)."]
+        () => "Stride (or Burrow, Climb, Fly or Swim, with that Speed) up to three times its Speed, triggering no reactions and moving through creatures' spaces (its own move on the map)."],
+    // (Clockwork Diving Suit's jet: "Swim 25 feet in a straight line", whatever its swim Speed or its armor's penalty, difficult terrain still
+    // slowing it.)
+    [[/^The diving suit shoots out a water jet that causes you to Swim (\d+) feet in a straight line\.$/i, /^The distance of this movement is unaffected by your swim Speed, if you have one, or the armor's Speed penalty\.$/i, /^However, difficult terrain, such as the difficult terrain for moving up or down or moving against a current, still slows this movement\.$/i],
+        (sentences) => `Swim ${/(\d+) feet/.exec(sentences[0])[1]} feet in a straight line, whatever its swim Speed or its armor's Speed penalty; difficult terrain still slows it (its own move on the map).`]
 ];
 export function ownMovePlan(html, base) {
     const sentences = SENTENCES(plainOf(html).replace(/^.*?\bEffect\b\s*/s, "").replace(/\s*\bCraft Requirements\b.*$/s, ""));
     const acts = OWN_ACTS.find(([forms]) => forms.length === sentences.length && forms.every((form, index) => form.test(sentences[index])));
-    if (acts) return { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: [acts[1]()] };
+    if (acts) return { ...base, automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } }, notes: [acts[1](sentences)] };
     const move = sentences.length === 1 ? OWN_MOVE.exec(sentences[0]) : null;
     if (!move) return null;
     return {

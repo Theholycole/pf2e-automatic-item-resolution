@@ -1,16 +1,16 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1310,
+  "entries": 1309,
   "results": {
    "partial": 411,
-   "none": 531,
+   "none": 530,
    "note-only": 249,
    "builtin:no-effect": 119
   },
   "main": {
    "cast-changes": 22,
-   "speeds": 23,
+   "speeds": 22,
    "counteract": 24,
    "afflictions": 60,
    "moving": 84,
@@ -49,8 +49,8 @@
   },
   "any": {
    "cast-changes": 22,
-   "speeds": 29,
-   "areas": 199,
+   "speeds": 28,
+   "areas": 198,
    "immunity": 90,
    "objects": 390,
    "speech": 129,
@@ -67,7 +67,7 @@
    "strike": 194,
    "reader": 215,
    "spells": 75,
-   "information": 198,
+   "information": 197,
    "actions": 62,
    "from-events": 29,
    "no-rules": 17,
@@ -3746,18 +3746,6 @@
     "dying",
     "information",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Clockwork Diving Suit",
-   "kind": "activation",
-   "result": "none",
-   "main": "speeds",
-   "work": "swim speed",
-   "needs": [
-    "speeds",
-    "areas",
-    "information"
    ]
   },
   {
