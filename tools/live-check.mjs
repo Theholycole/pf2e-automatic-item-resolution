@@ -239,6 +239,10 @@ async function pressRecurring(message, action) {
 }
 const recurringResult = (message) => game.messages.get(message.id)?.flags?.["pf2e-automatic-ability-resolution"]?.recurring;
 
+// The helpers, for the cases written by group in tools/live-cases/*.mjs (2026-10-27): each file's default export a function of these → its
+// cases, joined to this file's below (a name already here kept).
+export const helpers = { NS, PREFIX, assert, wait, shift, messageAfter, itemCard, abilitySaveCard, clearSquares, unpaused, withTemperature, creature, give, target, strike, ownItem, dropSpell, dialogTitled, until, optionFor, rollAndApply, applyAbilityCard, withDie, recurringFor, pressRecurring, recurringResult };
+
 export const cases = {
     // A healing potion fed to a dying ally next to the user: PF2e's own roll heals her once, Dying ends, Wounded rises.
     async potionToDyingAlly(scene) {
@@ -12055,6 +12059,17 @@ export const cases = {
         }
     }
 };
+
+// (The group files' cases: imported with this file's own version, so the browser doesn't keep an old one.)
+export const GROUPS = ["strike", "moving", "triggers", "lasting", "senses", "rules"];
+const version = new URL(import.meta.url).search;
+for (const group of GROUPS) {
+    const more = await import(`./live-cases/${group}.mjs${version}`).then((module) => module.default(helpers)).catch((error) => {
+        console.error(`${NS} | live cases of ${group}`, error);
+        return {};
+    });
+    for (const [name, run] of Object.entries(more)) if (!cases[name]) cases[name] = run;
+}
 
 // One case: its result recorded (on this GM's user flag); a dialog left open over a minute is answered and fails it.
 export async function runCase(name) {
