@@ -27,7 +27,8 @@ export function beyondRange(castRange, casterToken, actor, targets) {
     if (!feet || !placeable || !canvas?.ready || (placeable.document?.parent?.id ?? placeable.parent?.id) !== canvas.scene?.id) return [];
     const grid = { size: canvas.grid.size, gridFeet: canvas.dimensions?.distance ?? 5 };
     const from = spaceOf(placeable);
-    return targets.filter((target) => distanceFeet(from, spaceOf(target.object ?? target), grid) > feet).map((target) => target.name);
+    // (A burst's creatures as far as its edge: its radius past the range.)
+    return targets.filter((target) => distanceFeet(from, spaceOf(target.object ?? target), grid) > feet + (Number(castRange?.area) || 0)).map((target) => target.name);
 }
 
 // The cast's bonus beside the spell (src/compiler/cast-riders.js castBonus) on each creature it's cast on: PF2e's FlatModifier rules for its

@@ -367,7 +367,10 @@ const castWords = (note, plan, spell) => {
     if (plan.attack) text = text.replace(new RegExp(String.raw`(?:\b(?:spell attack roll and )?counteract (?:check |modifier |bonus )*(?:is |of |are |at )?(?:1d20 ?)?\+${plan.attack}|\+${plan.attack} (?:modifier (?:to (?:its|the) counteract check|for the roll)|counteract (?:check )?modifier))\b|\bcounteract DC of these effects is ${plan.attack + 10}\b`, "gi"), " ");
     text = text.replace(/\b(?:\d+(?:st|nd|rd|th)[- ]rank|rank \d+|\d+(?:st|nd|rd|th)[- ]level)\b/gi, " ").replace(/spell attack (?:roll|modifier) of \+\d+/gi, " ").replace(/\b(?:with)?in (?:the spell's )?range(?: of the spells?)?\b/gi, " ");
     for (const own of [spell?.duration, spell?.range]) if (/^\d+ (?:feet|miles?|rounds?|minutes?|hours?|days?)$/i.test(own ?? "")) text = text.replace(new RegExp(String.raw`\b${literal(own)}\b`, "gi"), " ");
-    return plan.dc ? text.replace(new RegExp(String.raw`\(?DC ${plan.dc}\)?`, "g"), " ") : text;
+    // (Its target said again as its trigger's creature, Talonstrike Blade's "on the creature you just dealt damage to": the one the presser targets.)
+    text = text.replace(/\bon the (?:creature|target) you just (?:dealt damage to|damaged|hit)\b/gi, " ");
+    // (Its DC said again: "(DC 19)", "with a DC of 34", "The spell DC is 34".)
+    return plan.dc ? text.replace(new RegExp(String.raw`\(?DC ${plan.dc}\)?|\b(?:with )?a DC of ${plan.dc}\b|\bThe spell DC is ${plan.dc}\b`, "gi"), " ") : text;
 };
 // (A note that says again what the item's own PF2e rules give, Elemental Wayfinder (Fire)'s "Additionally, you gain resistance 5 to fire.":
 // PF2e's, no leftover.)

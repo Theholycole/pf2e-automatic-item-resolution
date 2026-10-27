@@ -228,3 +228,15 @@ test("a condition its user avoids gaining once (2026-10-27): Immortal Bastion's 
     const urn = activations(item("Urn of Ashes"), options).find((one) => one.plan?.item?.ruleEffects)?.plan;
     assert.deepEqual([urn.item.ruleEffects[0].prevents, urn.partial], [["doomed"], true]);
 });
+
+test("a cast said again in other words (2026-10-27): Talonstrike Blade's 'on the creature you just dealt damage to, with a DC of 34', Dazzling Shortbow's burst within 60 feet (its range, the burst's radius past it); Greater Brilliant's ignored resistances are PF2e's rune's", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const talons = activations(item("Talonstrike Blade (Greater)"), options).find((entry) => entry.plan?.builtin === "cast-spell").plan;
+    assert.deepEqual([talons.dc, talons.partial], [34, undefined]);
+    const [shortbow] = activations(item("Dazzling Shortbow"), options);
+    assert.deepEqual([shortbow.plan.castRange.feet, shortbow.plan.castRange.area, shortbow.plan.partial], [60, 10, undefined]);
+    const [brilliant] = activations(item("Brilliant (Greater)"), options);
+    assert.deepEqual([brilliant.plan.builtin, brilliant.plan.partial], ["counteract", undefined]);
+    // (Songbird's Brush keeps its good-aligned creatures, the GM's: partial.)
+    assert.equal(first("Songbird's Brush").partial, true);
+});

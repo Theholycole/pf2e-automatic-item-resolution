@@ -64,7 +64,10 @@ export function readCounteract(html, { level = 0, extras: withExtras = true } = 
 // The counteract's notes that are lines of its card, not rules it leaves: what to tick or give on it, the GM's numbers (the user's answer 5),
 // a limit to keep to, a timing, the spell a charm spends; a summoned creature controlled the GM's (the user's answer D of 2026-10-13).
 const CARD_NOTES = [/^Tick one:/, /^Only an active [\w ]+ spell: tick one that is\.$/, /^Its counteract rank is the stored spell's: give it on the card\.$/, /^Its counteract modifier \+\d+: .*\(the GM's call\)\.$/, /^Its DC and rank are those of what caused the condition\.$/, /^It doesn't undo Hit Point damage already taken, and can't end an ongoing affliction\.$/, /^This expends the spell held in the charm\.$/, /^Once you do, the stored spell's energy is spent, and the ring is empty\.$/, /^If it fails, it can't attempt to counteract the same [\w ]+ again\.$/, /^This takes longer for a disease\b/, /^If the spell would be counteracted, the bloodstone doll instead influences the summoned creature\.$/, /^You gain control of the summoned creature\b/, /^The triggering creature then regains control of their summoned creature\b/];
-export const counteractLeaves = (counteract) => (counteract?.notes ?? []).filter((note) => !CARD_NOTES.some((line) => line.test(String(note).trim())));
+// (And what the rune's own PF2e data already plays, beside its activation: Greater Brilliant's "Damage dealt by this weapon ignores the target's
+// resistances to fire, spirit, and vitality" — PF2e's greaterBrilliant rune ignores those resistances on every Strike, 2026-10-27.)
+const RUNE_OWN = [/^Damage dealt by this weapon ignores the target's resistances to fire, spirit, and vitality\.$/];
+export const counteractLeaves = (counteract) => (counteract?.notes ?? []).filter((note) => ![...CARD_NOTES, ...RUNE_OWN].some((line) => line.test(String(note).trim())));
 
 // A counteract card's plan, last: partial while its notes leave a rule its card doesn't play — not a wait the plan's recharge holds (Cloth of
 // Nullification's "can't be activated again for 2d6 hours", src/compiler/cooldown.js), which an earlier reading may have counted it whole by.
