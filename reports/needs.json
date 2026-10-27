@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1317,
+  "entries": 1315,
   "results": {
-   "partial": 418,
+   "partial": 416,
    "none": 531,
    "note-only": 249,
    "builtin:no-effect": 119
@@ -16,7 +16,7 @@
    "moving": 84,
    "visibility": 48,
    "choice": 31,
-   "lasting": 67,
+   "lasting": 65,
    "strike": 100,
    "spells": 36,
    "information": 23,
@@ -57,12 +57,12 @@
    "out-of-combat": 447,
    "counteract": 105,
    "afflictions": 110,
-   "lasting": 236,
+   "lasting": 234,
    "moving": 111,
    "triggers": 121,
    "visibility": 50,
    "dying": 75,
-   "choice": 110,
+   "choice": 109,
    "several": 106,
    "strike": 194,
    "reader": 215,
@@ -8525,16 +8525,6 @@
    ]
   },
   {
-   "name": "Phantom Shroud",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "sustain",
-   "needs": [
-    "lasting"
-   ]
-  },
-  {
    "name": "Paired (Greater)",
    "kind": "activation",
    "result": "builtin:no-effect",
@@ -13575,17 +13565,6 @@
     "triggers",
     "afflictions",
     "situational"
-   ]
-  },
-  {
-   "name": "Ethereal",
-   "kind": "activation",
-   "result": "partial",
-   "main": "lasting",
-   "work": "until you",
-   "needs": [
-    "lasting",
-    "choice"
    ]
   },
   {

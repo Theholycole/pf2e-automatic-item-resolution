@@ -51,7 +51,7 @@ export function castRequest(state, { targetUuids = [] } = {}) {
 
 // The item's duration for the spell (src/compiler/cast-duration.js): "lasts 10 minutes (1 hour from 17th level)".
 const timeWords = (time) => (time.unit === "unlimited" ? "with no time limit" : `${time.value} ${time.value === 1 ? time.unit.replace(/s$/, "") : time.unit}`);
-export const lastsWords = (castDuration) => (castDuration ? `lasts ${timeWords(castDuration)}${castDuration.atLevel ? ` (${timeWords(castDuration.atLevel)} from level ${castDuration.atLevel.level})` : ""}` : null);
+export const lastsWords = (castDuration) => (castDuration ? `lasts ${timeWords(castDuration)}${castDuration.sustained ? " at most, while its user Sustains it (end it sooner if they stop)" : ""}${castDuration.atLevel ? ` (${timeWords(castDuration.atLevel)} from level ${castDuration.atLevel.level})` : ""}` : null);
 
 export function castCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";

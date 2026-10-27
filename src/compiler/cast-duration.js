@@ -30,6 +30,11 @@ function readTime(note, name) {
         String.raw`\b(?:The spell|The illusion|the effect) lasts (?:for )?${TIME}`,
         String.raw`\bto a maximum of ${TIME}`,
         String.raw`\byou become \w+ for ${TIME}, gaining the effects of`,
+        // (Not sustained, the Ethereal rune's "This doesn't require concentration and lasts for 10 minutes or until you choose to return to material
+        // form as a free action" (its user ends it sooner); sustained longer, Phantom Shroud's "You can Sustain the activation for up to 10
+        // minutes" (the Effects that long at most), 2026-10-27.)
+        String.raw`\bThis doesn't require concentration and lasts for ${TIME}(?: or until you choose to return to material form as a free action)?`,
+        String.raw`\bYou can Sustain the activation for up to ${TIME}`,
         ...(spell ? [String.raw`\beffects? of ${spell} for ${TIME}`] : [])
     ];
     // (And the spell's own it replaces: The Peacock's "instead of 20 minutes", Orb of Dragonkind's "rather than unlimited".)
@@ -57,7 +62,9 @@ export function withCastDuration(plan, spell = null) {
     const base = found ?? (atLevel ? own : null);
     if (!base || (!atLevel && own && own.value === base.value && own.unit === base.unit)) return plan;
     const said = [found?.said, atLevel?.said].filter(Boolean);
-    return { ...plan, castDuration: { value: base.value, unit: base.unit, said, ...(atLevel ? { atLevel: { level: atLevel.level, value: atLevel.value, unit: atLevel.unit } } : {}) } };
+    // (A Sustain's most, Phantom Shroud's: sustained, the card's words.)
+    const sustained = said.some((words) => /\bSustain\b/.test(words));
+    return { ...plan, castDuration: { value: base.value, unit: base.unit, said, ...(sustained ? { sustained: true } : {}), ...(atLevel ? { atLevel: { level: atLevel.level, value: atLevel.value, unit: atLevel.unit } } : {}) } };
 }
 
 // The duration for a caster of that level: the higher one from its level on.

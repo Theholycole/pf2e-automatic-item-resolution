@@ -265,3 +265,13 @@ test("an item spent by a flat check after its use (2026-10-27): Aeon Stone (Pale
     const html = counteractCardHTML({ status: "open", step: "pick", drinkers: [], drinker: 0, user: { name: "Wizard" }, item: { name: "Aeon Stone" }, counteract: stone.plan.item.counteract, rows: [], results: [] });
     assert.match(html, /Then a flat check \(DC 5\); if it fails, the item turns into Aeon Stone \(Consumed\)\./);
 });
+
+test("a cast's own time, not sustained or sustained longer (2026-10-27): the Ethereal rune's Ethereal Jaunt for 10 minutes without concentration, Phantom Shroud's Sustain up to 10 minutes", async () => {
+    const { compileActivations: activations } = await import("../src/compiler/permanent.js");
+    const { lastsWords } = await import("../src/live/cast-card.js");
+    const ethereal = activations(item("Ethereal"), options).find((entry) => entry.plan?.builtin === "cast-spell").plan;
+    assert.deepEqual([ethereal.castDuration.value, ethereal.castDuration.sustained, ethereal.partial], [10, undefined, undefined]);
+    const shroud = activations(item("Phantom Shroud"), options).find((entry) => entry.plan?.builtin === "cast-spell").plan;
+    assert.deepEqual([shroud.castDuration.value, shroud.castDuration.sustained, shroud.partial], [10, true, undefined]);
+    assert.equal(lastsWords(shroud.castDuration), "lasts 10 minutes at most, while its user Sustains it (end it sooner if they stop)");
+});
