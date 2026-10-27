@@ -98,6 +98,11 @@ export async function activate(itemUuid, index, userId = game.user.id) {
     if (!sender || !(sender.isGM || item.actor.testUserPermission?.(sender, "OWNER"))) return null;
     const entry = playable(item).find((candidate) => String(candidate.index) === String(index));
     if (!entry) throw new Error("That activation isn't there any more.");
+    // (Its essence possessing another creature, Emerald Fulcrum Lens's: no magic until that ends — scripts/possession.js.)
+    if (item.getFlag?.(MODULE_ID, "possessing")) throw new Error(`${item.name}: its essence possesses another creature, and it has no magic until that ends.`);
+    // (Full, Mindsponge's four memories: none of its activations but squeezing it out — the ways card's own, scripts/live.js storeAfter.)
+    const full = entry.plan?.item?.storeFull ?? null;
+    if (full && Number(item.getFlag?.(MODULE_ID, "stored")) >= full) throw new Error(`${item.name} is full: squeeze it out first (its Absorb Memories card's last way).`);
     const frequency = entry.plan.trigger?.frequency ?? null;
     const record = item.getFlag(MODULE_ID, USES) ?? {};
     const name = entry.rune ? `${item.name} (${activationName(entry.activation, entry.rune)})` : entry.activation.name ? `${item.name}: ${entry.activation.name}` : item.name;

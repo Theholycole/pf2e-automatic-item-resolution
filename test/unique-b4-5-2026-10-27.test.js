@@ -13,7 +13,7 @@ import { planFor } from "../src/live/if-target.js";
 import { withAttackModifiers, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
 import { saveText, withAttackChoice } from "../src/live/poison-card.js";
-import { doomCurseOf, markText, marksEndingAt, spaceSource } from "../src/live/card.js";
+import { doomCurseOf, markText, marksEndingAt, runesAfter, spaceSource, storeAfter } from "../src/live/card.js";
 import { focusText, poolAfter } from "../src/live/focus-card.js";
 import { readiedRules } from "../src/live/fortune-card.js";
 
@@ -204,4 +204,41 @@ test("Hex Blaster: the creature hexed for a minute, its Will save card kept open
     const [curse] = rows.criticalFailure.noteEffects;
     assert.deepEqual(doomCurseOf({ system: { rules: curse.rules } }), { dc: 28, days: 1 });
     assert.equal(doomCurseOf({ system: { rules: [] } }), null);
+});
+
+test("Emerald Fulcrum Lens: its splinter possessing the creature its +20 spell attack hits — the lens's benefits on it for good, its user uninvested", () => {
+    const [, possess] = plans("Emerald Fulcrum Lens");
+    const [effect] = possess.resolution.outcomes.success.noteEffects;
+    assert.deepEqual([done(possess), routeOf(possess), possess.resolution.check.modifier, possess.resolution.check.against.statistic, possess.possess.degrees, effect.duration], [true, "save", 20, "ac", ["criticalSuccess", "success"], null]);
+    assert.deepEqual(effect.rules.map((rule) => rule.key), ["ActiveEffectLike", "FlatModifier", "RollOption"]);
+});
+
+test("Mindsponge: the surgery its user's Medicine check at DC 28 (a failure the creature's death), the harvest one more of four (the corpse's Talking Corpse save worse), squeezing them out", () => {
+    const sponge = compileActivations(item("Mindsponge"), options);
+    const absorb = sponge.find((entry) => entry.activation.name === "Absorb Memories").plan;
+    const wipe = sponge.find((entry) => entry.activation.name === "Wipe Memories").plan;
+    const [prepare, harvest, squeeze] = absorb.ways.map((way) => way.plan);
+    assert.deepEqual([routeOf(absorb), prepare.resolution.check.statistic, prepare.resolution.check.against, prepare.resolution.outcomes.failure.terminal, absorb.partial], ["ways", "medicine", { dc: "fixed", value: 28, statistic: "fortitude" }, { kind: "death" }, true]);
+    assert.deepEqual([routeOf(harvest), harvest.item.store, harvest.resolution.outcomes.success.noteEffects[0].rules[0].key, squeeze.item.store, wipe.item.storeFull], ["item", { max: 4, add: 1 }, "AdjustDegreeOfSuccess", { max: 4, release: true }, 4]);
+    assert.deepEqual([storeAfter(3, harvest.item.store, "Mindsponge"), storeAfter(4, harvest.item.store, "Mindsponge").full, storeAfter(4, squeeze.item.store, "Mindsponge").count], [{ count: 4, line: "Mindsponge now holds 4 of 4" }, "Mindsponge is full (4 of 4): squeeze it out first", 0]);
+});
+
+test("Jax: her Dominate on its wielder, a Lamashtu worshipper's or a chaotic one's save at -2 and a degree worse (PF2e's rules on a note Effect), her orders a note Effect", () => {
+    const [, dominate] = plans("Jax");
+    const [judged, orders] = dominate.userEffects;
+    assert.deepEqual([done(dominate), routeOf(dominate), dominate.notes, judged.kind, judged.note.rules.map((rule) => rule.key), judged.note.rules[0].value, orders.note.label], [true, "cast", undefined, "note", ["FlatModifier", "AdjustDegreeOfSuccess"], -2, "Jax's orders"]);
+});
+
+test("Meloth's Lifedrinker: Lifedrink's 1d6 void, its slain victim raising its runes for good by its wielder's level; Vision of Meloth's death at 0 HP. Tengu Feather Fan: the spells its owner's feats put in it, or a cantrip not counted", () => {
+    const blade = compileActivations(item("Meloth's Lifedrinker (Level 7)"), options);
+    const drink = blade.find((entry) => entry.activation.name === "Lifedrink").plan;
+    const vision = blade.find((entry) => entry.activation.name === "Vision of Meloth").plan;
+    assert.deepEqual([done(drink), routeOf(drink), drink.lifedrink.upgrades.map((step) => step.level), vision.resolution.postDamageTerminal, vision.notes], [true, "save", [10, 12, 16, 19], { kind: "death", threshold: 0 }, undefined]);
+    assert.deepEqual(runesAfter({ potency: 1, striking: 1 }, drink.lifedrink.upgrades, 16), { runes: { potency: 3, striking: 2 }, lines: ["its +1 potency rune is now +2", "its striking rune is now greater striking", "its +2 potency rune is now +3"] });
+    assert.deepEqual(runesAfter({ potency: 2, striking: 1 }, drink.lifedrink.upgrades, 11).lines, []);
+    const fan = (feats) => compileActivations({ ...item("Tengu Feather Fan"), ownerFeats: feats }, options)[0].plan;
+    const plain = fan([]);
+    assert.deepEqual([done(plain), routeOf(plain), plain.trigger.frequency.max, plain.ways[0].plan.spell.name, plain.ways[0].plan.rank, plain.ways[0].plan.ownerDC, plain.ways[1].refund], [true, "ways", 1, "Gust of Wind", 1, "class-spell", true]);
+    const full = fan(["wind-gods-fan", "thunder-gods-fan"]);
+    assert.deepEqual([full.trigger.frequency.max, full.ways[0].plan.choices.map((choice) => `${choice.spell.name} ${choice.rank}`)], [3, ["Gust of Wind 1", "Wall of Wind 3", "Lightning Bolt 5"]]);
 });

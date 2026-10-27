@@ -18,7 +18,7 @@ import { triggeringMiss, withStrikeFormula } from "../src/live/strike-as.js";
 import { spendsCharges, withCharges } from "../src/live/charges.js";
 import { armedMarkSource } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
-import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
+import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, storeAfter, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
@@ -624,6 +624,12 @@ async function giveUserConditions(effects, { actor, token, used }) {
             lines.push(line ?? `${name} gains ${effect.amount} temporary Hit Points${ability?.applyChange ? "" : " (add them by hand: the ability module isn't active)"}`);
             continue;
         }
+        // (A note Effect of its own, with PF2e's rules — Jax's judgment on her Dominate's save: the ability module's note Effect, 2026-10-27.)
+        if (effect.kind === "note") {
+            const line = ability?.applyChange ? await ability.applyChange({ op: "effect", target: "source", effect: { kind: "note", note: effect.note } }, state) : null;
+            lines.push(line ?? `${name}: ${effect.note?.label ?? "a note"}${ability?.applyChange ? "" : " (add it by hand: the ability module isn't active)"}`);
+            continue;
+        }
         // (PF2e's own Effect on its user beside a zone, Arctic Worm Chitin Shield's Effect: Misty Chill: the ability module's native Effect,
         // src/compiler/zone-readings.js.)
         if (effect.kind === "native") {
@@ -1004,6 +1010,16 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             const said = await ability.applyChange(entry.heal ? { op: "heal", target: DRINKER_ID, amount } : { op: "tempHp", target: DRINKER_ID, amount, duration: entry.duration ?? null }, abilityState(state));
             lines.push(`${said ?? `${recipient.name}: ${amount} ${entry.heal ? "Hit Points regained" : "temporary Hit Points"}`} (from ${others[0].name}, level ${level})`);
         } else lines.push(`${recipient.name}: ${levelTempText(entry)} — ${others[0] ? `${others[0].name}'s level gives none` : "no creature targeted"}; apply it by hand.`);
+    }
+    // (What it holds, Mindsponge's memories: its count on the item, one more or all let out — refused once full, src/live/card.js storeAfter.)
+    if (state.plan.item?.store && state.item.uuid) {
+        const holder = await fromUuid(state.item.uuid).catch(() => null);
+        if (holder?.setFlag) {
+            const after = storeAfter(holder.getFlag(MODULE_ID, "stored"), state.plan.item.store, state.item.name);
+            if (after.full) throw new Error(after.full);
+            await holder.setFlag(MODULE_ID, "stored", after.count);
+            lines.push(after.line);
+        }
     }
     // (An extradimensional space it opens, What Doors We Open's: its container made on its user once — PF2e's own pouch, flagged as the item's.)
     if (state.plan.item?.space && target.actor) {

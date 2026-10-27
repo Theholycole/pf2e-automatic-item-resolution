@@ -49,7 +49,147 @@ const unarmedCheck = (against, rows, base) => ({ modelVersion: base?.modelVersio
 const RESEARCHED = (dc, rank) => `Only once its user has Researched this ritual: 12 RP from DC ${dc} Occultism checks (${rank}).`;
 const researchOf = (html) => /Research<\/strong>\s*Accumulate (\d+) RP by making @Check\[occultism\|dc:(\d+)\] \((\w+)\) checks/i.exec(String(html ?? ""));
 
+const SPELL_BY_NAME = (options, name) => options?.spells?.[String(name).toLowerCase()] ?? null;
+const RUNE_STEPS = { "striking rune": "striking", "greater striking rune": "greaterStriking", "major striking rune": "majorStriking" };
+
 const READINGS = [
+    {
+        // (Its 1d6 more void at the living creature its critical hit struck — the item card's damage at it —, and a victim slain by that hit
+        // drained to a husk: its runes raised for good the first time at each of its wielder's levels — +2 potency at 10th, greater striking at
+        // 12th, +3 at 16th, major striking at 19th (plan.lifedrink, scripts/lifedrink.js, once the card is applied and the creature is dead).)
+        name: "Meloth's Lifedrinker (Level 7): Lifedrink",
+        over: true,
+        sentences: [
+            /^Meloth's Lifedrinker inflicts (\d+d\d+) additional (\w+) damage to the living creature\.$/,
+            /^If the creature struck by the critical hit is slain by its damage, the blade impales its victim\.$/,
+            /^Black, oily energy like wet smoke pours from the victim's eyes and flows to the ebon sword, desiccating the corpse in an instant as all of its liquid seeps into the Lifedrinker, leaving the body a dried-out husk\.$/,
+            /^The first time this happens when its wielder is at least (\d+)th level, Meloth's Lifedrinker's \+(\d) weapon potency rune permanently becomes a \+(\d) weapon potency rune\.$/,
+            /^The first time this happens when its wielder is at least (\d+)th level, Meloth's Lifedrinker's (striking rune) permanently becomes a (greater striking rune)\.$/,
+            /^The first time this happens when its wielder is at least (\d+)th level, Meloth's Lifedrinker's \+(\d) weapon potency rune permanently becomes a \+(\d) weapon potency rune\.$/,
+            /^And the first time this happens when its wielder is at least (\d+)th level, Meloth's Lifedrinker's (greater striking rune) permanently becomes a (major striking rune) ?\.$/
+        ],
+        card: ([, , , p1, s1, p2, s2], plan) => {
+            if (plan?.resolution?.outcomes?.success?.damage?.mode !== "shared") return null;
+            const success = { ...plan.resolution.outcomes.success, manualInstructions: undefined };
+            delete success.manualInstructions;
+            const potency = (found) => ({ level: Number(found[1]), rune: "potency", from: Number(found[2]), to: Number(found[3]) });
+            const striking = (found) => ({ level: Number(found[1]), rune: "striking", from: RUNE_STEPS[found[2]], to: RUNE_STEPS[found[3]] });
+            return {
+                keep: true,
+                notes: ["Only at a living creature of its wielder's level or higher that its critical hit struck."],
+                partial: undefined,
+                automation: { ...(plan.automation ?? {}), level: "automatic" },
+                resolution: { ...plan.resolution, outcomes: { ...plan.resolution.outcomes, success } },
+                lifedrink: { upgrades: [potency(p1), striking(s1), potency(p2), striking(s2)].sort((a, b) => a.level - b.level), words: "The blade impales its victim: black, oily smoke pours from its eyes into the sword, leaving the body a dried-out husk." }
+            };
+        }
+    },
+    {
+        // (One of the spells its fan holds, by its owner's feats — Gust of Wind at 1st rank, Wall of Wind at 3rd with Wind God's Fan, Lightning
+        // Bolt at 5th with Thunder God's Fan, one more use a day each, three at most —, at its user's class or spell DC, whichever is higher (the
+        // cast card's choices); or a cantrip of its heritage or an ancestry feat, its own action, not counted (way.refund).)
+        name: "Tengu Feather Fan: Wave Fan",
+        sentences: [
+            /^You cast your choice of one spell contained in your tengu feather fan ?\.$/,
+            /^You can instead cast a cantrip you've gained from a heritage or an ancestry feat; this doesn't use up one of the fan's daily activations\.$/,
+            /^This activation takes the spell's normal number of actions\.$/,
+            /^The spell's DC is your class DC or spell DC, whichever is higher\.$/
+        ],
+        card: (found, plan, { base, info, item, options }) => {
+            const feats = new Set(item?.ownerFeats ?? []);
+            const contained = [["gust of wind", 1, null], ["wall of wind", 3, "wind-gods-fan"], ["lightning bolt", 5, "thunder-gods-fan"]].filter(([, , feat]) => !feat || feats.has(feat));
+            const choices = contained.map(([name, rank]) => [SPELL_BY_NAME(options, name), rank]).filter(([spell]) => spell).map(([spell, rank]) => ({ spell: { uuid: spell.uuid, name: spell.name }, rank, area: spell.area, targets: spell.targets }));
+            if (!choices.length) return null;
+            const uses = Math.min(3, contained.length);
+            const frequency = { max: uses, per: "day", raw: uses === 1 ? "once per day" : uses === 2 ? "twice per day" : "three times per day" };
+            const own = (card) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use", frequency }, ...card, item: { ...info, activation: { ...(info?.activation ?? {}), frequency }, ...(card.item ?? {}) } });
+            const [first] = choices;
+            const cast = own({ builtin: "cast-spell", targeting: { target: null, range: null, area: null }, spell: first.spell, rank: first.rank, dc: null, ownerDC: "class-spell", attack: null, tradition: "primal", self: false, area: Boolean(first.area), targets: Boolean(first.targets), ...(choices.length > 1 ? { choices } : {}), notes: ["It takes the spell's own number of actions."] });
+            const cantrip = own({ ...ownRow({ notes: ["Its user casts a cantrip of its heritage or an ancestry feat from its sheet (its own action): this use isn't one of the fan's."] }) });
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, trigger: { event: "use", frequency }, item: { ...info, activation: { ...(info?.activation ?? {}), frequency } }, ways: [{ name: "A spell the fan holds", html: "<p>A spell from the fan.</p>", plan: cast }, { name: "A cantrip of its heritage or an ancestry feat (not counted)", html: "<p>A cantrip instead.</p>", plan: cantrip, refund: true }] };
+        }
+    },
+    {
+        // (Dominate cast on its own wielder, DC 24 (the spell module's cast): first a note Effect on them with PF2e's rules for that Will save —
+        // −2 and one degree worse for a worshipper of Lamashtu or a chaotic creature (by its trait) — and then Jax's orders, a note Effect for as
+        // long as she keeps renewing it (the user's ruling for a creature's behaviour). plan.userEffects kind "note", scripts/live.js.)
+        name: "Jax",
+        over: true,
+        sentences: [
+            /^Jax deems you an unworthy agent of justice\.$/,
+            /^She casts Dominate on you \(@Check\[will\|dc:(\d+)\|[^\]]*\]\)\.$/,
+            /^If you're chaotic or a worshipper of Lamashtu, you take a -(\d+) penalty to your Will save, and the result of your save is one degree of success worse than the result you rolled\.$/,
+            /^Jax orders you to fight banditry and protect innocent travelers in the Spellscar Desert, renewing the spell as often as necessary until you cease your lawless ways\.$/
+        ],
+        card: ([, , penalty], plan) => {
+            if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Dominate") return null;
+            const who = [{ or: ["deity:primary:lamashtu", "self:trait:chaotic"] }, "item:slug:dominate"];
+            const judged = { kind: "note", note: { label: "Jax's judgment", text: `Against Jax's Dominate: a worshipper of Lamashtu or a chaotic creature takes a –${penalty[1]} penalty to the Will save, and its result is one degree worse.`, rules: [{ key: "FlatModifier", selector: "will", type: "untyped", value: -Number(penalty[1]), predicate: who }, { key: "AdjustDegreeOfSuccess", selector: "will", adjustment: { all: "one-degree-worse" }, predicate: who }], duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } } };
+            const orders = { kind: "note", note: { label: "Jax's orders", text: "While Jax's Dominate holds it (remove this Effect if the save threw it off): it's ordered to fight banditry and protect innocent travelers in the Spellscar Desert, and she renews the spell as often as she must until it ceases its lawless ways.", duration: null } };
+            return { keep: true, notes: undefined, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" }, userEffects: [...(plan.userEffects ?? []), judged, orders] };
+        }
+    },
+    {
+        // (Its memories harvested from a prepared creature as it dies: the ways card's three ways — the 10-minute surgery, its user's Medicine
+        // check at DC 28 against the creature (a failure its death; the ability module's card for a skill check at a fixed DC, requested:
+        // partial for that alone); the harvest, the creature's corpse a note Effect for good (PF2e's AdjustDegreeOfSuccess, its save against
+        // Talking Corpse one degree worse), one more of the sponge's four (item.store, scripts/live.js: refused once full, the item's other
+        // activation too); squeezing it out, all of them gone.)
+        name: "Mindsponge: Absorb Memories",
+        sentences: [
+            /^You use the mindsponge to harvest the memories and mental energy of a specially prepared target as it dies\.$/,
+            /^To prepare the target \(who must be willing or helpless\), you must perform a (\d+)-minute surgery to expose a portion of the target's brain without killing them\.$/,
+            /^This requires a successful @Check\[(\w+)\|dc:(\d+)\] \((\w+)\) check; if you fail this check, the target dies before you can use the mindsponge ?\.$/,
+            /^Memories and psychic energy absorbed aren't taken from the target's soul but from energies temporarily infused within the body, so that a creature slain in this way who is later brought back to life retains their harvested memories and energy\.$/,
+            /^The corpse of someone who has had their memories harvested is difficult to communicate with via talking corpse - treat the saving throw result against that spell as one degree of success lower than the actual result\.$/,
+            /^A mindsponge can store the memories and energy of up to (four|\d+) creatures at a time\.$/,
+            /^Once full, it cannot be activated at all, other than to squeeze it as an Interact action with the concentrate trait, which causes all of the memories within to drip out as cold ectoplasm, which swiftly evaporates if not used or contained\.$/
+        ],
+        card: ([, surgery, check, , , stores], plan, { base, info }) => {
+            const max = { four: 4 }[stores[1]] ?? Number(stores[1]);
+            const own = (card) => ({ ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...card, item: { ...info, ...(card.item ?? {}) } });
+            const prepare = own({
+                activation: { ...(base?.activation ?? {}), time: `${surgery[1]} minutes` },
+                targeting: { target: "1 willing or helpless creature", range: "touch", area: null },
+                resolution: { kind: "check", check: { roll: "skill", statistic: check[1].toLowerCase(), against: { dc: "fixed", value: Number(check[2]), statistic: "fortitude" } }, sharedDamage: null, outcomes: { criticalSuccess: { ...none(), noteEffects: [{ label: "Prepared for the mindsponge", text: "Its brain partly exposed by surgery, without killing it: the mindsponge can harvest its memories as it dies.", duration: null }] }, success: { ...none(), noteEffects: [{ label: "Prepared for the mindsponge", text: "Its brain partly exposed by surgery, without killing it: the mindsponge can harvest its memories as it dies.", duration: null }] }, failure: { ...none(), terminal: { kind: "death" } }, criticalFailure: { ...none(), terminal: { kind: "death" } } } },
+                notes: [`A ${surgery[1]}-minute surgery: its user's ${check[1]} check at DC ${check[2]} (it must be a ${check[3]} in ${check[1]}). On a failure, the creature dies before the mindsponge is used.`],
+                partial: true
+            });
+            const harvest = own({
+                ...ownRow({
+                    target: "the prepared creature as it dies",
+                    noteEffects: [{ label: "Memories harvested", text: "Its memories and psychic energy are in the mindsponge — not taken from its soul: brought back to life, it keeps them. Its save against Talking Corpse is one degree worse.", rules: [{ key: "AdjustDegreeOfSuccess", selector: "saving-throw", adjustment: { all: "one-degree-worse" }, predicate: ["item:slug:talking-corpse"] }], duration: null }]
+                }),
+                item: { ...info, recipient: "targets", store: { max, add: 1 } }
+            });
+            const squeeze = own({ ...ownRow({ notes: ["The memories drip out as cold ectoplasm, which soon evaporates unless it's used or contained."] }), activation: { ...(base?.activation ?? {}), time: "1", traits: ["concentrate"] }, item: { ...info, store: { max, release: true } } });
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, partial: true, ways: [{ name: "Prepare the creature (surgery)", html: "<p>The surgery.</p>", plan: prepare }, { name: "Absorb its memories", html: "<p>The harvest.</p>", plan: harvest }, { name: "Squeeze it out (Interact)", html: "<p>Squeezed.</p>", plan: squeeze }] };
+        }
+    },
+    {
+        // (Its splinter of Nhimbaloth's essence possessing the creature hit: its melee spell attack at the lens's own +20 against AC, the hit a
+        // note Effect on the creature for good — the lens's invested benefits as PF2e's rules (void healing, +4 status to the Hit Points Harm
+        // restores), ended by what ends a possession —; its user no longer invested, the lens without its magic until then (plan.possess,
+        // scripts/possession.js).)
+        name: "Emerald Fulcrum Lens",
+        sentences: [
+            /^While grasping the lens, make a melee spell attack roll with a modifier of @Check\[emerald-fulcrum-lens\|against:ac\]\{\+(\d+)\}\.$/,
+            /^On a hit, you force the splinter of Nhimbaloth's essence from the lens to possess the target\.$/,
+            /^You're no longer invested in the lens, and the target gains the benefits as though it had invested the lens but can't activate the lens's other abilities\.$/,
+            /^This effect is permanent, but it can be ended by any effect that removes a possession effect\.$/,
+            /^The lens doesn't have any magical abilities until the possession effect ends; when it does, the essence returns to the lens\.$/
+        ],
+        card: ([attack]) => {
+            const possessed = [{ label: "Possessed by Nhimbaloth's splinter", text: "Possessed by the splinter of Nhimbaloth's essence from the Emerald Fulcrum Lens, for good: its flesh waxen and pallid, it has void healing, and Harm restores 4 more Hit Points to it (a status bonus). Anything that removes a possession effect ends it, and the essence goes back to the lens.", rules: [{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.hp.negativeHealing", value: true }, { key: "FlatModifier", selector: "healing-received", type: "status", value: 4, predicate: ["item:slug:harm"] }, { key: "RollOption", domain: "all", option: "air-possessed-by:emerald-fulcrum-lens" }], duration: null }];
+            const hit = { ...none(), noteEffects: possessed };
+            return {
+                targeting: { target: "1 creature", range: "touch", area: null },
+                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: Number(attack[1]) }, sharedDamage: null, outcomes: { criticalSuccess: hit, success: hit, failure: none(), criticalFailure: none() } },
+                possess: { degrees: ["criticalSuccess", "success"], option: "air-possessed-by:emerald-fulcrum-lens" },
+                notes: ["While grasping the lens: its melee spell attack, the lens's own +20. On a hit its user is no longer invested in it, and it has no magic until the possession ends."]
+            };
+        }
+    },
     {
         // (A hex of impending doom on a creature its user sees, for a minute: the item card marks it; its Will save card (DC 28), kept open for
         // that minute, is pressed at the end of each of its user's turns they hit it with the hex blaster — one save a turn, however many hits.

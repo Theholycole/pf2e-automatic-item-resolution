@@ -7,12 +7,25 @@ import { withSpecialSentences } from "./special-sentences.js";
 
 // The plan, and its activation's { name (its source name), html, text (plain), words (its effect's), base, info, frequency, item } → the plan with
 // its item's own rules, or the same plan.
-export function withSpecialReadings(plan, { name, html, text, words, base, info, frequency, item }) {
-    let next = withSpecialSentences(plan, { name, words, html, base, info, frequency, item });
+export function withSpecialReadings(plan, { name, html, text, words, base, info, frequency, item, options }) {
+    let next = withSpecialSentences(plan, { name, words, html, base, info, frequency, item, options });
     next = withHostileEnds(next, text, name);
     next = withoutNextTier(next, name);
     next = withTerrainAdaptation(next, name);
+    // (Mindsponge's Wipe Memories refused while it's full — "Once full, it cannot be activated at all, other than to squeeze it", its Absorb
+    // Memories' four: item.storeFull, scripts/activations.js.)
+    if (name === "Mindsponge: Wipe Memories" && next?.item && !next.item.storeFull) next = { ...next, item: { ...next.item, storeFull: 4 } };
+    next = withVisionKills(next, name);
     return next;
+}
+
+// (Vision of Meloth's "If the target is reduced to 0 HP by this effect, the vision becomes reality and kills the target instantly": the save's
+// death once its damage leaves it at 0, the core's postDamageTerminal; what onlookers see, and the sword's whim, its card's lines.)
+const KILLS = /^If the target is reduced to 0 HP by this effect, the vision becomes reality and kills the target instantly\.$/;
+function withVisionKills(plan, name) {
+    if (name !== "Meloth's Lifedrinker (Level 7): Vision of Meloth" || plan?.resolution?.kind !== "save" || !(plan.notes ?? []).some((note) => KILLS.test(String(note)))) return plan;
+    const notes = plan.notes.filter((note) => !KILLS.test(String(note)));
+    return { ...plan, resolution: { ...plan.resolution, postDamageTerminal: { kind: "death", threshold: 0 } }, notes: notes.length ? notes : undefined };
 }
 
 // (Slithermaw's Bane's Terrain Adaptation, its heat or cold the ways card's two ways (src/compiler/temperature.js): its terrain PF2e's ChoiceSet

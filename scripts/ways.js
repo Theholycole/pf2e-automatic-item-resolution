@@ -3,11 +3,20 @@
 
 import { createWaysCard, waysCardHTML } from "../src/live/ways-card.js";
 import { FLAG, MODULE_ID, encounterOf, entryOf, stateOf } from "./foundry.js";
-import { frequencyText, overLimit, perWord, usesNow, withUse } from "../src/live/activations-card.js";
+import { frequencyText, overLimit, perWord, usesNow, withUse, withoutUse } from "../src/live/activations-card.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 // (scripts/activations.js's flag of each activation's uses: not imported, as that module reaches this one.)
 const USES = "activationUses";
+
+async function refundWay(itemUuid, plan) {
+    const holder = await fromUuid(itemUuid).catch(() => null);
+    const index = plan?.item?.activation?.index;
+    const frequency = plan?.trigger?.frequency ?? plan?.item?.activation?.frequency ?? null;
+    if (!holder?.actor || index === undefined || index === null || !frequency?.max) return;
+    const at = { worldTime: Number(game.time?.worldTime) || 0, combatId: encounterOf(holder.actor)?.combat?.id ?? null };
+    await holder.setFlag(MODULE_ID, USES, withoutUse(holder.getFlag(MODULE_ID, USES) ?? {}, index, frequency, at));
+}
 
 async function countWay(itemUuid, key, frequency, name) {
     const holder = await fromUuid(itemUuid).catch(() => null);
@@ -38,6 +47,8 @@ export async function applyWaysCard(message, { choice = null } = {}, postCardFor
     // (Ways that share their uses by a key, Spear of the Destroyer's Flame's two ties of its soul: frequencyKey.)
     if (way.frequency?.max && state.item.uuid) await countWay(state.item.uuid, `${way.plan?.item?.activation?.index ?? 0}:${way.frequencyKey ?? index}`, way.frequency, `${state.item.name} (${way.name})`);
     await postCardFor({ message: null, plan: way.plan, used, actor, token });
+    // (A way that isn't one of the activation's uses, Tengu Feather Fan's cantrip: the use activating it counted given back.)
+    if (way.refund && state.item.uuid) await refundWay(state.item.uuid, way.plan);
     // (Used once, a snare's crafted choice: closed.)
     const next = { ...state, choice: index, ...(state.plan.once ? { status: "applied" } : {}), results: [...state.results, `${way.name}: ${way.plan.builtin === "zone" ? "placed" : "its card"}.`] };
     return message.update({ content: waysCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });

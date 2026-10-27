@@ -608,7 +608,8 @@ test("activations: a choice of jumps (Blast Boots), temporary Hit Points from th
     assert.deepEqual(compileActivations(item("Soulpiercer"))[0].plan?.item?.weapon?.map((entry) => [entry.property, entry.value]), [["reach", 15]]);
     const vision = compileActivations(item("Meloth's Lifedrinker (Level 7)"))[1].plan;
     assert.deepEqual([vision.resolution.check.statistic, vision.resolution.check.basic, vision.resolution.check.against], ["will", true, { dc: "owner", statistic: "class-spell" }]);
-    assert.ok(vision.notes.some((note) => /^If the target is reduced to 0 HP by this effect/.test(note)), vision.notes.join(" / "));
+    // (2026-10-27: its at-0-HP death the core's postDamageTerminal, no longer a note — test/unique-b4-5-2026-10-27.test.js.)
+    assert.deepEqual([vision.resolution.postDamageTerminal, (vision.notes ?? []).some((note) => /^If the target is reduced to 0 HP by this effect/.test(note))], [{ kind: "death", threshold: 0 }, false]);
     // (Its rows' Frightened, beside a "basic" save: on the success row once the ability compiler reads it there, else a note — never dropped,
     // src/compiler/honest.js.)
     const frightened = (vision.resolution.outcomes.success.effects ?? []).some((effect) => effect.slug === "frightened");
