@@ -1346,6 +1346,52 @@ export const cases = {
         });
     },
 
+    // Poison Barbs Snare (2026-10-27): a failed save, the barbs' note Effect; a 10-foot step gives nothing, a 20-foot move (more than half a 25-foot
+    // Speed) 1d4 poison damage; the end-early card's 3 Interact actions remove the barbs.
+    async poisonBarbsMove(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Barbs Setter", { type: "character", x: 0, y: 12 });
+            const { actor: walker, token: walkerToken } = await creature(scene, "Barbs Walker", { x: 6, y: 12, alliance: "opposition", hp: 100, save: -30 });
+            const snare = await give(setter, "Poison Barbs Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Poison Barbs Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                let since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const save = await messageAfter(since, abilitySaveCard, { what: "the snare's save card", timeout: 10000 });
+                since = Date.now();
+                await rollAndApply(save);
+                const barbs = () => walker.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => /^air-move-damage:/.test(String(rule.option ?? ""))));
+                await until(() => barbs(), `the barbs' Effect (${walker.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+                const ending = await messageAfter(since, itemCard("end-early"), { what: "the end-early card", timeout: 10000 });
+                await wait(1500);
+                const size = canvas.grid.size;
+                let hp = walker.system.attributes.hp.value;
+                await walkerToken.update({ x: walkerToken.x + 2 * size }, { animate: false });
+                await wait(2000);
+                assert(walker.system.attributes.hp.value === hp, `no damage for 10 feet (${hp} → ${walker.system.attributes.hp.value})`);
+                hp = walker.system.attributes.hp.value;
+                await walkerToken.update({ y: walkerToken.y + 4 * size }, { animate: false });
+                await until(() => walker.system.attributes.hp.value < hp, `1d4 poison for 20 feet (${hp} → ${walker.system.attributes.hp.value})`, { timeout: 8000 });
+                const taken = hp - walker.system.attributes.hp.value;
+                await game.modules.get(NS).api.live.apply(ending.id, { entry: 0 });
+                await until(() => !barbs(), "the barbs removed", { timeout: 8000 });
+                return { taken, results: game.messages.get(ending.id).getFlag(NS, "card").results };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Poison Barbs Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Scale of Igroon (2026-10-27): its +4 Stealth Effect ended by its user's next activation (the scale's other one), and again by a Shield
     // Block (PF2e's applyDamage with shieldBlockRequest).
     async scaleIgroonEnds(scene) {

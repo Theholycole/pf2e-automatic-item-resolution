@@ -253,6 +253,18 @@ test("a missile that reveals the creature it stays in (2026-10-27): Beacon Shot 
     assert.deepEqual([note.duration.value, note.duration.unit, note.rules[0].predicate, shot.strike.endEarly.how, shot.strike.notes, shot.partial], [1, "minutes", ["self:condition:invisible"], { kind: "check", skill: "athletics", dc: 20 }, [], undefined]);
 });
 
+test("barbs that hurt each long Stride (2026-10-27): Poison Barbs Snare — its failing rows' 1-minute note Effect (RollOption air-move-damage), 3 Interact actions to remove them; the live roll past half its Speed", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { moveDamagesOf, movedFarEnough } = await import("../scripts/move-damage.js");
+    const snare = compileItem(item("Poison Barbs Snare"), options);
+    const save = snare.zone.saves[0].plan;
+    const note = save.resolution.outcomes.failure.noteEffects.find((entry) => /feet/.test(entry.label));
+    assert.deepEqual([note.rules[0].option, note.duration.value, save.endEarly.how, save.endEarly.degrees, snare.partial], ["air-move-damage:1d4:poison:half", 1, { kind: "actions", count: 3, helped: true }, ["failure", "criticalFailure"], undefined]);
+    const actor = { itemTypes: { effect: [{ name: "Poison Barbs Snare: Barbs in its feet", system: { rules: note.rules } }] } };
+    assert.deepEqual(moveDamagesOf(actor).map(({ dice, type, half }) => [dice, type, half]), [["1d4", "poison", true]]);
+    assert.deepEqual([movedFarEnough(15, 25), movedFarEnough(10, 25), movedFarEnough(12.5, 25)], [true, false, false]);
+});
+
 test("an affliction under its own heading, handed over by the activation that names it: Devil's Trident's sewer haze — the DC 25 exposure, the disease's own name and traits", async () => {
     const { compileActivations: activations } = await import("../src/compiler/permanent.js");
     const [critical] = activations(item("Devil's Trident"), options);

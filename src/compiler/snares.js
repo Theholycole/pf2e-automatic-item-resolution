@@ -86,6 +86,26 @@ function attackSnare(item) {
     };
 }
 
+// (Barbs lodged in the creature's feet, Poison Barbs Snare's "On a failed save, several barbs lodge in the creature's feet. For 1 minute (or until
+// a creature or an ally spends three Interact actions to remove the barbs), the barbs deal 1d4 poison damage to the creature each time it Strides
+// more than half its Speed": a note Effect for that time on the failing rows, its PF2e RollOption "air-move-damage:<dice>:<type>:half" what
+// scripts/move-damage.js rolls each time its creature moves farther than half its Speed; the three Interact actions, the end-early card's.
+// 2026-10-27.)
+const BARBS = /\bOn a failed save, [^.]*?\blodge in the creature's feet\. For (\d+) (minutes?|rounds?) \(or until a creature or an ally spends (one|two|three|\d) Interact actions to remove the (\w+)\), the \4 deal (\d+d\d+) (\w+) damage to the creature each time it Strides more than half its Speed\./i;
+const WORD_COUNT = { one: 1, two: 2, three: 3 };
+function barbedRows(read, text) {
+    const barbs = BARBS.exec(text);
+    const outcomes = read?.resolution?.outcomes;
+    if (!barbs || !outcomes) return null;
+    const [, value, unit, count, what, dice, type] = barbs;
+    const actions = WORD_COUNT[count.toLowerCase()] ?? Number(count);
+    const note = { label: `${what.charAt(0).toUpperCase()}${what.slice(1)} in its feet`, text: `Each time it Strides more than half its Speed, it takes ${dice} ${type.toLowerCase()} damage (rolled as it moves). ${actions} Interact actions, its own or an ally's, remove the ${what.toLowerCase()}.`, duration: { mode: "fixed", value: Number(value), unit: /^min/i.test(unit) ? "minutes" : "rounds", expiry: "turn-start", anchor: "effect-start" }, rules: [{ key: "RollOption", domain: "all", option: `air-move-damage:${dice}:${type.toLowerCase()}:half` }] };
+    const failing = ["failure", "criticalFailure"].filter((degree) => outcomes[degree]);
+    const rows = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => [degree, failing.includes(degree) ? { ...row, noteEffects: [...(row.noteEffects ?? []), note] } : row]));
+    const said = barbs[0].replace(/^On a failed save, [^.]*?\. /i, "");
+    return { read: { ...read, resolution: { ...read.resolution, outcomes: rows } }, endEarly: { how: { kind: "actions", count: actions, helped: true }, conditions: [], degrees: failing, said: [said] } };
+}
+
 // (A mark left on the creature, Marking Snare's "Either type of marking grants a +2 circumstance bonus to Track the creature for up to 24 hours or
 // until the dye or scent is washed off …" and its rows' "The snare marks the creature": a note Effect for that time on each row that marks it —
 // a bonus to others' Track checks against it, not PF2e's to play — and the row's line gone. 2026-10-27.)
@@ -131,7 +151,9 @@ export function snareZone(item, read) {
     const whole = plainText(item.system?.description?.value);
     const setArea = /\bYou set this snare up in an? (\d+)-foot-by-\1-foot area\./i.exec(whole);
     const traitGate = /\bThe first creature with the ([a-z]+) trait that steps into the area\b/i.exec(whole)?.[1]?.toLowerCase() ?? null;
-    const plan = { ...markedRows(read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ? { endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
+    // (Barbs that hurt each long Stride, Poison Barbs Snare's: a note Effect on its failing rows, src/compiler/snares.js barbedRows.)
+    const barbs = barbedRows(read, whole);
+    const plan = { ...markedRows(barbs?.read ?? read, whole), trigger: { event: "zone" }, targeting: { target: "the creature that enters the snare's square", range: null, area: null }, ...(endEarly ?? barbs?.endEarly ? { endEarly: endEarly ?? barbs.endEarly } : {}), ...(setArea ? { notes: (read.notes ?? []).filter((note) => !String(note).includes(setArea[0])) } : {}) };
     const gate = sizeGate(plainText(item.system?.description?.value));
     const cap = sizeCap(plainText(item.system?.description?.value));
     const only = gate || cap || traitGate ? { only: { ...(gate ? { minSize: gate } : {}), ...(cap ? { maxSize: cap } : {}), ...(traitGate ? { traits: [traitGate] } : {}) } } : {};

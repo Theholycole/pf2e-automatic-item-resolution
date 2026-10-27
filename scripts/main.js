@@ -29,6 +29,7 @@ import { setUpShieldShare } from "./shield-share.js";
 import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpEndEarly } from "./end-early.js";
 import { setUpDropHeld } from "./drop-held.js";
+import { setUpMoveDamage } from "./move-damage.js";
 import { setUpPreventCondition } from "./prevent-condition.js";
 import { setUpHalfDamage } from "./half-damage.js";
 import { setUpHealAfter } from "./heal-after.js";
@@ -182,6 +183,8 @@ Hooks.once("ready", async () => {
     setUpEndEarly();
     // (What a creature drops of what it holds, Deadweight Snare's metal items: scripts/drop-held.js.)
     setUpDropHeld();
+    // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)
+    setUpMoveDamage();
     setUpPreventCondition();
     // (Half the triggering attack's damage, Laurel of the Empath's: scripts/half-damage.js.)
     setUpHalfDamage();
