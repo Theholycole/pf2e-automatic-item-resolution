@@ -850,3 +850,15 @@ test("a consumable's later activation, its own PF2e Effect (2026-10-27): Aurochs
     assert.deepEqual(plan.again.plan.resolution.outcomes.success.nativeEffects, [{ uuid: "Compendium.pf2e.equipment-effects.Item.mIZVE5kyzxScpaS5", label: "Effect: Aurochs' Endurance" }]);
     assert.match(plan.again.when, /begins its turn fatigued/);
 });
+
+test("roots that carry and shield their dying user (2026-10-27): Skitter Knot — +1 AC and the roots' Hardness as resistance to physical damage, both spent by the first attack; the carrying a line of its card", async () => {
+    const { compileItem } = await import("../src/compiler/index.js");
+    const { readiedRules } = await import("../src/live/fortune-card.js");
+    for (const [grade, feet, hardness] of [["Lesser", 10, 5], ["Greater", 15, 10], ["Major", 20, 20]]) {
+        const plan = compileItem(item(`Skitter Knot (${grade})`), options);
+        assert.equal(plan.partial, undefined);
+        assert.deepEqual([plan.bonus.resistance, plan.bonus.against], [{ type: "physical", value: hardness }, true]);
+        assert.match(plan.bonus.limits[0], new RegExp(`up to ${feet} feet`));
+        assert.ok(readiedRules(plan).some((rule) => rule.key === "Resistance" && [].concat(rule.type).includes("physical") && rule.value === hardness));
+    }
+});

@@ -463,3 +463,25 @@ export function withEscalatingBonus(plan) {
     const { notes: _, ...rest } = plan;
     return { ...rest, ...(left.length ? { notes: left } : {}), bonus: { ...plan.bonus, escalate }, ...(plan.partial && !left.length && !(plan.unread ?? []).length ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {}) };
 }
+
+// (Roots that carry and shield their dying user, Skitter Knot's "After moving, the roots continue protecting you; this counts as Raising a
+// Shield, giving you a +1 circumstance bonus to AC until the beginning of your next turn. The roots use the Shield Block reaction against the first
+// physical attack against you, after which the roots crumble. The roots carry you up to 10 feet and have Hardness 5." The Shield Block its
+// Hardness as resistance to physical damage on the same Effect as the AC bonus, both spent by the first attack against it (bonus.against —
+// the roots crumble); the carrying a line of its card, its user's token moved. 2026-10-27.)
+const ROOTS = /^The roots carry you up to (\d+) feet and have Hardness (\d+)\.$/i;
+export function withRootsShield(plan, text) {
+    if (plan?.builtin !== "readied-bonus" || !plan.bonus || plan.bonus.resistance) return plan;
+    const note = (plan.notes ?? []).find((entry) => ROOTS.test(String(entry).trim()));
+    if (!note || !/\buse the Shield Block reaction against the first physical attack against you, after which the roots crumble\b/i.test(String(text ?? ""))) return plan;
+    const [, feet, hardness] = ROOTS.exec(String(note).trim());
+    const notes = plan.notes.filter((entry) => entry !== note);
+    const { notes: _, ...rest } = plan;
+    const line = `First the roots Stride with it up to ${feet} feet, away from harm (move its token; an ally who speaks Arboreal can pick where as a reaction).`;
+    return {
+        ...rest,
+        ...(notes.length ? { notes } : {}),
+        bonus: { ...plan.bonus, resistance: { type: "physical", value: Number(hardness) }, against: true, limits: [...(plan.bonus.limits ?? []), line] },
+        ...(plan.partial && !notes.length && !(plan.unread ?? []).length ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {})
+    };
+}
