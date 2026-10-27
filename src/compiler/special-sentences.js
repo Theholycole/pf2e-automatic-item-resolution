@@ -40,7 +40,147 @@ const statisticSlug = (words) => String(words).trim().toLowerCase().replace(/\s+
 const COMMANDER = "Commander of Flame";
 const COMMANDER_TEXT = "The Army of Fire follows its orders as long as the army can see and hear it, whatever language it speaks; it senses the army's presence and can give orders as the spear's holder does. It still needs the spear in hand to muster the army. If it doesn't hold the spear for 1 week, the spear returns to Cuetzmonquali.";
 
+const days = (value) => ({ mode: "fixed", value: Number(value), unit: "days", expiry: "turn-start", anchor: "effect-start" });
+const NO_BONUSES = "It can't benefit from circumstance or status bonuses";
+
+// (Its user's unarmed Strike against a creature's DC: the check at their unarmed attack modifier, filled in live — check.attackFrom, scripts/live.js.)
+const unarmedCheck = (against, rows, base) => ({ modelVersion: base?.modelVersion, source: base?.source, rank: 1, traits: ["attack"], automation: { level: "automatic" }, trigger: { event: "zone" }, targeting: { target: "a creature in the area", range: null, area: null }, resolution: { kind: "check", check: { roll: "skill", statistic: "unarmed", against: { dc: "target", statistic: against }, modifier: null, attackFrom: "unarmed" }, sharedDamage: rows.sharedDamage ?? null, outcomes: rows.outcomes } });
+
 const READINGS = [
+    {
+        // (A mob of shadowy figures in a 20-foot burst within 120 feet, for a minute: a zone, its user's unarmed Strike against each creature's
+        // Fortitude DC as it rises (Grabbed for the minute or until it Escapes against its user's class DC, and 3d6 bludgeoning), again at the end
+        // of each turn a creature not yet grabbed ends there, and 1d6 bludgeoning at the end of each turn of one that is. Those last two need the
+        // ability module's condition filters on a zone's entries (only.conditions, only.lacks — requested): partial for that alone. The figures'
+        // AC and Hit Points, moving the burst from 15th level, and ground that can't hold it are the zone card's lines (the map's).)
+        name: "The Uprising",
+        sentences: [
+            /^The card calls forth a mob of shadowy figures who batter and hinder your enemies\.$/,
+            /^Target a (\d+)-foot burst at any point on solid ground with (\d+) feet, and the mob of figures rises up from the ground, persisting for (\d+) (minutes?|rounds?)\.$/,
+            /^Make an unarmed Strike against the (Fortitude|Reflex|Will) DC of any number of creatures in this burst \(you can choose to not attack some creatures in the area if you wish\)\.$/,
+            /^Any creature you succeed against is Grabbed and takes (\d+d\d+) (\w+) damage\.$/,
+            /^Whenever a creature ends its turn in the area, the figures attempt to Grab that creature if they haven't already, and they deal (\d+d\d+) (\w+) damage to any creature already grabbed\.$/,
+            /^The mob's Escape DC is equal to your class DC\.$/,
+            /^A creature can attack a figure in an attempt to release its grip\.$/,
+            /^It's AC is equal to your class DC, and it's destroyed if it takes (\d+) or more damage\.$/,
+            /^Even if destroyed, additional figures continue to rise up in the area until the effect's duration ends\.$/,
+            /^You can Dismiss this effect\.$/,
+            /^If you are at least (\d+)th level, you can use a two-action activity, which has the concentrate trait, to move the burst up to (\d+) feet, which causes any currently grabbed creatures to be released and left behind\.$/,
+            /^If part of the burst appears or moves into an area that can't support it on the ground, that portion of the burst disappears until it is supported\.$/
+        ],
+        card: ([, burst, strike, hit, ends, , , figure, , , move], plan, { base }) => {
+            const lasts = timeOf(burst[3], burst[4]);
+            const grab = { kind: "condition", slug: "grabbed", value: null, duration: { ...lasts, escape: { ownerDC: "class" } } };
+            const struck = (damage) => ({ damage: damage ? { mode: "shared", multiplier: 1, sourceComponentIds: ["0"] } : { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [grab], modifiers: [] });
+            const rises = unarmedCheck(strike[1].toLowerCase(), { sharedDamage: { rollOnce: false, components: [{ id: "0", formula: hit[1], type: hit[2].toLowerCase(), category: null }] }, outcomes: { criticalSuccess: struck(true), success: struck(true), failure: none(), criticalFailure: none() } }, base);
+            const grabs = unarmedCheck(strike[1].toLowerCase(), { outcomes: { criticalSuccess: struck(false), success: struck(false), failure: none(), criticalFailure: none() } }, base);
+            return {
+                builtin: "zone",
+                actions: null,
+                partial: true,
+                automation: { level: "guided" },
+                targeting: { target: null, range: `${burst[2]} feet`, area: { type: "burst", value: Number(burst[1]) } },
+                zone: {
+                    area: { type: "burst", value: Number(burst[1]) },
+                    centre: "placed",
+                    range: Number(burst[2]),
+                    lasts,
+                    untilReused: false, concealed: false, terrain: [], others: false, hazard: null, effect: null, modifiers: [],
+                    saves: [{ when: ["initial"], plan: rises }, { when: ["end"], only: { lacks: { conditions: ["grabbed"] } }, plan: grabs }],
+                    damage: [{ when: "end", only: { conditions: ["grabbed"] }, formulas: [`${ends[1]}[${ends[2].toLowerCase()}]`] }],
+                    notes: [
+                        "On solid ground: a part of the burst over ground that can't hold it is gone until it's held again.",
+                        "Its user picks which creatures in it they Strike as it rises (dismiss the cards of those they spare).",
+                        `A figure holding a creature: AC equal to its user's class DC; ${figure[1]} damage or more destroys it and frees that creature (end its Grabbed). More keep rising until the minute's up.`,
+                        "Its user can Dismiss it (end the zone).",
+                        `From ${move[1]}th level, a two-action concentrate activity moves the burst up to ${move[2]} feet (move the zone's region): the creatures grabbed are released and left behind (end their Grabbed).`
+                    ]
+                }
+            };
+        }
+    },
+    {
+        // (A glimpse of someone its user will meet in the next 24 hours, and whether to trust them: what it tells, whispered to the GM and its
+        // user — the GM's to fill in — with the card's secret flat check rolled for the GM alone (plan.whisper.flat: DC 6, 2 lower while The
+        // Carnival is invested, 3 from 17th level, never below 2), a failure always "neither"; and, a divination with a flat check, its user
+        // Stupefied 1 for a round (the card's own invested rule).)
+        name: "The Carnival",
+        sentences: [
+            /^You peer into the future and witness yourself walking through a colorful but vaguely sinister carnival, meeting a variety of strange people\.$/,
+            /^One of these people looks more genuine than the others and resembles someone you're likely to meet for the first time in the next (\d+) hours \(if anyone\)\.$/,
+            /^This resemblance might be metaphorical, such a clown signifying someone who is silly or a stilt-walker representing someone who is tall\.$/,
+            /^You also get a sense for whether this person can be trusted, should be distrusted, or neither, based on how they're most likely to interact with you and your allies\.$/,
+            /^The GM decides who this new person might be, then rolls a secret @Check\[flat\|dc:(\d+)\]\.$/,
+            /^On a failure, the result is always "neither," making it hard to determine whether a "neither" result is accurate\.$/
+        ],
+        card: ([, meet, , , flat], plan, { item }) => {
+            const level = Number(item?.ownerLevel) || 0;
+            const dc = Math.max(2, Number(flat[1]) - (level >= 17 ? 3 : 2));
+            return {
+                builtin: "whisper",
+                targeting: { target: null, range: null, area: null },
+                whisper: {
+                    text: `A vision of a sinister carnival: among its strange people one looks more genuine, resembling — perhaps only in a manner of speaking — someone its user is likely to meet for the first time in the next ${meet[1]} hours (if anyone), and with it a sense of whether they can be trusted, should be distrusted, or neither. The GM says who.`,
+                    flat: { dc, failure: "The answer is \"neither\", whatever the truth." }
+                },
+                userEffects: [{ slug: "stupefied", value: 1, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" } }]
+            };
+        }
+    },
+    {
+        // (No circumstance or status bonuses for the creature that fails — PF2e has no rule to take them away, so its note Effect for the row's time
+        // (the user's ruling) —, and on a failure for its allies within 15 feet of it too, said on the same Effect.)
+        name: "The Empty Throne",
+        over: true,
+        sentences: [
+            /^You overwhelm a target you can see within (\d+) feet with feelings of helplessness and loss\.$/,
+            /^The creature must attempt a @Check\[will\|dc:\d+\] save with a DC equal to your class DC or spell DC\.$/,
+            /^Critical Success The target is unaffected\.$/,
+            /^Success The target can't benefit from circumstance or status bonuses for 1 round\.$/,
+            /^Failure The target can't benefit from circumstance or status bonuses for 1 day, and the target's allies are unable to benefit from circumstance or status bonuses while within (\d+) feet of the target\.$/,
+            /^Critical Failure As failure, except the duration is 1 week\.$/
+        ],
+        card: ([range, , , , allies], plan) => {
+            if (plan?.resolution?.kind !== "save") return null;
+            const lost = (duration, words, around) => ({ ...none(), noteEffects: [{ label: "Helpless and bereft", text: `${NO_BONUSES} ${words}.${around ? ` Its allies can't benefit from them either while within ${allies[1]} feet of it.` : ""}`, duration }] });
+            const outcomes = plan.resolution.outcomes;
+            const row = (degree, next) => ({ ...outcomes[degree], ...next, manualInstructions: undefined });
+            const rows = {
+                criticalSuccess: row("criticalSuccess", none()),
+                success: row("success", lost({ mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" }, "for 1 round", false)),
+                failure: row("failure", lost(days(1), "for 1 day", true)),
+                criticalFailure: row("criticalFailure", lost(days(7), "for 1 week", true))
+            };
+            for (const entry of Object.values(rows)) delete entry.manualInstructions;
+            return { keep: true, partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" }, targeting: { ...(plan.targeting ?? {}), range: `${range[1]} feet` }, resolution: { ...plan.resolution, outcomes: rows } };
+        }
+    },
+    {
+        // (One question of the region's spirits as by a Commune ritual: its user's Nature check, DC 30, with the card's own +2 item bonus to it
+        // (+3 from 17th level) — its degrees Commune's, what the spirits say the GM's, whispered on the row's note —; a critical failure its
+        // Stupefied 4 for a week that nothing removes.)
+        name: "The Owl",
+        sentences: [
+            /^After spending an hour meditating, you can ask one question of the region's spirits, as if you had just performed a Commune ritual\.$/,
+            /^Attempt a @Check\[(\w+)\|dc:(\d+)\|traits:activate-the-owl\] check to determine the result\.$/
+        ],
+        card: ([, check], plan, { item }) => {
+            const level = Number(item?.ownerLevel) || 0;
+            const answer = (label, text) => [{ label, text, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start", anchor: "effect-start" } }];
+            const card = ownCheck({
+                statistic: check[1].toLowerCase(),
+                dc: check[2],
+                rows: {
+                    criticalSuccess: answer("The spirits answer", "A more powerful spirit of nature, strongly aligned with its user's interests, answers its one yes-or-no question about the region's animals, beasts, fey, fungi, plants, land and resources within 3 miles: it won't deceive (though it may not know), and gives up to five words when clarity matters. The GM answers."),
+                    success: answer("The spirits answer", "The region's spirits of nature answer its one yes-or-no question with one word (\"Yes\", \"No\", \"Likely\", \"Unknown\"), as their own agenda has it — perhaps deceptively. The GM answers."),
+                    failure: answer("No answer", "It fails to reach an appropriate spirit: no answer."),
+                    criticalFailure: [{ label: "The enormity of the cosmos", text: "Stupefied 4 for 1 week; nothing can remove it.", rules: [{ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.e1XGnhKNSQIm5IXg", onDeleteActions: { grantee: "restrict" }, alterations: [{ mode: "override", property: "badge-value", value: 4 }] }], duration: days(7) }]
+                },
+                notes: ["An hour's meditation first; then its user asks its one question, the card's bonus on the Nature check."]
+            });
+            return { ...card, resolution: { ...card.resolution, check: { ...card.resolution.check, bonus: { value: level >= 17 ? 3 : 2, type: "item" } } } };
+        }
+    },
     {
         // (Two activations in one block — PF2e's text runs the second's Activate line on in the first's paragraph: tying its user's soul to the spear,
         // once a day, and mustering the Army of Fire, once a week — the ways card's ways, each its own frequency (way.frequency). Against a living

@@ -47,6 +47,20 @@ export function withTargetDC(plan, dcs, mods = {}) {
     return { ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, statistic: best, against: { ...plan.resolution.check.against, value: Math.max(...values) } } } };
 }
 
+// A check at its user's own attack modifier, filled in as it's used (check.attackFrom "unarmed", src/compiler/special-sentences.js: The
+// Uprising's mob, its user's unarmed Strike against each creature's Fortitude DC), wherever in the plan — its zone's entries too: the plan with
+// that modifier; the plan as it was without one.
+export function withAttackModifiers(plan, modifiers = {}) {
+    const walk = (value) => {
+        if (Array.isArray(value)) return value.map(walk);
+        if (!value || typeof value !== "object") return value;
+        const walked = Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, walk(entry)]));
+        if (value.attackFrom && Number.isFinite(Number(modifiers[value.attackFrom]))) return { ...walked, modifier: Number(modifiers[value.attackFrom]) };
+        return walked;
+    };
+    return plan && JSON.stringify(plan).includes('"attackFrom"') ? walk(plan) : plan;
+}
+
 // Its hit's damage gone, an ignition failed (Oil's flat check, plan.ownCheck.ignite): the plan with its success rows dealing none.
 export function withoutHitDamage(plan) {
     const none = { mode: "none", multiplier: 0, sourceComponentIds: [] };

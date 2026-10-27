@@ -27,7 +27,7 @@ import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, s
 import { applyCastCard, postCastCard } from "./casts.js";
 import { needsTargets } from "../src/live/cast-card.js";
 import { startItemConjure, startItemZone } from "./zones.js";
-import { scaledByCondition, withConditionDC, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
+import { scaledByCondition, withAttackModifiers, withConditionDC, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { applyFocusCard, loseUnspentFocus, postFocusCard } from "./focus.js";
 import { againstRolled, applyFortuneCard, fortuneRolled, postFortuneCard } from "./fortune.js";
 import { firstDegreeRolled } from "./first-degree.js";
@@ -205,6 +205,12 @@ async function postWhisper({ plan, used, actor, token }) {
     const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER") || also.some((other) => other.testUserPermission?.(user, "OWNER"))).map((user) => user.id);
     const who = token?.name ?? actor?.name ?? "its user";
     const told = also.length ? `, and ${also.map((other) => other.name).join(", ")}'s` : "";
+    // (Its secret flat check, The Carnival's: rolled now, for the GM alone — whisper.flat { dc, failure }.)
+    if (plan.whisper.flat?.dc) {
+        const roll = await new Roll("1d20").evaluate();
+        const passed = roll.total >= Number(plan.whisper.flat.dc);
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), blind: true, content: `<p><strong>${escapeHTML(used.data.name)}</strong>: secret flat check DC ${Number(plan.whisper.flat.dc)}: ${roll.total} — ${passed ? "a success: the answer is as it is" : `a failure. ${escapeHTML(plan.whisper.flat.failure ?? "")}`}</p>` });
+    }
     return ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor, token: token?.document ?? token ?? undefined }),
         whisper: owners,
@@ -307,6 +313,11 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (plan?.dcBy && actor) plan = withConditionDC(plan, (slug) => actor.getCondition?.(slug)?.value ?? 0);
     // (Its save's DC higher for each item of a name near its user, Flawed Orb of Gold Dragonkind's Orb Shards: src/live/scaled.js.)
     if (plan?.dcNear && token) plan = withNearbyDC(plan, itemsNear(token, plan.dcNear.name, plan.dcNear.within));
+    // (A check at its user's unarmed attack modifier as it is now, The Uprising's mob: PF2e's basic unarmed Strike — src/live/scaled.js.)
+    if (actor && JSON.stringify(plan ?? {}).includes('"attackFrom"')) {
+        const unarmed = (actor.system?.actions ?? []).find((action) => action?.slug === "basic-unarmed" || action?.item?.slug === "basic-unarmed" || action?.item?.system?.category === "unarmed");
+        plan = withAttackModifiers(plan, { unarmed: unarmed?.totalModifier });
+    }
     // (Its user's check at the highest DC of the creature its presser targets, with their best statistic — Spear of the Destroyer's Flame's tie to
     // the living Commander: src/live/scaled.js.)
     if (plan?.dcFromTarget && actor) {

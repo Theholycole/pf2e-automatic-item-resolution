@@ -10,7 +10,7 @@ import { compileActivations } from "../src/compiler/permanent.js";
 import { routeOf } from "../src/live/route.js";
 import { pausedAfter } from "../src/live/conjured.js";
 import { planFor } from "../src/live/if-target.js";
-import { withNearbyDC, withTargetDC } from "../src/live/scaled.js";
+import { withAttackModifiers, withNearbyDC, withTargetDC } from "../src/live/scaled.js";
 import { endsFor, hostileAt } from "../src/live/targeted.js";
 import { saveText, withAttackChoice } from "../src/live/poison-card.js";
 import { markText, marksEndingAt } from "../src/live/card.js";
@@ -138,4 +138,26 @@ test("Spear of the Destroyer's Flame: tying its user's soul (its best of four ag
     const rolled = withTargetDC(against, { will: 38, diplomacy: 41, intimidation: 36 }, { will: 20, diplomacy: 25, intimidation: 18, "warfare-lore": 27 });
     assert.deepEqual([rolled.resolution.check.against.value, rolled.resolution.check.statistic], [41, "warfare-lore"]);
     assert.equal(withTargetDC(against, {}, {}), null);
+});
+
+test("The Carnival, The Empty Throne, The Owl: a whispered vision with its secret flat check and its user's Stupefied 1; no bonuses for a day or a week; a Nature check as Commune, the card's bonus on it", () => {
+    const [carnival] = plans("The Carnival");
+    assert.deepEqual([done(carnival), routeOf(carnival), carnival.whisper.flat.dc, carnival.userEffects], [true, "whisper", 3, [{ slug: "stupefied", value: 1, duration: { mode: "fixed", value: 1, unit: "rounds", expiry: "turn-start", anchor: "effect-start" } }]]);
+    const [throne] = plans("The Empty Throne");
+    const rows = throne.resolution.outcomes;
+    assert.deepEqual([done(throne), routeOf(throne, "x"), rows.success.noteEffects[0].duration.unit, rows.failure.noteEffects[0].duration.value, rows.criticalFailure.noteEffects[0].duration.value], [true, "save", "rounds", 1, 7]);
+    assert.match(rows.failure.noteEffects[0].text, /allies can't benefit from them either while within 15 feet/);
+    const [owl] = plans("The Owl");
+    assert.deepEqual([routeOf(owl, "x"), owl.ownSave, owl.resolution.check.statistic, owl.resolution.check.against.value, owl.resolution.check.bonus], ["save", true, "nature", 30, { value: 3, type: "item" }]);
+    assert.equal(owl.resolution.outcomes.criticalFailure.noteEffects[0].rules[0].alterations[0].value, 4);
+});
+
+test("The Uprising: a 20-foot burst of grabbing figures for a minute, its user's unarmed Strike against each creature's Fortitude DC as it rises and at turns' ends", () => {
+    const [mob] = plans("The Uprising");
+    assert.deepEqual([routeOf(mob), mob.zone.area, mob.zone.range, mob.zone.lasts.value, mob.zone.lasts.unit, mob.partial], ["zone", { type: "burst", value: 20 }, 120, 1, "minutes", true]);
+    const [rises, grabs] = mob.zone.saves;
+    assert.deepEqual([rises.when, rises.plan.resolution.check.against.statistic, rises.plan.resolution.check.attackFrom, rises.plan.resolution.sharedDamage.components[0].formula, rises.plan.resolution.outcomes.success.effects[0].duration.escape], [["initial"], "fortitude", "unarmed", "3d6", { ownerDC: "class" }]);
+    assert.deepEqual([grabs.when, grabs.only, grabs.plan.resolution.outcomes.success.damage.mode, mob.zone.damage[0]], [["end"], { lacks: { conditions: ["grabbed"] } }, "none", { when: "end", only: { conditions: ["grabbed"] }, formulas: ["1d6[bludgeoning]"] }]);
+    // (Its user's unarmed attack modifier, filled in as it's used.)
+    assert.equal(withAttackModifiers(mob, { unarmed: 31 }).zone.saves[0].plan.resolution.check.modifier, 31);
 });
