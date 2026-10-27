@@ -15,6 +15,7 @@ import { isTable } from "./table-card.js";
 import { isTake } from "./take-card.js";
 import { isFeatUse } from "./feat-use-card.js";
 import { isBond } from "./bond-card.js";
+import { isFound } from "./found-card.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -76,6 +77,8 @@ export function routeOf(plan, text = "") {
     if (isFeatUse(plan)) return "feat-use";
     // (A bond with a willing creature: scripts/bonds.js, 2026-10-27.)
     if (isBond(plan)) return "bond";
+    // (A consumable found for the need at hand, the GM's pick: scripts/found.js, 2026-10-27.)
+    if (isFound(plan)) return "found";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

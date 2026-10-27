@@ -72,6 +72,17 @@
 //   scripts/bonds.js) gives both an Effect for the bond (the last bond of the item's gone), and when PF2e gives the bonded creature one of those
 //   conditions its user gets the counteract card for it — its class DC − 10, the item's rank (half its level), the condition its user's too on a
 //   failure, the bond over either way. Being willing is the creatures' own; awareness and telepathy are the Effects' words.
+// - A consumable found for the need at hand (withFoundConsumable): The Unicorn's "Inside, you'll find a Common consumable alchemical or magic
+//   item you need … The GM always decides what consumable item is discovered, and it must be equal to or lower than your level. If the
+//   consumable isn't used within 1 minute of being discovered, the item vanishes. If there's no appropriate item …, the daily use of The Unicorn
+//   is not expended." → builtin "found-item", plan.found: the found card (src/live/found-card.js, scripts/found.js) takes the GM's pick by name
+//   (PF2e's equipment), checks it's a common alchemical or magical consumable of its user's level or lower, and puts it in its user's
+//   inventory to vanish after the minute (scripts/expiring.js); none picked, the activation's use is given back. Its examples and the
+//   container its user opens: lines.
+// - A cast at a set DC on a creature of the item's own kind (withScryingAs): Viridian Crown's View Subject, "This functions as if the Viridian
+//   Crown cast Scrying to your specifications. The target can resist the scrying effect with a DC 43 Will save if they wish." → the spell
+//   module's cast (builtin "cast-spell") at that DC; whom it may scry (an elf who accepted its user's rule, known by name or met) and a willing
+//   target's choice not to resist, lines of the cast card.
 // Pure.
 
 import { keptBase, ownCard } from "./triggered.js";
@@ -377,13 +388,73 @@ function withBond(plan, { activation, index }, item) {
     return { ...keptBase(plan, item, { activation, index }), builtin: "bond", automation: { level: "automatic" }, targeting: { target: "1 adjacent willing creature", range: "touch", area: null }, bond: { reach: 5, telepathy, conditions, counter: { modifier: "class-dc", rank, failCopies: true } } };
 }
 
+// --- A consumable found for the need at hand ------------------------------------------------------------------------------------------------------
+
+const FOUND = [
+    /^You pass [\w' -]+? across an adjacent closed container and then open the container\.$/,
+    /^Inside, you'll find an? (Common) consumable (alchemical) or (magic) item you need to solve a problem or deal with a situation close at hand\.$/,
+    /^For example, if you're badly wounded, you might find an? ([a-z][\w' -]+?)\.$/,
+    /^If you've been poisoned, you could discover an? ([a-z][\w' -]+?)\.$/,
+    /^If you're faced with a written clue in a language you don't understand, the container might hold an? ([a-z][\w' -]+?)\.$/,
+    /^The GM always decides what consumable item is discovered, and it must be equal to or lower than your level\.$/,
+    /^If the consumable isn't used within (\d+) (minutes?|rounds?|hours?) of being discovered, the item vanishes\.$/,
+    /^If there's no appropriate item to solve your situation, the GM can rule that no object is found; in this case, the daily use of [\w' -]+? is not expended\.$/
+];
+function withFoundConsumable(plan, { activation, index }, item) {
+    const sentences = sentencesOf(effectOf(activation.html));
+    if (!unread(plan) || !matches(FOUND, sentences)) return plan;
+    const said = FOUND.map((pattern, at) => pattern.exec(sentences[at]));
+    const unit = /^min/i.test(said[6][2]) ? "minutes" : /^hour/i.test(said[6][2]) ? "hours" : "rounds";
+    const examples = [`badly wounded, a ${said[2][1]}`, `poisoned, a ${said[3][1]}`, `a written clue in a language it can't read, a ${said[4][1]}`];
+    return {
+        ...keptBase(plan, item, { activation, index }),
+        builtin: "found-item",
+        automation: { level: "automatic" },
+        found: { rarity: said[1][1].toLowerCase(), kinds: ["alchemical", "magical"], maxLevel: "user", vanish: { value: Number(said[6][1]), unit }, refundsNone: true },
+        notes: [`Its user passes it over a closed container next to them and opens it. The GM picks what's inside for the trouble at hand (for example: ${examples.join("; ")}).`]
+    };
+}
+
+// --- A cast at a set DC on a creature of the item's own kind --------------------------------------------------------------------------------------
+
+const SCRY_AS = [
+    /^You focus your thoughts, and the [\w' -]+? shows you an image of an? (\w+) who has accepted your rule\.$/,
+    /^You must know the \w+'s name or have met them in person\.$/,
+    /^This functions as if the [\w' -]+? cast ([A-Z][\w' -]+?) to your specifications\.$/,
+    /^The target can resist the [\w ]+? effect with a @Check\[(will|fortitude|reflex)\|dc:(\d+)\] save if they wish\.$/
+];
+function withScryingAs(plan, { activation, index }, item) {
+    // (Its words with the save's @Check kept, which plainText turns into its own words.)
+    const plain = sentencesOf(/\bEffect\b\s*(.*)$/s.exec(String(activation.html ?? "").replace(/<[^>]+>/g, " ").replace(/@UUID\[[^\]]+\]\{([^}]*)\}/g, "$1").replace(/\s+/g, " "))?.[1]?.trim() ?? "");
+    if (!unread(plan) || !matches(SCRY_AS, plain)) return plan;
+    const said = SCRY_AS.map((pattern, at) => pattern.exec(plain[at]));
+    const spell = new RegExp(String.raw`@UUID\[(Compendium\.pf2e\.spells-srd\.Item\.[A-Za-z0-9]+)\]\{${said[2][1]}\}`).exec(String(activation.html ?? ""));
+    if (!spell) return plan;
+    const base = keptBase(plan, item, { activation, index });
+    return {
+        builtin: "cast-spell",
+        source: base.source,
+        spell: { uuid: spell[1], name: said[2][1] },
+        rank: null,
+        dc: Number(said[3][2]),
+        attack: null,
+        tradition: null,
+        self: false,
+        targets: false,
+        trigger: base.trigger,
+        item: base.item,
+        automation: { level: "automatic" },
+        castLines: [`Only an ${said[0][1]} who has accepted its user's rule, whose name its user knows or whom it has met.`, `The target may choose not to resist (no ${said[3][1].replace(/^./, (letter) => letter.toUpperCase())} save) if it wishes.`]
+    };
+}
+
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.
 export const rankFromLevel = (by, level) => Math.max(1, by?.half ? Math.ceil((Number(level) || 0) / 2) : Number(level) || 1);
 
 // The plan, its entry ({ activation, index }) and item → the plan with the item's own rule built, or the same plan.
 export function withUniqueRules(plan, entry, item) {
     if (!entry?.activation) return plan;
-    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond]) {
+    for (const reader of [withFeatUse, withEasierRitual, withOwnAvatar, withAbsorbedBlow, withMended, withCheckedCreation, withSoiledBody, withSoilSummon, withDamageTypeWays, withFlyingGun, withConsecratedLight, withPutOut, withLimned, withBond, withFoundConsumable, withScryingAs]) {
         const next = reader(plan, entry, item);
         if (next !== plan) return next;
     }

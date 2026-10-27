@@ -190,3 +190,25 @@ test("The Marriage: a bond with the willing creature targeted, both sides' Effec
     assert.equal(counteredBy(bondOf(source), "frightened"), null);
     assert.deepEqual(bondCounteract(bondOf(source), "stunned", 24), { conditions: ["stunned"], modifier: 24, rank: 10, failCopies: true, endsBond: "Item.m", notes: [] });
 });
+
+test("The Unicorn: the GM's pick of a common alchemical or magical consumable up to its user's level, gone after a minute; none found, no use spent", async () => {
+    const { foundMisfit, foundText, vanishesAt } = await import("../src/live/found-card.js");
+    const [unicorn] = plans("The Unicorn");
+    assert.deepEqual([unicorn.builtin, unicorn.trigger.frequency.max, routeOf(unicorn)], ["found-item", 1, "found"]);
+    assert.deepEqual(unicorn.found, { rarity: "common", kinds: ["alchemical", "magical"], maxLevel: "user", vanish: { value: 1, unit: "minutes" }, refundsNone: true });
+    assert.match(unicorn.notes[0], /greater healing potion/);
+    const potion = equipment.find((doc) => doc.name === "Healing Potion (Greater)");
+    assert.equal(foundMisfit(potion, unicorn.found, 20), null);
+    assert.match(foundMisfit(potion, unicorn.found, 5), /above level 5/);
+    assert.match(foundMisfit(item("The Unicorn"), unicorn.found, 20), /isn't a consumable/);
+    assert.match(foundMisfit({ ...potion, system: { ...potion.system, traits: { ...potion.system.traits, rarity: "rare" } } }, unicorn.found, 20), /isn't common/);
+    assert.equal(vanishesAt(unicorn.found, 1000), 1060);
+    assert.match(foundText(unicorn.found, 20), /level 20 or lower, the GM's pick; it vanishes unless used within 1 minute/);
+});
+
+test("Viridian Crown's View Subject: the spell module's Scrying at DC 43, whom it may scry and a willing target's choice its lines", () => {
+    const view = plans("Viridian Crown")[1];
+    assert.deepEqual([view.builtin, view.spell.name, view.dc, view.partial, routeOf(view)], ["cast-spell", "Scrying", 43, undefined, "cast"]);
+    assert.equal(view.castLines.length, 2);
+    assert.match(view.castLines[0], /an elf who has accepted/);
+});
