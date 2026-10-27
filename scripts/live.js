@@ -20,7 +20,7 @@ import { armedMarkSource } from "../src/live/card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -40,6 +40,7 @@ import { lightAuraZone } from "../src/compiler/light-aura.js";
 import { applyWaysCard, postWaysCard } from "./ways.js";
 import { reviveCreature } from "./revive.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
+import { applyStructureCard, pickStructurePoint, postStructureCard } from "./structure.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
@@ -67,6 +68,7 @@ import { toggleOff, toggleOn } from "./toggle-off.js";
 import { endOnStrike } from "./ends-on-strike.js";
 import { plateShield } from "./shield-temp.js";
 import { endSpeedPenalties, granterOf, sparedBy } from "./speed-penalties.js";
+import { replacedBy } from "./until-rest.js";
 import { degreeOf } from "../src/compiler/consumables.js";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -338,6 +340,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "toggle") return postToggleCard({ message, plan, used, actor, token });
     if (route === "ways") return postWaysCard({ message, plan, used, actor, token });
     if (route === "teleport") return postTeleportCard({ message, plan, used, actor, token });
+    if (route === "structure") return postStructureCard({ message, plan, used, actor, token });
     if (route === "whisper") return postWhisper({ plan, used, actor, token });
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "table") return postTableCard({ message, plan, used, actor, token });
@@ -400,7 +403,7 @@ function choicesOf(state, root) {
         : { ...(root.querySelector("[data-air-field='drinker']") ? { drinker: Number(root.querySelector("[data-air-field='drinker']").value) } : {}), rows: state.rows.map((row, index) => ({ ticked: Boolean(root.querySelector(`[data-air-row="${index}"]`)?.checked), dc: root.querySelector(`[data-air-dc="${index}"]`)?.value ?? null, rank: root.querySelector(`[data-air-rank="${index}"]`)?.value ?? null, outright: Boolean(root.querySelector(`[data-air-outright="${index}"]`)?.checked) })), ...(root.querySelector("[data-air-ownrank]") ? { ownRank: root.querySelector("[data-air-ownrank]").value } : {}) };
     if (state.kind === "poison") return { weapon: Number(root.querySelector("[data-air-field='weapon']")?.value ?? state.weapon ?? 0) };
     if (state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), ...(state.kind === "item-action" && state.plan.action?.slugs ? { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) } : {}), ...(state.kind === "expose" ? { damageChoice: Number(root.querySelector("[data-air-field='damageChoice']")?.value ?? state.damageChoice ?? 0), attackChoice: Number(root.querySelector("[data-air-field='attackChoice']")?.value ?? state.attackChoice ?? 0), checkChoice: Number(root.querySelector("[data-air-field='checkChoice']")?.value ?? state.checkChoice ?? 0), ...(root.querySelector("[data-air-field='scaled']") ? { scaled: root.querySelector("[data-air-field='scaled']").value } : {}) } : {}) };
-    if (state.kind === "toggle" || state.kind === "ways") return { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) };
+    if (state.kind === "toggle" || state.kind === "ways" || state.kind === "structure") return { choice: Number(root.querySelector("[data-air-field='choice']")?.value ?? state.choice ?? 0) };
     // (A teleport: the creature targeted, when it's measured from one; the space is picked on Pick.)
     if (state.kind === "teleport") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean), critical: Boolean(root.querySelector("[data-air-field='critical']")?.checked) };
     // (One of its user's items, picked: scripts/objects.js.)
@@ -437,6 +440,7 @@ const APPLY = {
     toggle: (message, choices) => applyToggleCard(message, choices),
     ways: (message, choices) => applyWaysCard(message, choices, postCardFor),
     teleport: (message, choices) => applyTeleportCard(message, choices),
+    structure: (message, choices) => applyStructureCard(message, choices),
     objects: (message, choices) => applyObjectsCard(message, choices),
     disbelief: (message, choices) => applyDisbeliefCard(message, choices),
     take: (message, choices) => applyTakeCard(message, choices),
@@ -509,6 +513,15 @@ function wireCard(message, html) {
                 }
                 choices.destination = destination;
             }
+            // (A building's point: clicked on this client's canvas, then sent — the Guiding Chisel's, scripts/structure.js.)
+            if (state.kind === "structure") {
+                const destination = await pickStructurePoint(state);
+                if (!destination) {
+                    button.disabled = false;
+                    return;
+                }
+                choices.destination = destination;
+            }
             if (((state.kind === "expose" && !state.own) || (state.kind === "cast" && needsTargets(state.plan, state.plan.choices?.[choices.choice ?? state.choice ?? 0])) || (state.kind === "item-action" && state.plan?.action?.targeted) || (state.kind === "reroll" && state.plan?.reroll?.who === "companion") || (state.kind === "fortune" && state.plan?.bonus?.recipient === "target")) && !choices.targets?.length) throw new Error("Target the creatures first.");
             if (isActiveGM()) await applyByKind(message, state, choices);
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
@@ -552,6 +565,7 @@ async function onRequest(data) {
         : state.kind === "cast" ? { drinker: data.drinker, choice: Number.isInteger(data.choice) ? data.choice : null, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "expose" || state.kind === "item-action" || state.kind === "reroll" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [], ...(state.kind === "item-action" && Number.isInteger(data.choice) ? { choice: data.choice } : {}), ...(state.kind === "expose" && Number.isInteger(data.damageChoice) ? { damageChoice: data.damageChoice } : {}), ...(state.kind === "expose" && Number.isInteger(data.attackChoice) ? { attackChoice: data.attackChoice } : {}), ...(state.kind === "expose" && Number.isInteger(data.checkChoice) ? { checkChoice: data.checkChoice } : {}), ...(state.kind === "expose" && data.scaled !== undefined && data.scaled !== null ? { scaled: String(data.scaled) } : {}) }
         : state.kind === "toggle" || state.kind === "ways" ? { choice: Number.isInteger(data.choice) ? data.choice : null }
+        : state.kind === "structure" ? { choice: Number.isInteger(data.choice) ? data.choice : null, destination: data.destination && Number.isFinite(Number(data.destination.x)) && Number.isFinite(Number(data.destination.y)) ? { x: Number(data.destination.x), y: Number(data.destination.y) } : null }
         : state.kind === "table" ? {}
         : state.kind === "take" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
@@ -598,6 +612,12 @@ async function giveUserConditions(effects, { actor, token, used }) {
             lines.push(line ?? `${name} gains ${effect.amount} temporary Hit Points${ability?.applyChange ? "" : " (add them by hand: the ability module isn't active)"}`);
             continue;
         }
+        // (An Effect of PF2e's rules on its user beside the save, Starless Scope's +2 to its Recall Knowledge: the item's own.)
+        if (effect.kind === "rules") {
+            await actor.createEmbeddedDocuments("Item", [ruleEffectSource(effect, { item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            lines.push(`${name}: ${effect.words}`);
+            continue;
+        }
         // (PF2e's own Effect on its user beside a zone, Arctic Worm Chitin Shield's Effect: Misty Chill: the ability module's native Effect,
         // src/compiler/zone-readings.js.)
         if (effect.kind === "native") {
@@ -641,6 +661,28 @@ async function conditionUuid(slug) {
 }
 
 // The creatures of the token uuids a presser targeted: [{ token, actor, name }].
+// A creature's Hit Points lost by its user's level ({ level: multiple } or a number), PF2e's final damage; dead or dying after it (0 Hit
+// Points), its user's temporary Hit Points by its level too (killedTemp), the higher kept → the card's lines.
+async function loseHitPoints(creature, hpLoss, { user, userName }) {
+    const level = Number(user?.level) || 0;
+    const amountOf = (value) => (Number.isFinite(Number(value)) ? Number(value) : Math.max(0, Math.floor(level * (Number(value?.level) || 0))));
+    const amount = amountOf(hpLoss.amount);
+    if (!creature.actor?.applyDamage || !(amount > 0)) return [`${creature.name} loses ${amount} Hit Points (by hand).`];
+    await creature.actor.applyDamage({ damage: amount, token: creature.token?.document ?? creature.token ?? undefined, final: true });
+    const lines = [`${creature.name} loses ${amount} Hit Points`];
+    const left = Number(creature.actor.system?.attributes?.hp?.value);
+    // (Killed: a creature other than a character at 0 Hit Points; a character only once its Dying reaches its maximum.)
+    const dying = creature.actor.system?.attributes?.dying ?? {};
+    const dead = left === 0 && (creature.actor.type !== "character" || (Number(dying.value) > 0 && Number(dying.value) >= Number(dying.max ?? 4)));
+    if (dead && hpLoss.killedTemp && user) {
+        const temp = amountOf(hpLoss.killedTemp);
+        const now = Number(user.system?.attributes?.hp?.temp) || 0;
+        if (temp > now) await user.update({ "system.attributes.hp.temp": temp });
+        lines.push(`${creature.name} is killed by it: ${userName} gains ${temp} temporary Hit Points${temp > now ? "" : ` (it has ${now} already)`}`);
+    }
+    return lines;
+}
+
 async function targetedCreatures(uuids) {
     const tokens = await Promise.all((Array.isArray(uuids) ? uuids : []).map((uuid) => fromUuid(uuid).catch(() => null)));
     return tokens.filter((token) => token?.actor).map((token) => ({ token, actor: token.actor, name: token.name ?? token.actor.name }));
@@ -703,7 +745,10 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     // (Or its flat check, the creature its user touches: Nettle Balm's.)
     const byLevel = (state.plan.item?.levelTemp ?? []).some((entry) => entry.from !== "amount");
     const marks = Boolean(state.plan.item?.mark);
-    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks ? await targetedCreatures(targets) : [];
+    const hpLoss = state.plan.item?.hpLoss ?? null;
+    const others = reduce.some((entry) => entry.who === "targets") || state.plan.item?.recovery?.who === "targets" || byLevel || marks || hpLoss ? await targetedCreatures(targets) : [];
+    // (Hit Points lost by a creature of its user's choice, The Rakshasa's pledged follower: that one targeted.)
+    if (hpLoss && others.length !== 1) throw new Error(`Target the one creature that loses the Hit Points (${hpLoss.who ?? "the creature"}) first, then press Apply.`);
     // (The creature its bonuses are against, src/compiler/marked.js: that one targeted.)
     if (marks && !state.plan.item.mark.several && others.length !== 1) throw new Error("Target the one creature it's against first, then press Apply.");
     // (Or the creatures, mark.several — Rhyton of the Radiant Ifrit's toasted ones: one or more.)
@@ -739,6 +784,8 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
         const slug = entry.choose ? entry.choose[state.reduceChoice ?? 0] ?? entry.choose[0] : entry.slug;
         for (const creature of others) lines.push(await lowerCondition(creature.actor, creature.name, slug, entry.by));
     }
+    // (The item itself gone once it's used, a soulheart's Bolster Maiserene Phantom: plan.item.destroyed — scripts/foundry.js destroyUsedItem.)
+    if (state.plan.item?.destroyed) lines.push(await destroyUsedItem(state.item));
     const next = { ...state, status: "applied", results: lines.length ? lines : ["Nothing to apply."] };
     return message.update({ content: cardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
@@ -902,6 +949,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const entry of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
+        // (In place of its earlier one, Terrain Adaptation's: scripts/until-rest.js.)
+        const replaced = entry.replaces ? replacedBy(target.actor, { itemUuid: state.item.uuid, name: entry.name, any: entry.replaces === "any" }) : [];
+        if (replaced.length) await target.actor.deleteEmbeddedDocuments("Item", replaced);
         await target.actor.createEmbeddedDocuments("Item", [ruleEffectSource(entry, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${entry.words}`);
     }
@@ -945,6 +995,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (Protection from heat or cold for its time, src/compiler/temperature.js: an Effect the environment module reads.)
     const temperature = state.plan.temperature;
     if (temperature?.counts && target.actor) {
+        const replaced = temperature.replaces ? replacedBy(target.actor, { itemUuid: state.item.uuid, kind: "temperature" }) : [];
+        if (replaced.length) await target.actor.deleteEmbeddedDocuments("Item", replaced);
         await target.actor.createEmbeddedDocuments("Item", [temperatureEffectSource(temperature, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
         lines.push(`${recipient.name}: ${temperatureLine(temperature)}`);
     }
@@ -972,7 +1024,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             continue;
         }
         const level = Number(others[0]?.actor?.level);
-        const amount = Number.isFinite(level) ? Math.floor(entry.multiplier * level) : 0;
+        // (A higher multiple while its user holds another item too, Blood-Drinker's three times with Fleshrender in its other hand: entry.ifHeld.)
+        const holds = entry.ifHeld && (target.actor?.items?.contents ?? []).some((item) => item.name === entry.ifHeld.name && item.system?.equipped?.carryType === "held");
+        const amount = Number.isFinite(level) ? Math.floor((holds ? entry.ifHeld.multiplier : entry.multiplier) * level) : 0;
         const ability = game.modules.get(ABILITY_ID)?.api?.live;
         if (amount > 0 && ability?.applyChange && target.actor) {
             // (Or Hit Points regained: Holy's Holy Healing.)
@@ -1190,6 +1244,17 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
                 lines.push(`${creature.name} stays ${slug} (${granterOf(creature.actor, slug).name}: magical, level ${entry.unlessMagical} or higher)`);
                 continue;
             }
+            // (The effect giving it ending too, Cayden's Tankard's "Any effect causing these conditions ends": the Effect that grants it deleted —
+            // PF2e's grantedBy —, the item it came from, lower in level, kept from making it again for a while, a line.)
+            if (entry.granter === "ends") {
+                const granter = granterOf(creature.actor, slug);
+                if (granter) {
+                    const origin = granter.system?.context?.origin?.item ? await fromUuid(granter.system.context.origin.item).catch(() => null) : null;
+                    await granter.delete();
+                    const below = origin && Number(origin.level ?? origin.system?.level?.value) < Number(state.plan.item?.level ?? 0);
+                    lines.push(`${creature.name}: ${granter.name} ends${below && entry.granterWeeks ? ` (${origin.name} can't produce it again for ${entry.granterWeeks} week${entry.granterWeeks === 1 ? "" : "s"})` : ""}`);
+                }
+            }
             const line = await lowerCondition(creature.actor, creature.name, slug, entry.by);
             // (Of a list it ends — Cayden's Tankard's six — only the ones there.)
             if (reduce.length <= 2 || !/: nothing to lower\.$/.test(line)) lines.push(line);
@@ -1206,6 +1271,9 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (The Speed penalties it ends with them, scripts/speed-penalties.js: its user's, and the creatures targeted when the text says so.)
     const speedEnds = state.plan.item?.speedPenaltiesEnd;
     if (speedEnds) for (const creature of [{ actor: target.actor, name: recipient.name }, ...(speedEnds.targets ? others : [])]) lines.push(...await endSpeedPenalties(creature.actor, creature.name, speedEnds));
+    // (Hit Points the creature targeted loses, by its user's level — PF2e's final damage, which nothing lowers — and, if that kills it,
+    // temporary Hit Points for its user: The Rakshasa's, plan.item.hpLoss — src/compiler/artifact-readings.js.)
+    if (state.plan.item?.hpLoss) for (const creature of others) lines.push(...await loseHitPoints(creature, state.plan.item.hpLoss, { user: target.actor, userName: recipient.name }));
     // (Its flat check to end persistent damage: PF2e's own recovery roll for each of those types, at the text's DC when it's
     // lower — Quenching Potion's 10 — then the condition's own DC again if it stays.)
     if (state.plan.item?.recovery) {

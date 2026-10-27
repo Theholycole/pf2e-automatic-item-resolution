@@ -552,7 +552,10 @@ test("auras that act at a turn's start or end in them, as the ability module's z
     assert.deepEqual([plate.builtin, plate.zone.area, plate.zone.centre, plate.zone.lasts.value, plate.zone.lasts.unit, plate.zone.saves[0].when, plate.zone.saves[0].plan.resolution.check.basic, plate.zone.saves[0].plan.resolution.check.against.value, plate.zone.terrain.length, plate.zone.others], ["zone", { type: "emanation", value: 15 }, "self", 10, "minutes", ["enter", "start"], true, 40, 1, true]);
     const horn = compileActivations(item("Horn of Rust"), { spellEffects })[1].plan;
     assert.deepEqual([horn.zone.area.value, horn.zone.saves[0].when, horn.ownEffect?.label], [5, ["start"], "Effect: Horn of Rust"]);
-    assert.match(horn.zone.notes.join(" "), /exposed to a potent form of tetanus/);
+    // (2026-10-27, src/compiler/artifact-readings.js: its tetanus a save card of its own after the shards' damage — zone save afterDamage —, the
+    // zone's note saying so.)
+    assert.match(horn.zone.notes.join(" "), /tetanus's Fortitude save on the card that follows/);
+    assert.equal(horn.zone.saves[0].plan.afterDamage.plan.resolution.afflictionHandoff.name, "Horn of Rust Tetanus");
     // Bloodburn Censer: its smoke's damage type picked on the ways card, each way the zone on its user's token — the Fortitude save as
     // it's made and on entering, that type's persistent damage, Enfeebled while it lasts.
     const censer = compileActivations(item("Bloodburn Censer"), { spellEffects })[0].plan;

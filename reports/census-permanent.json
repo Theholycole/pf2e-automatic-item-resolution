@@ -6,53 +6,56 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1405,
-   "builtin:cast-spell": 471,
-   "none": 95,
+   "resolves": 1418,
+   "builtin:cast-spell": 473,
    "builtin:focus-point": 48,
    "builtin:counteract": 39,
    "builtin:readied-bonus": 52,
    "builtin:reroll": 46,
-   "builtin:ways": 66,
+   "builtin:ways": 67,
    "builtin:whisper": 49,
    "builtin:table": 8,
+   "none": 85,
    "builtin:teleport": 31,
    "builtin:pf2e-rules": 23,
    "builtin:zone": 38,
    "builtin:modes": 36,
-   "builtin:objects": 37,
+   "builtin:objects": 38,
    "builtin:item-action": 28,
    "builtin:conjure": 24,
-   "partial": 24,
+   "partial": 19,
    "builtin:roll-twice": 15,
-   "note-only": 17,
-   "builtin:no-effect": 15,
+   "note-only": 15,
+   "builtin:no-effect": 13,
    "builtin:spellstrike": 9,
-   "builtin:take-condition": 1
+   "builtin:take-condition": 1,
+   "builtin:structure": 1,
+   "gaps": 1
   },
   "live": {
-   "save": 438,
-   "cast": 471,
-   "item": 869,
-   "none": 135,
+   "save": 444,
+   "cast": 473,
+   "item": 870,
    "focus": 48,
    "counteract": 39,
    "fortune": 67,
    "reroll": 46,
-   "ways": 66,
+   "ways": 67,
    "strike": 130,
    "whisper": 49,
    "table": 8,
+   "none": 123,
    "teleport": 31,
    "zone": 38,
    "toggle": 36,
-   "objects": 37,
+   "objects": 38,
    "action": 28,
    "conjure": 24,
    "coat": 4,
    "later": 3,
    "spellstrike": 9,
-   "take": 1
+   "take": 1,
+   "structure": 1
   },
   "withFrequency": 1734,
   "withTrigger": 427
@@ -61,9 +64,8 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 851,
-    "builtin:cast-spell": 344,
-    "none": 71,
+    "resolves": 862,
+    "builtin:cast-spell": 346,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
     "builtin:readied-bonus": 33,
@@ -71,41 +73,43 @@
     "builtin:ways": 41,
     "builtin:whisper": 45,
     "builtin:table": 5,
+    "none": 63,
     "builtin:teleport": 18,
-    "builtin:objects": 21,
+    "builtin:objects": 22,
     "builtin:zone": 20,
     "builtin:item-action": 16,
     "builtin:conjure": 23,
-    "partial": 16,
+    "partial": 11,
     "builtin:modes": 19,
     "builtin:roll-twice": 11,
-    "note-only": 12,
-    "builtin:no-effect": 11,
+    "note-only": 10,
+    "builtin:no-effect": 10,
     "builtin:pf2e-rules": 1,
-    "builtin:take-condition": 1
+    "builtin:take-condition": 1,
+    "builtin:structure": 1,
+    "gaps": 1
    }
   },
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 271,
+    "resolves": 273,
     "builtin:cast-spell": 81,
     "builtin:reroll": 7,
-    "none": 21,
+    "none": 20,
     "builtin:table": 1,
     "builtin:modes": 13,
-    "builtin:ways": 9,
+    "builtin:ways": 10,
     "builtin:item-action": 9,
     "builtin:zone": 8,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 9,
     "builtin:objects": 6,
     "builtin:pf2e-rules": 2,
-    "partial": 7,
+    "partial": 6,
     "note-only": 4,
     "builtin:teleport": 7,
     "builtin:roll-twice": 2,
-    "builtin:no-effect": 1,
     "builtin:whisper": 1
    }
   },
@@ -166,7 +170,7 @@
     "builtin:no-effect": 2,
     "builtin:ways": 3,
     "builtin:counteract": 1,
-    "none": 1,
+    "partial": 1,
     "builtin:objects": 2,
     "builtin:item-action": 1,
     "note-only": 1
@@ -236,9 +240,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Bloodline Robe",
@@ -1194,9 +1198,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Slithermaw's Bane (Heroic)",
@@ -2396,9 +2400,9 @@
    "time": "cast",
    "frequency": null,
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "Horn of Rust",
@@ -2859,9 +2863,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Words of Wisdom (Lesser)",
@@ -4349,9 +4353,9 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Moonstone Diadem",
@@ -6148,9 +6152,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Radiant Spark",
@@ -6159,7 +6163,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -7461,9 +7465,9 @@
    "time": "2",
    "frequency": "Once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:cast-spell",
    "kind": null,
-   "live": null
+   "live": "cast"
   },
   {
    "name": "The Carnival",
@@ -10082,9 +10086,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Cayden's Tankard",
@@ -13985,9 +13989,9 @@
    "time": "10 minutes",
    "frequency": "once per day",
    "trigger": false,
-   "result": "none",
+   "result": "builtin:structure",
    "kind": null,
-   "live": null
+   "live": "structure"
   },
   {
    "name": "Pocket Watch of Stethelos",
@@ -14151,7 +14155,7 @@
    "time": "2",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -15297,7 +15301,7 @@
    "time": "free",
    "frequency": "once per minute",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -16090,9 +16094,9 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "partial",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Brooch of Inspiration",
@@ -16619,8 +16623,8 @@
    "frequency": null,
    "trigger": false,
    "result": "resolves",
-   "kind": "check",
-   "live": "item"
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Mirror of Sorshen",
@@ -16629,9 +16633,9 @@
    "time": "3",
    "frequency": null,
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
   },
   {
    "name": "Fauna Guardian",
@@ -19136,7 +19140,7 @@
    "time": "2",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -19147,9 +19151,9 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "builtin:no-effect",
+   "result": "builtin:ways",
    "kind": null,
-   "live": null
+   "live": "ways"
   },
   {
    "name": "Serithtial",
@@ -20658,9 +20662,9 @@
    "time": "10 minutes",
    "frequency": null,
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Guiding Star Orb",
@@ -21940,20 +21944,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
-   "kind": "check",
-   "live": "item"
-  },
-  {
-   "name": "Essence Prism",
-   "type": "equipment",
-   "activation": null,
-   "time": "1 minute",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "gaps",
+   "kind": "save",
+   "live": "save"
   },
   {
    "name": "Essence Prism",
@@ -21964,7 +21957,18 @@
    "trigger": false,
    "result": "resolves",
    "kind": "check",
-   "live": "item"
+   "live": "save"
+  },
+  {
+   "name": "Essence Prism",
+   "type": "equipment",
+   "activation": null,
+   "time": "1 minute",
+   "frequency": null,
+   "trigger": false,
+   "result": "resolves",
+   "kind": "check",
+   "live": "save"
   },
   {
    "name": "Awakened Cold Iron Shot",
@@ -22292,7 +22296,7 @@
    "time": "reaction",
    "frequency": "once per hour",
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "save"
   },
@@ -26192,7 +26196,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -27667,7 +27671,7 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": false,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "save"
   },

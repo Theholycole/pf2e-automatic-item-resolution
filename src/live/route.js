@@ -13,6 +13,7 @@ import { isTeleport } from "./teleport-card.js";
 import { isObjects } from "./objects-card.js";
 import { isTable } from "./table-card.js";
 import { isTake } from "./take-card.js";
+import { isStructure } from "./structure-card.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -26,7 +27,9 @@ const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolut
         // (Or a push alone: Avalanche Boots' Shove pushed farther, src/compiler/shove-farther.js.)
         || Boolean(plan.resolution.outcomes?.success?.forcedMovement)
         // (Or a note Effect alone on the vehicle its user targets, Feather Token (Anchor)'s stopped boat: src/compiler/vehicles.js, 2026-10-27.)
-        || (/\bvehicle\b/i.test(String(plan.targeting.target)) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0));
+        || (/\bvehicle\b/i.test(String(plan.targeting.target)) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0)
+        // (Or what a creature has, taken or dropped once it's applied — The Juggler's caught item: plan.dropHeld, scripts/drop-held.js, 2026-10-27.)
+        || Boolean(plan.dropHeld));
 
 // Its user's own skill check against a creature's DC (The Crows' Thievery against the Reflex DC, Whip-Tongue Sling's Athletics against
 // the Fortitude DC): the ability module's card at the creatures the presser targets, its user's skill rolled (the core's check family).
@@ -68,6 +71,8 @@ export function routeOf(plan, text = "") {
     if (isObjects(plan)) return "objects";
     // (An ally's condition taken onto its user: scripts/take.js.)
     if (isTake(plan)) return "take";
+    // (A building it raises, the Guiding Chisel's: the environment module's walls, placed where it's clicked — scripts/structure.js.)
+    if (isStructure(plan)) return "structure";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

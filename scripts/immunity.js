@@ -19,7 +19,8 @@ export const immuneNow = (actor, immunity) => Boolean(actor) && isImmune(unexpir
 async function recipientsOf(state, choices) {
     const tokens = async (uuids) => (await Promise.all((uuids ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter((token) => token?.actor).map((token) => ({ actor: token.actor, token, name: token.name ?? token.actor.name, uuid: token.uuid }));
     // (A skill action's at the creature targeted, Curled Cure Gel's on the creature treated: it, 2026-10-27.)
-    const forOthers = (state.kind === "item" && state.plan?.item?.recipient === "targets") || (state.kind === "item-action" && Boolean(state.plan?.action?.targeted)) || (state.kind === "cast" && (choices.targets ?? []).length) || (state.kind === "fortune" && state.plan?.bonus?.recipient === "target") || (state.kind === "reroll" && ["companion", "target"].includes(state.plan?.reroll?.who));
+    // (Or an item card's for its user whose immunity is the creature targeted's, The Rakshasa's pledged follower: immunity.on "targets".)
+    const forOthers = (state.kind === "item" && (state.plan?.item?.recipient === "targets" || state.plan?.item?.immunity?.on === "targets")) || (state.kind === "item-action" && Boolean(state.plan?.action?.targeted)) || (state.kind === "cast" && (choices.targets ?? []).length) || (state.kind === "fortune" && state.plan?.bonus?.recipient === "target") || (state.kind === "reroll" && ["companion", "target"].includes(state.plan?.reroll?.who));
     if (forOthers) return tokens(choices.targets);
     // (A counteract card's creature picked, Contagion Metabolizer's drinker: the one its find step is given, then the one it found on — 2026-10-27.)
     const picked = (list, at) => (Number.isInteger(at) && list?.[at] ? list[at] : null);

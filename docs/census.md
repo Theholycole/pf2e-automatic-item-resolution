@@ -32,15 +32,15 @@ Results, for the items this module handles:
 | builtin:reroll | 4 | 0% |
 | builtin:table | 1 | 0% |
 | builtin:teleport | 8 | 1% |
-| builtin:ways | 61 | 4% |
+| builtin:ways | 62 | 4% |
 | builtin:whisper | 14 | 1% |
-| none | 3 | 0% |
+| none | 2 | 0% |
 
 ## By category
 
 | Category | Items | resolves | partial | note-only | gaps | builtin | none |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 371 | 1 | 2 | 0 | 135 | 3 |
+| other | 512 | 371 | 1 | 2 | 0 | 136 | 2 |
 | potion | 182 | 159 | 0 | 0 | 0 | 23 | 0 |
 | talisman | 156 | 102 | 0 | 0 | 0 | 54 | 0 |
 | elixir | 149 | 132 | 0 | 0 | 0 | 17 | 0 |
@@ -59,7 +59,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 
 | Category | Items | item | coat | expose | save | later | cast | zone | strike | reroll | fortune | action | counteract | ways | no card |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| other | 512 | 267 | 3 | 3 | 88 | 1 | 12 | 41 | 3 | 0 | 9 | 3 | 13 | 40 | 12 |
+| other | 512 | 267 | 3 | 3 | 88 | 1 | 12 | 41 | 3 | 0 | 9 | 3 | 13 | 41 | 11 |
 | potion | 182 | 100 | 0 | 0 | 1 | 58 | 9 | 1 | 0 | 0 | 0 | 0 | 5 | 5 | 0 |
 | talisman | 156 | 75 | 1 | 0 | 16 | 0 | 9 | 0 | 10 | 2 | 15 | 12 | 3 | 2 | 0 |
 | elixir | 149 | 130 | 0 | 0 | 1 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 3 | 0 |
@@ -71,7 +71,7 @@ Which card each item gets after PF2e's Use (`src/live/route.js`): **item** (heal
 | fulu | 46 | 20 | 0 | 0 | 11 | 1 | 1 | 4 | 0 | 2 | 2 | 0 | 0 | 1 | 2 |
 | drug | 24 | 1 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | toolkit | 9 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
-| **all** | **1486** | **741** | **48** | **89** | **134** | **65** | **34** | **147** | **13** | **4** | **26** | **19** | **42** | **61** | **18** |
+| **all** | **1486** | **741** | **48** | **89** | **134** | **65** | **34** | **147** | **13** | **4** | **26** | **19** | **42** | **62** | **17** |
 
 Why the rest have no card yet:
 
@@ -79,7 +79,7 @@ Why the rest have no card yet:
 |---|---:|
 | a save on a trigger or a passive (an aura, a reaction) | 11 |
 | another plan not played yet | 4 |
-| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 3 |
+| nothing read yet (one-offs: a talisman's trigger, an out-of-combat use) | 2 |
 
 ## What they do
 

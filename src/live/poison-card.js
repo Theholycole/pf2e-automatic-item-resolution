@@ -46,7 +46,9 @@ export function saveText(plan) {
         return `${words([].concat(check.statistic)[0])}${Number.isFinite(check.modifier) ? ` +${check.modifier}` : ""} against ${check.against?.statistic === "ac" ? "AC" : `${words(check.against?.statistic)} DC`}`;
     }
     const statistic = String(check.statistic ?? "fortitude");
-    return `DC ${check.against?.value ?? "?"} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)} save`;
+    // (A skill rolled as the save card's check, its user's own — Essence Prism's DC 30 Arcana, 2026-10-27 —: a check, not a save.)
+    const kind = ["fortitude", "reflex", "will"].includes(statistic) ? "save" : "check";
+    return `DC ${check.against?.value ?? "?"} ${statistic.charAt(0).toUpperCase()}${statistic.slice(1)} ${kind}${check.secret ? " (secret)" : ""}`;
 }
 
 // An automatic row in words: its damage ("2d6 fire damage", "1d6 persistent bleed damage") and conditions.
@@ -234,7 +236,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     const hint = !open ? "" : state.step === "then"
         ? `<p class="aar-hint">If the attack hit: target the creature hit and press the button for its ${escape(saveText(state.plan.thenSave))}.</p>`
         : state.own
-        ? `<p class="aar-hint">${escape(state.user.name)}'s own save (${escape(saveText(state.plan))}).</p>`
+        ? `<p class="aar-hint">${escape(state.user.name)}'s own ${/ save\b/.test(saveText(state.plan)) ? "save" : "check"} (${escape(saveText(state.plan))}).</p>`
         : state.attacker && state.plan?.retaliation?.who
         ? `<p class="aar-hint">Each time ${escape(state.plan.retaliation.who.replace("{user}", state.user.name))} while it lasts, target that creature (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : state.attacker
@@ -246,7 +248,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
         ? `<p class="aar-hint">Kept for later: when ${escape(state.user.name)} uses it, target ${escape(who)} (${escape(saveText(state.plan))}) and press the button.${escape(again)}</p>`
         : `<p class="aar-hint">${state.delivery ? "Exposes" : automatic ? "For" : checked ? "A check at" : "A save for"} ${escape(who)} (${escape(saveText(state.plan))}). Target them, then press the button.</p>`;
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
-    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.step === "then" ? "Its save: my targets" : state.own ? "Roll the save" : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
+    const controls = open && canApply ? `<footer class="aar-controls"><button type="button" data-air-action="apply">${state.step === "then" ? "Its save: my targets" : state.own ? (/ save\b/.test(saveText(state.plan)) ? "Roll the save" : "Roll the check") : state.delivery ? "Expose my targets" : state.later ? "Use it: my targets" : automatic ? "Apply to my targets" : checked ? "Check: my targets" : "Save: my targets"}</button></footer>` : open ? `<p class="aar-hint">Waiting for ${escape(state.user.name)}'s player or the GM.</p>` : "";
     // (Saves for the creatures around the one targeted, src/compiler/hit-around.js aroundAllies: said before Apply.)
     // (And a condition its user lowers beside it, Grim Ring's drained.)
     const ownLowered = state.plan?.allyArea ? [] : (state.plan?.item?.reduce ?? []).filter((one) => !one.who && one.slug).map((one) => `${state.user.name}: ${one.slug} lowered by ${one.by === "all" ? "all of it" : one.by}.`);

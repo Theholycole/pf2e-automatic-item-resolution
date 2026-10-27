@@ -274,3 +274,12 @@ export async function recover(actor, name, recovery) {
     }
     return lines;
 }
+
+// The item a card was for, gone once used (2026-10-27, plan.item.destroyed: a soulheart "is destroyed" by its Bolster Maiserene Phantom, the
+// phoenix fighting fan consumed by its Raise Dead) → the card's line.
+export async function destroyUsedItem(item) {
+    const own = item?.uuid ? await fromUuid(item.uuid).catch(() => null) : null;
+    if (!own?.delete) return `${item?.name ?? "The item"} is destroyed: remove it by hand.`;
+    await own.delete();
+    return `${own.name} is destroyed.`;
+}

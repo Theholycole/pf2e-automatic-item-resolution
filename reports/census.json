@@ -17,7 +17,7 @@
    "builtin:zone": 147,
    "resolves": 1097,
    "builtin:readied-bonus": 24,
-   "builtin:ways": 61,
+   "builtin:ways": 62,
    "builtin:item-action": 19,
    "builtin:conjure": 13,
    "builtin:counteract": 42,
@@ -27,7 +27,7 @@
    "builtin:whisper": 14,
    "builtin:table": 1,
    "builtin:objects": 9,
-   "none": 3,
+   "none": 2,
    "builtin:roll-twice": 2,
    "partial": 1,
    "note-only": 3
@@ -40,14 +40,14 @@
     "builtin:cast-spell": 12,
     "builtin:zone": 41,
     "resolves": 371,
-    "builtin:ways": 40,
+    "builtin:ways": 41,
     "builtin:readied-bonus": 9,
     "builtin:teleport": 5,
     "builtin:conjure": 4,
     "builtin:counteract": 13,
     "builtin:whisper": 7,
     "builtin:item-action": 3,
-    "none": 3,
+    "none": 2,
     "builtin:objects": 1,
     "partial": 1,
     "note-only": 2
@@ -388,10 +388,10 @@
    "zone": 147,
    "item": 741,
    "fortune": 26,
-   "none": 18,
+   "none": 17,
    "save": 134,
    "expose": 89,
-   "ways": 61,
+   "ways": 62,
    "action": 19,
    "conjure": 13,
    "counteract": 42,
@@ -408,8 +408,8 @@
    "other": {
     "cast": 12,
     "zone": 41,
-    "none": 12,
-    "ways": 40,
+    "none": 11,
+    "ways": 41,
     "save": 88,
     "item": 267,
     "fortune": 9,
@@ -520,7 +520,7 @@
   "noCard": {
    "triggered": 11,
    "other": 4,
-   "no-plan": 3
+   "no-plan": 2
   }
  },
  "gapCounts": {},
@@ -9966,7 +9966,9 @@
     "divine"
    ],
    "mechanisms": [],
-   "result": "none"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Vaccine (Major)",
