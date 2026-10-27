@@ -40,8 +40,12 @@ test("minds: a GM's line on a row a note Effect on that row, done on its own —
     assert.ok(Object.values(lily.resolution.outcomes).every((row) => !(row?.manualInstructions ?? []).some((line) => /believes you're undead/.test(line))));
 });
 
-test("not decided: words with game numbers stay work to build (Comprehension Elixir's check, Laboratory Coat's 20-foot transport); the spell module's catalysts untouched", () => {
-    assert.equal(compileItem(item("Comprehension Elixir (Lesser)"))?.decided, undefined);
+test("not decided: words with game numbers stay work to build (Laboratory Coat's 20-foot transport); the spell module's catalysts untouched", () => {
+    // (Comprehension Elixir's "you still need to attempt a skill check to Decipher Writing" is its user's own PF2e action, no number: since
+    // 2026-10-27 decided, its speech note — nor is an item's own name a number, Mortar of Hidden Meaning's "hidden", nor a range.)
+    assert.equal(compileItem(item("Comprehension Elixir (Lesser)"))?.decided, "speech");
+    assert.equal(compileActivations(item("Mortar of Hidden Meaning"))[0].plan.decided, "speech");
+    assert.equal(compileActivations(item("Envisioning Mask"))[0].plan.decided, "speech");
     assert.equal(activation("Laboratory Coat", "Quick Escape")?.decided, undefined);
     assert.equal(compileItem(item("Feral Linguist")), null);
 });

@@ -15,7 +15,7 @@
   "results": {
    "builtin:cast-spell": 35,
    "none": 124,
-   "resolves": 887,
+   "resolves": 889,
    "builtin:readied-bonus": 23,
    "builtin:zone": 121,
    "builtin:ways": 30,
@@ -24,7 +24,7 @@
    "note-only": 101,
    "builtin:conjure": 7,
    "builtin:counteract": 33,
-   "builtin:no-effect": 23,
+   "builtin:no-effect": 21,
    "builtin:teleport": 7,
    "builtin:fall-foam": 4,
    "builtin:reroll": 3,
@@ -132,9 +132,8 @@
   "elixir": {
    "count": 149,
    "results": {
-    "resolves": 108,
+    "resolves": 110,
     "builtin:counteract": 11,
-    "builtin:no-effect": 2,
     "partial": 13,
     "builtin:ways": 1,
     "builtin:whisper": 1,
@@ -395,7 +394,7 @@
   },
   "duration": {
    "count": 943,
-   "resolves": 666,
+   "resolves": 668,
    "gaps": 0,
    "none": 13
   }
@@ -403,8 +402,8 @@
  "live": {
   "totals": {
    "cast": 35,
-   "none": 162,
-   "item": 687,
+   "none": 160,
+   "item": 689,
    "fortune": 25,
    "zone": 121,
    "save": 135,
@@ -466,12 +465,12 @@
     "coat": 1
    },
    "elixir": {
-    "item": 128,
+    "item": 130,
     "counteract": 11,
-    "none": 4,
     "save": 1,
     "ways": 1,
     "whisper": 1,
+    "none": 2,
     "zone": 2,
     "later": 1
    },
@@ -535,7 +534,7 @@
   "noCard": {
    "no-plan": 124,
    "triggered": 11,
-   "gm": 23,
+   "gm": 21,
    "other": 4
   }
  },
@@ -2183,9 +2182,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Wand of Shardstorm (3rd-Rank Spell)",
@@ -12414,9 +12414,10 @@
    "mechanisms": [
     "duration"
    ],
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "gaps": [],
+   "live": "item"
   },
   {
    "name": "Hail of Arrows Snare",

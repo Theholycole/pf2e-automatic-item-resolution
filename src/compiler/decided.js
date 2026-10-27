@@ -101,7 +101,8 @@ export function withDecided(plan, { text = "", base = null, kind = "consumable",
     // "you still need to attempt a skill check to Decipher Writing": its user's own action. A range — telepathy 100 feet, a mind within 30
     // feet — is no number to apply either: since 2026-10-27 no longer MECHANICAL's.)
     const own = String(name ?? "").replace(/:.*$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
-    const guarded = words.split(own && own.length > 3 ? new RegExp(own.replace(/[.*+?^${}()|[\]\\]/g, "\\    if (lined ? COMBAT.test(words) : MECHANICAL.test(words)) return plan;"), "gi") : /(?!)/).join(" ").replace(/\b(?:attempt )?an? (?:skill )?check to Decipher Writing\b/gi, " ");
+    const named = own.length > 3 ? words.split(new RegExp(own.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")).join(" ") : words;
+    const guarded = named.replace(/\b(?:attempt )?an? (?:skill )?check to Decipher Writing\b/gi, " ");
     if (lined ? COMBAT.test(guarded) : MECHANICAL.test(guarded)) return plan;
     const decided = needs.includes("information") ? "information" : needs.find((need) => need === "speech" || need === "mind") ?? (lined ? "card-line" : needs[0]);
     const body = bodyOf(kind, text, words);

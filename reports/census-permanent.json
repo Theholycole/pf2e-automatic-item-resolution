@@ -6,19 +6,19 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1049,
+   "resolves": 1052,
    "builtin:cast-spell": 474,
    "partial": 102,
-   "none": 317,
+   "none": 316,
    "builtin:focus-point": 47,
    "builtin:counteract": 32,
    "builtin:readied-bonus": 47,
-   "note-only": 122,
+   "note-only": 120,
    "builtin:reroll": 45,
-   "builtin:whisper": 25,
+   "builtin:whisper": 27,
    "builtin:table": 7,
    "builtin:teleport": 28,
-   "builtin:no-effect": 70,
+   "builtin:no-effect": 68,
    "builtin:ways": 35,
    "builtin:pf2e-rules": 24,
    "builtin:zone": 27,
@@ -33,14 +33,14 @@
   "live": {
    "save": 434,
    "cast": 474,
-   "item": 713,
-   "none": 412,
+   "item": 714,
+   "none": 409,
    "focus": 47,
    "counteract": 32,
    "fortune": 62,
    "reroll": 45,
    "strike": 117,
-   "whisper": 25,
+   "whisper": 27,
    "table": 7,
    "teleport": 28,
    "ways": 35,
@@ -61,19 +61,19 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 623,
+    "resolves": 626,
     "builtin:cast-spell": 346,
-    "none": 217,
+    "none": 216,
     "builtin:focus-point": 45,
     "builtin:counteract": 28,
     "builtin:readied-bonus": 33,
-    "note-only": 93,
+    "note-only": 91,
     "builtin:reroll": 34,
     "partial": 50,
-    "builtin:whisper": 24,
+    "builtin:whisper": 26,
     "builtin:table": 4,
     "builtin:teleport": 14,
-    "builtin:no-effect": 56,
+    "builtin:no-effect": 54,
     "builtin:objects": 20,
     "builtin:zone": 14,
     "builtin:ways": 19,
@@ -819,7 +819,7 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -2286,9 +2286,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:whisper",
+   "kind": null,
+   "live": "whisper"
   },
   {
    "name": "Breath Blaster (Greater)",
@@ -10270,9 +10270,9 @@
    "time": "1 minute",
    "frequency": "once per hour",
    "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Essence Forge (Lesser)",
@@ -13555,9 +13555,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
-   "kind": null,
-   "live": null
+   "result": "resolves",
+   "kind": "check",
+   "live": "item"
   },
   {
    "name": "Horns of Naraga",
@@ -19810,9 +19810,9 @@
    "time": "1",
    "frequency": "once per day",
    "trigger": false,
-   "result": "builtin:no-effect",
+   "result": "builtin:whisper",
    "kind": null,
-   "live": null
+   "live": "whisper"
   },
   {
    "name": "Warmaster's Baton",

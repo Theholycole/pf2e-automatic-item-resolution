@@ -1,12 +1,12 @@
 {
  "generated": "2026-10-27",
  "totals": {
-  "entries": 1076,
+  "entries": 1069,
   "results": {
    "partial": 319,
-   "none": 441,
-   "note-only": 223,
-   "builtin:no-effect": 93
+   "none": 440,
+   "note-only": 221,
+   "builtin:no-effect": 89
   },
   "main": {
    "cast-changes": 21,
@@ -23,7 +23,6 @@
    "actions": 32,
    "immunity": 26,
    "creatures": 71,
-   "mind": 5,
    "objects": 25,
    "illusions": 50,
    "removed": 6,
@@ -35,16 +34,17 @@
    "situational": 15,
    "dying": 30,
    "senses": 20,
-   "speech": 7,
    "from-events": 4,
    "forms": 25,
-   "information": 10,
    "several": 23,
    "retaliation": 3,
    "missing-number": 6,
    "out-of-combat": 7,
    "fortune": 6,
-   "by-kind": 7
+   "information": 8,
+   "by-kind": 7,
+   "mind": 4,
+   "speech": 3
   },
   "any": {
    "cast-changes": 21,
@@ -52,7 +52,7 @@
    "areas": 177,
    "immunity": 86,
    "objects": 295,
-   "speech": 100,
+   "speech": 94,
    "out-of-combat": 360,
    "counteract": 86,
    "afflictions": 101,
@@ -69,15 +69,15 @@
    "actions": 64,
    "from-events": 26,
    "no-rules": 8,
-   "information": 179,
+   "information": 177,
    "creatures": 71,
    "situational": 78,
-   "mind": 60,
    "illusions": 60,
    "removed": 7,
    "range": 6,
    "cooldown": 12,
    "vehicles": 27,
+   "mind": 59,
    "senses": 27,
    "forms": 26,
    "fortune": 9,
@@ -398,19 +398,6 @@
     "situational",
     "objects",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Watcher's Armband",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "activation": "Find the Plant",
-   "result": "note-only",
-   "main": "mind",
-   "work": "dominate",
-   "needs": [
-    "mind"
    ]
   },
   {
@@ -1053,18 +1040,6 @@
    ]
   },
   {
-   "name": "Comprehension Elixir (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 2,
-   "result": "builtin:no-effect",
-   "main": "speech",
-   "work": "word",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Flask of Elemental Earth",
    "kind": "consumable",
    "tier": "general",
@@ -1434,19 +1409,6 @@
    "needs": [
     "afflictions",
     "counteract"
-   ]
-  },
-  {
-   "name": "Gossip's Eye",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "information",
-   "work": "location",
-   "needs": [
-    "information",
-    "speech"
    ]
   },
   {
@@ -5602,18 +5564,6 @@
    ]
   },
   {
-   "name": "Mortar of Hidden Meaning",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "none",
-   "main": "speech",
-   "work": "speak",
-   "needs": [
-    "speech"
-   ]
-  },
-  {
    "name": "Essence Forge (Lesser)",
    "kind": "activation",
    "tier": "adventure",
@@ -6389,18 +6339,6 @@
     "strike",
     "several",
     "reader"
-   ]
-  },
-  {
-   "name": "Comprehension Elixir (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 7,
-   "result": "builtin:no-effect",
-   "main": "speech",
-   "work": "word",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -7243,18 +7181,6 @@
     "objects",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Envisioning Mask",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "result": "builtin:no-effect",
-   "main": "speech",
-   "work": "language",
-   "needs": [
-    "speech"
    ]
   },
   {
@@ -10756,19 +10682,6 @@
     "objects",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Secret-Keeper's Mask (Reaper of Reputation)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "result": "builtin:no-effect",
-   "main": "information",
-   "work": "identify",
-   "needs": [
-    "information",
-    "speech"
    ]
   },
   {
