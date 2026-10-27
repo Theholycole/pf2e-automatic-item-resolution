@@ -514,6 +514,108 @@ const READINGS = [
         })))
     },
     {
+        // (Leaves that protect allies and show enemies: the allies' lesser cover (+1 circumstance to AC) for a round at the creatures its presser
+        // targets, then the enemies' card — Revealing Light's Dazzled for a minute, its rule on invisibility and concealment a note Effect.)
+        name: "Sandalwood Fan: Cloud of Leaves",
+        sentences: [
+            /^You summon leaves that protect your allies and identify enemies\.$/,
+            /^All allies and indifferent creatures within (\d+) feet of you gain lesser cover for (\d+) rounds?, while enemies come under the effect of Revealing Light for (\d+) (minutes?|rounds?)\.$/
+        ],
+        card: ([, cloud]) => {
+            const area = { type: "emanation", value: Number(cloud[1]) };
+            const round = { mode: "fixed", value: Number(cloud[2]), unit: "rounds", expiry: "turn-start", anchor: "effect-start" };
+            const light = timeOf(cloud[3], cloud[4]);
+            const row = (fields = {}) => ({ ...none(), ...fields });
+            const enemies = {
+                targeting: { target: "the enemies within 30 feet", range: null, area },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: row({ effects: [{ kind: "condition", slug: "dazzled", value: null, duration: light }], noteEffects: [{ label: "Revealing Light", text: "Revealing Light's glow: Dazzled; if it was Invisible, it's Concealed instead, and concealment it has for any other reason is gone.", duration: light }] }) } },
+                notes: ["Target the enemies within 30 feet of its user."]
+            };
+            return {
+                targeting: { target: "your allies in the area", range: null, area },
+                allyArea: true,
+                resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: row(), success: row({ modifiers: [{ selector: "ac", value: 1, type: "circumstance", duration: round }] }), failure: row(), criticalFailure: row() } },
+                notes: ["Lesser cover for a round for the allies and indifferent creatures within 30 feet of its user: target them. The enemies' card follows."],
+                again: { plan: enemies, later: false }
+            };
+        }
+    },
+    {
+        // (Regeneration 15 for a minute, PF2e's own Effect; the swarm it collapses into at each regeneration in its normal form (and back once
+        // it's at full Hit Points) a note Effect pointing to PF2e's swarm Effect; Swarming Bites' save card kept open for the minute.)
+        name: "Ouroboros Buckles",
+        over: true,
+        sentences: [
+            /^You call forth the cursed regenerative blood of an ouroboros to recover from your wounds\.$/,
+            /^You gain regeneration (\d+) for (\d+) (minutes?|rounds?); fire damage deactivates this regeneration\.$/,
+            /^Each time you regain Hit Points from this regeneration, if you're in your normal form, you collapse into a Large swarm of Tiny snakes\.$/,
+            /^This is a polymorph effect that changes you into a battle form\.$/,
+            /^When you're a swarm of snakes, you gain low-light vision, imprecise scent \(30 feet\), a Speed of 20 feet, a climb Speed of 20 feet, and a swim Speed of 20 feet\.$/,
+            /^You have an AC of 16 \+ your level and ignore your armor's check penalty and Speed reduction\.$/,
+            /^Also, you gain resistance 5 to physical damage and weakness 5 to area damage and splash damage\.$/,
+            /^You can use none of your normal Strikes\.$/,
+            /^Instead, you can use Swarming Bites, a single action that deals (\d+d\d+) piercing plus (\d+d\d+) poison damage to creatures in your space with a @Check\[reflex\|dc:(\d+)\|basic[^\]]*\] save\.$/,
+            /^If you're in this battle form and are already at full HP when your regeneration occurs, the snakes instantaneously slither together, and you transform into your original form\.$/,
+            /^Effect: Ouroboros Buckles Effect: Ouroboros Buckles \(Swarm of Snakes\)$/
+        ],
+        card: ([, regeneration, , , , , , , bites], plan, { html, base }) => {
+            const own = /@UUID\[(Compendium\.[\w.-]+\.Item\.[A-Za-z0-9]{16})\]\{Effect: Ouroboros Buckles\}/.exec(html)?.[1];
+            if (!own || !/\{Effect: Ouroboros Buckles \(Swarm of Snakes\)\}/.test(html)) return null;
+            const duration = timeOf(regeneration[2], regeneration[3]);
+            const swarming = {
+                ...base,
+                source: { ...base.source, name: `${base.source.name}: Swarming Bites` },
+                automation: { level: "automatic" },
+                targeting: { target: "the creatures in its space", range: null, area: null },
+                trigger: { event: "use" },
+                resolution: { kind: "save", check: { roll: "save", statistic: "reflex", basic: true, against: { dc: "fixed", value: Number(bites[3]) } }, sharedDamage: { rollOnce: true, components: [{ id: "0", formula: `${bites[1]}[piercing]`, type: null, category: null }, { id: "1", formula: `${bites[2]}[poison]`, type: null, category: null }] }, outcomes: Object.fromEntries([["criticalSuccess", 0], ["success", 0.5], ["failure", 1], ["criticalFailure", 2]].map(([degree, multiplier]) => [degree, { damage: { mode: "shared", multiplier, sourceComponentIds: multiplier ? ["0", "1"] : [] }, effects: [] }])) }
+            };
+            return {
+                targeting: { target: null, range: null, area: null },
+                resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), nativeEffects: [{ uuid: own, label: "Effect: Ouroboros Buckles" }], noteEffects: [{ label: "Swarm of snakes", text: "Each time its regeneration heals it in its normal form, it collapses into a Large swarm of Tiny snakes: apply Effect: Ouroboros Buckles (Swarm of Snakes), PF2e's battle form (low-light vision, scent, its Speeds, AC 16 + its level, resistance 5 physical, weakness 5 area and splash, no Strikes but Swarming Bites). In the swarm and at full Hit Points when it regenerates, it's back in its own form: remove that Effect.", duration }] } } },
+                again: { plan: swarming, later: true, repeat: true, time: { value: duration.value, unit: duration.unit }, when: "{user} uses Swarming Bites (1 action) as a swarm, at the creatures in its space" },
+                notes: undefined,
+                partial: undefined,
+                unread: undefined
+            };
+        }
+    },
+    {
+        // (A summon spell counteracted to control its creature for a turn, then the creature's –2 status to attacks against its user: the
+        // counteract card over the creature its presser picks, its success a note Effect with PF2e's mark of the user — the spell not ended.)
+        name: /^Bloodstone Doll \((?:Minor|Moderate|Major)\)$/,
+        over: true,
+        sentences: [
+            /^Trigger A creature within (\d+) feet casts a summon spell Requirements You have a free hand\.$/,
+            /^This small doll has been carved from a fragment of Bloodstone\.$/,
+            /^When you Activate a bloodstone doll in response to another's magic, you Interact to take it in hand and hold it up toward the triggering creature\.$/,
+            /^Attempt a counteract check against the triggering spell with a counteract modifier of \+\d+ and a counteract rank of \d+\.$/,
+            /^If the spell would be counteracted, the bloodstone doll instead influences the summoned creature\.$/,
+            /^You gain control of the summoned creature and can dictate its (\d+) actions for that turn\.$/,
+            /^The triggering creature then regains control of their summoned creature, but the summoned creature takes a -(\d+) status penalty to attack rolls against you\.$/,
+            /^Your bloodstone doll shatters when the summon spell ends\.?$/
+        ],
+        card: ([trigger, , , , , control, penalty], plan) => {
+            const counteract = plan?.item?.counteract;
+            if (plan?.builtin !== "counteract" || !counteract) return null;
+            return {
+                keep: true,
+                partial: undefined,
+                automation: { ...(plan.automation ?? {}), level: "automatic" },
+                item: {
+                    ...plan.item,
+                    counteract: {
+                        ...counteract,
+                        within: Number(trigger[1]) + 30,
+                        free: { ...counteract.free, counteredWords: "not ended: the doll takes hold of its summoned creature instead" },
+                        afterFree: { name: "bloodstone doll", words: `Its user dictates its ${control[1]} actions this turn; then its caster has it back, but it takes a –${penalty[1]} status penalty to attack rolls against its user while the summon lasts.`, duration: null, against: "user", penalty: { selector: "attack-roll", type: "status", value: -Number(penalty[1]) } },
+                        notes: ["Pick the summoned creature, the spell its caster just cast; the doll shatters when that spell ends."]
+                    }
+                }
+            };
+        }
+    },
+    {
         // (An Animated Broom with no Strike, for menial tasks out of combat, for an hour (8 for the greater key).)
         name: /^Cordelia's (?:Greater )?Construct Key$/,
         sentences: [

@@ -221,7 +221,8 @@ test("counteracts at a triggering spell or affliction in more words: Bloodstone 
     const { compileActivations } = await import("../src/compiler/permanent.js");
     const doll = compileItem(source("Bloodstone Doll (Minor)"));
     assert.deepEqual([routeOf(doll), doll.item.counteract.modifier, doll.item.counteract.rank, doll.item.counteract.free.name], ["counteract", 9, 2, "the triggering spell"]);
-    assert.match(doll.item.counteract.notes.join(" "), /You gain control of the summoned creature/);
+    // (2026-10-27: its control of the summoned creature is the success's note Effect, src/compiler/creature-readings.js — no longer the GM's.)
+    assert.match(doll.item.counteract.afterFree.words, /dictates its 2 actions this turn/);
     const [theater] = compileActivations(source("The Theater"));
     assert.deepEqual([theater.plan.item.counteract.free.name, theater.plan.item.counteract.fromUser], ["the misfortune effect", { modifier: "class-dc", rank: "half-level" }]);
     const [locksmith] = compileActivations(source("The Locksmith"));

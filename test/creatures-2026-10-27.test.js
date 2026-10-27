@@ -12,6 +12,7 @@ import { routeOf } from "../src/live/route.js";
 import { conjuredChanges, countNow, pickCandidates, pickedPlan, slainUntil } from "../src/live/conjured.js";
 import { frequencyText, periodOf } from "../src/live/activations-card.js";
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
+import { afterFreeRules } from "../src/live/counteract-card.js";
 import { SPIDER_SWARM } from "../src/compiler/creature-readings.js";
 import { createItemCard, previewLines } from "../src/live/card.js";
 
@@ -207,4 +208,30 @@ test("Doctrine of Blissful Eternity's healing for its undead minion, a way per s
         const [strike, ghost] = activations(`Weapon Shot (${grade})`);
         assert.deepEqual([routeOf(strike), ghost.decided, done(ghost)], ["strike", "one-off", true], grade);
     }
+});
+
+test("Sandalwood Fan's Cloud of Leaves: the allies' lesser cover for a round, then the enemies' Revealing Light (Dazzled for a minute, its concealment rule a note Effect)", () => {
+    const leaves = activation("Sandalwood Fan", "Cloud of Leaves");
+    const [ac] = leaves.resolution.outcomes.success.modifiers;
+    const enemies = leaves.again.plan.resolution.outcomes.success;
+    assert.deepEqual([done(leaves), routeOf(leaves), leaves.allyArea, [ac.selector, ac.type, ac.value, ac.duration.value], leaves.again.later, enemies.effects.map((effect) => [effect.slug, effect.duration.value, effect.duration.unit]), enemies.noteEffects[0].duration.value], [true, "save", true, ["ac", "circumstance", 1, 1], false, [["dazzled", 1, "minutes"]], 1]);
+    assert.equal(routeOf({ ...leaves.again.plan, item: leaves.item }), "save");
+});
+
+test("Ouroboros Buckles' regeneration: PF2e's own Effect, its swarm a note Effect for the minute, Swarming Bites' basic Reflex DC 41 card kept open", () => {
+    const [regenerate, spray] = activations("Ouroboros Buckles");
+    const row = regenerate.resolution.outcomes.success;
+    assert.deepEqual([done(regenerate), routeOf(regenerate), row.nativeEffects.map((effect) => effect.uuid), row.noteEffects[0].duration.value, regenerate.again.repeat, regenerate.again.plan.resolution.check.against.value, regenerate.again.plan.resolution.sharedDamage.components.map((component) => component.formula), spray.resolution.kind], [true, "item", ["Compendium.pf2e.equipment-effects.Item.KbhyBlEERhMvGwbk"], 1, true, 41, ["4d4[piercing]", "2d6[poison]"], "save"]);
+});
+
+test("Bloodstone Dolls: the counteract card over the summoned creature, its success not ending the spell but a note Effect of the user's control and PF2e's mark for the –2 against its user; Alicorn Lance, Viper Arrow and Cloning Potion one-offs", () => {
+    for (const [grade, modifier] of [["Minor", 9], ["Moderate", 17], ["Major", 25]]) {
+        const doll = compileItem(item(`Bloodstone Doll (${grade})`));
+        const counteract = doll.item.counteract;
+        assert.deepEqual([done(doll), routeOf(doll), counteract.modifier, counteract.within, counteract.afterFree.against, counteract.afterFree.penalty, counteract.afterFree.duration], [true, "counteract", modifier, 90, "user", { selector: "attack-roll", type: "status", value: -2 }, null], grade);
+        assert.match(counteract.free.counteredWords, /not ended/);
+    }
+    const rules = afterFreeRules({ name: "bloodstone doll", penalty: { selector: "attack-roll", type: "status", value: -2 } }, "Scene.s.Token.t");
+    assert.deepEqual(rules, [{ key: "TokenMark", slug: "air-bloodstone-doll", uuid: "Scene.s.Token.t" }, { key: "FlatModifier", selector: "attack-roll", type: "status", value: -2, predicate: ["target:mark:air-bloodstone-doll"] }]);
+    for (const plan of [activations("Alicorn Lance")[0], activations("Viper Arrow")[0], compileItem(item("Cloning Potion"))]) assert.deepEqual([plan.decided, done(plan)], ["one-off", true]);
 });

@@ -4,8 +4,8 @@
 // DC and rank the card shows (the GM's where PF2e didn't know), and removes what it counteracts.
 
 import { rememberCastDuration } from "./cast-duration.js";
-import { DEGREE_WORDS, counteractCandidates, counteractCardHTML, counteractResult, counteracts, createCounteractCard } from "../src/live/counteract-card.js";
-import { itemNoteSource } from "../src/live/card.js";
+import { DEGREE_WORDS, afterFreeRules, counteractCandidates, counteractCardHTML, counteractResult, counteracts, createCounteractCard } from "../src/live/counteract-card.js";
+import { itemNoteSource, ruleEffectSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 import { FLAG, MODULE_ID, afflictionsOf, creatureOf, removeAfflictions, creaturesNear, entryOf, stateOf } from "./foundry.js";
 
@@ -148,8 +148,12 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
             // (What it keeps the creature picked from after, Devil's Trap's devil: a note Effect on it for that time, 2026-10-27.)
             const after = state.counteract.afterFree;
             if (after && target !== state.user) {
-                await actor.createEmbeddedDocuments("Item", [itemNoteSource({ name: after.name, words: after.words, duration: after.duration }, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
-                lines.push(`${target.name}: ${after.words.charAt(0).toLowerCase()}${after.words.slice(1)} for ${after.duration.value} ${after.duration.value === 1 ? after.duration.unit.replace(/s$/, "") : after.duration.unit}.`);
+                const at = { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID };
+                // (A penalty against its user alone, Bloodstone Doll's –2 to attacks against it: PF2e's mark of its user's token on the note
+                // Effect — src/live/counteract-card.js afterFreeRules.)
+                const rules = after.against === "user" && after.penalty && state.user.tokenUuid ? afterFreeRules(after, state.user.tokenUuid) : [];
+                await actor.createEmbeddedDocuments("Item", [rules.length ? ruleEffectSource({ name: after.name, words: after.words, rules, duration: after.duration }, at) : itemNoteSource({ name: after.name, words: after.words, duration: after.duration }, at)]);
+                lines.push(`${target.name}: ${after.words.charAt(0).toLowerCase()}${after.words.slice(1).replace(/\.$/, "")}${after.duration ? ` for ${after.duration.value} ${after.duration.value === 1 ? after.duration.unit.replace(/s$/, "") : after.duration.unit}` : ""}.`);
             }
             // (What its user then has, Spell Duelist's Siphon's absorbed spell: a note Effect on it.)
             const kept = state.counteract.onCounter;
