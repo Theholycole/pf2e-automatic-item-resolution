@@ -268,8 +268,9 @@ test("an item with a time and nothing else the module reads: a note of its text 
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.effect?.kind]), [["effect", "drinker", "note"]]);
     // With no time, nothing (the GM's). (2026-10-27: Swamp Lily Quilt for Ration Tonic, whose nourishment is now its card's line —
     // src/compiler/needs.js no longer reads its "fruity scent" as a sense. Later that day Beckoning Cat Amulet for Swamp Lily Quilt, whose
-    // mud is now the ability module's zone — src/compiler/area-readings.js.)
-    assert.equal(compileItem(item("Beckoning Cat Amulet")), null);
+    // mud is now the ability module's zone — src/compiler/area-readings.js. And later still Heartblood Ring for Beckoning Cat Amulet, whose
+    // allies' rerolls are now its card — src/compiler/trigger-readings.js.)
+    assert.equal(compileItem(item("Heartblood Ring")), null);
 });
 
 test("a snare: the ability module's zone, a 5-foot square set off once by the first creature to enter it", () => {

@@ -6,12 +6,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/leveldb.mjs";
+import { fakeFoundry, settle } from "./support/fake-foundry.mjs";
 import { compileItem, spellIndex } from "../src/compiler/index.js";
 import { compileActivations } from "../src/compiler/permanent.js";
 import { breathes, planFor, sunlightVulnerable } from "../src/live/if-target.js";
+import { raisedResult, rerollText, triggeringRoll } from "../src/live/reroll-card.js";
 import { routeOf } from "../src/live/route.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
+const SOCKET = `module.${MODULE_ID}`;
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const documents = (pack) => readDocuments(path.join(PACKS, pack)).filter((doc) => doc.collection === "items");
 const equipment = documents("equipment");
@@ -20,8 +23,10 @@ const options = { spells: spellIndex(documents("spells")), ...(claims ? { claims
 const source = (name) => equipment.find((doc) => doc.name === name);
 const item = (name) => ({ ...source(name), ownerLevel: Number(source(name).system.level?.value) || 1 });
 const activation = (name, which) => compileActivations(item(name), options).find((entry, index) => (typeof which === "string" ? entry.activation.name === which : index === (which ?? 0)))?.plan;
+const consumable = (name) => compileItem(item(name), options);
 // (Nothing left to the table: not partial nor note-only, no notes unread, no GM lines on its rows.)
 const done = (plan) => Boolean(plan) && !plan.partial && !plan.noteOnly && plan.builtin !== "no-effect" && !(plan.unread ?? []).length && Object.values(plan.resolution?.outcomes ?? {}).every((row) => !(row?.manualInstructions ?? []).length);
+const reminders = (plan) => Object.values(plan.resolution?.outcomes ?? {}).flatMap((row) => row?.noteEffects ?? []).filter((note) => note.reminder);
 const ability = (name, type = "action") => ({ name, type });
 
 test("Smogger's thick smog: every creature in it saves, its wearer too; those that need air and aren't holding their breath −2 and Sickened 2 on a failure", () => {
@@ -69,4 +74,89 @@ test("Horn of the Sun Aurochs: its enemies' save, Frightened for those vulnerabl
     const wraith = planFor(horn, { items: [ability("Sunlight Powerlessness")] });
     assert.deepEqual(wraith.resolution.outcomes.criticalFailure.effects.map((effect) => [effect.slug, effect.value]), [["frightened", 2]]);
     assert.equal(planFor(horn, { items: [] }), horn);
+});
+
+test("rerolls: Beckoning Cat Amulet's allies' failed Reflex saves, Silvanshee Collar's failed Lie or Make an Impression (the higher kept)", () => {
+    const cat = consumable("Beckoning Cat Amulet");
+    assert.ok(done(cat));
+    assert.equal(routeOf(cat), "reroll");
+    const { after, ...reroll } = cat.reroll;
+    assert.deepEqual(reroll, { what: "save", statistic: "reflex", keep: "higher", who: "allies", within: 10, failed: true });
+    assert.match(after, /same effect as its user's/, "the reroll card's own line");
+    assert.equal(rerollText(cat.reroll), "Each ally targeted within 10 feet: its latest failed Reflex save, rerolled: the higher result");
+    // (Its search: the ally's own latest Reflex save that failed — not a later success, nor another's.)
+    const messages = [
+        { id: "a", type: "saving-throw", domains: ["reflex"], actorUuid: "Actor.ally", outcome: "criticalFailure" },
+        { id: "b", type: "saving-throw", domains: ["reflex"], actorUuid: "Actor.ally", outcome: "success" },
+        { id: "c", type: "saving-throw", domains: ["reflex"], actorUuid: "Actor.other", outcome: "failure" }
+    ];
+    assert.equal(triggeringRoll(messages, cat.reroll, { actorUuid: "Actor.ally" }), "a");
+    const collar = activation("Silvanshee Collar", "Awww!");
+    assert.ok(done(collar));
+    assert.deepEqual(collar.reroll, { what: "check", statistic: ["deception", "diplomacy"], keep: "higher", who: "self" });
+    assert.deepEqual(collar.trigger.frequency, { max: 1, per: "hour", raw: "once per hour" });
+});
+
+test("Pyrefeather Token: its 5 temporary Hit Points, and the reroll card's recovery check at a DC 1 lower", () => {
+    const token = consumable("Pyrefeather Token");
+    assert.ok(done(token));
+    assert.equal(routeOf(token), "item", "its item card, the reroll card beside it");
+    assert.deepEqual(token.reroll, { what: "check", keep: "new", who: "self", recovery: true, raise: { dc: -1 } });
+    assert.deepEqual(token.resolution.outcomes.success.effects.map((effect) => [effect.kind, effect.amount]), [["temp-hp", 5]]);
+    assert.deepEqual(reminders(token), [], "no reminder of the whole text");
+    assert.equal(rerollText(token.reroll), "Your latest recovery check: its DC 1 lower, its degree again");
+    // (A 10 against DC 11 — dying 1 — fails; against 10 it succeeds.)
+    assert.deepEqual(raisedResult({ oldTotal: 10, oldNatural: 10, dc: 11, raise: token.reroll.raise }), { degree: 2, total: 10, before: 1, dc: 10 });
+    // (Its search: the latest flat check, not a later skill check.)
+    assert.equal(triggeringRoll([{ id: "r", type: "flat-check", actorUuid: "Actor.x" }, { id: "s", type: "skill-check", actorUuid: "Actor.x" }], token.reroll, { actorUuid: "Actor.x" }), "r");
+});
+
+// --- Live: the reroll cards, against the stand-in for Foundry. ----------------------------------------------------------------------------------
+
+// (Shared with the other flow tests: these creatures stand 777 squares down.)
+const foundry = await fakeFoundry();
+const cat = foundry.makeActor({ id: "b3t-cat", name: "Kitty", owners: ["player"] });
+const ally = foundry.makeActor({ id: "b3t-ally", name: "Pal" });
+const other = foundry.makeActor({ id: "b3t-other", name: "Bystander" });
+foundry.place(cat, 0, 77700);
+foundry.place(ally, 100, 77700);
+foundry.place(other, 200, 77700);
+const rolled = (actor, type, context = {}) => foundry.makeMessage({ flags: { pf2e: { context: { type, ...context } } }, speaker: { actor: actor.id }, actor });
+async function useCard(actor, name) {
+    const given = foundry.giveItem(actor, source(name));
+    const data = given.toObject();
+    const message = foundry.makeMessage({ flags: { pf2e: { origin: { uuid: given.uuid, sourceId: data._stats.compendiumSource, type: given.type } } }, speaker: { actor: actor.id }, actor, token: actor.token.document });
+    const count = foundry.messages.length;
+    await foundry.call("createChatMessage", message);
+    await settle();
+    return foundry.messages.slice(count);
+}
+
+test("Beckoning Cat Amulet live: each ally targeted has its latest failed Reflex save rerolled, the higher kept; one with none is said so", async () => {
+    const failed = rolled(ally, "saving-throw", { domains: ["saving-throw", "reflex"], outcome: "failure" });
+    rolled(other, "saving-throw", { domains: ["saving-throw", "reflex"], outcome: "success" });
+    const [card] = await useCard(cat, "Beckoning Cat Amulet");
+    assert.equal(card.flags[MODULE_ID].card.kind, "reroll");
+    const before = foundry.rerolls.length;
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [ally.token.uuid, other.token.uuid], userId: "player" });
+    await settle();
+    const done = foundry.rerolls.slice(before);
+    assert.deepEqual(done.map((entry) => [entry.message.id, entry.options]), [[failed.id, { keep: "higher" }]], "the ally's failed save only");
+    const state = card.flags[MODULE_ID].card;
+    assert.equal(state.status, "applied");
+    assert.ok(state.results.some((line) => /^Bystander: no failed reflex saving throw/.test(line)), JSON.stringify(state.results));
+});
+
+test("Pyrefeather Token live: its item card and the reroll card beside it, which works out the recovery check at a DC 1 lower", async () => {
+    const recovery = rolled(cat, "flat-check", { outcome: "failure", dc: { value: 11 } });
+    recovery.rolls = [{ total: 10, dice: [{ total: 10 }] }];
+    const cards = await useCard(cat, "Pyrefeather Token");
+    const kinds = cards.map((message) => message.flags?.[MODULE_ID]?.card?.kind);
+    assert.ok(kinds.includes("reroll") && kinds.includes("item"), JSON.stringify(kinds));
+    const card = cards.find((message) => message.flags?.[MODULE_ID]?.card?.kind === "reroll");
+    await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, targets: [], userId: "player" });
+    await settle();
+    const state = card.flags[MODULE_ID].card;
+    assert.equal(state.status, "applied", JSON.stringify(state.results));
+    assert.match(state.results[0], /^Kitty's recovery check \(10\) against DC 10 \(11 − 1\): a success \(was a failure\)\.$/);
 });

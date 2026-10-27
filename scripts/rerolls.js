@@ -17,7 +17,7 @@ export async function postRerollCard({ message, plan, used, actor, token }) {
 // A PF2e message as the card's search reads it.
 const asRoll = (message) => {
     const context = message?.flags?.pf2e?.context;
-    return { id: message?.id, type: context?.type ?? null, domains: context?.domains ?? [], isReroll: Boolean(context?.isReroll), actorUuid: message?.actor?.uuid ?? null, actorId: message?.speaker?.actor ?? null, targetActorUuid: context?.target?.actor ?? null };
+    return { id: message?.id, type: context?.type ?? null, domains: context?.domains ?? [], isReroll: Boolean(context?.isReroll), actorUuid: message?.actor?.uuid ?? null, actorId: message?.speaker?.actor ?? null, targetActorUuid: context?.target?.actor ?? null, outcome: context?.outcome ?? null };
 };
 
 // targets: the token uuids the presser had targeted (a companion's reroll).
@@ -25,6 +25,8 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     const state = stateOf(message);
     if (!state || state.kind !== "reroll" || state.status !== "open") return null;
     const reroll = state.plan.reroll;
+    // (Its allies' own, Beckoning Cat Amulet's: each creature targeted.)
+    if (reroll.who === "allies") return rerollAllies(message, state, targets);
     // (Whose roll: the user's, or for a companion's reroll the creature targeted; "either", the creature targeted if any, else the user.)
     const companion = reroll.who === "companion" || reroll.who === "either" || reroll.who === "target" ? await fromUuid(Array.isArray(targets) ? targets[0] ?? "" : "").catch(() => null) : null;
     if (reroll.who === "companion" && !companion?.actor) throw new Error("Target the companion first.");
@@ -54,6 +56,31 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     // (The roll's own creature: the user's, or the companion's or creature's targeted.)
     const whose = reroll.who === "attacker" ? `${triggering.actor?.name ?? "the attacker"}'s attack roll` : `${actor.name}'s ${WHAT_WORDS[triggering.flags.pf2e.context.type === "attack-roll" ? "attack" : triggering.flags.pf2e.context.type === "saving-throw" ? "save" : "check"]}`;
     const next = { ...state, status: "applied", results: [`Rerolled ${whose}${reroll.keep === "new" ? "" : `, keeping the ${reroll.keep} result`}.`] };
+    return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
+}
+
+// Its allies' own rolls (2026-10-27, Beckoning Cat Amulet's "any allies within 10 feet who also just failed … can also reroll their saving
+// throw and use the better result"): each creature the presser targets, its latest failed save of that kind in the recent chat rerolled by
+// PF2e, the higher kept; one with none said so.
+async function rerollAllies(message, state, targets) {
+    const reroll = state.plan.reroll;
+    const tokens = (await Promise.all((Array.isArray(targets) ? targets : []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter((token) => token?.actor);
+    if (!tokens.length) throw new Error("Target the allies first.");
+    const Check = game.pf2e?.Check;
+    if (!Check?.rerollFromMessage) throw new Error("PF2e's reroll isn't there; reroll each from the message's menu.");
+    const recent = (game.messages?.contents ?? []).slice(-RECENT).map(asRoll);
+    const lines = [];
+    for (const token of tokens) {
+        const name = token.name ?? token.actor.name;
+        const id = triggeringRoll(recent, reroll, { actorUuid: token.actor.uuid, actorId: token.actor.id });
+        if (!id) {
+            lines.push(`${name}: no ${reroll.failed ? "failed " : ""}${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} to reroll in the recent chat.`);
+            continue;
+        }
+        await Check.rerollFromMessage(game.messages.get(id), reroll.keep === "new" ? {} : { keep: reroll.keep });
+        lines.push(`Rerolled ${name}'s ${WHAT_WORDS[reroll.what] ?? "roll"}${reroll.keep === "new" ? "" : `, keeping the ${reroll.keep} result`}.`);
+    }
+    const next = { ...state, status: "applied", results: lines };
     return message.update({ content: rerollCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
 
@@ -183,6 +210,9 @@ async function raiseRoll(message, state, triggering, actor) {
             ? `${actor.name}'s roll: a ${raise.die} on the die instead of ${oldNatural ?? "?"} — ${result.total}${dc ? ` against DC ${dc}` : ""}: ${degree(result.degree)} (was ${degree(result.before)}).`
             : raise.ac
             ? `${triggering.actor?.name ?? "The attacker"}'s attack roll (${old.total}) against ${state.user.name}'s AC ${dc ?? "?"} + ${raise.ac.value} ${raise.ac.type} = ${result.dc ?? "?"}: ${degree(result.degree)} (was ${degree(result.before)}).`
+            // (Its own DC changed, Pyrefeather Token's recovery check, 2026-10-27.)
+            : Number.isFinite(raise.dc)
+            ? `${actor.name}'s ${state.plan.reroll.recovery ? "recovery check" : "roll"} (${old.total}) against DC ${result.dc ?? "?"} (${dc ?? "?"} ${raise.dc < 0 ? "−" : "+"} ${Math.abs(raise.dc)}): ${degree(result.degree)} (was ${degree(result.before)}).`
             : raise.change
             ? `${state.plan.reroll.who === "attacker" ? `${triggering.actor?.name ?? "The attacker"}'s ${state.plan.reroll.what === "check" ? "check" : "attack roll"}` : `${actor.name}'s roll`} (${old.total}): ${degree(result.before)}${result.degree === result.before ? ", nothing to change" : ` becomes ${degree(result.degree)}`}.`
             : `${actor.name}'s roll: ${old.total} + ${result.added} ${raise.bonus.type} = ${result.total}${dc ? ` against DC ${dc}` : ""}: ${degree(result.degree)} (was ${degree(result.before)}).`,

@@ -41,8 +41,9 @@ export function raisedResult({ oldTotal, oldNatural = null, dc = null, oldDegree
         return { degree: degreeOf({ total, dc, natural: raise.die }), total, before, die: raise.die };
     }
     // (Its user's AC raised against the attack: the same roll against that much higher a DC.)
-    if (raise.ac) {
-        const raised = Number.isFinite(Number(dc)) ? Number(dc) + raise.ac.value : null;
+    // (Or the roll's own DC changed, Pyrefeather Token's recovery check 1 lower — raise.dc, 2026-10-27.)
+    if (raise.ac || Number.isFinite(raise.dc)) {
+        const raised = Number.isFinite(Number(dc)) ? Number(dc) + (raise.ac ? raise.ac.value : raise.dc) : null;
         return { degree: degreeOf({ total: Number(oldTotal), dc: raised, natural: oldNatural }), total: Number(oldTotal), before, dc: raised };
     }
     const added = Number(raise.bonus?.value ?? bonusRolled) || 0;
@@ -66,6 +67,8 @@ export function rerollText(reroll) {
     if (Number.isFinite(reroll.raise?.die)) return `Your latest ${what}: a ${reroll.raise.die} on the die instead of what you rolled, its degree again`;
     // (Its user's AC raised against the latest attack at them: that attack's degree again.)
     if (reroll.raise?.ac) return `The latest attack roll at you: +${reroll.raise.ac.value} ${reroll.raise.ac.type} bonus to your AC against it, its degree again`;
+    // (Its DC changed: Pyrefeather Token's recovery check, 2026-10-27.)
+    if (Number.isFinite(reroll.raise?.dc)) return `Your latest ${reroll.recovery ? "recovery check" : what}: its DC ${Math.abs(reroll.raise.dc)} ${reroll.raise.dc < 0 ? "lower" : "higher"}, its degree again`;
     if (reroll.raise) {
         const changes = Object.entries(reroll.raise.change ?? {}).map(([from, to]) => `${DEGREE_TEXT[from]} becomes ${DEGREE_TEXT[to]}`);
         const bonus = reroll.raise.bonus ? `+${reroll.raise.bonus.value ?? reroll.raise.bonus.formula} ${reroll.raise.bonus.type} bonus added, its degree again` : null;
@@ -73,6 +76,8 @@ export function rerollText(reroll) {
         return `${reroll.who === "either" ? "The targeted creature's (else your) latest" : reroll.who === "target" ? "The targeted creature's latest" : reroll.who === "attacker" ? "The latest" : "Your latest"} ${what}${reroll.who === "attacker" ? " at you" : ""}: ${[...changes, bonus].filter(Boolean).join("; ")}`;
     }
     if (reroll.healing) return `Your latest healing roll, rolled again: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
+    // (Its allies' own, Beckoning Cat Amulet's: each ally targeted, its latest failed save, 2026-10-27.)
+    if (reroll.who === "allies") return `Each ally targeted${reroll.within ? ` within ${reroll.within} feet` : ""}: its latest ${reroll.failed ? "failed " : ""}${what}, rerolled: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
     const whose = reroll.who === "attacker" ? `The latest ${reroll.what === "spellAttack" ? "spell attack roll" : "attack roll"} at you` : reroll.who === "companion" ? `The targeted companion's latest ${what}` : reroll.who === "target" ? `The targeted creature's latest ${what}` : `Your latest ${what}`;
     const bonus = reroll.bonus?.mythic ? " at mythic proficiency (your level + 10)" : reroll.bonus ? ` with a +${reroll.bonus.value} ${reroll.bonus.type === "untyped" ? "" : `${reroll.bonus.type} `}bonus` : "";
     return `${whose}, rerolled${bonus}: ${KEEP_WORDS[reroll.keep] ?? KEEP_WORDS.new}`;
@@ -101,12 +106,15 @@ export function bonusReroll({ oldTotal, oldNatural = null, newNatural, bonus, dc
     return { total, modifier, degree, oldDegree, kept };
 }
 
-// The roll to reroll, newest first: messages as [{ id, type, domains, isReroll, actorUuid, actorId, targetActorUuid }] (the
+// The roll to reroll, newest first: messages as [{ id, type, domains, isReroll, actorUuid, actorId, targetActorUuid, outcome }] (the
 // live layer reads them off PF2e's messages; a save's domains name its statistic). → its id, or null.
 export function triggeringRoll(messages, reroll, { actorUuid, actorId }) {
-    const types = CHECK_TYPES[reroll.what] ?? CHECK_TYPES.roll;
+    // (A recovery check, Pyrefeather Token's: PF2e's flat check — 2026-10-27.)
+    const types = reroll.recovery ? ["flat-check"] : CHECK_TYPES[reroll.what] ?? CHECK_TYPES.roll;
     for (const message of [...messages].reverse()) {
         if (!message?.type || message.isReroll) continue;
+        // (Only a failed one, Beckoning Cat Amulet's allies' Reflex saves: its outcome, PF2e's context — 2026-10-27.)
+        if (reroll.failed && !["failure", "criticalFailure"].includes(message.outcome)) continue;
         if (reroll.who === "attacker") {
             // (A check at its user — a Shove, a Trip — for a check's; else an attack roll.)
             const kinds = reroll.what === "check" ? CHECK_TYPES.check : ["attack-roll"];

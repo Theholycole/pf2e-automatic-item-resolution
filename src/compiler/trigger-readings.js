@@ -5,7 +5,12 @@
 //   their breath take a -2 circumstance penalty to this save", and their Sickened 2 on a failure (ifTarget breathes: a creature that needs air
 //   and has no Effect of holding its breath); Horn of the Sun Aurochs' "Creatures that are specifically vulnerable to sunlight are also
 //   Frightened 1 if they fail this save" (ifTarget sunlight: an ability of theirs named for sunlight, or a vampire's vulnerabilities) — and the
-//   horn's counteract against darkness and sleep, the counteract card beside its save card (plan.item.counteract, its rank half the horn's level). Pure.
+//   horn's counteract against darkness and sleep, the counteract card beside its save card (plan.item.counteract, its rank half the horn's level).
+// - Rerolls: Beckoning Cat Amulet's "any allies within 10 feet who also just failed or critically failed a Reflex saving throw from the same
+//   source … can also reroll their saving throw and use the better result" (reroll.who "allies": each ally the presser targets, its latest
+//   failed Reflex save — scripts/rerolls.js); Silvanshee Collar's reroll of the failed check, its result its user's pick (the higher of
+//   the two, its user's sensible pick); Pyrefeather Token's "you reduce the triggering recovery check's DC by 1" (reroll.raise.dc, the reroll
+//   card beside its item card's temporary Hit Points — scripts/live.js). Pure.
 
 import { sentencesOf } from "./lasting.js";
 
@@ -99,6 +104,45 @@ const READINGS = [
                 item: { ...plan.item, counteract: { modifier: Number(counteract[1]), rank, conditions: [], traits: [], afflictions: [], free: { name: `each darkness or sleep effect in the ${area[1]}-foot emanation` }, pick: "one", notes: [`One roll against each of them; its counteract rank ${rank}, half the horn's level.`] } }
             };
         }
+    },
+    // --- Rerolls.
+    {
+        // (The allies within 10 feet who failed the same Reflex save: each ally targeted, its latest failed Reflex save rerolled, the better kept.)
+        name: "Beckoning Cat Amulet",
+        sentences: [
+            /^Usage affixed to armor Activat(?:e|ion)\b.*?\bTrigger You use a feat or ability to reroll a failed or critically failed Reflex saving throw \(such as [^)]+\)\.$/,
+            /^This clay figurine resembles a white cat with a paw outstretched\.$/,
+            /^When it's activated, any allies within (\d+) feet who also just failed or critically failed a Reflex saving throw from the same source \(such as a fireball spell\) can also reroll their saving throw and use the better result\.$/
+        ],
+        // (Its line the reroll card's own, reroll.after: that card shows no plan notes.)
+        card: ([, , allies]) => rerollCard({ what: "save", statistic: "reflex", keep: "higher", who: "allies", within: Number(allies[1]), failed: true, after: `Only allies whose failed Reflex save was against the same effect as its user's: target them.` }, `allies within ${allies[1]} feet`)
+    },
+    {
+        // (A failed Lie or Make an Impression rerolled, its user's pick of the two: the higher.)
+        name: "Silvanshee Collar: Awww!",
+        sentences: [/^Your pet does something distracting or adorable at the precise moment you failed, allowing you to reroll the failed check and to use the result\s+of your choice as the actual result\.$/],
+        card: () => rerollCard({ what: "check", statistic: ["deception", "diplomacy"], keep: "higher", who: "self" })
+    },
+    {
+        // (A recovery check's DC 1 lower, its degree again — the reroll card beside the item card's 5 temporary Hit Points.)
+        name: "Pyrefeather Token",
+        over: (plan) => (plan?.resolution?.outcomes?.success?.effects ?? []).some((effect) => effect?.kind === "temp-hp"),
+        sentences: [
+            /^Trigger You succeed at, fail, or critically fail a recovery check while Dying by \d+\.$/,
+            /^This pyrefowl feather, accentuated with beadwork, stores a spark of the bird's self-healing power\.$/,
+            /^When you Activate the token, you reduce the triggering recovery check's DC by (\d+), potentially improving your check's degree of success\.$/,
+            /^You also gain \d+ temporary Hit Points that last for \d+ minutes?\.$/,
+            /^You can Activate this talisman even while Unconscious\.$/
+        ],
+        card: ([, , lower], plan) => ({
+            keep: true,
+            partial: undefined,
+            unread: undefined,
+            automation: { ...(plan.automation ?? {}), level: "automatic" },
+            resolution: { ...plan.resolution, outcomes: withoutReminder(plan.resolution.outcomes) },
+            reroll: { what: "check", keep: "new", who: "self", recovery: true, raise: { dc: -Number(lower[1]) } },
+            notes: ["Usable even while Unconscious: its reroll card changes the recovery check just rolled."]
+        })
     }
 ];
 
