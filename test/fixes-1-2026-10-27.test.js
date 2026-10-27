@@ -176,3 +176,51 @@ test("Contagion Metabolizer: the drinker picked on the counteract card is the on
     assert.equal(card.flags[MODULE_ID].card.status, "applied");
     assert.deepEqual([immunities(drinker).map((effect) => [effect.flags[ABILITY_ID].immunity.slug, effect.system.duration.value, effect.system.duration.unit]), immunities(alchemist).length], [[["contagion-metabolizer", 1, "hours"]], 0]);
 });
+
+// --- Awakened Adamantine Shot's ignored resistance for its one Strike (bug 3) --------------------------------------------------------------------
+
+test("Awakened Adamantine Shot: the core's ignoreResistance on the readied Strike's Effect for that shot (not its stack), kept for the hit's damage roll", async () => {
+    const { rollIgnores } = await import("../../pf2e-resolution-core/src/patch-logic.js");
+    const CORE_ID = "pf2e-resolution-core";
+    // (PF2e's predicate, as far as this one goes: each statement an option, or an "or" of them.)
+    const fits = (predicate, options) => predicate.every((statement) => (typeof statement === "string" ? options.includes(statement) : statement.or.some((option) => options.includes(option))));
+    const archer = creature("fix1-archer", "Archer");
+    const foe = creature("fix1-adamantine-foe", "Foe");
+    const shots = foundry.giveItem(archer, source("Awakened Adamantine Shot"));
+    const readied = () => archer.itemTypes.effect.filter((effect) => effect.flags?.[MODULE_ID]?.strikeRider);
+    const ready = async () => {
+        const count = foundry.messages.length;
+        await foundry.socket(SOCKET)({ action: "activate", itemUuid: shots.uuid, activation: 0, userId: "player" });
+        await settle();
+        const card = foundry.messages.slice(count).find((message) => message.flags?.[MODULE_ID]?.card?.kind === "strike");
+        await foundry.socket(SOCKET)({ action: "apply", messageId: card.id, userId: "player" });
+        await settle();
+    };
+    const roll = async (type, outcome, options) => {
+        const message = foundry.makeMessage({ flags: { pf2e: { context: { type, ...(type === "damage-roll" ? { sourceType: "attack" } : {}), outcome, options, domains: type === "damage-roll" ? ["strike-damage"] : [], target: { actor: foe.uuid, token: foe.token.uuid } }, origin: { uuid: `${archer.uuid}.Item.bow`, type: "weapon" } } }, speaker: { actor: archer.id }, actor: archer, token: archer.token.document });
+        await foundry.call("createChatMessage", message);
+        await settle();
+    };
+    const mine = ["item:ranged", `item:ammo:id:${shots.id}`];
+    const other = ["item:ranged", "item:ammo:id:plainArrows01"];
+    await ready();
+    const [effect] = readied();
+    assert.deepEqual(effect.flags[CORE_ID].ignoreResistance, { value: 20, types: ["physical", "all-damage", "piercing", "bludgeoning"], predicate: [{ or: [`item:ammo:id:${shots.id}`, `ammo:id:${shots.id}`] }] });
+    assert.equal(shots.flags?.[CORE_ID]?.ignoreResistance, undefined, "nothing on the stack");
+    // (What the core's stamp finds among the archer's items: for a damage roll with this shot, not another.)
+    const found = (options) => rollIgnores([shots, ...archer.itemTypes.effect], { options, domains: ["strike-damage"] }, fits, CORE_ID);
+    assert.deepEqual(found(mine), [{ value: 20, types: ["physical", "all-damage", "piercing", "bludgeoning"] }]);
+    assert.deepEqual(found(other), []);
+    // (The hit: kept for its damage roll; another ammunition's damage roll doesn't spend it, this one's does.)
+    await roll("attack-roll", "success", mine);
+    assert.deepEqual([readied().length, readied()[0]?.flags[MODULE_ID].strikeRider.awaiting], [1, true]);
+    await roll("damage-roll", "success", other);
+    assert.equal(readied().length, 1, "another shot's damage: still awaiting");
+    await roll("damage-roll", "success", mine);
+    assert.equal(readied().length, 0, "spent by its damage roll");
+    assert.deepEqual(found(mine), [], "the next shot of the stack ignores nothing");
+    // (A miss spends it at once, its entry with it.)
+    await ready();
+    await roll("attack-roll", "failure", mine);
+    assert.deepEqual([readied().length, found(mine)], [0, []]);
+});

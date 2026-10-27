@@ -1,7 +1,7 @@
 // The second batch's misc group's live cases (2026-10-27): tools/live-check.mjs joins them to its own. h: its helpers.
-// (Only the item whose live play is new code has cases: Awakened Adamantine Shot — scripts/strikes.js's applied Strike card setting the
-// resolution core's ignoreResistance flag on the shot (core 321af5b stamps it onto the Strike's damage roll), and the Strike rider applying a
-// Strike plan's own ifTarget, once. Twig of Knowledge and Memory, Potion of Shared Life and Armorskin Robes of Fire feed mechanisms already
+// (Only the item whose live play is new code has cases: Awakened Adamantine Shot — scripts/strikes.js's applied Strike card putting the
+// resolution core's ignoreResistance flag on the readied Strike's Effect, predicated on the shot's id (core 321af5b stamps it onto that Strike's
+// damage roll; since 2026-10-27 not on the shot, whose stack kept it), and the Strike rider applying a Strike plan's own ifTarget, once. Twig of Knowledge and Memory, Potion of Shared Life and Armorskin Robes of Fire feed mechanisms already
 // checked live: guitarAlly and wardingBracelet, alliesEffect and the note Effects with PF2e rules, thunderRetaliation.)
 
 const CORE = "pf2e-resolution-core";
@@ -42,7 +42,8 @@ export default (h) => {
         await bow.update({ "system.selectedAmmoId": shot.id });
         return shot;
     };
-    // Activated and its Strike card applied: the readied Strike for that shot, and the core's flag on the shot (scripts/strikes.js applyStrikeCard).
+    // Activated and its Strike card applied: the readied Strike for that shot, the core's flag on its Effect for that shot, none on the shot
+    // (scripts/strikes.js applyStrikeCard, src/live/strike-card.js strikeEffectSource — 2026-10-27).
     const ready = async (archer, shot) => {
         const since = Date.now();
         await api().activate(shot.uuid, 0);
@@ -51,9 +52,11 @@ export default (h) => {
         await api().apply(card.id);
         const readied = readiedOf(archer);
         await h.until(() => readied()?.flags[h.NS].strikeRider.ammoId === shot.id, "the readied Strike for the shot", { timeout: 8000 });
-        const flag = () => archer.items.get(shot.id)?.getFlag(CORE, "ignoreResistance");
-        await h.until(() => flag(), `the core's ignoreResistance flag on the shot (its flags: ${JSON.stringify(archer.items.get(shot.id)?.flags?.[CORE] ?? {})})`, { timeout: 8000 });
+        const flag = () => readied()?.flags?.[CORE]?.ignoreResistance ?? null;
+        await h.until(() => flag(), `the core's ignoreResistance flag on the readied Strike's Effect (its flags: ${JSON.stringify(readied()?.flags?.[CORE] ?? {})})`, { timeout: 8000 });
         h.assert(sameIgnore(flag()), `ignoreResistance { value 20, types physical, all-damage, piercing, bludgeoning } (${JSON.stringify(flag())})`);
+        h.assert(JSON.stringify(flag().predicate ?? null).includes(`ammo:id:${shot.id}`), `for that shot alone (${JSON.stringify(flag().predicate ?? null)})`);
+        h.assert(!archer.items.get(shot.id)?.getFlag(CORE, "ignoreResistance"), `none on the shot (${JSON.stringify(archer.items.get(shot.id)?.flags?.[CORE] ?? {})})`);
         return { card, readied, flag: flag() };
     };
     // PF2e's Strike at that token, every d20 at that face; → { action, attack, outcome }.
@@ -82,11 +85,11 @@ export default (h) => {
 
     return {
         // Awakened Adamantine Shot at a creature with physical resistance 10 and no exceptions: "The shot ignores the first 20 resistance a creature
-        // has to physical damage, all damage, or piercing or bludgeoning damage." Applying the Strike card sets the resolution core's
-        // ignoreResistance { 20, [physical, all-damage, piercing, bludgeoning] } on the shot; the hit (d20 10 at AC 1) gets no Off-Guard (it's
-        // neither a construct nor a creature adamantine gets past); PF2e's damage roll carries the core's stamp, and applied it takes all of its
-        // total (resistance 10 counted as 0), PF2e's damage breakdown saying "Ignores 10 of its physical resistance". The resistance reads 10 again
-        // after. (Needs core 321af5b.)
+        // has to physical damage, all damage, or piercing or bludgeoning damage." Applying the Strike card puts the resolution core's
+        // ignoreResistance { 20, [physical, all-damage, piercing, bludgeoning] } on the readied Strike's Effect, for that shot; the hit (d20 10 at
+        // AC 1) gets no Off-Guard (it's neither a construct nor a creature adamantine gets past) and keeps the Effect for its damage roll; PF2e's
+        // damage roll carries the core's stamp and spends the Effect, and applied it takes all of its total (resistance 10 counted as 0), PF2e's
+        // damage breakdown saying "Ignores 10 of its physical resistance". The resistance reads 10 again after. (Needs core 321af5b.)
         async b2MiscAdamantineShotResistance(scene) {
             assertCore();
             await h.clearSquares(scene, [[2, 2], [5, 2]]);
@@ -102,11 +105,12 @@ export default (h) => {
             const { action, outcome } = await shoot(archer, bow, foeToken, 10);
             h.assert(["success", "criticalSuccess"].includes(outcome), `a hit (d20 10 at AC 1): ${outcome}`);
             const line = await h.messageAfter(since, lineFor(SHOT, archer), { what: "the shot's line after the Strike", timeout: 10000 });
-            await h.until(() => !readied(), "the readied Strike spent by the hit", { timeout: 8000 });
+            await h.until(() => readied()?.flags[h.NS].strikeRider.awaiting, "the readied Strike kept for the hit's damage roll", { timeout: 8000 });
             await h.wait(800);
             h.assert(!offGuards(foe).length && !foe.hasCondition("off-guard"), `no Off-Guard on a creature that isn't a construct and resists adamantine too (${said(foe)}; ${text(line)})`);
             const rolled = await damageRoll(action, outcome);
             h.assert([].concat(coreFlagOf(rolled) ?? []).some(sameIgnore), `the core's stamp on PF2e's damage roll (${JSON.stringify(coreFlagOf(rolled))})`);
+            await h.until(() => !readied(), "the readied Strike spent by its damage roll", { timeout: 8000 });
             const { total, lost, taken, options } = await dealt(foe, foeToken, rolled);
             h.assert(total > 0 && lost === total, `all ${total} taken, its physical resistance 10 ignored (lost ${lost}; the roll's ignoreResistance ${JSON.stringify(options)})`);
             h.assert(/Ignores 10 of its physical resistance/.test(takenWords(taken)), `PF2e's damage breakdown names it (${takenWords(taken).slice(0, 300)})`);
@@ -143,7 +147,8 @@ export default (h) => {
             h.assert(offGuards(golem).length === 1 && offGuardConditions(golem).length === 1, `once, though both kinds fit (${offGuards(golem).length} Effects, ${offGuardConditions(golem).length} conditions; ${said(golem)})`);
             const duration = offGuards(golem)[0].system.duration;
             h.assert(duration.value === 1 && duration.unit === "minutes", `for 1 minute (${JSON.stringify(duration)})`);
-            await h.until(() => !first.readied(), "the first readied Strike spent", { timeout: 8000 });
+            await damageRoll(hit.action, hit.outcome);
+            await h.until(() => !first.readied(), "the first readied Strike spent by its damage roll", { timeout: 8000 });
             // (The miss.)
             const second = await ready(archer, await load(archer, bow));
             since = Date.now();
@@ -173,7 +178,7 @@ export default (h) => {
             for (const [actor, token] of [[giant, giantToken], [construct, constructToken]]) {
                 const { readied } = await ready(archer, await load(archer, bow));
                 const since = Date.now();
-                const { outcome } = await shoot(archer, bow, token, 10);
+                const { action, outcome } = await shoot(archer, bow, token, 10);
                 h.assert(["success", "criticalSuccess"].includes(outcome), `a hit at ${actor.name} (d20 10 at AC 1): ${outcome}`);
                 const line = await h.messageAfter(since, lineFor(SHOT, archer), { what: `the shot's line after the hit at ${actor.name}`, timeout: 10000 });
                 await h.until(() => offGuards(actor).length > 0 && actor.hasCondition("off-guard"), `Off-Guard on ${actor.name} (${said(actor)}; ${text(line)})`, { timeout: 8000 });
@@ -181,16 +186,17 @@ export default (h) => {
                 h.assert(offGuards(actor).length === 1, `once on ${actor.name} (${said(actor)})`);
                 const duration = offGuards(actor)[0].system.duration;
                 h.assert(duration.value === 1 && duration.unit === "minutes", `${actor.name}'s for 1 minute (${JSON.stringify(duration)})`);
-                await h.until(() => !readied(), `the readied Strike at ${actor.name} spent`, { timeout: 8000 });
+                await damageRoll(action, outcome);
+                await h.until(() => !readied(), `the readied Strike at ${actor.name} spent by its damage roll`, { timeout: 8000 });
                 results[actor.name] = text(line);
             }
             return results;
         },
 
         // Awakened Adamantine Shot bought two to a stack, one activated: the shot activated ignores the resistance, the other one (fired after
-        // it, never activated) doesn't — its damage takes physical resistance 10 as PF2e counts it. A probe of the bug reported with this file
-        // (scripts/strikes.js sets the core's flag on the whole stack and nothing takes it off after the readied Strike is spent, so every later
-        // shot of that stack keeps ignoring 20 resistance): it fails at its last checks until that's fixed. Both Strikes hit (d20 10 at AC 1).
+        // it, never activated) doesn't — its damage takes physical resistance 10 as PF2e counts it. Once a probe of the bug reported with this
+        // file (the core's flag set on the whole stack, so every later shot of it kept ignoring 20 resistance); since 2026-10-27 the flag is on the
+        // readied Strike's Effect alone, for that shot, gone after its damage roll. Both Strikes hit (d20 10 at AC 1).
         async b2MiscAdamantineShotStackProbe(scene) {
             assertCore();
             await h.clearSquares(scene, [[2, 15], [5, 15]]);
@@ -205,10 +211,10 @@ export default (h) => {
             const first = await shoot(archer, bow, foeToken, 10);
             h.assert(["success", "criticalSuccess"].includes(first.outcome), `the first a hit: ${first.outcome}`);
             await h.messageAfter(since, lineFor(SHOT, archer), { what: "the shot's line after the first Strike", timeout: 10000 });
-            await h.until(() => !readied(), "the readied Strike spent by the first hit", { timeout: 8000 });
             await h.until(() => Number(archer.items.get(shots.id)?.system?.quantity) === 1, `one shot left in the stack (${archer.items.get(shots.id)?.system?.quantity})`, { timeout: 5000 });
             const one = await dealt(foe, foeToken, await damageRoll(first.action, first.outcome));
             h.assert(one.total > 0 && one.lost === one.total, `the activated shot ignores the resistance: all ${one.total} taken (${one.lost})`);
+            await h.until(() => !readied(), "the readied Strike spent by the first hit's damage roll", { timeout: 8000 });
             // (The other shot, not activated.)
             const second = await shoot(archer, bow, foeToken, 10);
             h.assert(["success", "criticalSuccess"].includes(second.outcome), `the second a hit: ${second.outcome}`);
@@ -220,11 +226,11 @@ export default (h) => {
             return { first: one, second: { total: two.total, lost: two.lost }, stackFlag: left };
         },
 
-        // Awakened Adamantine Shot as a gunslinger plays it: activated (its Strike card applied, the core's flag on the shot), then loaded into a
-        // Flintlock Pistol (reload 1) with PF2e's own attach — the round becomes the pistol's subitem with its id and flags, and the stack of one is
-        // deleted — and fired (d20 10 at AC 1) at a creature with physical resistance 10: its damage should ignore that resistance, all of it
-        // taken. A probe of the bug reported with this file (the core's stamp reads only the actor's own items, scripts/patches.js rollIgnores(
-        // document.actor.items …), so a round loaded into a firearm's subitems isn't found): it fails at its damage checks until that's fixed.
+        // Awakened Adamantine Shot as a gunslinger plays it: activated (its Strike card applied, the core's flag on the readied Strike's Effect for
+        // that shot's id), then loaded into a Flintlock Pistol (reload 1) with PF2e's own attach — the round becomes the pistol's subitem with its
+        // id and flags, and the stack of one is deleted — and fired (d20 10 at AC 1) at a creature with physical resistance 10: its damage ignores
+        // that resistance, all of it taken. (Once a probe of the core's stamp missing a loaded round, fixed in core c3976cf; since 2026-10-27 the
+        // flag is on the Effect, an actor's own item, predicated on the round's id, which the loaded round keeps — so either way.)
         async b2MiscAdamantineShotFirearmProbe(scene) {
             assertCore();
             await h.clearSquares(scene, [[2, 18], [5, 18]]);
@@ -247,8 +253,9 @@ export default (h) => {
             const { action, outcome } = await shoot(gunner, pistol, foeToken, 10);
             h.assert(["success", "criticalSuccess"].includes(outcome), `a hit (d20 10 at AC 1): ${outcome}`);
             const line = await h.messageAfter(since, lineFor(SHOT, gunner), { what: "the shot's line after the Strike (the readied Strike fired with the loaded round)", timeout: 10000 });
-            await h.until(() => !readied(), "the readied Strike spent by the hit", { timeout: 8000 });
+            await h.until(() => readied()?.flags[h.NS].strikeRider.awaiting, "the readied Strike kept for the hit's damage roll", { timeout: 8000 });
             const rolled = await damageRoll(action, outcome);
+            await h.until(() => !readied(), "the readied Strike spent by its damage roll", { timeout: 8000 });
             const { total, lost, options } = await dealt(foe, foeToken, rolled);
             h.assert(total > 0 && lost === total, `all ${total} taken, its physical resistance 10 ignored (lost ${lost}; the damage roll's stamp ${JSON.stringify(coreFlagOf(rolled))}, the roll's ignoreResistance ${JSON.stringify(options)}; the loaded round ${JSON.stringify(carried)})`);
             return { line: text(line), total, lost, carried };

@@ -16,9 +16,10 @@
 // - Resistance ignored in part: Awakened Adamantine Shot's "The shot ignores the first 20 resistance a creature has to physical damage, all
 //   damage, or piercing or bludgeoning damage. Against a construct or creature who already has a resistance bypassed by adamantine, or a weakness
 //   to adamantine, the shot shatters the target's defenses, causing them to become Off-Guard for 1 minute instead." Its Strike card with the
-//   shot loaded (strike.ammo); strike.ignoreResistance { value, types } — set on the shot as the resolution core's flag (its ignoreResistance,
-//   core 321af5b) when the card is applied (scripts/strikes.js), which the core stamps onto that Strike's damage roll: each of the creature's
-//   resistances of those types counts as that much lower. Off-Guard for the minute on a hit at a construct or a creature adamantine gets past
+//   shot loaded (strike.ammo); strike.ignoreResistance { value, types } — the resolution core's flag (its ignoreResistance, core 321af5b) on
+//   the readied Strike's Effect when the card is applied, predicated on the shot's id (src/live/strike-card.js; since 2026-10-27, not on the
+//   shot's whole stack), which the core stamps onto that Strike's damage roll: each of the creature's resistances of those types counts as that
+//   much lower. Off-Guard for the minute on a hit at a construct or a creature adamantine gets past
 //   (a weakness to it, or a resistance it's an exception to): plan.ifTarget, as Moonlit Spellgun's silver (src/live/if-target.js). Its rarity's
 //   sentence a line of the card.
 // Pure.
