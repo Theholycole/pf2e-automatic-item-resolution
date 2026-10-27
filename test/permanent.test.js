@@ -427,8 +427,10 @@ test("a moment's resistance with its type first (Sparkshade Parasol) and a compa
 
 test("a mount's bleed and quickened condition (Heedless Spurs): the fuller outright reading over the ability compiler's damage alone", () => {
     const spurs = compileActivations(item("Heedless Spurs"), { spellEffects })[0].plan;
-    assert.deepEqual([spurs.resolution.sharedDamage.components[0].formula, spurs.resolution.sharedDamage.components[0].category, spurs.resolution.outcomes.success.effects.map((effect) => effect.slug)], ["2d6", "persistent", ["quickened"]]);
-    assert.match(spurs.notes.join(" "), /Target your mount/);
+    // (Its quickened a note Effect granting it while the bleed lasts since 2026-10-27, src/compiler/adventure-readings.js: no longer the row's
+    // condition, its note its user's mount.)
+    assert.deepEqual([spurs.resolution.sharedDamage.components[0].formula, spurs.resolution.sharedDamage.components[0].category, spurs.resolution.outcomes.success.effects.map((effect) => effect.slug), spurs.resolution.outcomes.success.noteEffects[0].whilePersistent], ["2d6", "persistent", [], "bleed"]);
+    assert.match(spurs.notes.join(" "), /Target its user's mount/);
 });
 
 test("Nap Gas Dispenser: a penalty beside its row's slowed, and prone and unconscious only later, at the end of its next turn (plan.later, given then)", async () => {
@@ -661,9 +663,11 @@ test("healing back from dying without raising Wounded (Magical Medal (Phoenix's 
 });
 
 test("Cape of Justice's Force Shuriken: \"hits automatically and deals 1d4+1 force damage\" at the target, the designated offender's more a note; Swarmeater's Clasp's \"You recover 3d10+8 Hit Points\" and the same at the swarm (test/options-flow.test.js)", () => {
-    const cape = compileActivations(item("Cape of Justice"), { spellEffects })[0].plan;
-    assert.deepEqual([cape.resolution.check.roll, cape.resolution.sharedDamage.components[0].formula, cape.resolution.sharedDamage.components[0].type, cape.targeting.target], ["automatic", "1d4+1", "force", "1 creature"]);
-    assert.ok(cape.notes.some((note) => /designated offender takes 2d4\+2 force damage instead/.test(note)));
+    // (The designated offender's more damage the ways card's second way since 2026-10-27, src/compiler/adventure-readings.js: each way the
+    // damage outright.)
+    const [any, offender] = compileActivations(item("Cape of Justice"), { spellEffects })[0].plan.ways.map((way) => way.plan);
+    assert.deepEqual([any.resolution.check.roll, any.resolution.sharedDamage.components[0].formula, any.resolution.sharedDamage.components[0].type, any.targeting.target], ["automatic", "1d4+1", "force", "1 creature"]);
+    assert.equal(offender.resolution.sharedDamage.components[0].formula, "2d4+2");
 });
 
 test("Clockwork Helm: \"Make a spell or ranged attack roll (your choice)\" — the card's pick of its user's spell attack or best ranged Strike, 10d8 fire on a hit (doubled on a critical hit) and Drained 2", () => {
@@ -711,7 +715,8 @@ test("a save's degrees in sentences (Gearblade: DC 36 Reflex, 3d12 bludgeoning o
     const [gearblade] = compileActivations(item("Gearblade"), { spellEffects });
     const outcomes = gearblade.plan.resolution.outcomes;
     assert.deepEqual([gearblade.plan.resolution.check.statistic, gearblade.plan.resolution.check.against.value, outcomes.failure.damage.formulas[0].formula, outcomes.criticalFailure.damage.formulas[0].formula, outcomes.success.damage.mode], ["reflex", 36, "3d12[bludgeoning]", "6d12[bludgeoning]", "none"]);
-    assert.match(outcomes.criticalFailure.manualInstructions[0], /the limb becomes unusable until healed by a Regenerate spell/);
+    // (The limb a note Effect on the creature since 2026-10-27, src/compiler/adventure-readings.js, the GM's line no more.)
+    assert.match(outcomes.criticalFailure.noteEffects[0].text, /unusable until healed by Regenerate/);
     const [, pinch] = compileActivations(item("Scizore of the Crab"), { spellEffects });
     assert.deepEqual(pinch.plan.resolution.sharedDamage.components.map((component) => component.formula), ["1[slashing]"]);
     const [shadowmist] = compileActivations(item("Shadowmist Cape"), { spellEffects });
@@ -1034,7 +1039,8 @@ test("a partial plan without its Effect's opening flavor among its notes (Bloodg
     const slash = compileActivations(item("Bloodgorger Scythe"), { spellEffects })[1].plan;
     assert.deepEqual([slash.partial, JSON.stringify(slash).includes("grows large enough to be commanded")], [undefined, false]);
     const spurs = compileActivations(item("Heedless Spurs"), { spellEffects })[0].plan;
-    assert.deepEqual([spurs.partial, JSON.stringify(spurs).includes("You kick both spurs")], [true, false]);
+    // (Heedless Spurs whole since 2026-10-27, src/compiler/adventure-readings.js; its flavor still out of its notes.)
+    assert.deepEqual([spurs.partial, JSON.stringify(spurs).includes("You kick both spurs")], [undefined, false]);
     const { flavorSentence, withoutFlavorNotes } = await import("../src/compiler/flavor.js");
     const html = "<p><strong>Activate</strong> 1</p><p><strong>Effect</strong> A gust swirls around you. You Stride twice.</p>";
     assert.equal(flavorSentence(html), "A gust swirls around you.");

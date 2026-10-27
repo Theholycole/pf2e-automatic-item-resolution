@@ -19,11 +19,12 @@ export function chosenAction(state) {
 
 // "Sneak with a +1 item bonus", "Escape".
 export function actionText(action) {
-    const using = action.statistic ? ` using ${action.statistic.charAt(0).toUpperCase()}${action.statistic.slice(1)}` : "";
+    // (At mythic proficiency, Spindle Key's: its user's level + 10 for the check's proficiency.)
+    const using = `${action.statistic ? ` using ${action.statistic.charAt(0).toUpperCase()}${action.statistic.slice(1)}` : ""}${action.mythic ? " at mythic proficiency (its level + 10)" : ""}`;
     const name = action.names ? action.names.join(" or ") : action.name;
     if (action.names) return `${name}${using}${action.bonus ? ` with a +${action.bonus.value} ${action.bonus.type} bonus` : ""} (picked below)`;
     if (action.minimum) return `${action.name} at +${action.minimum.value} ${action.minimum.skill.charAt(0).toUpperCase()}${action.minimum.skill.slice(1)}, when that's higher than your own${action.minimum.ownBonus ? ` (else your own with a +${action.minimum.ownBonus.value} ${action.minimum.ownBonus.type} bonus)` : ""}`;
-    return action.bonus ? `${action.name} with a +${action.bonus.value} ${action.bonus.type} bonus` : action.name;
+    return `${action.name}${using}${action.bonus ? ` with a +${action.bonus.value} ${action.bonus.type} bonus` : ""}`;
 }
 
 const OUTCOME_WORDS = { criticalSuccess: "a critical success", success: "a success", failure: "a failure", criticalFailure: "a critical failure" };

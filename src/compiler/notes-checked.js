@@ -101,7 +101,10 @@ export const NOTES_CHECKED = new Map([
     // (2026-10-27, the small needs' group.)
     ["Collar of the Eternal Bond: Eidolon's Freedom", "for 5 minutes its user and eidolon may be any distance apart, past 150 feet the eidolon unmanifesting as it ends: distances on the map, nothing for a card"],
     ["Ghostly Portal Paint", "a 5-by-10-foot wall section passable to corporeal creatures and objects for 10 minutes, what's inside at its end (or an incorporeal creature in the wall) moved to the nearest exit: the map's walls"],
-    ["Ghost Ink", "writing that goes invisible, glowing red near heat (or another light its maker picks), found by a DC 25 Perception check to Seek and read on a critical success: a page's ink out of combat, the GM's"]
+    ["Ghost Ink", "writing that goes invisible, glowing red near heat (or another light its maker picks), found by a DC 25 Perception check to Seek and read on a critical success: a page's ink out of combat, the GM's"],
+    // (2026-10-27, the adventure books': each note checked for anything a card could play.)
+    ["Recording Rod (Basic)", "a minute of what its lens sees and hears, recorded and played back to its holder: an object's record, out of combat"],
+    ["Recording Rod (Reusable)", "a minute of what its lens sees and hears, recorded and played back to its holder, erased to record again: an object's record, out of combat"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));
