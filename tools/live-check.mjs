@@ -1204,6 +1204,43 @@ export const cases = {
         return { ended: 2 };
     },
 
+    // Flame Drake Snare (2026-10-27): a creature walking in from the east sets it off; its 15-foot cone aims east (back the way it came), the
+    // creature 10 feet east on the card, the one to the west not (ability baa2411).
+    async flameDrakeCone(scene) {
+        return unpaused(async () => {
+            const { actor: setter, token: setterToken } = await creature(scene, "Drake Setter", { type: "character", x: 2, y: 9 });
+            const snare = await give(setter, "Flame Drake Snare");
+            await setterToken.object?.control?.();
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await snare.consume();
+                const square = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Flame Drake Snare/.test(region.name));
+                await until(() => square(), "the snare's Region", { timeout: 8000 });
+                const placed = square().shapes[0];
+                await square().update({ shapes: [{ ...placed.toObject?.() ?? placed, x: Math.round(placed.x / 100) * 100, y: Math.round(placed.y / 100) * 100 }] });
+                await wait(500);
+                const shape = square().shapes[0];
+                const sx = shape.x / 100;
+                const sy = shape.y / 100;
+                const { token: walkerToken } = await creature(scene, "Drake Walker", { x: sx + 1, y: sy, alliance: "opposition", hp: 200 });
+                const { token: eastToken } = await creature(scene, "Drake East", { x: sx + 3, y: sy, alliance: "opposition", hp: 200 });
+                const { token: westToken } = await creature(scene, "Drake West", { x: sx - 2, y: sy, alliance: "opposition", hp: 200 });
+                const since = Date.now();
+                await walkerToken.update({ x: shape.x, y: shape.y }, { animate: false });
+                const card = await messageAfter(since, abilitySaveCard, { what: "the cone's save card" });
+                const targets = (card.flags["pf2e-automatic-ability-resolution"].card.targets ?? []).map((entry) => entry.tokenUuid ?? entry.uuid ?? entry.actorUuid);
+                const named = targets.map((uuid) => fromUuidSync(uuid)?.name ?? uuid);
+                assert(targets.includes(eastToken.uuid) && !targets.includes(westToken.uuid), `the one east, not the one west (${JSON.stringify(named)})`);
+                await until(() => !square(), "the snare spent", { timeout: 8000 });
+                return { targets: named };
+            } finally {
+                canvas.regions.placeRegion = placing;
+                for (const region of scene.regions.filter((entry) => /Flame Drake Snare/.test(entry.name))) await region.delete().catch(() => null);
+            }
+        });
+    },
+
     // Potion of Resistance: the type picked on the card (fire, the fourth) — PF2e's Resistance 5 to fire for an hour.
     async resistTypePick(scene) {
         const { actor: drinker } = await creature(scene, "Resistance Drinker", { x: 16, y: 14 });

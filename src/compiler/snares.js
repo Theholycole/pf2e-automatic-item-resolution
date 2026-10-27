@@ -129,12 +129,12 @@ export function snareZone(item, read) {
             others: false,
             hazard: null,
             saves: burst ? [] : [{ when: ["enter"], plan, ...only }],
-            ...(burst ? { burst: { ...burst, plan: { ...plan, targeting: { target: "every creature in the area", range: null, area: burst.area } }, ...only } } : {}),
+            ...(burst ? { burst: { area: burst.area, ...(burst.from ? { from: burst.from } : {}), plan: { ...plan, targeting: { target: "every creature in the area", range: null, area: burst.area }, ...(burst.said ? { notes: (plan.notes ?? []).filter((note) => !String(note).includes(burst.said.replace(/^(?:in )?an? /i, "").slice(0, 30))) } : {}) }, ...only } } : {}),
             damage: [],
             effect: null,
             modifiers: [],
             // (Expulsion Snare's "moved into an adjacent square (chosen by you when you craft the snare)": that square its crafter's.)
-            notes: [burst ? `${firstTo(gate)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save; then it's spent.` : then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
+            notes: [burst && ["cone", "line"].includes(burst.area.type) ? `${firstTo(gate)} to enter the square sets it off: its ${burst.area.value}-foot ${burst.area.type} aims back the way that creature came, and everyone in it attempts the save; then it's spent.` : burst ? `${firstTo(gate)} to enter the square sets it off: everyone within ${burst.area.value} feet of ${burst.from === "creature" ? "it" : "its square"} attempts the save; then it's spent.` : then ? `${firstTo(gate)} to enter the square sets it off; then the spines keep striking there.` : traitGate ? `The first creature with the ${traitGate} trait to enter its ${setArea ? `${setArea[1]}-foot square ` : ""}area sets it off; then it's spent.` : `${firstTo(gate)} to enter the square sets it off; then it's spent.`, ...(/\bchosen by you when you craft the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter chose the square it's pushed into: move its token there."] : []), ...(/\bYou determine the direction the rocket faces when crafting the snare\b/i.test(String(item.system?.description?.value ?? "")) ? ["Its crafter set the way the rocket faces: a push goes that way (move its token so)."] : []), ...leftOnTheGround(item)],
             once: true,
             ...(then ? { then } : {})
         }
@@ -185,6 +185,11 @@ function burstOf(plain) {
     const emanation = /\bin an? (\d+)-foot emanation\. Those within the emanation when the snare is activated must attempt\b/i.exec(plain);
     if (emanation) return { area: { type: "emanation", value: Number(emanation[1]) } };
     if (/\bThe target and all creatures in adjacent squares must attempt\b/i.test(plain)) return { area: { type: "emanation", value: 5 }, from: "creature" };
+    // (Or aimed back the way the creature came, Flame Drake Snare's "a 15-foot cone in the direction from which the creature entered", Frost Worm
+    // Snare's "a 30-foot line of frost in the direction from which the creature entered the square": a cone or line, the ability module's to aim
+    // (ability baa2411). said: the sentence, no longer a note.)
+    const aimed = /\b(?:in )?an? (\d+)-foot (cone|line)(?: of \w+)? in the direction from which the creature entered(?: the square)?\./i.exec(plain);
+    if (aimed) return { area: { type: aimed[2].toLowerCase(), value: Number(aimed[1]) }, said: aimed[0] };
     return null;
 }
 
