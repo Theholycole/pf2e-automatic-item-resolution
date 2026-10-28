@@ -4,7 +4,8 @@
 // with Hit Points left, and once it's applied the creature at 0: the ability module's save card at it, its wielder the source. Its critical
 // hits are the weapon's critical-hit riders (scripts/rune-strikes.js).
 
-import { riderFits, soulBindingRiders } from "../src/compiler/rune-strikes.js";
+import { riderFits } from "../src/compiler/rune-strikes.js";
+import { soulBindingRiders } from "../src/compiler/soul-binding.js";
 import { creatureOf } from "./rune-strikes.js";
 import { ABILITY_ID, CORE_ID, MODULE_ID } from "./foundry.js";
 

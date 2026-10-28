@@ -57,3 +57,7 @@ Four consumables are boons with stages that last days to months: Elder Seed (9 d
 ## Answers (2026-10-26)
 
 The user answered all five with **A**: 1 no-rules items counted done; 2 a cast counted partial when a note adds a rule it doesn't play; 3 a note-only item counted done once checked for anything a card could play, those parts built first; 4 a GM's-discretion clause a line of the card, counted done; 5 a counteract check with no modifier at the item level's DC − 10, a condition with no value at 1 when another row gives more, the GM free to change either.
+
+## Answers (2026-10-28)
+
+6: the backbiting curse is Archives of Nethys' Curses ID 3 (https://2e.aonprd.com/Curses.aspx?ID=3); The Liar builds it in full from that rule. 7: **A** — a boon's stage Effect advances on its own when its time has passed in world time, with a chat card; the GM can hold or end it from the Effect.
