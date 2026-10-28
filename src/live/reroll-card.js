@@ -123,10 +123,24 @@ export function triggeringRoll(messages, reroll, { actorUuid, actorId }) {
         }
         // (A companion's: actorUuid is the creature targeted.)
         if (reroll.statistic && ![].concat(reroll.statistic).some((name) => (message.domains ?? []).includes(name))) continue;
+        // (Only a failed one, Old Tillimaquin's "a single failed saving throw".)
+        if (reroll.failed && !["failure", "criticalFailure"].includes(message.outcome)) continue;
         if (types.includes(message.type) && (message.actorUuid === actorUuid || (actorId && message.actorId === actorId))) return message.id;
     }
     return null;
 }
+
+// A reroll kept for later (2026-10-27, Old Tillimaquin's "You can reroll a single failed saving throw within the next 24 hours … Each person who
+// rubs the claws can benefit only once per month"): why it can't be used now, or null — past its time from when it was given (at), or that
+// creature's use this month already (record { [actorUuid]: period }).
+const PERIODS = { month: 2_592_000, week: 604_800, day: 86_400 };
+const SECONDS = { hours: 3600, minutes: 60, days: 86_400, rounds: 6 };
+export function laterRefusal(reroll, { at = null, now = 0, record = null, actorUuid = null } = {}) {
+    if (reroll?.within && Number.isFinite(Number(at)) && Number(now) > Number(at) + Number(reroll.within.value) * (SECONDS[reroll.within.unit] ?? 3600)) return `its ${reroll.within.value} ${reroll.within.unit} are over`;
+    if (reroll?.perCreature && actorUuid && record?.[actorUuid] === Math.floor(Number(now) / (PERIODS[reroll.perCreature.per] ?? PERIODS.month))) return `that creature has had its luck this ${reroll.perCreature.per}`;
+    return null;
+}
+export const withLaterUse = (record, reroll, { now = 0, actorUuid }) => ({ ...(record ?? {}), [actorUuid]: Math.floor(Number(now) / (PERIODS[reroll?.perCreature?.per] ?? PERIODS.month)) });
 
 export function rerollCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";

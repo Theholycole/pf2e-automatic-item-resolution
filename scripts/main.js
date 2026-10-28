@@ -73,6 +73,17 @@ import { setUpTurnAuras } from "./turn-auras.js";
 import { setUpSwaps } from "./swap.js";
 import { setUpGrantedSpells } from "./grimoire.js";
 import { setUpAfterRest } from "./after-rest.js";
+import { setUpSphere, sphereTouched } from "./sphere.js";
+import { setUpCube } from "./cube.js";
+import { setUpDecoyDouble } from "./decoy-double.js";
+import { setUpPairedStone } from "./paired-stone.js";
+import { setUpSkillSwap } from "./skill-swap.js";
+import { setUpAdjacentBonus } from "./adjacent-bonus.js";
+import { setUpArcaneDrain } from "./arcane-drain.js";
+import { setUpPortals } from "./portals.js";
+import { setUpSouls } from "./souls.js";
+import { setUpLensPossession } from "./lens-possession.js";
+import { setUpReservoir } from "./reservoir.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -214,6 +225,28 @@ Hooks.once("ready", async () => {
     setUpGrantedSpells();
     // (A save at a user's next rest, Vile Remnant's nightmares: scripts/after-rest.js.)
     setUpAfterRest();
+    // (A sphere its user controls and what it touches destroyed, Sphere of Annihilation's: scripts/sphere.js.)
+    setUpSphere();
+    // (A cube's walls and the cubes it makes inert, Cube of Nex's: scripts/cube.js.)
+    setUpCube();
+    // (A double that takes what's aimed at its user, Shadewither Key's: scripts/decoy-double.js.)
+    setUpDecoyDouble();
+    // (Creatures teleported to a paired stone once its save card is applied, Jahan Waystone's: scripts/paired-stone.js.)
+    setUpPairedStone();
+    // (Two skills' ranks swapped for a while, The Trader's: scripts/skill-swap.js.)
+    setUpSkillSwap();
+    // (A bonus for each adjacent enemy, Vambrace of Gorum's Blade of Iron: scripts/adjacent-bonus.js.)
+    setUpAdjacentBonus();
+    // (A creature's spell or slot lost once its save card is applied, Belimarius's Invidious Halberd's Absorb Arcana: scripts/arcane-drain.js.)
+    setUpArcaneDrain();
+    // (Linked portals, Mountebank's Passage's: scripts/portals.js.)
+    setUpPortals();
+    // (Souls a weapon keeps from its kills, Reaper's Grasp's: scripts/souls.js.)
+    setUpSouls();
+    // (An item's essence possessing the creature it hits, Crimson Fulcrum Lens's: scripts/lens-possession.js.)
+    setUpLensPossession();
+    // (A weapon's poison reservoir, Reaper's Lancet's: scripts/reservoir.js.)
+    setUpReservoir();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
     setUpFoam();
     // (An Effect each hit of its types shortens, Bone Dreadnought Plate's: scripts/shorten-on-hit.js.)
@@ -287,5 +320,5 @@ Hooks.once("ready", async () => {
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
     // (temperatureProtections: what its items protect a creature from in heat and cold, for the environment module — synchronous,
     // scripts/temperature.js.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, sphereTouched, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
 });

@@ -1,73 +1,68 @@
 {
- "generated": "2026-10-27",
+ "generated": "2026-10-28",
  "totals": {
-  "entries": 72,
+  "entries": 49,
   "results": {
-   "none": 26,
    "partial": 26,
-   "note-only": 11,
-   "builtin:no-effect": 4,
-   "gaps": 5
+   "none": 9,
+   "gaps": 6,
+   "note-only": 6,
+   "builtin:no-effect": 2
   },
   "main": {
-   "areas": 13,
-   "creatures": 12,
-   "triggers": 5,
+   "areas": 10,
+   "creatures": 10,
    "visibility": 2,
-   "moving": 4,
-   "strike": 8,
+   "strike": 5,
    "cast-changes": 3,
    "afflictions": 1,
-   "fortune": 2,
-   "choice": 2,
+   "moving": 1,
    "counteract": 1,
-   "out-of-combat": 1,
-   "dying": 3,
-   "several": 1,
+   "dying": 2,
+   "triggers": 2,
    "actions": 1,
-   "situational": 2,
-   "spells": 3,
+   "situational": 1,
+   "spells": 2,
    "senses": 1,
    "information": 1,
    "reader": 1,
    "retaliation": 1,
+   "fortune": 1,
    "forms": 2,
-   "no-rules": 1,
    "objects": 1
   },
   "any": {
-   "areas": 23,
-   "lasting": 17,
-   "objects": 21,
+   "areas": 19,
+   "strike": 17,
    "counteract": 6,
-   "creatures": 12,
-   "strike": 21,
-   "several": 9,
-   "moving": 6,
+   "immunity": 9,
+   "lasting": 12,
+   "objects": 14,
+   "creatures": 10,
+   "several": 6,
+   "moving": 3,
    "range": 2,
-   "reader": 18,
+   "reader": 15,
    "mind": 7,
-   "triggers": 6,
-   "afflictions": 7,
    "visibility": 2,
    "cast-changes": 3,
-   "immunity": 9,
-   "choice": 4,
-   "fortune": 2,
-   "out-of-combat": 16,
-   "information": 11,
-   "spells": 12,
-   "speech": 6,
-   "dying": 6,
-   "situational": 6,
+   "afflictions": 6,
+   "out-of-combat": 10,
+   "dying": 5,
+   "triggers": 2,
+   "spells": 9,
+   "situational": 5,
+   "speech": 5,
    "actions": 2,
+   "information": 10,
    "senses": 2,
    "from-events": 4,
    "retaliation": 1,
+   "fortune": 1,
    "forms": 2,
    "speeds": 1,
-   "no-rules": 1,
-   "illusions": 1
+   "illusions": 1,
+   "choice": 1
   }
  },
  "entries": [
@@ -76,26 +71,14 @@
    "kind": "activation",
    "tier": "special",
    "level": 25,
-   "result": "none",
+   "result": "partial",
    "main": "areas",
    "work": "cube",
    "needs": [
     "areas",
-    "lasting",
-    "objects"
-   ]
-  },
-  {
-   "name": "Cube of Nex",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "none",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
+    "strike",
     "counteract",
+    "immunity",
     "lasting",
     "objects"
    ]
@@ -148,19 +131,6 @@
    ]
   },
   {
-   "name": "Reaper's Lancet",
-   "kind": "activation",
-   "tier": "special",
-   "level": 5,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you poison the …",
-   "needs": [
-    "triggers",
-    "afflictions"
-   ]
-  },
-  {
    "name": "Globe of Shrouds",
    "kind": "activation",
    "tier": "general",
@@ -174,19 +144,6 @@
     "areas",
     "lasting",
     "several"
-   ]
-  },
-  {
-   "name": "Sphere of Annihilation",
-   "kind": "activation",
-   "tier": "special",
-   "level": 27,
-   "result": "none",
-   "main": "moving",
-   "work": "move up to",
-   "needs": [
-    "moving",
-    "lasting"
    ]
   },
   {
@@ -230,59 +187,15 @@
    ]
   },
   {
-   "name": "Reaper's Grasp",
-   "kind": "activation",
-   "tier": "special",
-   "level": 11,
-   "activation": "Soul Shot",
-   "result": "none",
-   "main": "strike",
-   "work": "next strike",
-   "needs": [
-    "strike",
-    "choice"
-   ]
-  },
-  {
-   "name": "Old Tillimaquin",
-   "kind": "activation",
-   "tier": "special",
-   "level": 12,
-   "activation": "Luck of the Mascot",
-   "result": "none",
-   "main": "fortune",
-   "work": "reroll",
-   "needs": [
-    "fortune",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Mountain to the Sky",
    "kind": "activation",
    "tier": "special",
    "level": 16,
-   "result": "none",
+   "result": "gaps",
    "main": "moving",
-   "work": "climb",
+   "work": "plane shift",
    "needs": [
     "moving",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Guiding Star Orb (Heroic)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Embed Location",
-   "result": "none",
-   "main": "moving",
-   "work": "teleportation",
-   "needs": [
-    "moving",
-    "lasting",
-    "information",
     "out-of-combat"
    ]
   },
@@ -317,66 +230,6 @@
    ]
   },
   {
-   "name": "Belimarius's Invidious Halberd",
-   "kind": "activation",
-   "tier": "special",
-   "level": 17,
-   "activation": "Absorb Arcana",
-   "result": "note-only",
-   "main": "triggers",
-   "work": "Trigger: the halberd attempts …",
-   "needs": [
-    "triggers",
-    "strike",
-    "spells",
-    "reader"
-   ]
-  },
-  {
-   "name": "Mountebank's Passage",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "activation": "Doorway to Onyx",
-   "result": "none",
-   "main": "choice",
-   "work": "choose a",
-   "needs": [
-    "choice",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Mountebank's Passage",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "activation": "Doorway to Pearl",
-   "result": "none",
-   "main": "choice",
-   "work": "choose a",
-   "needs": [
-    "choice",
-    "objects",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Jahan Waystone",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "result": "none",
-   "main": "moving",
-   "work": "teleport",
-   "needs": [
-    "moving",
-    "areas",
-    "immunity"
-   ]
-  },
-  {
    "name": "Everburning Coal",
    "kind": "activation",
    "tier": "general",
@@ -388,21 +241,6 @@
    "needs": [
     "areas",
     "immunity"
-   ]
-  },
-  {
-   "name": "The Eye of the Slumberer",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "activation": "Vortex",
-   "result": "builtin:no-effect",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "lasting",
-    "objects"
    ]
   },
   {
@@ -419,33 +257,6 @@
    ]
   },
   {
-   "name": "The Hollow Star",
-   "kind": "activation",
-   "tier": "special",
-   "level": 9,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you speak in …",
-   "needs": [
-    "triggers",
-    "strike",
-    "objects",
-    "speech"
-   ]
-  },
-  {
-   "name": "The Hollow Star",
-   "kind": "activation",
-   "tier": "special",
-   "level": 9,
-   "result": "none",
-   "main": "creatures",
-   "work": "conjures",
-   "needs": [
-    "creatures"
-   ]
-  },
-  {
    "name": "Portable Seal (Moderate)",
    "kind": "consumable",
    "tier": "general",
@@ -457,18 +268,6 @@
     "creatures",
     "strike",
     "objects"
-   ]
-  },
-  {
-   "name": "The Trader",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "builtin:no-effect",
-   "main": "out-of-combat",
-   "work": "1 hour",
-   "needs": [
-    "out-of-combat"
    ]
   },
   {
@@ -527,20 +326,6 @@
    "needs": [
     "strike",
     "spells"
-   ]
-  },
-  {
-   "name": "Dragon-Lotus Drum",
-   "kind": "activation",
-   "tier": "special",
-   "level": 24,
-   "activation": "Summon Dragon-Lotus Army",
-   "result": "partial",
-   "main": "several",
-   "work": "each creature",
-   "needs": [
-    "several",
-    "reader"
    ]
   },
   {
@@ -725,35 +510,6 @@
    ]
   },
   {
-   "name": "Scene Stealer's Tunic",
-   "kind": "activation",
-   "tier": "special",
-   "level": 13,
-   "activation": "Look At Me!",
-   "result": "partial",
-   "main": "situational",
-   "work": "penalty to perception checks against",
-   "needs": [
-    "situational",
-    "several",
-    "reader",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Phoenix Necklace",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "strike",
-   "work": "attack rolls",
-   "needs": [
-    "strike",
-    "lasting"
-   ]
-  },
-  {
    "name": "Gate Attenuator",
    "kind": "activation",
    "tier": "general",
@@ -763,47 +519,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "Shadewither Key",
-   "kind": "activation",
-   "tier": "special",
-   "level": 22,
-   "activation": "Umbral Double",
-   "result": "note-only",
-   "main": "creatures",
-   "work": "umbral double",
-   "needs": [
-    "creatures",
-    "objects"
-   ]
-  },
-  {
-   "name": "The Big Sky",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "note-only",
-   "main": "areas",
-   "work": "difficult terrain",
-   "needs": [
-    "areas",
-    "several"
-   ]
-  },
-  {
-   "name": "Soulheart (Pure)",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Restore Life",
-   "result": "note-only",
-   "main": "dying",
-   "work": "dead",
-   "needs": [
-    "dying",
-    "spells"
    ]
   },
   {
@@ -908,12 +623,11 @@
    "kind": "activation",
    "tier": "special",
    "level": 20,
-   "result": "none",
+   "result": "partial",
    "main": "areas",
    "work": "bright light",
    "needs": [
     "areas",
-    "triggers",
     "lasting"
    ]
   },
@@ -1014,18 +728,6 @@
    ]
   },
   {
-   "name": "Vambrace of Gorum",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "activation": "Blade of Iron",
-   "result": "note-only",
-   "main": "no-rules",
-   "needs": [
-    "no-rules"
-   ]
-  },
-  {
    "name": "Soulcutter",
    "kind": "activation",
    "tier": "special",
@@ -1036,32 +738,6 @@
    "work": "don",
    "needs": [
     "objects"
-   ]
-  },
-  {
-   "name": "Crimson Fulcrum Lens",
-   "kind": "activation",
-   "tier": "special",
-   "level": 9,
-   "result": "none",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike",
-    "objects"
-   ]
-  },
-  {
-   "name": "Limitless Power",
-   "kind": "activation",
-   "tier": "special",
-   "level": 24,
-   "activation": "Unleash Power",
-   "result": "none",
-   "main": "spells",
-   "work": "cantrip",
-   "needs": [
-    "spells"
    ]
   },
   {

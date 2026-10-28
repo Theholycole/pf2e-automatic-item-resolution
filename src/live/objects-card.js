@@ -50,7 +50,10 @@ export function objectsText(objects, item = {}, stored = null) {
         const runes = objects.potency ? `+${objects.potency}${objects.striking ? ` ${["", "", "greater ", "major "][objects.striking]}striking` : ""} ` : "";
         // (Several, Chain of Stars' shuriken: their damage type, each gone after its attack; whom and from where they Strike.)
         if (objects.quantity > 1) return `${objects.quantity} ${runes}${objects.weapon}s${objects.damageType ? ` of ${objects.damageType}` : ""} for its user${objects.vanishAfterAttack ? ", each gone after its attack roll" : ""}: Strike with them — up to ${objects.strikes?.count ?? objects.quantity} Strikes, each at a different creature and not the one it hit, as though from that creature's space (measure from there); its multiple attack penalty rises only after the last (the same PF2e button for each)`;
-        return `A ${runes}${objects.weapon} in its user's hand${objects.replaces ? ", the last one it made gone" : ""}${objects.whileHeld ? ", gone once it's out of the hand" : ""}: Strike with it`;
+        // (Its material and its time, Vambrace of Gorum's high-grade adamantine greatsword for a minute; the guard its Effect gives.)
+        const material = objects.material ? `${objects.material.grade}-grade ${objects.material.type.replace(/-/g, " ")} ` : "";
+        const time = objects.lasts ? `, for ${objects.lasts.value} ${objects.lasts.value === 1 ? objects.lasts.unit.replace(/s$/, "") : objects.lasts.unit}` : "";
+        return `A ${runes}${material}${objects.weapon.replace(/-/g, " ")} in its user's hand${time}${objects.replaces ? ", the last one it made gone" : ""}${objects.whileHeld ? ", gone once it's out of the hand" : ""}: Strike with it${objects.effect ? `; ${objects.effect.words}` : ""}`;
     }
     return objects.op;
 }

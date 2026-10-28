@@ -21,6 +21,13 @@ import { isCraft } from "./craft-card.js";
 import { isTransmogrify } from "./transmogrify.js";
 import { isGrantSpell } from "./grimoire.js";
 import { isDeck } from "./deck.js";
+import { isSphere } from "./sphere-card.js";
+import { isInert, isWallsAround } from "./cube.js";
+import { isEmbed } from "./embedded-places.js";
+import { isSkillSwap } from "./skill-swap.js";
+import { isPortal } from "./portals.js";
+import { isSouls } from "./souls.js";
+import { isReservoir } from "./reservoir.js";
 
 // (Or modifiers alone, outright at it — North Wind's Night Verse's Speed penalty, src/compiler/direct-damage.js, whose check is
 // "automatic" — not its user's own bonus with a creature named, Spectacles of Inquiry's.)
@@ -96,6 +103,23 @@ export function routeOf(plan, text = "") {
     if (isBond(plan)) return "bond";
     // (A consumable found for the need at hand, the GM's pick: scripts/found.js, 2026-10-27.)
     if (isFound(plan)) return "found";
+    // (A sphere its user controls, Sphere of Annihilation's: the sphere card, scripts/sphere.js.)
+    if (isSphere(plan)) return "sphere";
+    // (Walls of the environment module's round its user, Cube of Nex's walls of force; an item made inert, its other activation's: scripts/cube.js.)
+    // (Its builtin "structure" too, after the Guiding Chisel's card above, which has sizes to pick: its own route — 2026-10-27, three
+    // groups built walls.)
+    if (isWallsAround(plan)) return "walls-around";
+    if (isInert(plan)) return "inert";
+    // (A place its user embeds, Guiding Star Orb (Heroic)'s: scripts/embedded-places.js.)
+    if (isEmbed(plan)) return "embed";
+    // (Two of its user's skills' ranks swapped, The Trader's: scripts/skill-swap.js.)
+    if (isSkillSwap(plan)) return "skill-swap";
+    // (Linked portals, Mountebank's Passage's: scripts/portals.js.)
+    if (isPortal(plan)) return "portal";
+    // (A soul a weapon keeps released, Reaper's Grasp's: scripts/souls.js.)
+    if (isSouls(plan)) return "souls";
+    // (A weapon's poison reservoir, Reaper's Lancet's: scripts/reservoir.js.)
+    if (isReservoir(plan)) return "reservoir";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

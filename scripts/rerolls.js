@@ -2,7 +2,7 @@
 // on the active GM's client, finds that roll in the recent chat and PF2e rerolls it (game.pf2e.Check.rerollFromMessage,
 // which the GM may do for any message) — keeping the new result as PF2e's own "Keep new" does, or the higher or lower.
 
-import { DEGREE_WORDS, bonusReroll, createRerollCard, raisedResult, rerollCardHTML, triggeringRoll } from "../src/live/reroll-card.js";
+import { DEGREE_WORDS, bonusReroll, createRerollCard, laterRefusal, raisedResult, rerollCardHTML, triggeringRoll, withLaterUse } from "../src/live/reroll-card.js";
 import { FLAG, MODULE_ID, applyRiders, entryOf, stateOf } from "./foundry.js";
 
 // How far back in the chat the triggering roll can be.
@@ -10,7 +10,8 @@ const RECENT = 40;
 const WHAT_WORDS = { save: "saving throw", attack: "attack roll", check: "check", roll: "roll" };
 
 export async function postRerollCard({ message, plan, used, actor, token }) {
-    const state = createRerollCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor) });
+    // (Kept for later, Old Tillimaquin's 24 hours: when it was given.)
+    const state = { ...createRerollCard({ plan, item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: entryOf(token, actor) }), ...(plan.reroll?.within ? { at: game.time.worldTime } : {}) };
     return ChatMessage.create({ content: rerollCardHTML(state, { canApply: true }), speaker: message?.speaker ?? ChatMessage.getSpeaker({ actor }), flags: { [MODULE_ID]: { [FLAG]: state } } });
 }
 
@@ -33,9 +34,14 @@ export async function applyRerollCard(message, { targets = [] } = {}) {
     if (reroll.who === "target" && !companion?.actor) throw new Error("Target the creature first.");
     const actor = companion?.actor ?? (await fromUuid(state.user.actorUuid).catch(() => null));
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
+    // (Kept for later, Old Tillimaquin's: only within its time, and once a month for each creature — src/live/reroll-card.js laterRefusal.)
+    const holder = reroll.perCreature && state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
+    const refused = laterRefusal(reroll, { at: state.at, now: game.time.worldTime, record: holder?.getFlag?.(MODULE_ID, "rerollsBy"), actorUuid: actor.uuid });
+    if (refused) throw new Error(`${state.item.name}: ${refused}.`);
     const recent = (game.messages?.contents ?? []).slice(-RECENT);
     const id = triggeringRoll(recent.map(asRoll), reroll, { actorUuid: actor.uuid, actorId: actor.id });
     if (!id) throw new Error(reroll.who === "attacker" ? `No attack roll at ${state.user.name}${reroll.contest ? "" : " to reroll"} in the recent chat.` : `No ${reroll.statistic ? `${reroll.statistic} ` : ""}${WHAT_WORDS[reroll.what] ?? "roll"} by ${actor.name} to reroll in the recent chat.`);
+    if (holder) await holder.setFlag(MODULE_ID, "rerollsBy", withLaterUse(holder.getFlag(MODULE_ID, "rerollsBy"), reroll, { now: game.time.worldTime, actorUuid: actor.uuid }));
     // (Behind a coin flip, Lucky Silver's and Fortune's Coin's: the card flips it; the other side, nothing happens.)
     if (reroll.coin) {
         const flip = await new Roll("1d2").evaluate();

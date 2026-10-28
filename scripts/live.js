@@ -44,6 +44,13 @@ import { restCreature } from "./rest.js";
 import { scrapeGoo } from "./scrape.js";
 import { applyTeleportCard, pickTeleportSpace, postTeleportCard } from "./teleport.js";
 import { applyStructureCard, pickStructurePoint, postStructureCard } from "./structure.js";
+import { postSphereCard } from "./sphere.js";
+import { placeWallsAround, postInertCard } from "./cube.js";
+import { postEmbedCard } from "./embedded-places.js";
+import { postSwapCard } from "./skill-swap.js";
+import { postPortalCard } from "./portals.js";
+import { postSoulsCard } from "./souls.js";
+import { postReservoirCard } from "./reservoir.js";
 import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyCraftCard, postCraftCard } from "./craft.js";
@@ -404,6 +411,10 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     // (A change to the roll just made beside the rest, Pyrefeather Token's recovery check 1 easier with its temporary Hit Points: the reroll card
     // too, src/compiler/trigger-readings.js — 2026-10-27.)
     if (plan?.reroll && route !== "reroll") await postRerollCard({ message, plan: { ...plan, builtin: "reroll", spend: undefined }, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | reroll card`, error));
+    // (A marker beside its card, Dragon-Lotus Drum's army: the ability module's conjured token first — scripts/zones.js.)
+    if (plan?.item?.alsoConjure) await startItemConjure({ plan: plan.item.alsoConjure, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | marker`, error));
+    // (A zone beside its card, The Eclipse's aura of doubt: the ability module's zone first — scripts/zones.js.)
+    if (plan?.item?.alsoZone) await startItemZone({ plan: plan.item.alsoZone, used, actor, token }).catch((error) => console.error(`${MODULE_ID} | zone`, error));
     if (route === "counteract") return postCounteractCard({ message, plan, used, actor, token });
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
@@ -425,6 +436,14 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "ways") return postWaysCard({ message, plan, used, actor, token });
     if (route === "teleport") return postTeleportCard({ message, plan, used, actor, token });
     if (route === "structure") return postStructureCard({ message, plan, used, actor, token });
+    if (route === "sphere") return postSphereCard({ message, plan, used, actor, token });
+    if (route === "walls-around") return placeWallsAround({ plan, used, actor, token });
+    if (route === "inert") return postInertCard({ message, plan, used, actor, token });
+    if (route === "embed") return postEmbedCard({ plan, used, actor, token });
+    if (route === "skill-swap") return postSwapCard({ message, plan, used, actor, token });
+    if (route === "portal") return postPortalCard({ message, plan, used, actor, token });
+    if (route === "souls") return postSoulsCard({ message, plan, used, actor, token });
+    if (route === "reservoir") return postReservoirCard({ message, plan, used, actor, token });
     if (route === "whisper") return postWhisper({ plan, used, actor, token });
     if (route === "objects") return postObjectsCard({ message, plan, used, actor, token });
     if (route === "craft") return postCraftCard({ message, plan, used, actor, token });
