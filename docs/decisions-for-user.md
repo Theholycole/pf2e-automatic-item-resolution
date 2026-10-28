@@ -39,6 +39,21 @@ A few texts give a check or condition without the number the card needs. Flowing
 - **B:** the card asks the GM for the number each time (a box on the card).
 - **C:** keep them listed, as now.
 
+## 6. The Liar's backbiting curse (2026-10-28)
+
+The Liar (a harrow deck card, level 20, unique) touches a weapon and gives it "the backbiting curse" until it's used again. That curse is one of GM Core's cursed-item curses, and its rules aren't in any PF2e pack the module reads, so there's nothing to build it from. Under your rule for unique items, it shouldn't just be a card line.
+
+- **A (suggested):** paste the backbiting curse's rule text here (or tell me where it is in your books), and I build it in full on the weapon: its Effect and what the curse does on its Strikes.
+- **B:** the card puts a note Effect on the weapon naming the curse, the GM plays it, and it counts done.
+
+## 7. Boons that last weeks and months (2026-10-28)
+
+Four consumables are boons with stages that last days to months: Elder Seed (9 days, then a month per stage), Heartblood Ring (a week first), Phoenix Cinder (a week first) and Void Fragment (8 days first). Each stage gives its own rules: resistances and weaknesses by level, fast healing, senses, innate spells, Clumsy or a lowered maximum Hit Points, Slowed on initiative, and at the last stage death or a change. The save is made once, when the boon is taken in (a success ends it). After that, the text has no save between stages: a stage simply lasts its time, then the next begins.
+
+- **A (suggested):** one stage Effect on the creature, each stage's rules built as PF2e rules on it (resistances, senses, conditions, initiative rolls, innate spells granted), and the next stage starts on its own when its time has passed in world time, with a chat card saying so. The GM can hold or end it from the Effect.
+- **B:** the same Effect and rules, but a stage only advances when the GM presses a button on its card.
+- **C:** keep them listed, as now.
+
 ## Answers (2026-10-26)
 
 The user answered all five with **A**: 1 no-rules items counted done; 2 a cast counted partial when a note adds a rule it doesn't play; 3 a note-only item counted done once checked for anything a card could play, those parts built first; 4 a GM's-discretion clause a line of the card, counted done; 5 a counteract check with no modifier at the item level's DC − 10, a condition with no value at 1 when another row gives more, the GM free to change either.

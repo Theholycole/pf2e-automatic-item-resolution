@@ -6,7 +6,7 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1467,
+   "resolves": 1473,
    "builtin:cast-spell": 473,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
@@ -30,7 +30,6 @@
    "builtin:found-item": 1,
    "builtin:sphere": 1,
    "builtin:souls": 2,
-   "gaps": 6,
    "builtin:embed-location": 1,
    "note-only": 3,
    "builtin:no-effect": 2,
@@ -92,7 +91,7 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 899,
+    "resolves": 904,
     "builtin:cast-spell": 347,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
@@ -113,7 +112,6 @@
     "none": 6,
     "builtin:found-item": 1,
     "builtin:sphere": 1,
-    "gaps": 5,
     "builtin:embed-location": 1,
     "note-only": 3,
     "builtin:deck": 1,
@@ -130,7 +128,7 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 282,
+    "resolves": 283,
     "builtin:cast-spell": 81,
     "builtin:reroll": 7,
     "builtin:zone": 9,
@@ -148,7 +146,6 @@
     "builtin:portal": 2,
     "partial": 2,
     "builtin:roll-twice": 2,
-    "gaps": 1,
     "none": 1,
     "builtin:whisper": 1
    }
@@ -6907,7 +6904,7 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "gaps",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -16482,7 +16479,7 @@
    "time": "1 minute",
    "frequency": null,
    "trigger": false,
-   "result": "gaps",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -16581,7 +16578,7 @@
    "time": "7 days",
    "frequency": "once per century",
    "trigger": false,
-   "result": "gaps",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -19066,7 +19063,7 @@
    "time": "1 hour",
    "frequency": "once per day",
    "trigger": false,
-   "result": "gaps",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -21980,7 +21977,7 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "gaps",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },
@@ -24876,7 +24873,7 @@
    "time": "3",
    "frequency": "once per week",
    "trigger": false,
-   "result": "gaps",
+   "result": "resolves",
    "kind": "save",
    "live": "save"
   },

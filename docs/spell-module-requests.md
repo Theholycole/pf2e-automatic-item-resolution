@@ -1,6 +1,6 @@
 # What the items need from the spell module
 
-The spell module (`pf2e-automatic-resolution`) casts the items' spells. This module never edits its tree, so what an item needs from it is kept here until a session works on it. Each item's rule is a line of its card until then. *(Started 2026-10-27, from the first six-agent batch.)*
+The spell module (`pf2e-automatic-resolution`) casts the items' spells. This module never edits its tree, so what an item needs from it is kept here until a session works on it. Each item's rule is a line of its card until then. *(Started 2026-10-27, from the first six-agent batch; rows 7 on from batches 2–4, the same day.)*
 
 | # | What the spell module would need | Items |
 |---|---|---|
@@ -10,3 +10,15 @@ The spell module (`pf2e-automatic-resolution`) casts the items' spells. This mod
 | 4 | A rider on its user's next spell with a trait that deals damage. Each creature it damages gets a condition for a time, a worse one on a critically failed save or a critical spell attack: `{ nextSpell: { traits: ["cold"], damages: true, rows: { default: [...], critical: [...] } } }`. | Tome of Scintillating Sleet (Dazzled 3 rounds; Blinded 1 round, then Dazzled 3) |
 | 5 | A cast at the caster's champion focus-spell rank, at the creature its user just hit, with a status penalty to that save equal to the weapon's damage dice (Calm); and a self cast of Protection. | Blessed Reformer (both activations) |
 | 6 | Optional: `castFlatCheck` with damage on a failure instead of a lost spell: each time the creature Casts a Spell within a week, a DC 11 flat check, 2d12 force on a failure. A note Effect for now. | Magekiller Bullet |
+| 7 | Claim the Spell Reservoir rune in `src/compiler/item-claims.js` (it already plays storing and Channeled Release through reservoirOnCast/reservoirOnStrike), and an API to empty it for Safe Release, such as `api.itemCasts.reservoirExpend({ actor, weapon })`. | Spell Reservoir (Channeled Release, Safe Release) |
+| 8 | `castFromItem` options to change the cast spell's area and add traits, such as `area: { type: "cone", value: 30 }, addTraits: ["air"]`, applied to the entry's copy of the spell, its 3-action variant too. | Fan of Soothing Winds (both: the 3-action Heal in a 30-foot cone, with air); Gate Attenuator (Thunderstrike gains metal) |
+| 9 | `castFromItem` overrides for a wall spell's traits, damage type and weaknesses, such as `{ traits: ["fire"], damageType: "fire", weaknesses: [{ type: "cold", value: 15 }, { type: "water", value: 15 }] }`. | Everburning Coal (Coal Wall: Wall of Ice turned fire) |
+| 10 | A `castFromItem` option for how an aura spell grows: `growth: { feet: 5, action: "concentrate" }` (5 feet per single concentrate action, not 10 on a Sustain). | Shining Wayfinder (its Bless) |
+| 11 | Mist cast as a 20-foot emanation on its user, and concealment some observers ignore (undead; creatures using or affected by a void effect for 1 round). Could be the ability module's zone instead. | Dreadsmoke Thurible |
+| 12 | A `castFromItem` option `damageType`: every damage instance of the cast spell takes that type (Weapon Storm too), listed in `api.castFromItemOptions` — the item module already passes it once listed. | Soulcutter (Soulcutting Storm: spirit) |
+| 13 | Sustain by Strikes: `castSustain { by: "strike", itemUuid, max: { value: 1, unit: "minutes" } }` — Sustained each round its caster hits with that item, ended at the first round without. | Phoenix Fighting Fan (Quandary) |
+| 14 | A rider on its user's next spell set by an item card's degree: `nextCast { attack, targetSaves, freeSlot: { maxRank }, disrupted, flatCheck: { dc: 11, onFail: "item-broken" } }`. | Starless Scope (divine-focus activation) |
+| 15 | An item that becomes a staff for a while: Arcane Shift turns the guisarme into Staff of Control (Major) with 10 charges kept on it, casting from that list; 1 Mythic Point and 10 charges heighten to 10th rank at mythic proficiency; reverts when the charges run out. | Sorshen's Sinuous Guisarme (Arcane Shift) |
+| 16 | Read In the Shadows of Toil's spellshape as Instructions for Lasting Agony is read (`src/compiler/item-spellshape.js`): a necromancy spell prepared from the grimoire with a save; a failed save gives Fatigued for the stated time. | In the Shadows of Toil |
+| 17 | Re-aim a card already in the chat (with the ability module): the latest save or attack card at the user marked counteracted and posted again at its source or at new targets with its numbers. | Cayden's Tankard (fear), Scale of Igroon (energy reflection) |
+| 18 | Optional: cast a self-only spell, such as Illusory Disguise, on each creature the item card targets. | Veiled Figurehead (Greater) |
