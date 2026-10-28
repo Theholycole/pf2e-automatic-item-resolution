@@ -256,7 +256,8 @@ export const cases = {
         const card = await messageAfter(since, itemCard("item"));
         const state = card.getFlag(NS, "card");
         assert(state.drinkers.some((entry) => entry.actorUuid === ally.uuid), "the ally next to the user is offered");
-        assert(used.getFlag(NS, "covered") === card.id && used.flags.pf2e.suppressDamageButtons, "PF2e's apply buttons come off its message");
+        // (The Use message is updated just after the card is made: waited for, 2026-10-28 — the first case of a run lost that race.)
+        await until(() => used.getFlag(NS, "covered") === card.id && used.flags.pf2e.suppressDamageButtons, "PF2e's apply buttons come off its message", { timeout: 5000 });
         const healed = used.rolls[0].total;
         await game.modules.get(NS).api.live.apply(card.id, { drinker: state.drinkers.findIndex((entry) => entry.actorUuid === ally.uuid) });
         await wait(800);
@@ -1232,11 +1233,12 @@ export const cases = {
         return { outcome: roll.flags.pf2e.context.outcome, results: game.messages.get(card.id).getFlag(NS, "card").results, dying: ally.hasCondition("dying") };
     },
 
-    // Spark Wafer: its save goes to the creatures targeted, through the ability module's save card.
+    // A consumable's save on its use goes to the creatures targeted, through the ability module's save card: Arsenic's Fortitude save.
+    // (Spark Wafer was this case's item until it became a lit zone on 2026-10-26, with a case of its own: 2026-10-28.)
     async useSave(scene) {
         const { actor: user } = await creature(scene, "Snapper", { x: 2, y: 12 });
         const { token: foe } = await creature(scene, "Spark Target", { x: 3, y: 12, alliance: "opposition" });
-        const wafer = await give(user, "Spark Wafer");
+        const wafer = await give(user, "Arsenic");
         const since = Date.now();
         await wafer.consume();
         const card = await messageAfter(since, itemCard("expose"));
