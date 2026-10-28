@@ -1,33 +1,28 @@
 {
  "generated": "2026-10-28",
  "totals": {
-  "entries": 49,
+  "entries": 43,
   "results": {
    "partial": 26,
    "none": 9,
-   "gaps": 6,
    "note-only": 6,
    "builtin:no-effect": 2
   },
   "main": {
    "areas": 10,
-   "creatures": 10,
+   "creatures": 9,
    "visibility": 2,
    "strike": 5,
    "cast-changes": 3,
    "afflictions": 1,
-   "moving": 1,
    "counteract": 1,
    "dying": 2,
    "triggers": 2,
    "actions": 1,
-   "situational": 1,
-   "spells": 2,
    "senses": 1,
-   "information": 1,
    "reader": 1,
+   "spells": 1,
    "retaliation": 1,
-   "fortune": 1,
    "forms": 2,
    "objects": 1
   },
@@ -38,27 +33,26 @@
    "immunity": 9,
    "lasting": 12,
    "objects": 14,
-   "creatures": 10,
+   "creatures": 9,
    "several": 6,
-   "moving": 3,
+   "moving": 2,
    "range": 2,
-   "reader": 15,
-   "mind": 7,
+   "reader": 14,
+   "mind": 5,
    "visibility": 2,
    "cast-changes": 3,
    "afflictions": 6,
-   "out-of-combat": 10,
    "dying": 5,
    "triggers": 2,
-   "spells": 9,
-   "situational": 5,
-   "speech": 5,
+   "spells": 7,
+   "situational": 4,
+   "speech": 3,
    "actions": 2,
-   "information": 10,
    "senses": 2,
    "from-events": 4,
+   "information": 5,
+   "out-of-combat": 6,
    "retaliation": 1,
-   "fortune": 1,
    "forms": 2,
    "speeds": 1,
    "illusions": 1,
@@ -184,19 +178,6 @@
     "afflictions",
     "immunity",
     "lasting"
-   ]
-  },
-  {
-   "name": "Mountain to the Sky",
-   "kind": "activation",
-   "tier": "special",
-   "level": 16,
-   "result": "gaps",
-   "main": "moving",
-   "work": "plane shift",
-   "needs": [
-    "moving",
-    "out-of-combat"
    ]
   },
   {
@@ -398,34 +379,6 @@
    ]
   },
   {
-   "name": "Passage Pane",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "gaps",
-   "main": "situational",
-   "work": "only while the",
-   "needs": [
-    "situational",
-    "information"
-   ]
-  },
-  {
-   "name": "Void Mirror",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "gaps",
-   "main": "spells",
-   "work": "ritual",
-   "needs": [
-    "spells",
-    "mind",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Heartblood Ring",
    "kind": "consumable",
    "tier": "general",
@@ -494,22 +447,6 @@
    ]
   },
   {
-   "name": "The Owl",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "gaps",
-   "main": "creatures",
-   "work": "spirit of",
-   "needs": [
-    "creatures",
-    "reader",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Gate Attenuator",
    "kind": "activation",
    "tier": "general",
@@ -519,18 +456,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "Essence Prism",
-   "kind": "activation",
-   "tier": "special",
-   "level": 28,
-   "result": "gaps",
-   "main": "information",
-   "work": "divine",
-   "needs": [
-    "information"
    ]
   },
   {
@@ -629,23 +554,6 @@
    "needs": [
     "areas",
     "lasting"
-   ]
-  },
-  {
-   "name": "Whisperer of Souls",
-   "kind": "activation",
-   "tier": "special",
-   "level": 28,
-   "result": "gaps",
-   "main": "fortune",
-   "work": "misfortune",
-   "needs": [
-    "fortune",
-    "spells",
-    "mind",
-    "information",
-    "speech",
-    "out-of-combat"
    ]
   },
   {
