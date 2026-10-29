@@ -1,14 +1,13 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 15,
+  "entries": 12,
   "results": {
-   "partial": 9,
    "note-only": 2,
+   "partial": 6,
    "none": 4
   },
   "main": {
-   "cast-changes": 3,
    "strike": 4,
    "areas": 3,
    "triggers": 2,
@@ -17,7 +16,6 @@
    "objects": 1
   },
   "any": {
-   "cast-changes": 3,
    "strike": 6,
    "reader": 2,
    "areas": 3,
@@ -29,18 +27,6 @@
   }
  },
  "entries": [
-  {
-   "name": "Fan of Soothing Winds (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "activation": "Healing Wind",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
   {
    "name": "Tome of Scintillating Sleet",
    "kind": "activation",
@@ -109,18 +95,6 @@
    ]
   },
   {
-   "name": "Gate Attenuator",
-   "kind": "activation",
-   "tier": "general",
-   "level": 3,
-   "activation": "Elemental Spell",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
-   ]
-  },
-  {
    "name": "Phoenix Fighting Fan",
    "kind": "activation",
    "tier": "special",
@@ -170,18 +144,6 @@
    "work": "stored spell",
    "needs": [
     "spells"
-   ]
-  },
-  {
-   "name": "Fan of Soothing Winds",
-   "kind": "activation",
-   "tier": "general",
-   "level": 11,
-   "activation": "Healing Wind",
-   "result": "partial",
-   "main": "cast-changes",
-   "needs": [
-    "cast-changes"
    ]
   },
   {
