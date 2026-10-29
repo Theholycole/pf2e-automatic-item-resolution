@@ -29,6 +29,7 @@ import { setUpCastDurations } from "./cast-duration.js";
 import { setUpShieldShare } from "./shield-share.js";
 import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpShieldRepair } from "./shield-repair.js";
+import { setUpWornRunes } from "./worn-rune.js";
 import { setUpBonds } from "./bonds.js";
 import { setUpEndEarly } from "./end-early.js";
 import { setUpHealCost } from "./heal-cost.js";
@@ -195,7 +196,8 @@ Hooks.once("ready", async () => {
     // (Its fall reactions offered as the environment module's card means a fall: scripts/falls.js.)
     setUpFallOffers({ activations: (item) => compileActivations(dataOf(item), options()), consumable: (item) => compile(item), isActiveGM: () => game.users.activeGM?.isSelf ?? game.user.isGM, fallLine });
     // (A runestone's rune etched onto its owner's weapon, armor or shield: scripts/etching.js.)
-    setUpEtching();
+    // (PF2e's rune items, for a rune key its sheets have no option for: scripts/etching.js.)
+    setUpEtching({ runes: () => runes });
     // (An ally kept at 1 Hit Point through its next damage from a hazard or an enemy: scripts/hp-floor.js.)
     setUpHPFloor();
     // (A share of the damage a creature the card damaged then takes, as its user's temporary Hit Points: scripts/drain.js.)
@@ -276,8 +278,11 @@ Hooks.once("ready", async () => {
     setUpShieldShare();
     // (Healing at the end of each of its user's turns beside a cast, Enveloping Light's: scripts/turn-heal.js.)
     setUpTurnHeals();
-    // (Its wearer's shields repaired at each turn's start, Forgefather's Seal's — until its Seal of Mending stops it: scripts/shield-repair.js.)
-    setUpShieldRepair();
+    // (Its wearer's shields repaired at each turn's start, Forgefather's Seal's — until its Seal of Mending stops it: scripts/shield-repair.js;
+    // etched onto the worn armor or worn in the inventory, PF2e's rune items read for the one etched.)
+    setUpShieldRepair({ runes: () => runes });
+    // (A rune's passive Effect on its wearer while it's worn on the armor, Forgefather's Seal's: scripts/worn-rune.js, 2026-10-29.)
+    setUpWornRunes({ runes: () => runes });
     // (A bonded creature's condition its user may counter, The Marriage's: scripts/bonds.js.)
     setUpBonds();
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)

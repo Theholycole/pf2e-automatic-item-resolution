@@ -7,6 +7,7 @@
 import { activationButtonsHTML, frequencyText, overLimit, perWord, rechargeLeft, rechargeSeconds, usesNow, waitText, withUse } from "../src/live/activations-card.js";
 import { handlesPermanent } from "../src/compiler/permanent.js";
 import { etchedKeys, isRuneItem } from "../src/compiler/runes.js";
+import { playsFromInventory } from "../src/compiler/worn-rune.js";
 import { chargeSpellstrike } from "./spellstrike.js";
 import { routeOf } from "../src/live/route.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -57,8 +58,9 @@ function addButtons(sheet, html) {
     if (!root) return;
     for (const row of root.querySelectorAll("li[data-item-id]")) {
         const item = actor.items.get(row.dataset.itemId);
-        // (Its own activations, or its etched runes': src/compiler/runes.js. Not a runestone's: its rune's are the etched item's.)
-        if (!item || isRuneItem(item) || !(handlesPermanent(item) || etchedKeys(item).length) || row.querySelector(".air-activate")) continue;
+        // (Its own activations, or its etched runes': src/compiler/runes.js. Not a runestone's: its rune's are the etched item's — but a worn
+        // Forgefather's Seal's, which stands for the seal on its armor when it isn't etched there: src/compiler/worn-rune.js, 2026-10-29.)
+        if (!item || (isRuneItem(item) && !playsFromInventory(item, actor.wornArmor ?? null)) || !(handlesPermanent(item) || etchedKeys(item).length) || row.querySelector(".air-activate")) continue;
         const list = playable(item);
         if (!list.length) continue;
         // (Right after the item's name, inside PF2e's name heading, which fills the row.)
