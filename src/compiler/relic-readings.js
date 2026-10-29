@@ -466,8 +466,8 @@ const READINGS = [
     },
     {
         // Soulcutter's Soulcutting Storm: Weapon Storm at 7th rank (read before), its cone or emanation its user's pick (the spell's own), all
-        // its damage spirit — castDamageType, the spell module's damageType once it takes it (scripts/casts.js; partial till then). A
-        // possessed creature taking none of the damage meant for its possessor: the card's line.
+        // its damage spirit — castDamageType, the spell module's damageType (scripts/casts.js; the spell module takes it since 2026-10-29). A
+        // possessed creature taking none of the damage meant for its possessor: the card's line (the GM's).
         name: "Soulcutter: Soulcutting Storm",
         over: true,
         sentences: [
@@ -477,8 +477,8 @@ const READINGS = [
         card: ([storm], plan) => (plan?.builtin === "cast-spell" && plan.spell?.name === "Weapon Storm" ? {
             keep: true,
             castDamageType: { type: storm[1], said: `all damage caused by the spell is ${storm[1]} damage` },
-            partial: true,
-            notes: [`All its damage is ${storm[1]} (its cone or emanation its user's pick).`, "Against a creature possessing another, the possessed creature takes none of its damage (don't apply it to the possessed one)."]
+            notes: [],
+            castLines: [`All its damage is ${storm[1]}, its cone or emanation its user's pick.`, "Against a creature possessing another, the possessed creature takes none of its damage (the GM's: don't apply it to the possessed one)."]
         } : null)
     },
     {

@@ -44,3 +44,15 @@ test("Gate Attenuator: the chosen element's spell gains that element's trait (Th
     assert.deepEqual(castChanges(plan, thunder, ALL).options, { addTraits: ["metal"] });
     for (const name of ["Gate Attenuator (Greater)", "Gate Attenuator (Major)"]) assert.deepEqual([done(first(name)), first(name).castElementTrait], [true, undefined], name);
 });
+
+test("Shining Wayfinder: its Bless's aura grows 5 feet a step (its single concentrate action once a turn, the spell's Sustain button)", () => {
+    const plan = compileActivations(item("Shining Wayfinder"), { spells })[1].plan;
+    assert.deepEqual([done(plan), plan.spell.name, plan.castGrowth, plan.castLines.length, plan.notes], [true, "Bless", { feet: 5 }, 1, undefined]);
+    assert.deepEqual(castChanges(plan, {}, ["growth"]).options, { growth: { feet: 5 } });
+});
+
+test("Everburning Coal: Wall of Ice made fire — its fire trait for cold and water, its fire damage; its sections' weakness and evaporating card lines", () => {
+    const plan = compileActivations(item("Everburning Coal"), { spells }).map((entry) => entry.plan).find((one) => one?.spell?.name === "Wall of Ice");
+    assert.deepEqual([done(plan), plan.castAddTraits, plan.castWithoutTraits, plan.castDamageType.type, plan.castLines.length, plan.notes], [true, ["fire"], ["cold", "water"], "fire", 2, undefined]);
+    assert.deepEqual(castChanges(plan, {}, ALL).options, { withoutTraits: ["cold", "water"], addTraits: ["fire"] });
+});

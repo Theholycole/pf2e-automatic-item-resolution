@@ -107,6 +107,7 @@ export function castChanges(plan, chosen = {}, takes = []) {
     if (added.length) give("addTraits", added, `The spell with the ${added.join(" and ")} trait`);
     if (plan?.castArea) give("area", plan.castArea, `Its area a ${plan.castArea.value}-foot ${plan.castArea.type}`);
     if (plan?.castActions) give("actions", plan.castActions, `Its ${plan.castActions}-action version`);
+    if (plan?.castGrowth) give("growth", plan.castGrowth, `Each step of its aura ${plan.castGrowth.feet} feet (Sustain's button)`);
     return { options, lines };
 }
 
@@ -117,6 +118,7 @@ function castChangeWords(plan) {
     if (plan?.castWithoutTraits?.length) words.push(`Cast without its ${plan.castWithoutTraits.join(" and ")} trait`);
     if (plan?.castAddTraits?.length) words.push(`Cast with the ${plan.castAddTraits.join(" and ")} trait`);
     if (plan?.castElementTrait) words.push("Cast with the trait of the element it's attuned to");
+    if (plan?.castGrowth) words.push(`Once a turn, a single action with the concentrate trait grows its aura ${plan.castGrowth.feet} feet (the spell's Sustain button)`);
     if (plan?.castArea || plan?.castActions) words.push([plan.castActions ? `Its ${plan.castActions}-action version` : null, plan.castArea ? `in a ${plan.castArea.value}-foot ${plan.castArea.type}` : null].filter(Boolean).join(", "));
     return words;
 }

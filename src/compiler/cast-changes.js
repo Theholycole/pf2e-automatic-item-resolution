@@ -56,7 +56,16 @@ const ACTIONS_AREA = /^The [\w' ]+? casts an? (\d)-action [A-Z][\w' -]+? spell w
 const GAINS_TRAIT = /^\s*This spell gains the ([a-z]+) trait\.$/i;
 const ONLY_KIND = /^\s*This has the effects of (?:\d+(?:st|nd|rd|th)-rank )?[A-Z][\w' -]+? with a DC of \d+, but it affects only ([a-z]+?)s\.$/i;
 const LACKS_TRAIT = /^\s*It lacks the ([a-z]+) trait and functions on mindless [a-z]+\.$/i;
-const OWN_LINES = [/^\s*It also ignores any golem antimagic\b[^.]*\.$/i, /^\s*The effect's duration ends\s*if the [\w' ]+? is destroyed\b[^.]*\.$/i];
+const OWN_LINES = [/^\s*It also ignores any golem antimagic\b[^.]*\.$/i, /^\s*The effect's duration ends\s*if the [\w' ]+? is destroyed\b[^.]*\.$/i,
+    // (Shining Wayfinder's Bless "with an emanation centered on itself": its holder's space, as the spell's own.)
+    /^\s*The [\w' ]+? casts [A-Z][\w' -]+?, with an emanation centered on itself\.$/i];
+// (Everburning Coal's Coal Wall, Wall of Ice made fire: its traits and its damage the spell module's castFromItem changes; its sections'
+// weakness and what melts them lines of the card — the spell module leaves the wall's sections to the GM.)
+const EXCEPT_ADJUSTED = /^\s*This has the effect of [A-Z][\w' -]+?, except for the following adjustments\.$/i;
+const TRAIT_INSTEAD = /^\s*The wall has the ([a-z]+) trait instead of ([a-z]+)(?: and ([a-z]+))?\.$/i;
+const DAMAGE_INSTEAD = /^\s*The wall deals ([a-z]+) damage instead of [a-z]+ damage\.$/i;
+const WALL_LINES = [/^\s*The weakness to [a-z]+ is instead weakness to [a-z]+ and to [a-z]+\.$/i, /^\s*Destroying a section of the wall with [a-z]+ or [a-z]+ \(rather than with [a-z]+\) causes a section to evaporate\.$/i];
+const GROWTH = /^\s*Once per turn, you can use a single action, which has the concentrate trait, to increase the emanation's radius by (\d+) feet\.$/i;
 
 // The plan, the item's source (its text's bead count) and the compile options (PF2e's spells by name) → the plan with its changes read,
 // or the same plan.
@@ -118,6 +127,28 @@ export function withCastChanges(plan, item = null, options = {}) {
                 next.castWithoutTraits = [...new Set([...(next.castWithoutTraits ?? []), lacks[1].toLowerCase()])];
                 continue;
             }
+            if (EXCEPT_ADJUSTED.test(sentence)) continue;
+            const instead = TRAIT_INSTEAD.exec(sentence);
+            if (instead) {
+                next.castAddTraits = [...new Set([...(next.castAddTraits ?? []), instead[1].toLowerCase()])];
+                next.castWithoutTraits = [...new Set([...(next.castWithoutTraits ?? []), ...[instead[2], instead[3]].filter(Boolean).map((trait) => trait.toLowerCase())])];
+                continue;
+            }
+            const typed = DAMAGE_INSTEAD.exec(sentence);
+            if (typed) {
+                next.castDamageType = { type: typed[1].toLowerCase(), said: sentence };
+                continue;
+            }
+            if (WALL_LINES.some((pattern) => pattern.test(sentence))) {
+                lines.push(sentence);
+                continue;
+            }
+            // (A growing aura's own step, Shining Wayfinder's 5 feet for its single concentrate action: the spell module's castFromItem growth.)
+            const growth = GROWTH.exec(sentence);
+            if (growth) {
+                next.castGrowth = { feet: Number(growth[1]) };
+                continue;
+            }
             if (OWN_LINES.some((pattern) => pattern.test(sentence))) {
                 lines.push(sentence);
                 continue;
@@ -148,7 +179,7 @@ export function withCastChanges(plan, item = null, options = {}) {
         const rest = impulse ? joined.replace(impulse[0], " ").replace(/\s+/g, " ").trim() : joined;
         if (rest) kept.push(left.length === sentences(note).length && !impulse ? note : rest);
     }
-    const changed = ["castActions", "castArea", "castAddTraits", "castTraits", "castWithoutTraits", "castElementTrait"].some((key) => next[key] !== plan[key]);
+    const changed = ["castActions", "castArea", "castAddTraits", "castTraits", "castWithoutTraits", "castElementTrait", "castGrowth", "castDamageType"].some((key) => next[key] !== plan[key]);
     if (!lines.length && !next.choices && !next.castImpulse && next.dc === plan.dc && !unplayed && !wielded && !changed) return plan;
     if (next.castImpulse && !next.choices?.some((choice) => choice.element)) delete next.castImpulse;
     if (kept.length) next.notes = kept;

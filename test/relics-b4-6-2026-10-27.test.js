@@ -221,9 +221,9 @@ test("Book of Lost Days' Study Memory: a 40 to Recall Knowledge whispered, Drain
     assert.deepEqual([book.unlessCondition.slug, /total of 40/.test(book.alsoWhisper), row.noteEffects.length], ["drained", true, 1]);
 });
 
-test("Soulcutter's Soulcutting Storm: Weapon Storm at 7th rank, its damage spirit once the spell module takes damageType (partial till then)", () => {
+test("Soulcutter's Soulcutting Storm: Weapon Storm at 7th rank, its damage spirit (the spell module's damageType since 2026-10-29), the possessed creature a card line", () => {
     const storm = activation("Soulcutter", "Soulcutting Storm");
-    assert.deepEqual([routeOf(storm), storm.partial, storm.castDamageType.type, storm.rank], ["cast", true, "spirit", 7]);
+    assert.deepEqual([routeOf(storm), storm.partial, storm.castDamageType.type, storm.rank, storm.notes, storm.castLines.length], ["cast", undefined, "spirit", 7, [], 2]);
 });
 
 test("Crooner's Cravat's Influential Croon and Stage Magician's Cloak: two casts on the ways card; the smoke's save, its user Quickened; Invisibility and the teleport", () => {
