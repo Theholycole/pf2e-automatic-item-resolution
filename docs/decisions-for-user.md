@@ -75,3 +75,7 @@ The user answered all five with **A**: 1 no-rules items counted done; 2 a cast c
 ## Answers (2026-10-28)
 
 6: the backbiting curse is Archives of Nethys' Curses ID 3 (https://2e.aonprd.com/Curses.aspx?ID=3); The Liar builds it in full from that rule. 7: **A** — a boon's stage Effect advances on its own when its time has passed in world time, with a chat card; the GM can hold or end it from the Effect.
+
+## Answers (2026-10-29)
+
+8: **A** — I work on the spell module myself and build its rows in docs/spell-module-requests.md (the battle-form version gate first). 9: **A** — the module rewrites an added item's old-form predicates into PF2e's current form.

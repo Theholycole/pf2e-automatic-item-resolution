@@ -91,6 +91,7 @@ import { setUpReservoir } from "./reservoir.js";
 import { setUpBackbiting } from "./backbiting.js";
 import { setUpBoons } from "./boons.js";
 import { setUpItemForms } from "./item-form.js";
+import { setUpLegacyPredicates } from "./legacy-predicates.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -308,6 +309,8 @@ Hooks.once("ready", async () => {
     setUpBackbiting();
     // (An item's own Bulk in its other form, back once its Effect goes — Staff of Sun Wukong's needle: scripts/item-form.js.)
     setUpItemForms();
+    // (An item's rules in PF2e's old predicate form rewritten as it's added to an actor — Battlezoo's four, question 9: scripts/legacy-predicates.js.)
+    setUpLegacyPredicates();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)
     setUpMoveDamage();
     // (Damage back each time its foot Strike deals damage, Hoof Stakes Snare's stakes: scripts/foot-damage.js.)
