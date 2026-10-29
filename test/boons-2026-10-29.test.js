@@ -352,3 +352,17 @@ test("Heartblood Ring used: its Regenerate marked for the counteract, the counte
     assert.equal(stageEffects(user).length, 1);
     assert.match(foundry.messages.at(-1).content, /already has this boon/);
 });
+
+test("a stage's Hit Points come off those its creature had, not PF2e's figure already held under the lower maximum", async () => {
+    const user = creature("merisiel-boon", "Merisiel", 15);
+    await use(user, foundry.giveItem(user, source("Heartblood Ring")));
+    // (Stage 2 lowers its maximum by 30: PF2e's prepared value is held at the new 270; it had 290.)
+    user._source = { system: { attributes: { hp: { value: 290 } } } };
+    user.system.attributes.hp.value = 270;
+    const [effect] = stageEffects(user);
+    Object.defineProperty(effect, "actor", { value: user, configurable: true });
+    await foundry.call("updateItem", effect, { system: { badge: { value: 2 } } });
+    await settle(60);
+    assert.deepEqual(stageEffects(user).map((one) => one.name), ["Heartblood Ring: stage 2"]);
+    assert.equal(user.system.attributes.hp.value, 260);
+});

@@ -130,11 +130,13 @@ async function stageItems(actor, flag, { from = 0, effectId = null } = {}) {
     if (!holder && holders.length) await actor.deleteEmbeddedDocuments("Item", holders.map((one) => one.id));
     else if (holder && holders.length) await holders[0].update({ "system.description.value": holder.system.description.value, [`flags.${MODULE_ID}.boonActivation`]: holder.flags[MODULE_ID].boonActivation });
     else if (holder) await actor.createEmbeddedDocuments("Item", [holder]);
-    // (Its current Hit Points lower by what the stage takes more than the last.)
+    // (Its current Hit Points lower by what the stage takes more than the last — from those it had, not PF2e's figure already held under the
+    // lower maximum.)
     const loss = hpLossOf(boon, from, flag.stage, actor.level ?? actor.system?.details?.level?.value);
     const hp = actor.system?.attributes?.hp;
-    if (loss > 0 && hp) {
-        await actor.update({ "system.attributes.hp.value": Math.max(0, Number(hp.value) - loss) });
+    const had = Number(actor._source?.system?.attributes?.hp?.value ?? hp?.value);
+    if (loss > 0 && hp && Number.isFinite(had)) {
+        await actor.update({ "system.attributes.hp.value": Math.max(0, had - loss) });
         lines.push(`${actor.name} loses ${loss} Hit Points, its maximum ${loss} lower too.`);
     }
     // (Its last stage: dead.)
