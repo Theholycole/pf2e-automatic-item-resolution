@@ -121,6 +121,21 @@ export default (h) => {
                 clicked.add(confirm);
                 ok.click();
             }
+            // (A battle form's own choice, the spell module's "<spell> — choose form": its first, as a prompt's.)
+            const form = [...foundry.applications.instances.values()].find((app) => app.constructor.name === "DialogV2" && /— choose form$/.test(app.title ?? ""));
+            const pick = form?.element?.querySelector('button[data-action="ok"], button[type="submit"], footer button');
+            if (pick && !clicked.has(form)) {
+                clicked.add(form);
+                answered.push(form.element.querySelector("select")?.value ?? "the first form");
+                pick.click();
+            }
+            // (And its review of the space, confirmed: the lab has room.)
+            const space = [...foundry.applications.instances.values()].find((app) => app.constructor.name === "DialogV2" && /— review space and restrictions$/.test(app.title ?? ""));
+            const yes = space?.element?.querySelector('button[data-action="yes"], button[data-action="ok"], button[data-action="confirm"], footer button');
+            if (yes && !clicked.has(space)) {
+                clicked.add(space);
+                yes.click();
+            }
             const value = await answerPrompt();
             if (value !== null) answered.push(value);
             await h.wait(200);

@@ -12250,7 +12250,7 @@ export const cases = {
 };
 
 // (The group files' cases: imported with this file's own version, so the browser doesn't keep an old one.)
-export const GROUPS = ["strike", "moving", "triggers", "lasting", "senses", "rules", "b2-areas", "b2-creatures", "b2-illusions", "b2-visibility", "b2-afflictions", "b2-actions", "b2-spells", "b2-misc", "b3-moving", "b3-places", "b3-triggers", "b3-strike", "b3-lasting", "b3-rest", "b4-1", "b4-2", "b4-3", "b4-4", "b4-5", "b4-6", "b5-moving", "b5-strike", "b5-areas", "b5-plain", "b5-creatures", "b5-afflictions", "b5-leftovers", "b5-wire"];
+export const GROUPS = ["strike", "moving", "triggers", "lasting", "senses", "rules", "b2-areas", "b2-creatures", "b2-illusions", "b2-visibility", "b2-afflictions", "b2-actions", "b2-spells", "b2-misc", "b3-moving", "b3-places", "b3-triggers", "b3-strike", "b3-lasting", "b3-rest", "b4-1", "b4-2", "b4-3", "b4-4", "b4-5", "b4-6", "b5-moving", "b5-strike", "b5-areas", "b5-plain", "b5-creatures", "b5-afflictions", "b5-leftovers", "b5-wire", "b6-spells"];
 const version = new URL(import.meta.url).search;
 for (const group of GROUPS) {
     const more = await import(`./live-cases/${group}.mjs${version}`).then((module) => module.default(helpers)).catch((error) => {
