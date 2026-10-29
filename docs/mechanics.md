@@ -1407,3 +1407,11 @@ Each item's effect is read sentence by sentence, every sentence one of the readi
 - **A rune while raging:** Instinct Crown (Rune) lends a common property rune of its user's level or lower (`src/compiler/property-runes.js`, PF2e's runes with their levels) to a weapon picked, `rune.untilRage`: refused when its user isn't raging, and its Effect, flagged `untilRage`, goes with the Rage. Instinct Crown (Untamed) gives the companion targeted PF2e's Effect: Rage and Quickened until that rage ends (`item.untilRage`), its Rend in words.
 - **A chaos table row by row:** Rumbustious Robes' Pocket Full of Chaos — places traded with the target (`item.swapPlaces`, `scripts/swap.js` tradePlaces), conditions at the target and its user, a self-cast Dragon Form for a rolled time (`castDuration.formula`, rolled as it's cast in `scripts/cast-duration.js`), two torrents on the ways card, a Reflex save in the sand's area, a billow of concealment (a zone), healing by its user's level, what Recall Knowledge tells whispered with its flat check, its looks as card lines, and a 20's two more rolls with further 20s ignored (`table.rolls`, `table.ignore`, `scripts/table.js`).
 - **One-offs:** Protoplasmic Template's familiar-like minion, Rumbustious Robes' Ask and Receive (adventuring gear from the pocket after a flat check), Pill Furnace (Greater)'s chamber (its refining is the lesser furnace's card).
+
+## The backbiting curse (The Liar, 2026-10-29)
+
+Your answer to question 6: the curse as Archives of Nethys' Curses 3 has it. A Strike that critically fails with a weapon flagged `flags.<module>.backbiting` hits its own wielder instead. `scripts/backbiting.js` rolls that Strike's damage at its maximum, with PF2e's own Strike damage, and applies it to the wielder. The Liar's card has two ways:
+- **A weapon a creature carries.** The creature attempts a Will save against its user's class DC or spell DC. On a failure, the drop card lists its weapons and the ticked one is cursed (`dropHeld.curse`).
+- **One of its user's own weapons.** No save: the objects card's `op: "curse"`.
+
+The weapon the same Liar cursed before is freed (the item's `backbit` flag). An unattended weapon is the GM's to mark.

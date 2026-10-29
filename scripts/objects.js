@@ -13,6 +13,7 @@ import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { chargesOf } from "../src/live/charges.js";
 import { FLAG, MODULE_ID, creaturesNear, entryOf, isActiveGM, spaceOf, startInitiative, stateOf } from "./foundry.js";
 import { pauseEffectSource, pauseWords } from "../src/live/shield-repair.js";
+import { curseWeapon } from "./backbiting.js";
 
 const SPELL_ID = "pf2e-automatic-resolution";
 
@@ -54,6 +55,7 @@ export function objectChoices(actor, objects, holderId) {
         : objects.op === "retrieve" ? items.filter((item) => item.system?.containerId === holderId)
             : objects.op === "hand" ? items.filter((item) => !held(item) && fits(item, objects) && (!objects.weapon || item.type === "weapon"))
                 : objects.op === "repair" ? items.filter((item) => Number(item.system?.hp?.max) > 0 && Number(item.system?.hp?.value) < Number(item.system?.hp?.max) && fits(item, objects))
+                    : objects.op === "curse" ? items.filter((item) => item.type === "weapon")
                     : objects.op === "reload" ? items.filter((item) => item.type === "weapon" && String(item.system?.reload?.value ?? "") === String(objects.reload) && loadedOf(item) < capacityOf(item) && (ammoFor(actor, item) || (objects.recalled && (spentAmmoFor(actor, item) || item.getFlag?.(MODULE_ID, "lastRound")))))
                         : [];
     return list.map((item) => ({ id: item.id, name: item.name }));
@@ -247,6 +249,9 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
                 line += `, loaded with ${ammo.name}`;
             } else line += ` (no ammunition for it to load)`;
         }
+    } else if (objects.op === "curse") {
+        // (One of its user's own weapons, The Liar's backbiting curse: scripts/backbiting.js, 2026-10-29.)
+        line = (await curseWeapon(chosen, { item: state.item, owner: state.user.name })).replace(/\.$/, "");
     } else if (objects.op === "don") {
         await chosen.update({ "system.containerId": null, "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.handsHeld": 0 });
         line = `${state.user.name} wears ${chosen.name}`;

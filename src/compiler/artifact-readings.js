@@ -453,6 +453,44 @@ const READINGS = [
         }
     },
     {
+        // (A weapon given the backbiting curse — the user's answer to question 6, 2026-10-29: Archives of Nethys' Curses 3, a Strike with it that
+        // critically fails hits its wielder instead for its most damage, scripts/backbiting.js —, until the next use: a ways card of the
+        // two weapons it can touch. One a creature carries: its Will save against its user's class DC or spell DC first, then the drop card's
+        // pick of its weapons at a failure (plan.dropHeld curse); or one of its user's own, no save (the objects card, op curse).)
+        name: "The Liar",
+        sentences: [
+            /^You touch a weapon and instill faithlessness within it\.$/,
+            /^The weapon gains the backbiting curse\.$/,
+            /^The curse lasts until you use this activation again\.$/,
+            /^If you're at least (\d+)th level, you can instead use this activation on a weapon within (\d+) feet\.$/,
+            /^If the weapon is carried by a creature, it can resist the effect with a successful @Check\[will\|dc:9003\] save against your class DC or spell DC\.$/
+        ],
+        card: ([, , , farther]) => {
+            const reach = `touch (within ${farther[2]} feet from its user's ${farther[1]}th level)`;
+            const carried = {
+                automation: { level: "automatic" },
+                trigger: { event: "use" },
+                targeting: { target: "the creature carrying the weapon", range: reach, area: null },
+                resolution: { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "owner", statistic: "class-spell" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+                dropHeld: { degrees: ["failure", "criticalFailure"], one: true, attended: true, types: ["weapon"], curse: "backbiting", said: "the weapon" },
+                notes: ["Target the creature carrying the weapon; at a failed save, tick its weapon on the next card."]
+            };
+            const own = {
+                builtin: "objects",
+                automation: { level: "automatic" },
+                trigger: { event: "use" },
+                targeting: { target: null, range: null, area: null },
+                objects: { op: "curse", curse: "backbiting" }
+            };
+            return {
+                builtin: "ways",
+                targeting: { target: null, range: null, area: null },
+                ways: [{ name: "A weapon a creature carries (it may resist)", plan: carried }, { name: "One of its user's own weapons", plan: own }],
+                notes: [`It reaches by ${reach}.`, "An unattended weapon gains the curse with no save (it's no creature's to tick: the GM marks it).", "The curse lasts until The Liar is used this way again: the weapon it cursed before is freed then."]
+            };
+        }
+    },
+    {
         // (An item of PF2e's in its user's hand for a minute, any common permanent one of Light Bulk at most two levels below its user's: the
         // objects card's pick (scripts/objects.js), gone when the minute's up or it's dropped.)
         name: "The Wanderer",

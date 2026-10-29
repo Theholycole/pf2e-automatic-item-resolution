@@ -6,6 +6,8 @@ import { readDocuments } from "../../pf2e-automatic-ability-resolution/tools/lev
 import { compileActivations } from "../src/compiler/permanent.js";
 import { gateMet } from "../src/compiler/strike-gate.js";
 import { strikeRules, strikeLines } from "../src/live/strike-card.js";
+import { createDropCard, dropCardHTML, listedItems } from "../src/live/drop-card.js";
+import { routeOf } from "../src/live/route.js";
 
 const PACKS = `${process.env.HOME}/.local/share/FoundryVTT/Data/systems/pf2e/packs`;
 const equipment = readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items");
@@ -34,4 +36,19 @@ test("Grisly Scythe's critical hit turns only its slashing void: the DamageAlter
 test("The Eye of the Slumberer's Vortex: a burst placed on the Eye, ended by its next use (dismissOnReuse)", () => {
     const vortex = activations("The Eye of the Slumberer").find((plan) => plan?.zone?.terrain?.some((entry) => entry.movement?.includes("swim")));
     assert.deepEqual([vortex.zone.area.type, vortex.zone.centre, vortex.zone.untilReused, vortex.zone.dismissOnReuse], ["burst", "placed", true, true]);
+});
+
+// (The user's answer to question 6, 2026-10-29: the backbiting curse as Archives of Nethys' Curses 3 has it.)
+test("The Liar: a ways card — a creature's weapon after its Will save at its user's class or spell DC, ticked on the drop card; or its user's own", () => {
+    const [plan] = activations("The Liar");
+    assert.deepEqual([plan.builtin, plan.trigger.frequency.max, plan.ways.map((way) => routeOf(way.plan))], ["ways", 1, ["save", "objects"]]);
+    const [carried, own] = plan.ways.map((way) => way.plan);
+    assert.deepEqual(carried.resolution.check, { roll: "save", statistic: "will", basic: false, against: { dc: "owner", statistic: "class-spell" } });
+    assert.deepEqual([carried.dropHeld.degrees, carried.dropHeld.types, carried.dropHeld.curse], [["failure", "criticalFailure"], ["weapon"], "backbiting"]);
+    assert.deepEqual(own.objects, { op: "curse", curse: "backbiting" });
+    // (Only its weapons listed, and the card's button says what it does.)
+    const items = [{ id: "a", name: "Longsword", type: "weapon", carryType: "held" }, { id: "b", name: "Shield", type: "shield", carryType: "held" }, { id: "c", name: "Dagger", type: "weapon", carryType: "worn" }];
+    assert.deepEqual(listedItems(items, carried.dropHeld).map((one) => one.name), ["Longsword", "Dagger"]);
+    const card = createDropCard({ dropHeld: carried.dropHeld, item: { name: "The Liar" }, user: { name: "Reader" }, creatures: [{ actorUuid: "Actor.x", name: "Foe", held: [{ id: "a", name: "Longsword" }] }] });
+    assert.match(dropCardHTML(card, { canApply: true }), /Curse the ticked weapon/);
 });

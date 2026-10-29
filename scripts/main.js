@@ -86,6 +86,7 @@ import { setUpPortals } from "./portals.js";
 import { setUpSouls } from "./souls.js";
 import { setUpLensPossession } from "./lens-possession.js";
 import { setUpReservoir } from "./reservoir.js";
+import { setUpBackbiting } from "./backbiting.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -285,6 +286,8 @@ Hooks.once("ready", async () => {
     setUpLifedrink();
     // (What a creature drops of what it holds, Deadweight Snare's metal items: scripts/drop-held.js.)
     setUpDropHeld();
+    // (A weapon's backbiting curse, The Liar's: its critically failed Strikes hit its wielder — scripts/backbiting.js.)
+    setUpBackbiting();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)
     setUpMoveDamage();
     // (Damage back each time its foot Strike deals damage, Hoof Stakes Snare's stakes: scripts/foot-damage.js.)

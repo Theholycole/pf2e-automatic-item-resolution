@@ -1,10 +1,10 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 43,
+  "entries": 42,
   "results": {
    "partial": 26,
-   "none": 9,
+   "none": 8,
    "note-only": 6,
    "builtin:no-effect": 2
   },
@@ -14,7 +14,6 @@
    "visibility": 2,
    "strike": 5,
    "cast-changes": 3,
-   "afflictions": 1,
    "counteract": 1,
    "dying": 2,
    "triggers": 2,
@@ -30,8 +29,8 @@
    "areas": 19,
    "strike": 17,
    "counteract": 6,
-   "immunity": 9,
-   "lasting": 12,
+   "immunity": 8,
+   "lasting": 11,
    "objects": 14,
    "creatures": 9,
    "several": 6,
@@ -41,7 +40,6 @@
    "mind": 5,
    "visibility": 2,
    "cast-changes": 3,
-   "afflictions": 6,
    "dying": 5,
    "triggers": 2,
    "spells": 7,
@@ -50,6 +48,7 @@
    "actions": 2,
    "senses": 2,
    "from-events": 4,
+   "afflictions": 5,
    "information": 5,
    "out-of-combat": 6,
    "retaliation": 1,
@@ -164,20 +163,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "The Liar",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "none",
-   "main": "afflictions",
-   "work": "curse",
-   "needs": [
-    "afflictions",
-    "immunity",
-    "lasting"
    ]
   },
   {

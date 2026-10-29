@@ -4,6 +4,7 @@
 
 import { createDropCard, dropCardHTML, listedItems, looksMetal } from "../src/live/drop-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, stateOf } from "./foundry.js";
+import { curseWeapon } from "./backbiting.js";
 
 export function setUpDropHeld() {
     Hooks.on(`${ABILITY_ID}.applied`, (payload) => {
@@ -47,6 +48,13 @@ export async function applyDropCard(message, { ticked = null } = {}) {
         const dropped = [];
         const ticked = held.filter((candidate) => candidate.ticked);
         if (state.plan.dropHeld?.one && ticked.length > 1) throw new Error(`Tick only one of ${entry.name}'s items.`);
+        // (Cursed instead, The Liar's backbiting weapon: scripts/backbiting.js, 2026-10-29.)
+        if (state.plan.dropHeld?.curse) {
+            const item = ticked[0] ? actor?.items?.get(ticked[0].id) : null;
+            lines.push(item ? await curseWeapon(item, { item: state.item, owner: entry.name }) : `${entry.name}: no weapon ticked, nothing cursed.`);
+            entries.push({ ...entry, held });
+            continue;
+        }
         // (Into its user's hand, The Crows' critical success: PF2e's own transfer, then held in one hand.)
         if (entry.take) {
             const user = state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : null;

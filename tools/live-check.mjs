@@ -5355,17 +5355,22 @@ export const cases = {
         return { results };
     },
 
-    // Swallow-Spike etched on +1 armor: its second activation (the 1-action one) is the first's attack, at the armor's bonus (+15).
+    // Swallow-Spike etched on +1 chain mail: its second activation (the 1-action one) is the first's attack at the armor's item bonus to AC
+    // (its AC Bonus 4 and its potency 1: +14 + 5 = +19), since 2026-10-26 a ways card — as it is, or the swallowed or engulfed die a second
+    // button (2026-10-29: the case still expected the plain card).
     async swallowSpike(scene) {
         const { actor: wearer } = await creature(scene, "Spike Wearer", { type: "character", x: 6, y: 8 });
         await creature(scene, "Spike Grabber", { x: 7, y: 8, alliance: "opposition" });
         const armor = await give(wearer, "Chain Mail");
         await armor.update({ "system.runes.potency": 1, "system.runes.property": ["swallowSpike"], "system.equipped.inSlot": true });
-        const since = Date.now();
+        let since = Date.now();
         await game.modules.get(NS).api.live.activate(armor.uuid, "rune:swallowSpike:1");
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the spikes' ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 0 });
         const card = await messageAfter(since, itemCard("expose"), { what: "the spikes' card" });
         const check = card.getFlag(NS, "card").plan.resolution.check;
-        assert(check.modifier === 15 && check.against.statistic === "ac", `+15 against AC (${JSON.stringify(check)})`);
+        assert(check.modifier === 19 && check.against.statistic === "ac", `+19 against AC (${JSON.stringify(check)})`);
         return { check };
     },
 
@@ -7675,7 +7680,8 @@ export const cases = {
         const save = await messageAfter(since, abilitySaveCard, { what: "the ability module's save card" });
         const plan = save.flags["pf2e-automatic-ability-resolution"].card.plan;
         assert(plan.resolution.check.statistic === "will" && plan.resolution.check.against.value === 31, `Will DC 31 (${JSON.stringify(plan.resolution.check)})`);
-        assert(/redirects the Strike/.test(JSON.stringify(plan.resolution.outcomes.failure.manualInstructions)), "the redirect for the GM on a failure");
+        // (The redirect a note Effect on the creature since 2026-10-27, the rulings' note for a rule PF2e can't play — 2026-10-29.)
+        assert((plan.resolution.outcomes.failure.noteEffects ?? []).some((note) => note.label === "Strike redirected"), "the redirect's note Effect on a failure");
         return { save: save.id };
     },
 
@@ -7922,7 +7928,8 @@ export const cases = {
         const against = card.getFlag(NS, "card").plan.resolution.check.against;
         const expected = wielder.system.attributes.classOrSpellDC?.value ?? Math.max(wielder.system.attributes.classDC?.value ?? 0, wielder.system.attributes.spellDC?.value ?? 0);
         assert(against?.value === expected && expected > 0, `the owner's DC ${expected} (${JSON.stringify(against)})`);
-        assert(/reduced to 0 HP/.test(card.content), "the at-0-HP note");
+        // (Its death at 0 Hit Points played by the core since 2026-10-27, postDamageTerminal, not a card's note — 2026-10-29.)
+        assert(card.getFlag(NS, "card").plan.resolution.postDamageTerminal?.kind === "death", "death once its damage leaves the creature at 0");
         since = Date.now();
         await game.modules.get(NS).api.live.apply(card.id, { targets: [foe.uuid] });
         await messageAfter(since, abilitySaveCard, { what: "the save card" });
@@ -8343,7 +8350,7 @@ export const cases = {
         const card = await messageAfter(since, itemCard("fortune"), { what: "the fortune card" });
         assert(/a flat check now to end persistent fire damage/.test(card.content), "the card's flat check");
         await game.modules.get(NS).api.live.apply(card.id);
-        await until(() => (game.messages.get(card.id).getFlag(NS, "card").results ?? []).some((line) => /flat check \(DC \d+\)/.test(line)), `the flat check's line (${JSON.stringify(game.messages.get(card.id).getFlag(NS, "card").results)})`, { timeout: 10000 });
+        await until(() => (game.messages.get(card.id).getFlag(NS, "card").results ?? []).some((line) => /\(flat check, DC \d+\)|flat check \(DC \d+\)/.test(line)), `the flat check's line (${JSON.stringify(game.messages.get(card.id).getFlag(NS, "card").results)})`, { timeout: 10000 });
         return { results: game.messages.get(card.id).getFlag(NS, "card").results, persistent: wearer.itemTypes.condition.filter((condition) => condition.slug === "persistent-damage").length };
     },
 
@@ -8684,6 +8691,48 @@ export const cases = {
         const read = check.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check;
         assert(read.roll === "skill" && read.statistic === "thievery" && read.against?.statistic === "reflex", `Thievery against the Reflex DC (${JSON.stringify(read)})`);
         return { check: check.id };
+    },
+
+    // The Liar (the user's answer to question 6, 2026-10-29: the backbiting curse as Archives of Nethys' Curses 3 has it): a foe's longsword
+    // cursed — its Will save against its user's spell DC failed (a 10 on the die, Will +0 against DC 34), its weapon ticked on the drop card —;
+    // then a Strike with it that critically fails (a 1 on the die against AC 50) hits the foe itself, for its most damage.
+    async theLiarBackbiting(scene) {
+        const { actor: user, token: userToken } = await creature(scene, "Liar Reader", { type: "character", x: 2, y: 30, level: 20 });
+        await user.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Occult Spells`, type: "spellcastingEntry", system: { tradition: { value: "occult" }, prepared: { value: "innate" }, ability: { value: "cha" }, proficiency: { value: 2 } } }]);
+        const { actor: foe, token: foeToken } = await creature(scene, "Liar Mark", { type: "character", x: 3, y: 30 });
+        // (Hit Points first: a fixture character has none, and PF2e takes no damage on one then.)
+        await foe.createEmbeddedDocuments("Item", [{ name: `${PREFIX} Hit Points`, type: "effect", system: { rules: [{ key: "FlatModifier", selector: "hp", value: 200 }], duration: { value: -1, unit: "unlimited", expiry: null, sustained: false } } }]);
+        await until(() => foe.system.attributes.hp.max >= 200, "200 maximum Hit Points", { timeout: 5000 });
+        await foe.update({ "system.attributes.hp.value": foe.system.attributes.hp.max });
+        const sword = await give(foe, "Longsword");
+        await sword.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
+        const { token: wall } = await creature(scene, "Liar Wall", { x: 4, y: 30, ac: 50 });
+        const liar = await give(user, "The Liar");
+        await userToken.object?.control?.();
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(liar.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "The Liar's ways card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: 0 });
+        const card = await messageAfter(since, itemCard("expose"), { what: "its save card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [foeToken.uuid] });
+        const save = await messageAfter(since, abilitySaveCard, { what: "the Will save card" });
+        since = Date.now();
+        await withDie(10, () => rollAndApply(save));
+        const drop = await messageAfter(since, itemCard("drop"), { what: "the drop card" });
+        const index = drop.getFlag(NS, "card").entries[0].held.findIndex((one) => one.id === sword.id);
+        assert(index >= 0, `its longsword listed (${JSON.stringify(drop.getFlag(NS, "card").entries[0].held)})`);
+        await game.modules.get(NS).api.live.apply(drop.id, { ticked: [`0:${index}`] });
+        await until(() => sword.getFlag(NS, "backbiting"), "the backbiting curse on the longsword", { timeout: 8000 });
+        const before = foe.system.attributes.hp.value;
+        await target(wall);
+        since = Date.now();
+        await withDie(1, () => strike(foe, sword));
+        const hurt = await messageAfter(since, (message) => /backbiting/.test(message.flavor ?? ""), { what: "the backbiting damage roll", timeout: 12000 });
+        const most = hurt.rolls?.[0]?.total;
+        await until(() => foe.system.attributes.hp.value === before - most, `${most} damage on the foe (${foe.system.attributes.hp.value} of ${before})`, { timeout: 8000 });
+        return { most, hp: foe.system.attributes.hp.value, results: game.messages.get(drop.id).getFlag(NS, "card").results };
     },
 
     // Reactive Mail's Quick Spike: pressed when a creature within 15 feet manipulates — its basic Reflex save (DC 20) at that creature.
@@ -10084,7 +10133,18 @@ export const cases = {
         assert(rust.resolution.sharedDamage.components[0].formula === "8d6[untyped]" && rust.resolution.check.basic && rust.resolution.check.against.value === 24 && persistent === "2d6[persistent,untyped]", `8d6, basic DC 24, 2d6 persistent on a failure (${JSON.stringify(rust.resolution.check)}, ${persistent})`);
         const hope = await saveFor("Last Hope", 0, { scaled: 3 });
         assert(hope.resolution.sharedDamage.components[0].formula === "3d10[vitality]" && hope.resolution.check.against.value === 37, `3d10 vitality, DC 37 (${hope.resolution.sharedDamage.components[0].formula})`);
-        const briar = await saveFor("Briar", 9);
+        // (Briar's tenth activation is an item card since 2026-10-27 — its Nyrissa's save its own card after it, plan.again —: its card applied
+        // first, then the save card that follows at the foe — 2026-10-29.)
+        const briarItem = await give(user, "Briar");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(briarItem.uuid, 9);
+        const briarCard = await messageAfter(since, itemCard("item"), { what: "Briar's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(briarCard.id, { targets: [foe.uuid] });
+        const again = await messageAfter(since, itemCard("expose"), { what: "Briar's save card after it" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(again.id, { targets: [foe.uuid] });
+        const briar = (await messageAfter(since, abilitySaveCard, { what: "the ability module's save card for Briar" })).flags["pf2e-automatic-ability-resolution"].card.plan;
         const rows = ["failure", "criticalFailure"].map((degree) => briar.resolution.outcomes[degree].effects.map((effect) => `${effect.slug} ${effect.value}`).join());
         assert(briar.resolution.check.against.value === 50 && rows[0] === "stunned 1" && rows[1] === "stunned 3", `DC 50, Stunned 1 and 3 (${rows.join(" / ")})`);
         return { persistent, hope: hope.resolution.sharedDamage.components[0].formula, rows };
