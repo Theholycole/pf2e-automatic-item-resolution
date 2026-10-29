@@ -446,25 +446,25 @@ export default (h) => {
             }
         },
 
-        // Briar's revival (item.revive { hp "max", keepPools }; scripts/revive.js isDead — a character dying at its most counts dead — and
-        // reviveCreature): its dead partner back at full Hit Points with its pools as they were. Its partner (30 maximum Hit Points, 1 of 2
-        // Focus Points) at 0 Hit Points and Dying 4: the item card's Apply brings it back — no Dying
+        // Briar's revival (item.revive { hp "max", keepPools }; scripts/revive.js isDead and reviveCreature): its dead partner back at full Hit
+        // Points with its pools as they were. Its partner (30 maximum Hit Points, 1 of 2 Focus Points) dead at 0 Hit Points: the item card's
+        // Apply brings it back — no Dying
         // nor Unconscious, 30 Hit Points, its Focus Point still there (a revival spends them otherwise), the "back from death" note Effect, and
         // the row's "Touched by Nyrissa" note.
         async b4G5BriarRevive(scene) {
             await h.clearSquares(scene, [[9, 2]]);
-            const { actor: partner } = await h.creature(scene, "Briar Partner", { type: "character", x: 9, y: 2, level: 20 });
+            // (An NPC partner, as the other revival cases have it: a fixture character's focus pool stays 0 in PF2e whatever its rules say —
+            // dead at 0 Hit Points with PF2e's dead status, scripts/revive.js isDead.)
+            const { actor: partner } = await h.creature(scene, "Briar Partner", { x: 9, y: 2, level: 20 });
             await hitPoints(partner, 30);
-            await ruled(partner, "focus pool", [{ key: "ActiveEffectLike", mode: "add", path: "system.resources.focus.max", value: 2 }]);
+            await partner.update({ "system.resources.focus": { value: 1, max: 2 } });
             const focus = () => partner.system.resources?.focus ?? {};
-            await h.until(() => Number(focus().max) >= 2, `a focus pool of 2 (${JSON.stringify(focus())})`, { timeout: 5000 });
-            await partner.update({ "system.resources.focus.value": 1 });
-            await h.until(() => Number(focus().value) === 1, `1 Focus Point (${JSON.stringify(focus())})`, { timeout: 5000 });
+            await h.until(() => Number(focus().max) >= 2 && Number(focus().value) === 1, `1 of 2 Focus Points (${JSON.stringify(focus())})`, { timeout: 5000 });
             const briar = await h.give(partner, "Briar");
             await briar.update(held(1));
             await partner.update({ "system.attributes.hp.value": 0 });
-            await partner.increaseCondition("dying", { value: 4 });
-            await h.until(() => Number(partner.getCondition?.("dying")?.value) >= 4 || partner.statuses?.has?.("dead"), `Dying 4 (${conditions(partner)})`, { timeout: 5000 });
+            await partner.toggleStatusEffect("dead", { active: true, overlay: true });
+            await h.until(() => partner.statuses?.has?.("dead") && hpOf(partner) === 0, `dead at 0 Hit Points (${hpOf(partner)}; ${conditions(partner)})`, { timeout: 5000 });
             const card = await activated(briar, 8, "item", "the revival's item card");
             await live().apply(card.id, {});
             await h.until(() => stateOf(card)?.status === "applied", "the card applied", { timeout: 10000 });

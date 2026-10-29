@@ -517,8 +517,8 @@ export default (h) => {
             h.assert(row, "Maze of Locked Doors in PF2e's spells");
             const uuid = `Compendium.pf2e.spells-srd.Item.${row._id}`;
             const spellSource = (await fromUuid(uuid)).toObject();
-            delete spellSource._id;
-            const scroll = async (name) => (await user.createEmbeddedDocuments("Item", [{ name, type: "consumable", img: "icons/sundries/scrolls/scroll-bound-sealed-red.webp", system: { category: "scroll", quantity: 1, level: { value: 13 }, traits: { value: ["consumable", "magical", "scroll"], rarity: "common" }, spell: { ...spellSource, _stats: { ...(spellSource._stats ?? {}), compendiumSource: uuid } } } }]))[0];
+            // (Its spell with an id of its own, as PF2e's scrolls have it: without one PF2e keeps no spell on the scroll.)
+            const scroll = async (name) => (await user.createEmbeddedDocuments("Item", [{ name, type: "consumable", img: "icons/sundries/scrolls/scroll-bound-sealed-red.webp", system: { category: "scroll", quantity: 1, level: { value: 13 }, traits: { value: ["consumable", "magical", "scroll"], rarity: "common" }, spell: { ...spellSource, _id: foundry.utils.randomID(), _stats: { ...(spellSource._stats ?? {}), compendiumSource: uuid } } } }]))[0];
             const older = await scroll(`${h.PREFIX} Old Scroll of the Maze`);
             await h.wait(1500);
             const card = await activated(grimoire, 0, "grant-spell", "the grimoire's card");

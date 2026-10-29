@@ -252,7 +252,7 @@ export function gateText(gate) {
 // ceremony: a tea's Tea Ceremony, true or false (null for any other item) — PF2e's own ceremony choice on the tea's Effect
 // is preset to it (Peace in Dreams Tea's "tea-ceremony", Resurrection Tea's "TeaCeremony" label), so PF2e needn't ask.
 const isCeremonyChoice = (entry) => entry?.value === "tea-ceremony" || /TeaCeremony/i.test(String(entry?.label ?? ""));
-export function effectSource(template, { application = null, item = {}, user = {}, worldTime = 0, initiative = null, flags = {}, ceremony = null } = {}) {
+export function effectSource(template, { application = null, item = {}, user = {}, worldTime = 0, initiative = null, flags = {}, ceremony = null, originOptions = [] } = {}) {
     const source = structuredClone(template);
     delete source._id;
     const slug = item.slug ?? null;
@@ -281,7 +281,10 @@ export function effectSource(template, { application = null, item = {}, user = {
         if (!(rule.brackets ?? rule.value?.brackets) && rule.overrides && typeof rule.overrides === "object") rule.overrides.tempHP = Number(application.battleTempHP);
     }
     source.system.start = { value: worldTime, initiative };
-    source.system.context = { ...(source.system.context ?? {}), origin: { ...(source.system.context?.origin ?? {}), actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null } };
+    // (With PF2e's origin roll options, its getOriginData's — scripts/foundry.js originOptionsOf: rules testing parent:origin:item read it, Assassin's
+    // Bracers' fear penalty its wearer's bonus, not a prompt — 2026-10-29.)
+    const rollOptions = Array.isArray(originOptions) && originOptions.length ? { rollOptions: [...originOptions] } : {};
+    source.system.context = { ...(source.system.context ?? {}), origin: { ...(source.system.context?.origin ?? {}), actor: user.actorUuid ?? null, token: user.tokenUuid ?? null, item: item.uuid ?? null, ...rollOptions } };
     source.flags = { ...(source.flags ?? {}), ...flags };
     return source;
 }

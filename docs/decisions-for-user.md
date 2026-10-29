@@ -56,10 +56,17 @@ Four consumables are boons with stages that last days to months: Elder Seed (9 d
 
 ## 8. The items waiting on the spell module (2026-10-29)
 
-Fifteen of the 19 PF2e entries left need something only the spell module can do. The list, with the shape each needs, is in docs/spell-module-requests.md (rows 1–18): casts with a changed area, traits or damage type (Fan of Soothing Winds, Everburning Coal, Gate Attenuator, Soulcutter, Shining Wayfinder, Dreadsmoke Thurible); riders on the user's next spell (Tome of Scintillating Sleet, Starless Scope, In the Shadows of Toil); Spell Reservoir; Blessed Reformer's casts; Phoenix Fighting Fan's Sustain by Strikes; and Sorshen's Sinuous Guisarme becoming a staff. No session works on the spell module now, and I never edit its tree.
+Fifteen of the 19 PF2e entries left need something only the spell module can do. The list, with the shape each needs, is in docs/spell-module-requests.md (rows 1–18): casts with a changed area, traits or damage type (Fan of Soothing Winds, Everburning Coal, Gate Attenuator, Soulcutter, Shining Wayfinder, Dreadsmoke Thurible); riders on the user's next spell (Tome of Scintillating Sleet, Starless Scope, In the Shadows of Toil); Spell Reservoir; Blessed Reformer's casts; Phoenix Fighting Fan's Sustain by Strikes; and Sorshen's Sinuous Guisarme becoming a staff. No session works on the spell module now, and I never edit its tree. Found live on 2026-10-29 (row 19): the spell module plays battle forms only on PF2e 8.5.0 exactly. On 8.6, which pftest and your Forge world run, every battle-form cast it makes is refused with "Form integration requires verification for this PF2e version". That is worth fixing whatever you choose for the rest.
 
 - **A (suggested):** open a session on the spell module (or tell me to work on it myself) to build those requests; the item module then plays them, and these entries leave the list.
 - **B:** leave them as they are: each card does everything else and says what to do by hand for the spell part.
+
+## 9. Third-party items whose own rules PF2e ignores (2026-10-29)
+
+Four Battlezoo items write their rules' predicates in an old form (`{ all: [...], not: [...] }`) that PF2e no longer reads, so PF2e ignores those rules: Runebranded Hide and Cloak of Eyes (the bestiary module), and Labyrinth and Tree (the ancestries module). For Runebranded Hide that means its own +1 to saves against electricity and its toggle never work; this module's activation still gives its electricity dice. These are passive rules in Battlezoo's data, not activations, so they're outside what the module builds now.
+
+- **A (suggested):** when one of these items is added to an actor, the module rewrites those predicates into PF2e's current form (`[...all, { not: ... }]`), which is what PF2e's own migration does to its own items, so the items work as their authors meant. Only items with an old-form predicate are touched.
+- **B:** leave Battlezoo's data alone; the GM fixes those four items by hand if wanted.
 
 ## Answers (2026-10-26)
 

@@ -146,6 +146,9 @@ test("Runebranded Hide: its melee Strikes' electricity dice by its resilient run
         assert.deepEqual([effect.duration.value, effect.duration.unit], [1, "minutes"]);
         assert.deepEqual([plan.unread, plan.resolution.outcomes.success.noteEffects, plan.notes.length, plan.activation.time], [undefined, [], 1, "1"]);
     }
+    // (As a live item has its rules once PF2e has prepared them: the selector an array — found live 2026-10-29.)
+    const prepared = { ...hide, system: { ...hide.system, rules: hide.system.rules.map((rule) => (rule.selector ? { ...rule, selector: [rule.selector] } : rule)) } };
+    assert.equal(compileActivations(prepared)[0].plan.item.ruleEffects?.length, 1);
 });
 
 test("Fume Ammunition: its hit's Dazzled a note Effect granting the condition for as long as the shot's persistent acid lasts", (t) => {

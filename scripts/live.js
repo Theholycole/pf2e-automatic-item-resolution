@@ -20,7 +20,7 @@ import { armedMarkSource, checkGateMet, gateOption, gateWords } from "../src/liv
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, storeAfter, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine, attackFloorRule, itemNoteSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf, itemRecord } from "./foundry.js";
+import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf, itemRecord, originOptionsOf } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -58,6 +58,7 @@ import { applyCraftCard, postCraftCard } from "./craft.js";
 import { startPulse } from "./pulse.js";
 import { postBoonCard } from "./boons.js";
 import { itemFormEffectSource, itemFormText, itemIdOf } from "../src/live/item-form.js";
+import { setFormBulk } from "./item-form.js";
 import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
 import { mutagenPlan } from "../src/live/transmogrify.js";
 import { applyGrantCard, postGrantCard } from "./grimoire.js";
@@ -1397,6 +1398,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
             lines.push(`${recipient.name}: ${state.item.name} is its own form again`);
         } else {
             await target.actor.createEmbeddedDocuments("Item", [itemFormEffectSource(otherForm, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
+            // (Its Bulk on the item itself too, carried hidden: scripts/item-form.js — back once the Effect goes.)
+            await setFormBulk(target.actor, itemId, otherForm);
             lines.push(`${recipient.name}: ${itemFormText(otherForm)}`);
         }
     }
@@ -1637,6 +1640,7 @@ async function nativeEffect(actor, name, change, state) {
         ceremony,
         item: state.item,
         user: state.user,
+        originOptions: originOptionsOf(state.item?.uuid, state.user?.actorUuid),
         worldTime: game.time.worldTime,
         initiative: startInitiative(actor),
         // (Its temporary immunity from when this Effect ends, Starsong Nectar's: given then, scripts/immunity.js.)

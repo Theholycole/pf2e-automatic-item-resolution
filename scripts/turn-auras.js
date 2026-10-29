@@ -28,7 +28,9 @@ async function checkAuras(combatant, at) {
                 const self = bearer.document.uuid === placeable.document?.uuid || bearer.actor.uuid === actor.uuid;
                 if (!auraFits(aura, { ...facts, self, distance: distanceFeet(spaceOf(bearer), spaceOf(placeable), grid) })) continue;
                 const name = effect.flags[MODULE_ID].from ?? effect.name;
-                await postCard({ plan: aura.plan, item: { name, uuid: effect.origin?.uuid ?? null }, sourceActor: bearer.actor, sourceToken: bearer, tokens: [placeable], cause: `${name}: ${aura.label ?? "its save"}` });
+                // (Its item the Effect's origin item — PF2e's effect.origin is the origin actor, and a save rolled with an actor as its item
+                // throws in PF2e's Check.roll: 2026-10-29, found live —, else the Effect itself.)
+                await postCard({ plan: aura.plan, item: { name, uuid: effect.system?.context?.origin?.item ?? effect.uuid ?? null }, sourceActor: bearer.actor, sourceToken: bearer, tokens: [placeable], cause: `${name}: ${aura.label ?? "its save"}` });
             }
         }
     }

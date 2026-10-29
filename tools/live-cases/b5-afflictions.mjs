@@ -428,7 +428,11 @@ export default (h) => {
             await h.until(() => strikeOf(wearer, sword) && strikeOf(wearer, sling), "Strikes with the longsword and the sling", { timeout: 5000 });
             const reflex = (options) => Number(wearer.getStatistic("reflex")?.withRollOptions({ extraRollOptions: options })?.dc?.value);
             const over = () => reflex(["electricity"]) - reflex([]);
-            await h.until(() => over() === 1, `the hide's own +1 to saves against electricity, worn (${over()}: is its rule's predicate read?)`, { timeout: 5000 });
+            // (The hide's own rules are Battlezoo's, their predicates in an old form — { all, not } — that PF2e no longer reads: it ignores
+            // them, its own +1 never there. Then only this module's Effects are checked.)
+            const own = (wearer.items.get(hide.id)?.rules ?? []).find((rule) => rule.key === "FlatModifier");
+            const ownWorks = Boolean(own && !own.ignored);
+            if (ownWorks) await h.until(() => over() === 1, `the hide's own +1 to saves against electricity, worn (${over()})`, { timeout: 5000 });
             const card = await activated(hide, 0, "item", "the hide's card");
             await api().apply(card.id, {});
             const off = () => wearer.itemTypes.effect.find((effect) => effect.flags?.[h.NS]?.ruleEffect === "Runebranded Hide: save bonus off");
@@ -439,15 +443,15 @@ export default (h) => {
             const added = (dice().system.rules ?? []).find((rule) => rule.key === "DamageDice");
             h.assert(added?.damageType === "electricity" && added.dieSize === "d6" && Number(added.diceNumber) === 1 && (added.predicate ?? []).includes("item:melee"), `1d6 electricity on melee Strikes (${JSON.stringify(added)})`);
             for (const effect of [off(), dice()]) h.assert(Number(effect.system.duration?.value) === 1 && effect.system.duration?.unit === "minutes", `${effect.name} for 1 minute (${JSON.stringify(effect.system.duration)})`);
-            await h.until(() => over() === 0, `the hide's own bonus off (${over()})`, { timeout: 8000 });
+            if (ownWorks) await h.until(() => over() === 0, `the hide's own bonus off (${over()})`, { timeout: 8000 });
             const types = async (weapon) => ((await strikeOf(wearer, weapon).damage({ event: h.shift(), createMessage: false }))?.instances ?? []).map((instance) => instance.type);
             const melee = await types(sword);
             const ranged = await types(sling);
             h.assert(melee.includes("electricity"), `electricity on the longsword's damage (${melee.join(", ")})`);
             h.assert(!ranged.includes("electricity"), `none on the sling's (${ranged.join(", ")})`);
             await off().delete();
-            await h.until(() => over() === 1, `the +1 back once its Effect is gone (${over()})`, { timeout: 8000 });
-            return { melee, ranged, suppress };
+            if (ownWorks) await h.until(() => over() === 1, `the +1 back once its Effect is gone (${over()})`, { timeout: 8000 });
+            return { melee, ranged, suppress, ownWorks };
         }
     };
 };

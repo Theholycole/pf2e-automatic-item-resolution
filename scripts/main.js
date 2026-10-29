@@ -90,6 +90,7 @@ import { setUpSouls } from "./souls.js";
 import { setUpReservoir } from "./reservoir.js";
 import { setUpBackbiting } from "./backbiting.js";
 import { setUpBoons } from "./boons.js";
+import { setUpItemForms } from "./item-form.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -305,6 +306,8 @@ Hooks.once("ready", async () => {
     setUpDropHeld();
     // (A weapon's backbiting curse, The Liar's: its critically failed Strikes hit its wielder — scripts/backbiting.js.)
     setUpBackbiting();
+    // (An item's own Bulk in its other form, back once its Effect goes — Staff of Sun Wukong's needle: scripts/item-form.js.)
+    setUpItemForms();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)
     setUpMoveDamage();
     // (Damage back each time its foot Strike deals damage, Hoof Stakes Snare's stakes: scripts/foot-damage.js.)

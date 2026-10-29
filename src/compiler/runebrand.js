@@ -31,8 +31,9 @@ export function withRunebrand(plan, html, item) {
     const [, [, count, faces, type]] = found;
     const extra = (plan.item?.strikeDamage ?? []).find((entry) => entry.damageType === type && entry.diceNumber === Number(count) && entry.dieSize === `d${faces}` && (entry.predicate ?? []).includes("item:melee"));
     if (!extra) return plan;
-    // (The hide's own bonus to those saves: its FlatModifier on saving throws, predicated on the damage type.)
-    const own = (item.system?.rules ?? []).find((rule) => rule?.key === "FlatModifier" && rule.selector === "saving-throw" && rule.type === "item" && JSON.stringify(rule.predicate ?? []).includes(`"${type}"`));
+    // (The hide's own bonus to those saves: its FlatModifier on saving throws, predicated on the damage type. Its selector a string in the
+    // pack's data, an array on a live item once PF2e has prepared its rules — 2026-10-29, found live.)
+    const own = (item.system?.rules ?? []).find((rule) => rule?.key === "FlatModifier" && [].concat(rule.selector ?? []).includes("saving-throw") && rule.type === "item" && JSON.stringify(rule.predicate ?? []).includes(`"${type}"`));
     if (!own) return plan;
     const slug = own.slug ? sluggify(own.slug) : sluggify(own.label ?? item.name);
     const effect = { name: `${item.name}: save bonus off`, words: `The hide's own item bonus to saves against ${type} effects (and any ${type} resistance it gives) is off`, rules: [{ key: "AdjustModifier", selector: "saving-throw", slug, suppress: true }], duration: extra.duration ?? MINUTE };

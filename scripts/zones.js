@@ -3,7 +3,7 @@
 // that export, the GM places it by hand. And a creature the item becomes (the conjure builtin, src/compiler/conjured.js):
 // the ability module's conjured token beside its user (its api.live.startConjure), or the GM's by hand.
 
-import { ABILITY_ID, CORE_ID, MODULE_ID } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, MODULE_ID, originOptionsOf } from "./foundry.js";
 import { effectSource, lightEffectSource } from "../src/live/card.js";
 import { lightZone } from "./placed-light.js";
 import { pickFor } from "./creature-pick.js";
@@ -26,7 +26,7 @@ export async function startItemZone({ plan: given, used, actor, token, userId = 
     // (Its user's own PF2e Effect beside the zone, src/compiler/aura-zones.js: Horn of Rust's +1 item bonus to AC.)
     if (plan.ownEffect?.uuid && actor) {
         const template = await fromUuid(plan.ownEffect.uuid).catch(() => null);
-        if (template) await actor.createEmbeddedDocuments("Item", [effectSource(template.toObject(), { item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, flags: { [MODULE_ID]: { card: true } } })]);
+        if (template) await actor.createEmbeddedDocuments("Item", [effectSource(template.toObject(), { item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, originOptions: originOptionsOf(used.data.uuid, actor.uuid), worldTime: game.time.worldTime, flags: { [MODULE_ID]: { card: true } } })]);
     }
     // (Its light on its user while the zone lasts, Soulspark Candle's: PF2e's TokenLight on its user's Effect, the last one it gave gone — 2026-10-27.)
     if (plan.ownLight && actor) {

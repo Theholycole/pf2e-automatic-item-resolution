@@ -37,6 +37,10 @@ export async function applyFocusCard(message) {
     else if (after.reason === "full") lines.push(key === "focus" ? `${state.user.name}'s focus pool is full (${after.value} of ${after.max}): no Focus Point gained.` : `${state.user.name}'s ${word}s are full (${after.value} of ${after.max}): no ${word} gained.`);
     else {
         const before = Number(pool.value) || 0;
+        // (Past its maximum, Red Hand's Satchel's extra batch: PF2e keeps a resource's value to its maximum, so an Effect raises that by the
+        // extra while it lasts — taken off with it, loseUnspentFocus. 2026-10-29.)
+        const extra = Math.max(0, after.value - (Number(pool.max) || 0));
+        const [over] = extra > 0 ? await actor.createEmbeddedDocuments("Item", [overMaxSource(state, { key, word, extra })]) : [];
         // (A special resource, the versatile vials, through PF2e's own updateResource: its value isn't the actor's data to update.)
         if (slug && typeof actor.updateResource === "function") await actor.updateResource(slug, after.value);
         else await actor.update({ [`system.resources.${key}.value`]: after.value });
@@ -46,10 +50,10 @@ export async function applyFocusCard(message) {
         const found = ["turn-end", "next-turn-end"].includes(focus.lost) ? encounterOf(actor) : null;
         if (found) {
             const skip = focus.lost === "next-turn-end" && found.combat.combatant?.id === found.combatant.id ? 1 : 0;
-            await actor.setFlag(MODULE_ID, GRANT, { before, gained: after.gained, combatId: found.combat.id, combatantId: found.combatant.id, item: state.item.name, key, word, ...(skip ? { skip } : {}) });
+            await actor.setFlag(MODULE_ID, GRANT, { before, gained: after.gained, combatId: found.combat.id, combatantId: found.combatant.id, item: state.item.name, key, word, ...(skip ? { skip } : {}), ...(over ? { overId: over.id } : {}) });
             lines.push(focus.lost === "next-turn-end" ? "Unused at the end of its next turn, it's taken back." : "Unspent at the end of the turn, it's taken back.");
         } else if (focus.lost === "turn-end") lines.push("Not in an encounter: take it back by hand if it isn't spent this turn.");
-        else if (focus.lost === "next-turn-end") lines.push("Not in an encounter: take it back by hand if it isn't used by the end of its next turn.");
+        else if (focus.lost === "next-turn-end") lines.push(`Not in an encounter: take it back by hand if it isn't used by the end of its next turn${over ? ` (and delete ${over.name})` : ""}.`);
         // (Its reminder, until the end of the turn when it's lost then, else for the round.)
         const applyChange = game.modules.get(ABILITY_ID)?.api?.live?.applyChange;
         if (applyChange && focus.only) {
@@ -61,6 +65,20 @@ export async function applyFocusCard(message) {
     const next = { ...state, status: "applied", results: lines };
     return message.update({ content: focusCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }
+
+// The Effect raising the resource's maximum by the extra gained past it, while it lasts.
+const overMaxSource = (state, { key, word, extra }) => ({
+    name: `${state.item.name}: ${extra} ${word}${extra === 1 ? "" : "s"} past the maximum`,
+    type: "effect",
+    img: state.item.img ?? "icons/svg/upgrade.svg",
+    flags: { [MODULE_ID]: { overMax: key } },
+    system: {
+        description: { value: `<p>${extra} ${word}${extra === 1 ? "" : "s"} past the day's maximum, from ${state.item.name}, until ${extra === 1 ? "it's" : "they're"} used or lost.</p>` },
+        duration: { value: -1, unit: "unlimited", expiry: null, sustained: false },
+        start: { value: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null },
+        rules: [{ key: "ActiveEffectLike", mode: "add", path: `system.resources.${key}.max`, value: extra }]
+    }
+});
 
 // PF2e's pf2e.endTurn (combatant, encounter): that creature's unspent point is lost.
 export async function loseUnspentFocus(combatant, encounter) {
@@ -77,8 +95,11 @@ export async function loseUnspentFocus(combatant, encounter) {
     const key = grant.key ?? "focus";
     const pool = poolOf(actor, key);
     const lost = unspent(grant, pool);
+    // (The raised maximum gone with it, the value taken back first: PF2e would keep it to the lower maximum anyway.)
+    const over = grant.overId ? actor.items.get(grant.overId) : null;
+    if (lost) await actor.update({ [`system.resources.${key}.value`]: (Number(pool.value) || 0) - lost });
+    if (over) await over.delete();
     if (!lost) return null;
-    await actor.update({ [`system.resources.${key}.value`]: (Number(pool.value) || 0) - lost });
     const owners = (game.users?.filter?.((user) => user.isGM || actor.testUserPermission?.(user, "OWNER")) ?? []).map((user) => user.id);
     return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: owners, content: `<p><strong>${grant.item}</strong>: ${actor.name}'s unspent ${grant.word ?? "Focus Point"} is lost at the end of the turn.</p>` });
 }

@@ -51,7 +51,7 @@ export function withHostileEnds(plan, text, name) {
             outcomes: {
                 ...outcomes,
                 criticalSuccess: row("criticalSuccess", []),
-                success: row("success", [{ label: `Stunned ${stunned[1]}`, text: `Stunned ${stunned[1]} by the orb; this Effect goes once the stun's spent. ${ENDS_WORDS}`, rules: [{ key: "GrantItem", uuid: stun, onDeleteActions: { granter: "cascade" }, alterations: [{ mode: "override", property: "badge-value", value: Number(stunned[1]) }] }, ENDS], duration: null }]),
+                success: row("success", [{ label: `Stunned ${stunned[1]}`, text: `Stunned ${stunned[1]} by the orb; this Effect goes once the stun's spent. ${ENDS_WORDS}`, rules: [{ key: "GrantItem", uuid: stun, onDeleteActions: { granter: "cascade", grantee: "cascade" }, alterations: [{ mode: "override", property: "badge-value", value: Number(stunned[1]) }] }, ENDS], duration: null }]),
                 failure: row("failure", [held(true)]),
                 criticalFailure: row("criticalFailure", [held(false)])
             }

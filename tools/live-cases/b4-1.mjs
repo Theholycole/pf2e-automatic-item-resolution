@@ -61,12 +61,14 @@ export default (h) => {
         // Essence Prism's first activation (2026-10-27, artifact-readings.js; plan.ownSave in scripts/poisons.js, saveText "check"): "You must
         // succeed at a secret DC 30 skill check with a skill associated with a magical tradition that uses the essence you chose." Its card is its
         // user's own (no targets), its eight picks the essences and their traditions' skills; "Spiritual essence: Religion" picked, the ability
-        // module's card is at its user's own token, Religion against DC 30, secret. Rolled (a natural 20: a success), its user gets the prism's
+        // module's card is at its user's own token, Religion against DC 30, secret. Rolled (Religion +15, a natural 20: a critical success), its user gets the prism's
         // note Effect for the quality it chose, of spiritual essence. (The Religion roll's whisper is returned: the secret roll is the ability
         // module's to make.)
         async b4G1EssencePrismReligion(scene) {
             await h.clearSquares(scene, [[4, 4]]);
             const { actor: user, token: userToken } = await h.creature(scene, "Prism Setter", { type: "character", x: 4, y: 4 });
+            // (Religion +15: a natural 20 is 35, a critical success — at +0 it's 20 against DC 30, a failure, PF2e's natural 20 one step up.)
+            await user.createEmbeddedDocuments("Item", [{ name: `${h.PREFIX} Religion bonus`, type: "effect", system: { duration: { value: -1, unit: "unlimited", expiry: null, sustained: false }, rules: [{ key: "FlatModifier", selector: "religion", type: "untyped", value: 15 }] } }]);
             const prism = await h.give(user, "Essence Prism");
             await userToken.object?.control?.();
             await h.target();

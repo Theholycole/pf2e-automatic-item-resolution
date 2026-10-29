@@ -181,13 +181,20 @@ export default (h) => {
                 const inside = (token) => cells.includes(squareOf(token));
                 // (The undead crossing: its Will save, a critical failure.)
                 let since = Date.now();
-                await undeadToken.update({ x: 6 * SIZE, y: 5 * SIZE }, { animate: false });
-                const save = await h.messageAfter(since, (message) => h.abilitySaveCard(message) && aimsAt(undead)(message), { what: "the undead's Will card as it crosses", timeout: 10000 });
-                const check = abilityState(save).plan.resolution.check;
-                h.assert(check.statistic === "will" && Number(check.against?.value) === 30, `DC 30 Will (${JSON.stringify(check)})`);
-                await h.withDie(1, () => h.rollAndApply(save));
-                await h.until(() => !inside(undeadToken), `the undead pushed back out (at ${squareOf(undeadToken)}; ${degreeOf(save, undead)})`, { timeout: 10000 });
-                h.assert(undead.itemTypes.effect.some((effect) => /Kept out by the cube/.test(effect.name)), `its note Effect (${effectNames(undead)})`);
+                // (Its note Effect lasts to the end of the undead's turn: out of an encounter, as here, it ends as soon as it's made — so its making is watched.)
+                const made = [];
+                const watch = Hooks.on("createItem", (item) => item.parent?.id === undead.id && item.type === "effect" && made.push(item.name));
+                try {
+                    await undeadToken.update({ x: 6 * SIZE, y: 5 * SIZE }, { animate: false });
+                    const save = await h.messageAfter(since, (message) => h.abilitySaveCard(message) && aimsAt(undead)(message), { what: "the undead's Will card as it crosses", timeout: 10000 });
+                    const check = abilityState(save).plan.resolution.check;
+                    h.assert(check.statistic === "will" && Number(check.against?.value) === 30, `DC 30 Will (${JSON.stringify(check)})`);
+                    await h.withDie(1, () => h.rollAndApply(save));
+                    await h.until(() => !inside(undeadToken), `the undead pushed back out (at ${squareOf(undeadToken)}; ${degreeOf(save, undead)})`, { timeout: 10000 });
+                    await h.until(() => made.some((name) => /Kept out by the cube/.test(name)), `its note Effect made (${JSON.stringify(made)}; now ${effectNames(undead)})`, { timeout: 5000 });
+                } finally {
+                    Hooks.off("createItem", watch);
+                }
                 // (A living creature crossing face 2: no card.)
                 since = Date.now();
                 await livingToken.update({ x: 5 * SIZE, y: 6 * SIZE }, { animate: false });
@@ -336,12 +343,13 @@ export default (h) => {
                 const record = () => user.items.get(contract.id)?.getFlag(h.NS, "contract");
                 await h.until(() => record()?.selected?.["1"] === healUuid, `Heal recorded as the rank-1 selection (${JSON.stringify(record() ?? null)}; ${JSON.stringify(resultsOf(card))})`, { timeout: 15000 });
                 const day = Math.floor(Number(game.time.worldTime) / 86_400);
-                h.assert(record().used?.[healUuid] === day, `cast today (${JSON.stringify(record().used)})`);
+                const usedKey = healUuid.replace(/\./g, "|");
+                h.assert(record().used?.[usedKey] === day, `cast today (${JSON.stringify(record().used)})`);
                 card = await activated(contract, unleash, "cast", "the same day's cast card");
                 const again = stateOf(card).plan.choices ?? [];
                 h.assert(!again.some((choice) => choice.slot === "1"), `no rank-1 spell the same day (${again.filter((choice) => choice.slot === "1").map((choice) => choice.spell.name)})`);
                 h.assert(again.filter((choice) => choice.slot === "cantrip").length === cantrips && again.some((choice) => choice.slot === "2"), `every cantrip still, and the other ranks (${again.filter((choice) => choice.slot === "cantrip").length} of ${cantrips})`);
-                await user.items.get(contract.id).setFlag(h.NS, "contract", { ...record(), used: { ...record().used, [healUuid]: day - 1 } });
+                await user.items.get(contract.id).setFlag(h.NS, "contract", { ...record(), used: { ...record().used, [usedKey]: day - 1 } });
                 card = await activated(contract, unleash, "cast", "the next day's cast card");
                 const rankOne = (stateOf(card).plan.choices ?? []).filter((choice) => choice.slot === "1");
                 h.assert(rankOne.length === 1 && rankOne[0].spell.uuid === healUuid, `only Heal for rank 1 the next day (${rankOne.map((choice) => choice.spell.name)})`);
@@ -726,7 +734,7 @@ export default (h) => {
             let since = Date.now();
             await live().apply(card.id, { targets: [rubberToken.uuid] });
             const rerolled = await h.messageAfter(since, (message) => saveBy(rubber)(message) && message.flags.pf2e.context.isReroll, { what: "PF2e's reroll of its failed save", timeout: 10000 });
-            h.assert(rubber.uuid in (keeper.items.get(mascot.id)?.getFlag(h.NS, "rerollsBy") ?? {}), `its use this month recorded (${JSON.stringify(keeper.items.get(mascot.id)?.getFlag(h.NS, "rerollsBy") ?? null)})`);
+            h.assert(rubber.uuid.replace(/\./g, "|") in (keeper.items.get(mascot.id)?.getFlag(h.NS, "rerollsBy") ?? {}), `its use this month recorded (${JSON.stringify(keeper.items.get(mascot.id)?.getFlag(h.NS, "rerollsBy") ?? null)})`);
             await failWill(rubber);
             card = await activated(mascot, luck, "reroll", "the luck's card again");
             const again = await errorOf(live().apply(card.id, { targets: [rubberToken.uuid] }));

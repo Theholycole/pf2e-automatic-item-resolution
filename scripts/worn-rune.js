@@ -7,7 +7,7 @@
 import { wornEffectChanges, wornRunes } from "../src/compiler/worn-rune.js";
 import { isRuneItem } from "../src/compiler/runes.js";
 import { effectSource } from "../src/live/card.js";
-import { MODULE_ID, isActiveGM } from "./foundry.js";
+import { MODULE_ID, isActiveGM, originOptionsOf } from "./foundry.js";
 
 const GIVEN = "wornRune";
 const queues = new Map();
@@ -41,7 +41,7 @@ async function keepNow(actor, index) {
     for (const { uuid, rune } of add) {
         const template = await fromUuid(uuid).catch(() => null);
         if (!template) continue;
-        const source = effectSource(template.toObject(), { item: { name: rune.name, uuid: rune.holder.uuid ?? null }, user: { actorUuid: actor.uuid }, worldTime: game.time.worldTime, flags: { [MODULE_ID]: { [GIVEN]: uuid } } });
+        const source = effectSource(template.toObject(), { item: { name: rune.name, uuid: rune.holder.uuid ?? null }, user: { actorUuid: actor.uuid }, originOptions: originOptionsOf(rune.holder.uuid, actor.uuid), worldTime: game.time.worldTime, flags: { [MODULE_ID]: { [GIVEN]: uuid } } });
         source._stats = { ...(source._stats ?? {}), compendiumSource: uuid };
         sources.push(source);
     }

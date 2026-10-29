@@ -132,15 +132,16 @@ export function triggeringRoll(messages, reroll, { actorUuid, actorId }) {
 
 // A reroll kept for later (2026-10-27, Old Tillimaquin's "You can reroll a single failed saving throw within the next 24 hours … Each person who
 // rubs the claws can benefit only once per month"): why it can't be used now, or null — past its time from when it was given (at), or that
-// creature's use this month already (record { [actorUuid]: period }).
+// creature's use this month already (record { [its uuid, the dots out]: period } — a dotted key Foundry's flag update reads as a path, 2026-10-29).
+const byKey = (uuid) => String(uuid ?? "").replace(/\./g, "|");
 const PERIODS = { month: 2_592_000, week: 604_800, day: 86_400 };
 const SECONDS = { hours: 3600, minutes: 60, days: 86_400, rounds: 6 };
 export function laterRefusal(reroll, { at = null, now = 0, record = null, actorUuid = null } = {}) {
     if (reroll?.within && Number.isFinite(Number(at)) && Number(now) > Number(at) + Number(reroll.within.value) * (SECONDS[reroll.within.unit] ?? 3600)) return `its ${reroll.within.value} ${reroll.within.unit} are over`;
-    if (reroll?.perCreature && actorUuid && record?.[actorUuid] === Math.floor(Number(now) / (PERIODS[reroll.perCreature.per] ?? PERIODS.month))) return `that creature has had its luck this ${reroll.perCreature.per}`;
+    if (reroll?.perCreature && actorUuid && record?.[byKey(actorUuid)] === Math.floor(Number(now) / (PERIODS[reroll.perCreature.per] ?? PERIODS.month))) return `that creature has had its luck this ${reroll.perCreature.per}`;
     return null;
 }
-export const withLaterUse = (record, reroll, { now = 0, actorUuid }) => ({ ...(record ?? {}), [actorUuid]: Math.floor(Number(now) / (PERIODS[reroll?.perCreature?.per] ?? PERIODS.month)) });
+export const withLaterUse = (record, reroll, { now = 0, actorUuid }) => ({ ...(record ?? {}), [byKey(actorUuid)]: Math.floor(Number(now) / (PERIODS[reroll?.perCreature?.per] ?? PERIODS.month)) });
 
 export function rerollCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";

@@ -85,8 +85,8 @@ export const impulseWords = "A kineticist whose kinetic elements include the spe
 // PF2e's own Effects made with the cast (src/compiler/adventure-readings.js plan.castLinks, Assassin's Bracers' Focus on the Doomed): its
 // user's and the creature it designates — in words, and each one's source from its compendium Effect, its TokenMark at that creature.
 export const castLinksWords = (links) => `With it: ${links.map((link) => `${link.label} on ${link.on === "user" ? "its user" : "the creature targeted"}`).join(", ")} (PF2e's Effects)`;
-export function castLinkSource(template, link, { markUuid = null, item = {}, user = {}, worldTime = 0, initiative = null } = {}) {
-    const source = effectSource(template, { item, user, worldTime, initiative });
+export function castLinkSource(template, link, { markUuid = null, item = {}, user = {}, worldTime = 0, initiative = null, originOptions = [] } = {}) {
+    const source = effectSource(template, { item, user, worldTime, initiative, originOptions });
     if (link.mark && markUuid) source.system.rules = (source.system.rules ?? []).map((rule) => (rule?.key === "TokenMark" ? { ...rule, uuid: markUuid } : rule));
     return source;
 }

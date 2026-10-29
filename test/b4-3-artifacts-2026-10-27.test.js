@@ -103,6 +103,8 @@ test("Limitless Power's Unleash Power: the cast card of every common divine cant
     assert.deepEqual([cantrip.rank, heal.slot, heal.rank, bless.slot], [10, "1", 1, "1"]);
     assert.ok(plan.choices.every((choice) => choice.slot === "cantrip" || (choice.rank >= 1 && choice.rank <= 9)));
     const record = withContractCast(null, heal, 5);
+    // (No dot in a key of its record: Foundry's flag update would read the uuid as a path.)
+    assert.ok(Object.keys(record.used).every((key) => !key.includes(".")) && Object.keys(record.used).length === 1);
     const now = contractChoices(plan, record, 5);
     assert.ok(!now.some((choice) => choice.slot === "1"));
     assert.ok(contractChoices(plan, record, 6).filter((choice) => choice.slot === "1").every((choice) => choice.spell.name === "Heal"));
@@ -221,6 +223,8 @@ test("Old Tillimaquin's Luck of the Mascot: the reroll card kept for 24 hours, t
     const day = 86_400;
     assert.match(laterRefusal(plan.reroll, { at: 0, now: day + 1 }), /over/);
     const record = withLaterUse(null, plan.reroll, { now: 100, actorUuid: "Actor.a" });
+    // (No dot in its key: Foundry's flag update would read the uuid as a path.)
+    assert.deepEqual(Object.keys(record), ["Actor|a"]);
     assert.match(laterRefusal(plan.reroll, { at: 0, now: 200, record, actorUuid: "Actor.a" }), /this month/);
     assert.equal(laterRefusal(plan.reroll, { at: 0, now: 200, record, actorUuid: "Actor.b" }), null);
     const messages = [{ id: "1", type: "saving-throw", actorUuid: "Actor.a", outcome: "failure" }, { id: "2", type: "saving-throw", actorUuid: "Actor.a", outcome: "success" }];

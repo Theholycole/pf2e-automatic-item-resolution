@@ -201,8 +201,12 @@ export default (h) => {
                 h.assert(altered().system.duration.value === 1 && altered().system.duration.unit === "rounds" && altered().system.duration.expiry === "turn-end", `to the end of its next turn (${JSON.stringify(altered().system.duration)})`);
                 h.assert(resultsOf(electric.card).includes("All of its Weapon Storm's damage is electricity damage."), `the card's line (${JSON.stringify(resultsOf(electric.card))})`);
                 const typed = await stormFormula(electric.cast, electric.since);
-                h.assert(/\[electricity\]$/.test(typed), `the spell module's Weapon Storm damage electricity (${typed}: its held-weapon dice are a DamageRoll of the weapon's own type, which PF2e's DamageAlteration on the caster doesn't reach)`);
-                return { own, typed, rule };
+                // (Its held-weapon dice a DamageRoll of the weapon's own type, which the DamageAlteration doesn't reach: electricity once the spell
+                // module takes castFromItem's damageType — docs/spell-module-requests.md row 12 —, else the card's line to change it by hand.)
+                const takesType = (game.modules.get("pf2e-automatic-resolution")?.api?.castFromItemOptions ?? []).includes("damageType");
+                if (takesType) h.assert(/\[electricity\]$/.test(typed), `the spell module's Weapon Storm damage electricity (${typed})`);
+                else h.assert(resultsOf(electric.card).some((line) => /^All its damage is electricity: change its type by hand/.test(line)), `the line to change its type by hand (${JSON.stringify(resultsOf(electric.card))})`);
+                return { own, typed, rule, takesType };
             } finally {
                 await closeWindows(/Weapon Storm/);
             }

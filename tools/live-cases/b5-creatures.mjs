@@ -370,7 +370,18 @@ export default (h) => {
                 const mark = game.messages.get(casting.id).getFlag(h.NS, "castDuration");
                 h.assert(Number(mark.value) === rolled && mark.unit === "rounds", `its mark ${rolled} rounds (${JSON.stringify(mark)})`);
                 const effect = () => wearer.itemTypes.effect.find((entry) => entry.system?.context?.origin?.item === mark.spellUuid);
-                const answered = await resolveSpellCard(casting, () => Boolean(effect()), { timeout: 20000 });
+                // (The spell module plays battle forms on one PF2e version only — its scripts/form-runtime.js verify, "Form integration requires
+                // verification for this PF2e version" —, docs/spell-module-requests.md row 19: refused, this module's own part is all there is.)
+                const refusals = [];
+                const notify = ui.notifications.notify.bind(ui.notifications);
+                ui.notifications.notify = (text, type, options) => (/Form integration requires verification/.test(String(text)) && refusals.push(String(text)), notify(text, type, options));
+                let answered;
+                try {
+                    answered = await resolveSpellCard(casting, () => Boolean(effect()) || refusals.length > 0, { timeout: 20000 });
+                } finally {
+                    ui.notifications.notify = notify;
+                }
+                if (!effect() && refusals.length) return { rolled, mark, formRefused: refusals[0], results: resultsOf(cast) };
                 await h.until(() => Number(effect()?.system?.duration?.value) === rolled && effect().system.duration.unit === "rounds", `its Effect for ${rolled} rounds (${JSON.stringify(effect()?.system?.duration)})`, { timeout: 8000 });
                 return { rolled, effect: effect().name, duration: effect().system.duration, answered, results: resultsOf(cast) };
             } finally {

@@ -67,8 +67,12 @@ function bottledGrasp({ base, info }, { what, size, count, reach, dc, grabbed = 
         automation: { level: "automatic" },
         trigger: { event: "zone" },
         targeting: { target: "a creature in the ink", range: null, area: null },
-        // (Its item's own stages, Pseudo Afflictions' to track: "item", the bottle's uuid filled in once it's used.)
-        resolution: save("fortitude", poison.dc, { criticalSuccess: { ...none() }, success: { ...none() }, failure: { ...none(), affliction: { name: base?.source?.name ?? "Kraken Bottle", stage: 1, dc: poison.dc, uuid: "item" } }, criticalFailure: { ...none(), affliction: { name: base?.source?.name ?? "Kraken Bottle", stage: 2, dc: poison.dc, uuid: "item" } } })
+        // (Its item's own stages, Pseudo Afflictions' to track: "item", the bottle's uuid filled in once it's used. The hand-off itself on the
+        // resolution, as the core's save family reads it — its rows only say at which stage: 2026-10-29, found live.)
+        resolution: {
+            ...save("fortitude", poison.dc, { criticalSuccess: { ...none() }, success: { ...none() }, failure: { ...none(), affliction: { name: base?.source?.name ?? "Kraken Bottle", stage: 1, dc: poison.dc, uuid: "item" } }, criticalFailure: { ...none(), affliction: { name: base?.source?.name ?? "Kraken Bottle", stage: 2, dc: poison.dc, uuid: "item" } } }),
+            afflictionHandoff: { name: base?.source?.name ?? "Kraken Bottle", slug: String(base?.source?.name ?? "Kraken Bottle").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), traits: ["poison"], level: Number(info?.level) || null, statistic: "fortitude", dc: poison.dc, uuid: "item" }
+        }
     } : null;
     const cloud = {
         ...base,

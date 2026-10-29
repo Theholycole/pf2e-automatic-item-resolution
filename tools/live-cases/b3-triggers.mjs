@@ -44,7 +44,8 @@ export default (h) => {
         // increases their sickened condition value to 2 if it isn't holding its breath). The creature also takes 4d6 poison damage." Pressed at a
         // human, a construct and a human with an Effect named Holding Breath: two save cards, Fortitude DC 32 — the plain human's alone with −2
         // circumstance, the construct and the breath-holder on the other with none. Every die a 5 (+20: 25, the human's 23 — failures, not
-        // critical ones): the human Sickened 2, the other two Sickened 1, each 8 poison damage (4d6 at 2 each).
+        // critical ones): the human Sickened 2 and the breath-holder Sickened 1, each damaged; the construct, PF2e's immune to poison and
+        // sickened, untouched.
         async b3TriggersSmoggerBreathers(scene) {
             await h.clearSquares(scene, [[2, 2], [3, 2], [3, 3], [2, 3]]);
             const { actor: wearer, token: wearerToken } = await h.creature(scene, "Smog Wearer", { type: "character", x: 2, y: 2, level: 9 });
@@ -73,11 +74,16 @@ export default (h) => {
             h.assert(Number(check(humanCard).bonus?.value) === -2 && check(humanCard).bonus.type === "circumstance", `the human's −2 circumstance (${JSON.stringify(check(humanCard).bonus ?? null)})`);
             h.assert(!check(plainCard).bonus, `no penalty for the construct nor the breath-holder (${JSON.stringify(check(plainCard).bonus ?? null)})`);
             const before = { human: hpOf(human), construct: hpOf(construct), holder: hpOf(holder) };
-            for (const message of [humanCard, plainCard]) await h.withDie(5, () => h.rollAndApply(message));
-            await h.until(() => valueOf(human, "sickened") === 2 && valueOf(construct, "sickened") === 1 && valueOf(holder, "sickened") === 1, `the human Sickened 2, the others Sickened 1 (${conditions(human)} / ${conditions(construct)} / ${conditions(holder)})`, { timeout: 12000 });
+            // (One card after the other, each applied before the next is rolled. The construct is PF2e's construct: immune to poison and to
+            // sickened by its trait, so nothing of the smog's lands on it. The damage is rolled once Apply's pressed, after the die's let go:
+            // taken, not a set amount.)
+            await h.withDie(5, () => h.rollAndApply(humanCard));
+            await h.until(() => valueOf(human, "sickened") === 2 && hpOf(human) < before.human, `the human Sickened 2 and damaged (${conditions(human)}; ${hpOf(human)} of ${before.human})`, { timeout: 12000 });
+            await h.withDie(5, () => h.rollAndApply(plainCard));
+            await h.until(() => valueOf(holder, "sickened") === 1 && hpOf(holder) < before.holder, `the breath-holder Sickened 1 and damaged (${conditions(holder)}; ${hpOf(holder)} of ${before.holder})`, { timeout: 12000 });
             h.assert(degreeOf(humanCard, human) === "failure" && degreeOf(plainCard, construct) === "failure" && degreeOf(plainCard, holder) === "failure", `failures all (${degreeOf(humanCard, human)}, ${degreeOf(plainCard, construct)}, ${degreeOf(plainCard, holder)})`);
-            await h.until(() => before.human - hpOf(human) === 8 && before.construct - hpOf(construct) === 8 && before.holder - hpOf(holder) === 8, `8 poison damage each (${before.human - hpOf(human)}, ${before.construct - hpOf(construct)}, ${before.holder - hpOf(holder)})`, { timeout: 8000 });
             await h.wait(800);
+            h.assert(!valueOf(construct, "sickened") && hpOf(construct) === before.construct, `the construct immune: no Sickened, no poison damage (${conditions(construct)}; ${hpOf(construct)} of ${before.construct})`);
             h.assert(valueOf(human, "sickened") === 2, `the human's Sickened stays 2, not raised past it by the base row's 1 (${conditions(human)})`);
             return { human: conditions(human), construct: conditions(construct), holder: conditions(holder) };
         },

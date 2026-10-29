@@ -230,9 +230,11 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
     const chosen = objects.self ? holder : choice ? (owner ?? actor).items.get(choice.id) : null;
     // (A weapon made by a talisman used up as it's made, Chain of Stars': no holder needed.)
     const spentMaker = objects.op === "create" && objects.self && !holder && state.plan.item?.type === "consumable";
-    if (!chosen && !spentMaker) throw new Error(objects.self ? `${state.item.name} isn't on ${state.user.name} any more.` : `Pick one of ${state.user.name}'s items first.`);
+    // (A pick from PF2e's compendium, The Wanderer's any item and Armory Bracelet's weapon: none of its user's, the create below finds it.)
+    const fromPack = objects.op === "create" && Boolean(objects.choose);
+    if (!chosen && !spentMaker && !fromPack) throw new Error(objects.self ? `${state.item.name} isn't on ${state.user.name} any more.` : `Pick one of ${state.user.name}'s items first.`);
     // (Still fit for it: the item may have moved since the card was posted.)
-    if (!objects.self && !objectChoices(owner ?? actor, objects, owner ? null : state.item.id).some((entry) => entry.id === chosen.id)) throw new Error(`${chosen.name} can't be taken now.`);
+    if (!objects.self && !fromPack && !objectChoices(owner ?? actor, objects, owner ? null : state.item.id).some((entry) => entry.id === chosen.id)) throw new Error(`${chosen.name} can't be taken now.`);
     let line;
     if (objects.op === "store") {
         if (!holder) throw new Error(`${state.item.name} isn't on ${state.user.name} any more.`);

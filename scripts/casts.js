@@ -5,7 +5,7 @@ import { CONTRACT, contractChoices, contractRefusal, dayOf, withContractCast } f
 import { castCardHTML, castLinkSource, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
-import { FLAG, MODULE_ID, creaturesNear, destroyUsedItem, entryOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
+import { FLAG, MODULE_ID, creaturesNear, destroyUsedItem, entryOf, originOptionsOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
 import { castRankAt } from "../src/compiler/cast-owner.js";
 import { rankFromLevel } from "../src/compiler/unique-rules.js";
 import { impulseNumbers } from "../src/compiler/cast-changes.js";
@@ -50,12 +50,13 @@ export function beyondRange(castRange, casterToken, actor, targets) {
 }
 
 // The cast's bonus beside the spell (src/compiler/cast-riders.js castBonus) on each creature it's cast on: PF2e's FlatModifier rules for its
-// time. → the card's lines.
-export async function giveCastBonus(state, actors) {
+// time. → the card's lines. casterKnew: whether its caster knew castBonus.ifKnows before the cast.
+export async function giveCastBonus(state, actors, { casterKnew = false } = {}) {
     // (Or PF2e's own rules for it, The Courtesan's degree better to Impersonate: castBonus.rules, its time castBonus.duration — 2026-10-27.)
     const { modifiers = [], said, ifKnows, rules = null } = state.plan.castBonus;
-    // (Only for a caster who already has that spell or ritual, the Oculus of Abaddon's Binding Circle: none otherwise — 2026-10-27.)
-    if (ifKnows && !actors.some((actor) => (actor.itemTypes?.spell ?? []).some((spell) => spell.name.toLowerCase() === ifKnows.toLowerCase()))) return [`No ${said.replace(/^(?:and|with) /i, "")}: its caster doesn't know ${ifKnows}.`];
+    // (Only for a caster who already has that spell or ritual, the Oculus of Abaddon's Binding Circle: none otherwise — 2026-10-27. Read before the
+    // cast: the spell module's cast puts the spell among its caster's own, 2026-10-29.)
+    if (ifKnows && !casterKnew) return [`No ${said.replace(/^(?:and|with) /i, "")}: its caster doesn't know ${ifKnows}.`];
     const time = state.plan.castBonus.duration ?? modifiers[0].duration;
     const words = said.replace(/^(?:and|with) /i, "");
     const lines = [];
@@ -85,7 +86,7 @@ async function giveCastLinks(state, { user, designated }) {
             continue;
         }
         for (const actor of actors.filter(Boolean)) {
-            const source = castLinkSource(template, link, { markUuid: designated[0]?.document?.uuid ?? designated[0]?.uuid ?? null, item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null });
+            const source = castLinkSource(template, link, { markUuid: designated[0]?.document?.uuid ?? designated[0]?.uuid ?? null, item: state.item, user: state.user, originOptions: originOptionsOf(state.item?.uuid, state.user?.actorUuid), worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null });
             await actor.createEmbeddedDocuments("Item", [source]);
             lines.push(`${actor.name} gains ${template.name}.`);
         }
@@ -217,6 +218,8 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const holder = state.plan.contract && state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
         const refused = holder ? contractRefusal(state.plan, holder.getFlag(MODULE_ID, CONTRACT), chosenSpell(state), dayOf(game.time.worldTime)) : null;
         if (refused) throw new Error(`${state.item.name}: ${refused}.`);
+        const knows = state.plan.castBonus?.ifKnows?.toLowerCase();
+        const casterKnew = Boolean(knows) && (actor.itemTypes?.spell ?? []).some((spell) => spell.name.toLowerCase() === knows);
         const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item, ...typed });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
         if (holder) await holder.setFlag(MODULE_ID, CONTRACT, withContractCast(holder.getFlag(MODULE_ID, CONTRACT), chosenSpell(state), dayOf(game.time.worldTime)));
@@ -253,7 +256,7 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         // (PF2e's own Effects with it, Assassin's Bracers': its user's and the designated creature's.)
         if (state.plan.castLinks?.length) lines.push(...await giveCastLinks(state, { user: state.user?.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) ?? actor : actor, designated }));
         // (A bonus with the spell, Psyche Salts': an Effect of PF2e's rules on the creature it's cast on.)
-        if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean)));
+        if (state.plan.castBonus) lines.push(...await giveCastBonus(state, selfOf(state) ? [actor] : targetTokens.map((target) => target.actor).filter(Boolean), { casterKnew }));
         // (A condition on its user with the cast, Locket of Sealed Nightmares' fatigued: PF2e's condition on the item's user.)
         // (A zone over the spell's area beside it, The Beating's difficult terrain: the ability module's, placed once the spell is cast —
         // src/compiler/artifact-readings.js castZone.)

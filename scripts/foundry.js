@@ -56,6 +56,19 @@ export function itemsNear(token, name, feet) {
 // An item's record for the ability module's save card: its level, type and traits beside its name and uuid, so a save with the incapacitation
 // trait keeps the item's level once it's used up and gone (the ability module's state.ability.item, 2026-10-29 — after a reload it can't
 // remember the deleted item itself).
+// PF2e's origin roll options for an Effect an item gives (its getOriginData's): the user's "origin:" options and the item's "origin:item:"
+// ones, read from the live documents — [] when the item isn't one (a compendium entry, gone).
+export function originOptionsOf(itemUuid, actorUuid = null) {
+    const item = itemUuid ? fromUuidSync(itemUuid) : null;
+    if (typeof item?.getRollOptions !== "function") return [];
+    const actor = (actorUuid ? fromUuidSync(actorUuid) : null) ?? item.actor ?? null;
+    try {
+        return [...(actor?.getSelfRollOptions?.("origin") ?? []), ...item.getRollOptions("origin:item")].filter(Boolean);
+    } catch {
+        return [];
+    }
+}
+
 export const itemRecord = (name, uuid, plan) => ({ name, uuid: uuid ?? null, ...(Number(plan?.item?.level) > 0 ? { level: Number(plan.item.level) } : {}), ...(plan?.item?.type ? { type: plan.item.type } : {}), ...(plan?.traits?.length ? { traits: plan.traits } : {}) });
 
 export async function creatureOf(entry) {

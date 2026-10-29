@@ -48,7 +48,7 @@ test("Flawed Orb of Gold Dragonkind: dragons only, gold ones at -4, +1 DC a shar
     const rows = orb.resolution.outcomes;
     assert.deepEqual([done(orb), routeOf(orb), orb.resolution.check.against.value, orb.dcNear], [true, "save", 30, { name: "Orb Shard", within: 60, each: 1 }]);
     const [success] = rows.success.noteEffects;
-    assert.deepEqual([rows.success.effects, success.rules[0].alterations[0].value, success.rules[0].onDeleteActions, success.rules[1].option], [[], 3, { granter: "cascade" }, "air-ends-on:targeted"]);
+    assert.deepEqual([rows.success.effects, success.rules[0].alterations[0].value, success.rules[0].onDeleteActions, success.rules[1].option], [[], 3, { granter: "cascade", grantee: "cascade" }, "air-ends-on:targeted"]);
     const [held] = rows.failure.noteEffects;
     assert.deepEqual([held.duration.value, held.duration.unit, held.rules.map((rule) => rule.key)], [10, "minutes", ["GrantItem", "RollOption"]]);
     // (Its critical failure's stun isn't ended by hostile acts.)

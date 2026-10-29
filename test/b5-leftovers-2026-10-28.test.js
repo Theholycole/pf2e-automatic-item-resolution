@@ -192,6 +192,8 @@ test("Kraken Bottle: a DC 38 Fortitude save card at up to four creatures within 
     // (Live, the used bottle's compendium source named as the affliction's item.)
     const named = withAfflictionItem(water.item.alsoZone, "Compendium.pf2e.equipment-srd.Item.k");
     assert.equal(named.zone.saves[0].plan.resolution.outcomes.failure.affliction.uuid, "Compendium.pf2e.equipment-srd.Item.k");
+    // (The hand-off on the resolution, as the core's save family reads it: its item named too — Pseudo Afflictions knows kraken-bottle.)
+    assert.deepEqual([poison.plan.resolution.afflictionHandoff.slug, poison.plan.resolution.afflictionHandoff.dc, named.zone.saves[0].plan.resolution.afflictionHandoff.uuid], ["kraken-bottle", 39, "Compendium.pf2e.equipment-srd.Item.k"]);
     assert.equal(withAfflictionItem(ground, "x"), ground);
 });
 

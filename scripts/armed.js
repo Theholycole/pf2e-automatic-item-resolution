@@ -30,7 +30,7 @@ export function before(actor, params) {
         for (const application of armed.applications) {
             const template = application.uuid ? await fromUuid(application.uuid).catch(() => null) : null;
             if (!template) continue;
-            const source = effectSource(template.toObject(), { application, item: { name: mark.name.replace(/: armed$/, ""), uuid: mark.system?.context?.origin?.item ?? null }, user: { actorUuid: mark.system?.context?.origin?.actor ?? live.uuid }, worldTime: game.time.worldTime, flags: { [MODULE_ID]: { card: true } } });
+            const source = effectSource(template.toObject(), { application, item: { name: mark.name.replace(/: armed$/, ""), uuid: mark.system?.context?.origin?.item ?? null }, user: { actorUuid: mark.system?.context?.origin?.actor ?? live.uuid }, originOptions: mark.system?.context?.origin?.rollOptions ?? [], worldTime: game.time.worldTime, flags: { [MODULE_ID]: { card: true } } });
             source._stats = { ...(source._stats ?? {}), compendiumSource: application.uuid };
             await live.createEmbeddedDocuments("Item", [source]);
             given.push(template.name);
