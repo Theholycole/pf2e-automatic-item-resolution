@@ -1,28 +1,25 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 12,
+  "entries": 8,
   "results": {
-   "note-only": 2,
-   "partial": 6,
-   "none": 4
+   "note-only": 1,
+   "none": 4,
+   "partial": 3
   },
   "main": {
    "strike": 4,
-   "areas": 3,
    "triggers": 2,
-   "reader": 1,
-   "spells": 1,
-   "objects": 1
+   "areas": 1,
+   "spells": 1
   },
   "any": {
    "strike": 6,
-   "reader": 2,
-   "areas": 3,
-   "immunity": 1,
+   "reader": 1,
    "triggers": 2,
    "spells": 5,
-   "objects": 3,
+   "objects": 2,
+   "areas": 1,
    "lasting": 1
   }
  },
@@ -38,20 +35,6 @@
    "needs": [
     "strike",
     "reader"
-   ]
-  },
-  {
-   "name": "Everburning Coal",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "activation": "Coal Wall",
-   "result": "partial",
-   "main": "areas",
-   "work": "wall of",
-   "needs": [
-    "areas",
-    "immunity"
    ]
   },
   {
@@ -108,18 +91,6 @@
    ]
   },
   {
-   "name": "In the Shadows of Toil",
-   "kind": "activation",
-   "tier": "special",
-   "level": 8,
-   "result": "note-only",
-   "main": "reader",
-   "work": "fatigued",
-   "needs": [
-    "reader"
-   ]
-  },
-  {
    "name": "Spell Reservoir",
    "kind": "activation",
    "tier": "general",
@@ -147,19 +118,6 @@
    ]
   },
   {
-   "name": "Soulcutter",
-   "kind": "activation",
-   "tier": "special",
-   "level": 15,
-   "activation": "Soulcutting Storm",
-   "result": "partial",
-   "main": "objects",
-   "work": "don",
-   "needs": [
-    "objects"
-   ]
-  },
-  {
    "name": "Sorshen's Sinuous Guisarme",
    "kind": "activation",
    "tier": "special",
@@ -173,18 +131,6 @@
     "strike",
     "spells",
     "objects"
-   ]
-  },
-  {
-   "name": "Shining Wayfinder",
-   "kind": "activation",
-   "tier": "general",
-   "level": 4,
-   "result": "partial",
-   "main": "areas",
-   "work": "emanation centered",
-   "needs": [
-    "areas"
    ]
   }
  ]

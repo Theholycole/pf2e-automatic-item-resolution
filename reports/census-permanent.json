@@ -6,7 +6,7 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1474,
+   "resolves": 1475,
    "builtin:cast-spell": 473,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
@@ -31,7 +31,7 @@
    "builtin:souls": 2,
    "builtin:structure": 6,
    "builtin:embed-location": 1,
-   "note-only": 2,
+   "note-only": 1,
    "builtin:deck": 1,
    "builtin:portal": 2,
    "builtin:spellstrike": 9,
@@ -89,7 +89,7 @@
   "equipment": {
    "activations": 1674,
    "results": {
-    "resolves": 903,
+    "resolves": 904,
     "builtin:cast-spell": 347,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
@@ -111,7 +111,7 @@
     "builtin:sphere": 1,
     "builtin:structure": 2,
     "builtin:embed-location": 1,
-    "note-only": 2,
+    "note-only": 1,
     "builtin:deck": 1,
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
@@ -21602,6 +21602,17 @@
    "live": "item"
   },
   {
+   "name": "Juubun's One Thousand Poems",
+   "type": "equipment",
+   "activation": "Poetic Spellcasting",
+   "time": "1",
+   "frequency": "once per day",
+   "trigger": false,
+   "result": "resolves",
+   "kind": "effect",
+   "live": "item"
+  },
+  {
    "name": "Sanguine Klar",
    "type": "shield",
    "activation": null,
@@ -23157,17 +23168,6 @@
    "result": "resolves",
    "kind": "save",
    "live": "save"
-  },
-  {
-   "name": "In the Shadows of Toil",
-   "type": "equipment",
-   "activation": null,
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
   },
   {
    "name": "Kraken Figurehead (Wracking)",
