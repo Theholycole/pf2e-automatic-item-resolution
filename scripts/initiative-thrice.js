@@ -26,6 +26,17 @@ export function setUpInitiativeThrice() {
     });
 }
 
+// The chat's roll that set a combatant's initiative, and its d20 → { roll, natural } (null and undefined when none is found).
+// (Its total the initiative now — a value set by hand in the tracker has none, and an older encounter's roll was taken for it, found by the
+// 2026-10-28 case writers. Shared with the boons' rules at initiative, scripts/boons.js, 2026-10-29.)
+export function initiativeRollOf(combatant) {
+    const actor = combatant?.actor;
+    if (!actor) return { roll: null, natural: undefined };
+    const message = (game.messages?.contents ?? []).slice(-30).reverse().find((entry) => entry.flags?.pf2e?.context?.type === "initiative" && (entry.actor?.id === actor.id || entry.speaker?.actor === actor.id) && Number(entry.rolls?.[0]?.total) === Number(combatant.initiative));
+    const roll = message?.rolls?.[0] ?? null;
+    return { roll, natural: roll?.dice?.[0]?.total };
+}
+
 async function rollThrice(combatant) {
     const actor = combatant?.actor;
     const effect = thriceOf(actor);
@@ -35,11 +46,8 @@ async function rollThrice(combatant) {
     const speaker = ChatMessage.getSpeaker({ actor });
     const name = combatant.name ?? actor.name;
     const from = String(effect.name ?? "").replace(/:.*$/, "") || "The item";
-    // (The roll that set it: its total the initiative now — a value set by hand in the tracker has none, and an older encounter's roll was taken
-    // for it, found by the 2026-10-28 case writers.)
-    const message = (game.messages?.contents ?? []).slice(-30).reverse().find((entry) => entry.flags?.pf2e?.context?.type === "initiative" && (entry.actor?.id === actor.id || entry.speaker?.actor === actor.id) && Number(entry.rolls?.[0]?.total) === Number(combatant.initiative));
-    const roll = message?.rolls?.[0];
-    const natural = roll?.dice?.[0]?.total;
+    // (The roll that set it.)
+    const { roll, natural } = initiativeRollOf(combatant);
     if (!roll || !Number.isFinite(Number(natural))) {
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(from)}</strong>: ${escape(name)}'s initiative roll wasn't found; roll it twice more and keep the one it picks (by hand).</p>` });
         return null;

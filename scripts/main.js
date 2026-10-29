@@ -88,6 +88,7 @@ import { setUpPortals } from "./portals.js";
 import { setUpSouls } from "./souls.js";
 import { setUpReservoir } from "./reservoir.js";
 import { setUpBackbiting } from "./backbiting.js";
+import { setUpBoons } from "./boons.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -324,6 +325,9 @@ Hooks.once("ready", async () => {
     setUpUntilRest();
     // (A save card after another's damage, Horn of Rust's tetanus: scripts/after-damage.js.)
     setUpAfterDamage();
+    // (A boon's stages on its creature, each begun on its own in world time — Elder Seed's, Heartblood Ring's, Phoenix Cinder's, Void
+    // Fragment's: scripts/boons.js, 2026-10-29.)
+    setUpBoons();
     try {
         const pack = game.packs.get("pf2e.equipment-srd");
         const ids = pack ? [...(await pack.getIndex({ fields: ["system.usage.value"] }))].filter((entry) => /^etched-onto/.test(entry.system?.usage?.value ?? "")).map((entry) => entry._id) : [];

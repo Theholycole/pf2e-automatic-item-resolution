@@ -8,6 +8,7 @@ import { withCubeWalls } from "./cube-faces.js";
 import { withDancingWhip } from "./dancing-whip.js";
 import { withPlacedStructure } from "./placed-structures.js";
 import { withWonderRows } from "./wonder-table.js";
+import { withBoons } from "./boons.js";
 
 const READINGS = [
     // (Instant Fortress, Warding Escutcheon's door, Testudo Shield's barrier: the structure card — src/compiler/placed-structures.js.)
@@ -19,7 +20,10 @@ const READINGS = [
     // (Bomb Snare: a way for each bomb it can be loaded with, options.bombs — src/compiler/bomb-snare.js.)
     withBombSnare,
     // (Pistol of Wonder: its d% table's rows built on what plays them, the rest its card's lines — src/compiler/wonder-table.js.)
-    withWonderRows
+    withWonderRows,
+    // (The boons, Elder Seed's, Heartblood Ring's, Phoenix Cinder's and Void Fragment's stages on one Effect, and the activation a stage gives
+    // on the item made for it — src/compiler/boons.js, 2026-10-29.)
+    withBoons
 ];
 
 export function withLeftoversGroup(plan, context) {

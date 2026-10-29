@@ -265,11 +265,14 @@ test("bonuses against what a creature makes, what an effect gives, or ranged att
 test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {
     // (2026-10-27: Potion of Passing Fancy for Hovering Potion, whose climb Speed is read now — src/compiler/aloft.js. Later that day Anointing
     // Oil (Greater) for Potion of Passing Fancy, whose changed looks are now its own reading's note Effect — src/compiler/lasting.js. 2026-10-28:
-    // Phoenix Cinder for Anointing Oil (Greater), whose 5th-rank Peaceful Rest is now cast — src/compiler/user-actions.js.)
-    const plan = compileItem(item("Phoenix Cinder"));
+    // Phoenix Cinder for Anointing Oil (Greater), whose 5th-rank Peaceful Rest is now cast — src/compiler/user-actions.js. 2026-10-29: a draught
+    // of this test's own for Phoenix Cinder, a boon whose stages are now one Effect — src/compiler/boons.js; no pack consumable is a note alone
+    // with a time any more.)
+    const draught = { name: "Test Draught", type: "consumable", system: { slug: null, level: { value: 5 }, traits: { value: ["consumable", "magical", "potion"] }, category: "potion", usage: { value: "held-in-one-hand" }, uses: { max: 1, value: 1, autoDestroy: true }, description: { value: "<p><strong>Activate</strong> <span class=\"action-glyph\">1</span> (manipulate)</p><hr /><p>For 3 days after you drink this draught, whenever you critically succeed at a skill check, you gain 2 temporary Hit Points per ally within 30 feet.</p>" } } };
+    const plan = compileItem(draught);
     assert.equal(plan.noteOnly, true);
     const [note] = plan.resolution.outcomes.success.noteEffects;
-    assert.equal(note.label, undefined, "the ability module calls it \"Phoenix Cinder: note\"");
+    assert.equal(note.label, undefined, "the ability module calls it \"Test Draught: note\"");
     assert.deepEqual([note.duration.value, note.duration.unit], [3, "days"]);
     assert.doesNotMatch(note.text, /^Activate/);
     const result = registry.resolveSync(plan, context(), io());
@@ -277,8 +280,9 @@ test("an item with a time and nothing else the module reads: a note of its text 
     // With no time, nothing (the GM's). (2026-10-27: Swamp Lily Quilt for Ration Tonic, whose nourishment is now its card's line —
     // src/compiler/needs.js no longer reads its "fruity scent" as a sense. Later that day Beckoning Cat Amulet for Swamp Lily Quilt, whose
     // mud is now the ability module's zone — src/compiler/area-readings.js. And later still Heartblood Ring for Beckoning Cat Amulet, whose
-    // allies' rerolls are now its card — src/compiler/trigger-readings.js.)
-    assert.equal(compileItem(item("Heartblood Ring")), null);
+    // allies' rerolls are now its card — src/compiler/trigger-readings.js. 2026-10-29: Waterproofing Wax for Heartblood Ring, a boon whose
+    // stages are now one Effect — src/compiler/boons.js.)
+    assert.equal(compileItem(item("Waterproofing Wax")), null);
 });
 
 test("a snare: the ability module's zone, a 5-foot square set off once by the first creature to enter it", () => {

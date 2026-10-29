@@ -56,6 +56,7 @@ import { forAbility } from "./placed-moves.js";
 import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyCraftCard, postCraftCard } from "./craft.js";
 import { startPulse } from "./pulse.js";
+import { postBoonCard } from "./boons.js";
 import { itemFormEffectSource, itemFormText, itemIdOf } from "../src/live/item-form.js";
 import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
 import { mutagenPlan } from "../src/live/transmogrify.js";
@@ -461,6 +462,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "feat-use") return postFeatUseCard({ message, plan, used, actor, token });
     if (route === "bond") return postBondCard({ message, plan, used, actor, token });
     if (route === "found") return postFoundCard({ message, plan, used, actor, token });
+    // (A boon begun on its user, its stages in world time: scripts/boons.js, 2026-10-29.)
+    if (route === "boon") return postBoonCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message?.rolls?.[0];

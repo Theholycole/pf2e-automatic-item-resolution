@@ -1,7 +1,7 @@
 // Which card a used consumable gets (scripts/live.js), as a pure decision the census shares: "coat" (an injury
 // poison), "expose" (a contact, inhaled or ingested poison, or a drug), "cast" (a spell PF2e has no Effect for, the
 // spell module's), "save" (another item's save on its Use, at the presser's targets), "focus" (a Focus Point for its
-// user), "strike" (its user's next Strike carries its riders), "reroll" (PF2e rerolls the roll that triggered it), "fortune" (its user's next roll of a kind rolled twice), "action" (PF2e's own skill action, with its bonus), "counteract" (what it counteracts on its drinker), "teleport" (a short teleport for its user, the space picked on the canvas), "table" (a roll on its own table, the row's card), "item" (healing, PF2e Effects, the item's own row), or null (none yet).
+// user), "strike" (its user's next Strike carries its riders), "reroll" (PF2e rerolls the roll that triggered it), "fortune" (its user's next roll of a kind rolled twice), "action" (PF2e's own skill action, with its bonus), "counteract" (what it counteracts on its drinker), "teleport" (a short teleport for its user, the space picked on the canvas), "table" (a roll on its own table, the row's card), "boon" (a boon's stages on its user, scripts/boons.js), "item" (healing, PF2e Effects, the item's own row), or null (none yet).
 
 import { isExposurePoison, isInjuryPoison, isLaterSave, isUseSave } from "./poison-card.js";
 import { isCast } from "./cast-card.js";
@@ -121,6 +121,8 @@ export function routeOf(plan, text = "") {
     if (isSouls(plan)) return "souls";
     // (A weapon's poison reservoir, Reaper's Lancet's: scripts/reservoir.js.)
     if (isReservoir(plan)) return "reservoir";
+    // (A boon's stages on its user, begun as it's used — Heartblood Ring, Phoenix Cinder: scripts/boons.js, 2026-10-29.)
+    if (plan.builtin === "boon" && plan.boon) return "boon";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)
