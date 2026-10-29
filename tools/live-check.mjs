@@ -8735,6 +8735,31 @@ export const cases = {
         return { most, hp: foe.system.attributes.hp.value, results: game.messages.get(drop.id).getFlag(NS, "card").results };
     },
 
+    // Cayden's Tankard turns a fear effect back (2026-10-29, the ability module's reflect): a foe's fear save card at its user (a DC 22 Will save,
+    // Frightened 1 on a failure) is counteracted, and the same save is posted at the foe alone.
+    async tankardReflect(scene) {
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const { actor: user, token: userToken } = await creature(scene, "Tankard Drinker", { type: "character", x: 6, y: 30 });
+        const { actor: foe, token: foeToken } = await creature(scene, "Tankard Scarer", { x: 7, y: 30, alliance: "opposition" });
+        const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
+        const frightened = { ...none(), effects: [{ kind: "condition", slug: "frightened", value: 1, duration: null }] };
+        const plan = { modelVersion: 13, source: { name: "Scary Shout", slug: "scary-shout", uuid: null, type: "action" }, rank: 1, traits: ["emotion", "fear", "mental"], automation: { level: "automatic" }, targeting: { target: "a creature", range: "30 feet", area: null }, trigger: { event: "use" }, resolution: { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: 22 } }, outcomes: { criticalSuccess: none(), success: none(), failure: frightened, criticalFailure: frightened } } };
+        let since = Date.now();
+        await game.modules.get(ABILITY).api.live.postCard({ plan, item: { name: "Scary Shout", uuid: null }, sourceActor: foe, sourceToken: foeToken, tokens: [userToken.object] });
+        const fear = await messageAfter(since, abilitySaveCard, { what: "the foe's fear card" });
+        const tankard = await give(user, "Cayden's Tankard");
+        since = Date.now();
+        await game.modules.get(NS).api.live.activate(tankard.uuid, 0);
+        const card = await messageAfter(since, itemCard("item"), { what: "the tankard's card" });
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [] });
+        const back = await messageAfter(since, (message) => abilitySaveCard(message) && message.id !== fear.id && (message.flags[ABILITY].card.targets ?? []).some((entry) => entry.actorUuid === foe.uuid), { what: "the save turned back at the foe", timeout: 12000 });
+        const state = back.flags[ABILITY].card;
+        assert(state.plan.resolution.check.against.value === 22 && state.targets.length === 1, `the same DC 22 save at the foe alone (${JSON.stringify(state.plan.resolution.check)}, ${state.targets.length})`);
+        await until(() => game.messages.get(fear.id).flags[ABILITY].card.status !== "open", "the fear card closed (counteracted)", { timeout: 8000 });
+        return { back: back.id, results: game.messages.get(card.id).getFlag(NS, "card").results };
+    },
+
     // Reactive Mail's Quick Spike: pressed when a creature within 15 feet manipulates — its basic Reflex save (DC 20) at that creature.
     async reactiveMailSpike(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Spiked Wearer", { type: "character", x: 18, y: 25 });

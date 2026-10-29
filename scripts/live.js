@@ -795,6 +795,20 @@ async function giveUserConditions(effects, { actor, token, used }) {
     await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escapeHTML(used.data.name)}</strong>: ${lines.map(escapeHTML).join("; ")}.</p>` });
 }
 
+// The ability module's latest open save or attack card at the item's user, turned back (plan.reflect) → the card's line.
+async function reflectBack(state, targets) {
+    const reflect = game.modules.get(ABILITY_ID)?.api?.live?.reflect;
+    if (!reflect) return "Turn the effect back by hand: the ability module's reflect isn't there.";
+    const { actor, token } = await creatureOf(state.user);
+    const userToken = token?.document ?? token ?? (state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null);
+    const aimed = (await Promise.all((targets ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
+    const turned = await reflect({ plan: state.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null, actor }, userToken, targets: aimed });
+    if (!turned) return `${state.item.name}: no open card targets ${state.user.name} (the GM has a note).`;
+    const at = turned.at?.length ? ` at ${turned.at.join(", ")}` : "";
+    const beyond = turned.beyond?.length ? `; out of its range: ${turned.beyond.join(", ")}` : "";
+    return `${turned.from ?? "The effect"} turned back${at}${beyond}.`;
+}
+
 // Its persistent damage of a type over: the Effects an item card gave it that lower that type's flat-check DC with no time of their own (PF2e's
 // ItemAlteration on pd-recovery-dc for item:damage:type:<type>), deleted — once none of that type is left.
 async function endRecoveryEffects(actor, type) {
@@ -941,6 +955,9 @@ async function applyCard(message, { drinker = null, ceremony = false, resistType
     const allies = state.plan.item?.recipient === "targets" ? await targetedCreatures(targets) : null;
     if (allies && !allies.length) throw new Error("Target the creatures it helps first, then press Apply.");
     const lines = [];
+    // (The card at its user turned back first — Cayden's Tankard's fear at its creator, Scale of Igroon's energy at the creatures targeted: the
+    // ability module's reflect, 2026-10-29 —, so a refusal there leaves nothing applied.)
+    if (state.plan.reflect) lines.push(await reflectBack(state, targets));
     const each = allies ? allies.map((creature) => ({ ...state, drinkers: [entryOf(creature.token, creature.actor)], drinker: 0 })) : [state];
     for (const one of each) lines.push(...await applyToRecipient(one, { core, others: allies ? [] : others, reduce: allies ? reduce.filter((entry) => entry.who !== "targets") : reduce }));
     // (Its user's shield raised, Shield of Snakes' Snap Up: PF2e's own Raise a Shield, src/compiler/raise-shield.js.)

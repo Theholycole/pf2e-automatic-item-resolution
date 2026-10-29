@@ -42,7 +42,8 @@ test("Essence Prism: its user's own secret DC 30 check, the essence's skills pic
 
 test("Cayden's Tankard: a fear effect counteracted for its targets (its creator's save the open part); the conditions' Effects ended too", () => {
     const [fear, freed, indestructible] = activations("Cayden's Tankard");
-    assert.deepEqual([fear.partial, fear.reduce.map((entry) => [entry.slug, entry.who ?? "self", entry.granter])], [true, [["frightened", "self", "ends"], ["frightened", "targets", "ends"]]]);
+    // (Its creator's save the ability module's reflect since 2026-10-29: the card done.)
+    assert.deepEqual([done(fear), fear.reflect, fear.reduce.map((entry) => [entry.slug, entry.who ?? "self", entry.granter])], [true, { trait: "fear", of: "targeting-user", to: "creator" }, [["frightened", "self", "ends"], ["frightened", "targets", "ends"]]]);
     assert.deepEqual([done(freed), freed.reduce.length, freed.reduce.every((entry) => entry.granter === "ends" && entry.granterWeeks === 1), Boolean(freed.item.speedPenaltiesEnd)], [true, 12, true, true]);
     assert.ok(freed.notes.some((line) => /Escape .*next attempt automatically/.test(line)));
     assert.equal(indestructible.spell.name, "Indestructibility");
@@ -81,7 +82,9 @@ test("Graymist: hidden from the creature that missed, as Shadowmist Cape's readi
 });
 
 test("Scale of Igroon's reflection and Phoenix Fighting Fan's Sustain by Strikes: the parts another module must add, partial", () => {
-    assert.equal(activations("Scale of Igroon")[2].partial, true);
+    // (Igroon's reflection the ability module's reflect since 2026-10-29: done.)
+    const igroon = activations("Scale of Igroon")[2];
+    assert.deepEqual([done(igroon), igroon.reflect], [true, { kinds: ["line", "ray", "attack"], of: "targeting-user", to: "chosen" }]);
     const fan = activations("Phoenix Fighting Fan")[0];
     assert.deepEqual([fan.partial, fan.dc, fan.castRange.feet, fan.castDuration.value, routeOf(fan)], [true, 34, 30, 1, "cast"]);
 });

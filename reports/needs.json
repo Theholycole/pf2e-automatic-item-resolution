@@ -1,9 +1,9 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 42,
+  "entries": 40,
   "results": {
-   "partial": 26,
+   "partial": 24,
    "none": 8,
    "note-only": 6,
    "builtin:no-effect": 2
@@ -14,10 +14,8 @@
    "visibility": 2,
    "strike": 5,
    "cast-changes": 3,
-   "counteract": 1,
    "dying": 2,
    "triggers": 2,
-   "actions": 1,
    "senses": 1,
    "reader": 1,
    "spells": 1,
@@ -28,7 +26,7 @@
   "any": {
    "areas": 19,
    "strike": 17,
-   "counteract": 6,
+   "counteract": 5,
    "immunity": 8,
    "lasting": 11,
    "objects": 14,
@@ -36,7 +34,7 @@
    "several": 6,
    "moving": 2,
    "range": 2,
-   "reader": 14,
+   "reader": 13,
    "mind": 5,
    "visibility": 2,
    "cast-changes": 3,
@@ -45,7 +43,6 @@
    "spells": 7,
    "situational": 4,
    "speech": 3,
-   "actions": 2,
    "senses": 2,
    "from-events": 4,
    "afflictions": 5,
@@ -55,6 +52,7 @@
    "forms": 2,
    "speeds": 1,
    "illusions": 1,
+   "actions": 1,
    "choice": 1
   }
  },
@@ -210,19 +208,6 @@
    ]
   },
   {
-   "name": "Cayden's Tankard",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "partial",
-   "main": "counteract",
-   "work": "counteracted",
-   "needs": [
-    "counteract",
-    "reader"
-   ]
-  },
-  {
    "name": "Portable Seal (Moderate)",
    "kind": "consumable",
    "tier": "general",
@@ -349,18 +334,6 @@
     "creatures",
     "strike",
     "objects"
-   ]
-  },
-  {
-   "name": "Scale of Igroon",
-   "kind": "activation",
-   "tier": "special",
-   "level": 21,
-   "result": "partial",
-   "main": "actions",
-   "work": "shield block",
-   "needs": [
-    "actions"
    ]
   },
   {

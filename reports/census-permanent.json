@@ -6,7 +6,7 @@
   "ours": 2119,
   "activations": 2577,
   "results": {
-   "resolves": 1473,
+   "resolves": 1475,
    "builtin:cast-spell": 473,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
@@ -35,11 +35,11 @@
    "builtin:no-effect": 2,
    "builtin:deck": 1,
    "builtin:portal": 2,
-   "partial": 5,
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1,
    "builtin:skill-swap": 1,
    "builtin:structure": 1,
+   "partial": 3,
    "builtin:bond": 1,
    "builtin:transmogrify": 1,
    "builtin:grant-spell": 1,
@@ -128,7 +128,7 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 283,
+    "resolves": 284,
     "builtin:cast-spell": 81,
     "builtin:reroll": 7,
     "builtin:zone": 9,
@@ -144,7 +144,7 @@
     "builtin:pf2e-rules": 2,
     "builtin:teleport": 7,
     "builtin:portal": 2,
-    "partial": 2,
+    "partial": 1,
     "builtin:roll-twice": 2,
     "none": 1,
     "builtin:whisper": 1
@@ -196,7 +196,7 @@
    "activations": 100,
    "results": {
     "builtin:cast-spell": 12,
-    "resolves": 62,
+    "resolves": 63,
     "builtin:zone": 4,
     "builtin:modes": 4,
     "builtin:teleport": 1,
@@ -204,7 +204,6 @@
     "builtin:no-effect": 2,
     "builtin:ways": 3,
     "builtin:counteract": 1,
-    "partial": 1,
     "builtin:objects": 3,
     "builtin:item-action": 1
    }
@@ -10119,7 +10118,7 @@
    "time": "reaction",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },
@@ -16127,7 +16126,7 @@
    "time": "free",
    "frequency": null,
    "trigger": true,
-   "result": "partial",
+   "result": "resolves",
    "kind": "check",
    "live": "item"
   },

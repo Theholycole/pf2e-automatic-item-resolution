@@ -234,8 +234,8 @@ const READINGS = [
     },
     {
         // (A fear effect at its user turned back: Frightened, and the Effects that give it, gone from its user and the effect's other targets —
-        // counteracted outright —; the effect's save at its creator, as its only target, the GM's to run until the ability and spell modules
-        // can re-aim a card in the chat.)
+        // counteracted outright —; the effect's save at its creator, as its only target: the ability module's reflect of its card, 2026-10-29 (a
+        // spell module card isn't taken: the GM's then).)
         name: "Cayden's Tankard",
         index: 0,
         sentences: [
@@ -249,9 +249,10 @@ const READINGS = [
                 resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
                 reduce,
                 item: { reduce },
-                notes: ["Target the fear effect's other targets: it's counteracted for all of them, no check (Frightened it gave ends, with the Effects that give it).", "Its creator attempts the fear effect's saving throw as though it were its only target: post that effect's save at it (its DC and results)."],
-                partial: true,
-                automation: { level: "guided" }
+                // (The fear effect's card turned back at its creator: the ability module's reflect, 2026-10-29.)
+                reflect: { trait: "fear", of: "targeting-user", to: "creator" },
+                notes: ["Target the fear effect's other targets: it's counteracted for all of them, no check (Frightened it gave ends, with the Effects that give it); its card is turned back at its creator alone."],
+                automation: { level: "automatic" }
             };
         }
     },
@@ -279,17 +280,19 @@ const READINGS = [
         }
     },
     {
-        // (Energy it blocked sent back along a line of its user's choosing: the effect's own card aimed again at the creatures in its way, the
-        // GM's until the ability and spell modules can re-aim a card in the chat.)
+        // (Energy it blocked sent back along a line of its user's choosing: the effect's own card aimed again at the creatures in its way — the
+        // ability module's reflect, 2026-10-29; a spell module card isn't taken, the GM's then.)
         name: "Scale of Igroon",
         index: 2,
         sentences: [/^You reflect the energy along a trajectory you choose\.$/, /^The effect travels only up to its remaining range, using its original parameters if it strikes other targets\.$/],
         card: () => ({
             targeting: { target: null, range: null, area: null },
             resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
-            notes: ["After a Shield Block that kept its user from a line's, a ray's or a direct attack's energy damage (Force Barrage too): its user aims it along a new line, out to what's left of its range.", "It hits what it meets there with its own numbers: post that effect's card again at those creatures."],
-            partial: true,
-            automation: { level: "guided" }
+            // (The blocked line's, ray's or attack's card turned back at the creatures its presser targets, within its remaining range: the ability
+            // module's reflect, 2026-10-29.)
+            reflect: { kinds: ["line", "ray", "attack"], of: "targeting-user", to: "chosen" },
+            notes: ["After a Shield Block that kept its user from a line's, a ray's or a direct attack's energy damage: target the creatures along the new line its user picks, out to what's left of its range, then Apply."],
+            automation: { level: "automatic" }
         })
     },
     {
