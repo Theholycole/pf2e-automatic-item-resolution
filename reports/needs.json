@@ -1,21 +1,19 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 6,
+  "entries": 5,
   "results": {
-   "note-only": 1,
    "none": 2,
    "partial": 3
   },
   "main": {
-   "strike": 3,
    "triggers": 2,
+   "strike": 2,
    "areas": 1
   },
   "any": {
-   "strike": 5,
-   "reader": 1,
    "triggers": 2,
+   "strike": 4,
    "spells": 3,
    "objects": 2,
    "areas": 1,
@@ -23,19 +21,6 @@
   }
  },
  "entries": [
-  {
-   "name": "Tome of Scintillating Sleet",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "result": "note-only",
-   "main": "strike",
-   "work": "attack roll",
-   "needs": [
-    "strike",
-    "reader"
-   ]
-  },
   {
    "name": "Starless Scope",
    "kind": "activation",

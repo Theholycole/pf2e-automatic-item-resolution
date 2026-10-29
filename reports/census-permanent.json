@@ -4,7 +4,7 @@
   "items": 2679,
   "staves": 561,
   "ours": 2118,
-  "activations": 2574,
+  "activations": 2573,
   "results": {
    "resolves": 1473,
    "builtin:cast-spell": 473,
@@ -31,7 +31,6 @@
    "builtin:souls": 2,
    "builtin:structure": 6,
    "builtin:embed-location": 1,
-   "note-only": 1,
    "builtin:deck": 1,
    "builtin:portal": 2,
    "builtin:spellstrike": 9,
@@ -46,7 +45,7 @@
   "live": {
    "save": 449,
    "cast": 473,
-   "item": 884,
+   "item": 883,
    "focus": 49,
    "counteract": 39,
    "fortune": 69,
@@ -82,12 +81,12 @@
    "grant-spell": 1,
    "feat-use": 1
   },
-  "withFrequency": 1733,
+  "withFrequency": 1732,
   "withTrigger": 427
  },
  "byType": {
   "equipment": {
-   "activations": 1671,
+   "activations": 1670,
    "results": {
     "resolves": 903,
     "builtin:cast-spell": 347,
@@ -111,7 +110,6 @@
     "builtin:sphere": 1,
     "builtin:structure": 2,
     "builtin:embed-location": 1,
-    "note-only": 1,
     "builtin:deck": 1,
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
@@ -7849,17 +7847,6 @@
    "result": "resolves",
    "kind": "check",
    "live": "save"
-  },
-  {
-   "name": "Tome of Scintillating Sleet",
-   "type": "equipment",
-   "activation": null,
-   "time": "free",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
   },
   {
    "name": "Aether Appendage",
