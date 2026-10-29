@@ -297,8 +297,8 @@ const READINGS = [
         })
     },
     {
-        // (Quandary at the fan's DC 34, for a minute at most: the spell module's cast; its Sustain the user's Strikes with the fan each round, the
-        // spell module's to keep until it can be told so.)
+        // (Quandary at the fan's DC 34, for a minute at most: the spell module's cast; kept up by its user's Strikes with the fan — plan.castSustain
+        // { by: "strike" }: a turn of its user's after the cast's without one ends it, scripts/strike-sustain.js, 2026-10-29.)
         name: "Phoenix Fighting Fan",
         index: 0,
         sentences: [
@@ -315,9 +315,11 @@ const READINGS = [
                 dc: Number(escape[1]),
                 castRange: { feet: Number(within[1]) },
                 castDuration: { value: Number(most[1]), unit: "minutes", said: [most[0]] },
-                notes: [`The creature in the demiplane escapes with a Survival or Perception check against DC ${escape[1]}; it can't touch the relics Hao Jin keeps there.`, "The fan Sustains the spell for its user each round they Strike a creature with it: a round without such a Strike ends it (Sustain it by hand at each such Strike)."],
-                partial: true,
-                automation: { level: "guided" }
+                castSustain: { by: "strike" },
+                notes: [],
+                castLines: [`The creature in the demiplane escapes with a Survival or Perception check against DC ${escape[1]}; it can't touch the relics Hao Jin keeps there.`, "The fan keeps the spell up while its user Strikes a creature with it each round: a turn of its user's without such a Strike ends it."],
+                partial: undefined,
+                automation: { level: "automatic" }
             };
         }
     },

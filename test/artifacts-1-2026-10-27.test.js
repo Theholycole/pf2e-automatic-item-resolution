@@ -81,12 +81,12 @@ test("Graymist: hidden from the creature that missed, as Shadowmist Cape's readi
     assert.deepEqual([done(reaction), rowsOf(reaction).success.noteEffects[0].label], [true, "Lost in the mist"]);
 });
 
-test("Scale of Igroon's reflection and Phoenix Fighting Fan's Sustain by Strikes: the parts another module must add, partial", () => {
+test("Scale of Igroon's reflection and Phoenix Fighting Fan's Sustain by Strikes: done (the ability module's reflect; scripts/strike-sustain.js, 2026-10-29)", () => {
     // (Igroon's reflection the ability module's reflect since 2026-10-29: done.)
     const igroon = activations("Scale of Igroon")[2];
     assert.deepEqual([done(igroon), igroon.reflect], [true, { kinds: ["line", "ray", "attack"], of: "targeting-user", to: "chosen" }]);
     const fan = activations("Phoenix Fighting Fan")[0];
-    assert.deepEqual([fan.partial, fan.dc, fan.castRange.feet, fan.castDuration.value, routeOf(fan)], [true, 34, 30, 1, "cast"]);
+    assert.deepEqual([done(fan), fan.dc, fan.castRange.feet, fan.castDuration.value, fan.castSustain, routeOf(fan)], [true, 34, 30, 1, { by: "strike" }, "cast"]);
 });
 
 test("Deck of Harrowed Tales casts Gate; Slithermaw's Bane (Heroic)'s Terrain Adaptation: eighteen ways, until its user's next rest", () => {

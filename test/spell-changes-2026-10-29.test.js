@@ -61,3 +61,31 @@ test("Animate Dreamer's Unleash Spell: its Spell Reservoir's spell cast at its o
     const plan = compileActivations(item("Animate Dreamer"), { spells }).map((entry) => entry.plan).find((one) => one?.objects?.op === "cast-reservoir");
     assert.deepEqual([done(plan), routeOf(plan), plan.objects], [true, "objects", { op: "cast-reservoir", self: true, attack: 25, dc: 33, within: 120 }]);
 });
+
+test("Phoenix Fighting Fan: Quandary at DC 34 for a minute, kept up by its user's Strikes with the fan (castSustain by strike)", () => {
+    const plan = compileActivations(item("Phoenix Fighting Fan"), { spells })[0].plan;
+    assert.deepEqual([done(plan), plan.spell.name, plan.dc, plan.castDuration.value, plan.castSustain, plan.castLines.length], [true, "Quandary", 34, 1, { by: "strike" }, 2]);
+});
+
+test("strike sustain: a turn after the cast's without a Strike ends the cast's Effects; one with a Strike, or the cast's own turn, keeps them", async () => {
+    const { endIfNotStruck } = await import("../scripts/strike-sustain.js");
+    const made = [];
+    const effect = (name) => ({ name, system: { context: { origin: { item: "Spell.1" } } }, delete: async () => made.push(`deleted ${name}`) });
+    const target = { itemTypes: { effect: [effect("Quandary")] } };
+    const flags = new Map();
+    const user = { name: "Fan User", setFlag: async (_m, key, value) => flags.set(key, value), unsetFlag: async (_m, key) => flags.delete(key), itemTypes: { effect: [] } };
+    const saved = { game: globalThis.game, canvas: globalThis.canvas, ChatMessage: globalThis.ChatMessage };
+    globalThis.game = { actors: [user, target], combat: null };
+    globalThis.canvas = { scene: { tokens: [] } };
+    globalThis.ChatMessage = { create: async (data) => made.push(data.content), getSpeaker: () => ({}) };
+    try {
+    const flag = { spellUuid: "Spell.1", weaponId: "fan", name: "Phoenix Fighting Fan", combatId: "C", from: 1, struck: null };
+    flags.set("strikeSustain", flag);
+    assert.equal(await endIfNotStruck(user, flag, { id: "C", round: 1 }), null);
+    assert.equal(await endIfNotStruck(user, { ...flag, struck: 2 }, { id: "C", round: 2 }), null);
+    await endIfNotStruck(user, flag, { id: "C", round: 2 });
+    assert.deepEqual([made[0], flags.has("strikeSustain"), /didn't Strike/.test(made[1])], ["deleted Quandary", false, true]);
+    } finally {
+        Object.assign(globalThis, saved);
+    }
+});

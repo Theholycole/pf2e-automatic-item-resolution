@@ -1,23 +1,22 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 5,
+  "entries": 4,
   "results": {
    "none": 2,
-   "partial": 3
+   "partial": 2
   },
   "main": {
    "triggers": 2,
-   "strike": 2,
+   "strike": 1,
    "areas": 1
   },
   "any": {
    "triggers": 2,
-   "strike": 4,
+   "strike": 3,
    "spells": 3,
    "objects": 2,
-   "areas": 1,
-   "lasting": 1
+   "areas": 1
   }
  },
  "entries": [
@@ -59,19 +58,6 @@
    "work": "smoke",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Phoenix Fighting Fan",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "strike",
-   "work": "they strike",
-   "needs": [
-    "strike",
-    "lasting"
    ]
   },
   {

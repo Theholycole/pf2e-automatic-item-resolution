@@ -2,6 +2,7 @@
 // through PF2e (its api.castFromItem), so its own cast handling resolves it as any cast.
 
 import { CONTRACT, contractChoices, contractRefusal, dayOf, withContractCast } from "../src/live/contract-spells.js";
+import { rememberStrikeSustain } from "./strike-sustain.js";
 import { castCardHTML, castChanges, castLinkSource, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
@@ -234,6 +235,11 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         const duration = chosenSpell(state).castDuration ?? state.plan.castDuration;
         const lasts = duration ? await rememberCastDuration(cast, duration, { actor, targets: targetTokens }) : null;
         if (lasts) lines.push(lasts);
+        // (Kept up by its user's Strikes with the item, Phoenix Fighting Fan's Quandary: scripts/strike-sustain.js.)
+        if (state.plan.castSustain?.by === "strike") {
+            const kept = await rememberStrikeSustain(cast, { actor, weaponId: String(state.item.uuid ?? "").split(".").at(-1), name: state.item.name });
+            if (kept) lines.push(kept);
+        }
         // (Healing at the end of each of its user's turns for the item's time: scripts/turn-heal.js.)
         const heals = state.plan.turnHeal ? await rememberTurnHeal(state.user.actorUuid ? await fromUuid(state.user.actorUuid).catch(() => null) : actor, state.plan.turnHeal, { item: state.item, duration: state.plan.castDuration }) : null;
         if (heals) lines.push(heals);

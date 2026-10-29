@@ -93,6 +93,7 @@ import { setUpBoons } from "./boons.js";
 import { setUpItemForms } from "./item-form.js";
 import { setUpLegacyPredicates } from "./legacy-predicates.js";
 import { setUpCastCurses } from "./cast-curse.js";
+import { setUpStrikeSustain } from "./strike-sustain.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -314,6 +315,8 @@ Hooks.once("ready", async () => {
     setUpLegacyPredicates();
     // (A curse on a creature's spellcasting, Magekiller Bullet's flat check and damage at each cast: scripts/cast-curse.js.)
     setUpCastCurses();
+    // (A cast kept up by its user's Strikes with the item, Phoenix Fighting Fan's Quandary: scripts/strike-sustain.js.)
+    setUpStrikeSustain();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)
     setUpMoveDamage();
     // (Damage back each time its foot Strike deals damage, Hoof Stakes Snare's stakes: scripts/foot-damage.js.)
