@@ -123,6 +123,8 @@ export function routeOf(plan, text = "") {
     if (isReservoir(plan)) return "reservoir";
     // (A boon's stages on its user, begun as it's used — Heartblood Ring, Phoenix Cinder: scripts/boons.js, 2026-10-29.)
     if (plan.builtin === "boon" && plan.boon) return "boon";
+    // (A check that changes its user's last cast, Starless Scope's: scripts/cast-boost.js, 2026-10-29.)
+    if (plan.builtin === "cast-boost" && plan.castBoost) return "cast-boost";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

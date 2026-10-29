@@ -57,6 +57,7 @@ import { applyObjectsCard, postObjectsCard } from "./objects.js";
 import { applyCraftCard, postCraftCard } from "./craft.js";
 import { startPulse } from "./pulse.js";
 import { postBoonCard } from "./boons.js";
+import { applyCastBoostCard, postCastBoostCard } from "./cast-boost.js";
 import { itemFormEffectSource, itemFormText, itemIdOf } from "../src/live/item-form.js";
 import { setFormBulk } from "./item-form.js";
 import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
@@ -465,6 +466,8 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "found") return postFoundCard({ message, plan, used, actor, token });
     // (A boon begun on its user, its stages in world time: scripts/boons.js, 2026-10-29.)
     if (route === "boon") return postBoonCard({ message, plan, used, actor, token });
+    // (A check that changes its user's last cast, Starless Scope's: scripts/cast-boost.js, 2026-10-29.)
+    if (route === "cast-boost") return postCastBoostCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message?.rolls?.[0];
@@ -553,6 +556,7 @@ function choicesOf(state, root) {
     if (state.kind === "bond") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (The GM's pick, typed: scripts/found.js.)
     if (state.kind === "found") return { name: String(root.querySelector("[data-air-field='found']")?.value ?? "") };
+    if (state.kind === "cast-boost") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A bonus for the creature targeted: the presser's targets.)
     if (state.kind === "fortune") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
@@ -590,6 +594,7 @@ const APPLY = {
     "feat-use": (message, choices) => applyFeatUseCard(message, choices),
     bond: (message, choices) => applyBondCard(message, choices),
     found: (message, choices) => applyFoundCard(message, choices),
+    "cast-boost": (message, choices) => applyCastBoostCard(message, choices),
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     "end-early": (message, choices) => applyEndEarlyCard(message, choices),
     // (What a creature drops of what it holds, Deadweight Snare's metal: scripts/drop-held.js.)
@@ -719,6 +724,7 @@ async function onRequest(data) {
         : state.kind === "feat-use" ? { pick: Number.isInteger(data.pick) ? data.pick : 0 }
         : state.kind === "bond" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "found" ? { name: typeof data.name === "string" ? data.name : "" }
+        : state.kind === "cast-boost" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
         : state.kind === "craft" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, gm: Boolean(sender.isGM) }

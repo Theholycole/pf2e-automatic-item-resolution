@@ -1,36 +1,21 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 2,
+  "entries": 1,
   "results": {
-   "none": 2
+   "none": 1
   },
   "main": {
-   "triggers": 2
+   "triggers": 1
   },
   "any": {
-   "triggers": 2,
-   "strike": 2,
-   "spells": 2,
-   "objects": 2
+   "triggers": 1,
+   "strike": 1,
+   "spells": 1,
+   "objects": 1
   }
  },
  "entries": [
-  {
-   "name": "Starless Scope",
-   "kind": "activation",
-   "tier": "special",
-   "level": 9,
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: you attempt to …",
-   "needs": [
-    "triggers",
-    "strike",
-    "spells",
-    "objects"
-   ]
-  },
   {
    "name": "Sorshen's Sinuous Guisarme",
    "kind": "activation",

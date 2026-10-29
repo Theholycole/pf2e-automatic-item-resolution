@@ -9,6 +9,7 @@ import { withDancingWhip } from "./dancing-whip.js";
 import { withPlacedStructure } from "./placed-structures.js";
 import { withWonderRows } from "./wonder-table.js";
 import { withBoons } from "./boons.js";
+import { withCastBoost } from "./cast-boost.js";
 
 const READINGS = [
     // (Instant Fortress, Warding Escutcheon's door, Testudo Shield's barrier: the structure card — src/compiler/placed-structures.js.)
@@ -23,7 +24,10 @@ const READINGS = [
     withWonderRows,
     // (The boons, Elder Seed's, Heartblood Ring's, Phoenix Cinder's and Void Fragment's stages on one Effect, and the activation a stage gives
     // on the item made for it — src/compiler/boons.js, 2026-10-29.)
-    withBoons
+    withBoons,
+    // (Starless Scope's reaction as its user casts: a Religion check against the spell's DC, its degree the spell's — src/compiler/cast-boost.js,
+    // 2026-10-29.)
+    withCastBoost
 ];
 
 export function withLeftoversGroup(plan, context) {

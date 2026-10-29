@@ -36,11 +36,12 @@
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1,
    "builtin:skill-swap": 1,
-   "none": 2,
+   "builtin:cast-boost": 1,
    "builtin:bond": 1,
    "builtin:transmogrify": 1,
    "builtin:grant-spell": 1,
-   "builtin:feat-use": 1
+   "builtin:feat-use": 1,
+   "none": 1
   },
   "live": {
    "save": 449,
@@ -58,7 +59,7 @@
    "inert": 1,
    "teleport": 32,
    "zone": 46,
-   "none": 25,
+   "none": 24,
    "toggle": 36,
    "objects": 43,
    "action": 28,
@@ -76,6 +77,7 @@
    "spellstrike": 9,
    "take": 1,
    "skill-swap": 1,
+   "cast-boost": 1,
    "bond": 1,
    "transmogrify": 1,
    "grant-spell": 1,
@@ -114,7 +116,7 @@
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
     "builtin:skill-swap": 1,
-    "none": 1,
+    "builtin:cast-boost": 1,
     "builtin:bond": 1,
     "builtin:transmogrify": 1,
     "builtin:grant-spell": 1
@@ -14159,9 +14161,9 @@
    "time": "reaction",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:cast-boost",
    "kind": null,
-   "live": null
+   "live": "cast-boost"
   },
   {
    "name": "Starless Scope",
