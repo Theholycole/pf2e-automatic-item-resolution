@@ -1,51 +1,31 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 19,
+  "entries": 15,
   "results": {
    "partial": 9,
-   "note-only": 4,
-   "none": 6
+   "note-only": 2,
+   "none": 4
   },
   "main": {
    "cast-changes": 3,
    "strike": 4,
    "areas": 3,
    "triggers": 2,
-   "senses": 1,
    "reader": 1,
    "spells": 1,
-   "retaliation": 1,
-   "creatures": 1,
-   "forms": 1,
    "objects": 1
   },
   "any": {
    "cast-changes": 3,
    "strike": 6,
-   "reader": 6,
-   "areas": 6,
-   "immunity": 5,
+   "reader": 2,
+   "areas": 3,
+   "immunity": 1,
    "triggers": 2,
-   "spells": 6,
+   "spells": 5,
    "objects": 3,
-   "senses": 2,
-   "from-events": 4,
-   "afflictions": 4,
-   "dying": 3,
-   "counteract": 2,
-   "situational": 2,
-   "lasting": 3,
-   "information": 4,
-   "out-of-combat": 4,
-   "retaliation": 1,
-   "creatures": 1,
-   "speeds": 1,
-   "moving": 1,
-   "range": 1,
-   "mind": 2,
-   "speech": 2,
-   "forms": 1
+   "lasting": 1
   }
  },
  "entries": [
@@ -129,29 +109,6 @@
    ]
   },
   {
-   "name": "Heartblood Ring",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 15,
-   "result": "none",
-   "main": "senses",
-   "work": "low-light vision",
-   "needs": [
-    "senses",
-    "areas",
-    "from-events",
-    "afflictions",
-    "dying",
-    "counteract",
-    "immunity",
-    "situational",
-    "lasting",
-    "reader",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Gate Attenuator",
    "kind": "activation",
    "tier": "general",
@@ -216,27 +173,6 @@
    ]
   },
   {
-   "name": "Phoenix Cinder",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 16,
-   "result": "note-only",
-   "main": "retaliation",
-   "work": "creatures that hit you",
-   "needs": [
-    "retaliation",
-    "from-events",
-    "afflictions",
-    "dying",
-    "immunity",
-    "situational",
-    "lasting",
-    "reader",
-    "information",
-    "out-of-combat"
-   ]
-  },
-  {
    "name": "Fan of Soothing Winds",
    "kind": "activation",
    "tier": "general",
@@ -246,55 +182,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "Void Fragment",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 13,
-   "result": "note-only",
-   "main": "creatures",
-   "work": "servant",
-   "needs": [
-    "creatures",
-    "speeds",
-    "moving",
-    "areas",
-    "from-events",
-    "afflictions",
-    "dying",
-    "spells",
-    "counteract",
-    "immunity",
-    "range",
-    "reader",
-    "mind",
-    "information",
-    "speech",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Elder Seed",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 11,
-   "result": "none",
-   "main": "forms",
-   "work": "enlarge",
-   "needs": [
-    "forms",
-    "senses",
-    "areas",
-    "from-events",
-    "afflictions",
-    "immunity",
-    "reader",
-    "mind",
-    "information",
-    "speech",
-    "out-of-combat"
    ]
   },
   {

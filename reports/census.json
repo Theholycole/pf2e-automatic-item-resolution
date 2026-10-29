@@ -15,7 +15,7 @@
   "results": {
    "builtin:cast-spell": 35,
    "builtin:zone": 146,
-   "resolves": 1096,
+   "resolves": 1098,
    "builtin:readied-bonus": 24,
    "builtin:ways": 65,
    "builtin:item-action": 19,
@@ -27,9 +27,8 @@
    "builtin:whisper": 14,
    "builtin:table": 1,
    "builtin:objects": 9,
-   "none": 2,
-   "builtin:roll-twice": 2,
-   "note-only": 2
+   "builtin:boon": 2,
+   "builtin:roll-twice": 2
   }
  },
  "byCategory": {
@@ -38,7 +37,7 @@
    "results": {
     "builtin:cast-spell": 12,
     "builtin:zone": 41,
-    "resolves": 370,
+    "resolves": 372,
     "builtin:ways": 43,
     "builtin:readied-bonus": 9,
     "builtin:teleport": 5,
@@ -46,9 +45,8 @@
     "builtin:counteract": 13,
     "builtin:whisper": 7,
     "builtin:item-action": 3,
-    "none": 2,
-    "builtin:objects": 1,
-    "note-only": 2
+    "builtin:boon": 2,
+    "builtin:objects": 1
    },
    "mechanisms": {
     "casts-spell": 17,
@@ -326,15 +324,15 @@
   },
   "affliction": {
    "count": 144,
-   "resolves": 138,
+   "resolves": 140,
    "gaps": 0,
-   "none": 2
+   "none": 0
   },
   "casts-spell": {
    "count": 33,
-   "resolves": 6,
+   "resolves": 8,
    "gaps": 0,
-   "none": 1
+   "none": 0
   },
   "strike": {
    "count": 31,
@@ -356,9 +354,9 @@
   },
   "counteract": {
    "count": 79,
-   "resolves": 28,
+   "resolves": 29,
    "gaps": 0,
-   "none": 1
+   "none": 0
   },
   "area": {
    "count": 44,
@@ -368,13 +366,13 @@
   },
   "condition": {
    "count": 433,
-   "resolves": 316,
+   "resolves": 318,
    "gaps": 0,
-   "none": 2
+   "none": 0
   },
   "duration": {
    "count": 943,
-   "resolves": 783,
+   "resolves": 784,
    "gaps": 0,
    "none": 0
   }
@@ -383,10 +381,10 @@
   "totals": {
    "cast": 35,
    "zone": 146,
-   "item": 740,
+   "item": 738,
    "fortune": 26,
-   "none": 16,
-   "save": 133,
+   "none": 14,
+   "save": 135,
    "expose": 89,
    "ways": 65,
    "action": 19,
@@ -399,16 +397,17 @@
    "coat": 48,
    "strike": 13,
    "table": 1,
-   "objects": 9
+   "objects": 9,
+   "boon": 2
   },
   "byCategory": {
    "other": {
     "cast": 12,
     "zone": 41,
-    "none": 10,
+    "none": 8,
     "ways": 43,
-    "save": 87,
-    "item": 267,
+    "save": 89,
+    "item": 265,
     "fortune": 9,
     "teleport": 5,
     "conjure": 4,
@@ -417,6 +416,7 @@
     "whisper": 7,
     "expose": 3,
     "action": 3,
+    "boon": 2,
     "objects": 1,
     "coat": 3,
     "later": 1
@@ -516,8 +516,7 @@
   },
   "noCard": {
    "triggered": 10,
-   "other": 4,
-   "no-plan": 2
+   "other": 4
   }
  },
  "gapCounts": {},
@@ -18107,7 +18106,9 @@
     "counteract",
     "condition"
    ],
-   "result": "none"
+   "result": "builtin:boon",
+   "kind": null,
+   "live": "boon"
   },
   {
    "name": "Addiction Suppressant (Greater)",
@@ -26171,9 +26172,9 @@
     "casts-spell",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:boon",
+   "kind": null,
+   "live": "boon"
   },
   {
    "name": "Snarling Badger (Greater)",
@@ -28223,9 +28224,10 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Energizing Pill",
@@ -28398,7 +28400,10 @@
     "casts-spell",
     "condition"
    ],
-   "result": "none"
+   "result": "resolves",
+   "kind": "save",
+   "gaps": [],
+   "live": "save"
   },
   {
    "name": "Potion of Fire Retaliation (Minor)",
