@@ -808,7 +808,9 @@ test("third-party bonuses read from their own packs (their words not kept here):
     // (2026-10-28: its better degree on the triggering save no longer a line — the fortune card beside it, src/compiler/triggering-save.js.)
     if (pearl) assert.deepEqual(mods(pearl), [[["saving-throw", 2, "status", "1 minutes", JSON.stringify(["item:trait:curse"])]], 0]);
     const steak = find("pf2e-team-plus-alchemists", "pf2e-items", "Draconic Steak");
-    if (steak) assert.deepEqual(mods(steak)[0], [["intimidation", 2, "circumstance", "24 hours", "null"]]);
+    // (2026-10-28: the steak's bonus only against creatures with scent, its user's Effect with PF2e's toggle for them — item.ruleEffects,
+    // src/compiler/readings-areas.js, test/b5-areas-2026-10-28.test.js —, no longer a modifier for every Intimidation check.)
+    if (steak) assert.deepEqual(mods(steak)[0], []);
     const voice = find("pf2e-team-plus-alchemists", "pf2e-items", "Honeyed Voice");
     if (voice) assert.deepEqual(mods(voice)[0], [["performance", 2, "item", "1 hours", "null"]]);
 });

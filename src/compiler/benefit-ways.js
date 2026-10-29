@@ -19,20 +19,24 @@ const SHIFT = /^The weapon's damage becomes your choice of ((?:\w+, )*\w+,? or \
 const TAKE = /^If the Strike hits, you can attempt to (Disarm|Trip|Shove|Grapple|Reposition) or (\w+) from your target immediately after as a reaction\.$/i;
 const WEIGH = /^Gain a status bonus to the damage roll equal to the weapon's number of damage dice\.$/i;
 
+// A way's plan: its user's next Strike this turn, with what the way gives it (strike: extra) — the Strike card's (scripts/strikes.js).
+// (2026-10-28: shared with Ice Zuggle Orb's spell-charged throws, src/compiler/readings-areas.js.)
+export const benefitStrike = (base, extra = {}, rows = {}) => ({
+    ...base,
+    modelVersion: MODEL_VERSION,
+    automation: { level: "automatic" },
+    targeting: { target: "the creature the Strike hits", range: null, area: null },
+    trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
+    resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none(), ...rows } },
+    strike: { range: null, save: null, damage: [], attack: null, alteration: null, own: false, unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: false, notes: [], ...extra }
+});
+
 // The activation's html, its base, options → the ways card, or null.
 export function benefitWaysPlan(html, base, options = {}) {
     const text = String(html ?? "");
     const head = HEAD.exec(text);
     if (!head) return null;
-    const strikeOf = (extra = {}, rows = {}) => ({
-        ...base,
-        modelVersion: MODEL_VERSION,
-        automation: { level: "automatic" },
-        targeting: { target: "the creature the Strike hits", range: null, area: null },
-        trigger: { event: "strike", on: ["success", "criticalSuccess"], cost: "free" },
-        resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none(), ...rows } },
-        strike: { range: null, save: null, damage: [], attack: null, alteration: null, own: false, unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: false, notes: [], ...extra }
-    });
+    const strikeOf = (extra = {}, rows = {}) => benefitStrike(base, extra, rows);
     const ways = [];
     for (const [, name, words] of text.slice(head.index + head[0].length).matchAll(BENEFIT)) {
         const said = plain(words);

@@ -420,7 +420,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "coat") return postPoisonCard({ message, plan, used, actor, token });
     if (route === "expose" || route === "save" || route === "later") return postExposureCard({ message, plan, used, actor, token, later: route === "later" });
     if (route === "cast") return postCastCard({ message, plan, used, actor, token });
-    if (route === "zone") return startItemZone({ plan, used, actor, token });
+    if (route === "zone") return startItemZone({ plan, used, actor, token, userId: userId ?? message?.author?.id ?? null });
     // (Its user's pick, when it has one, on that user's client: scripts/creature-pick.js, 2026-10-27.)
     if (route === "conjure") return startItemConjure({ plan, used, actor, token, userId: userId ?? message?.author?.id ?? null });
     if (route === "focus") return postFocusCard({ message, plan, used, actor, token });

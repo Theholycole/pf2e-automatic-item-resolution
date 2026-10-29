@@ -126,7 +126,8 @@ export function vehiclePlan(html, base) {
 }
 
 // A note Effect on the vehicle its user targets: { label, text, duration } → the plan.
-const vehicleNote = (base, note, notes = []) => ({
+// (2026-10-28: Sea Dragon Figurehead's Tidal Boost too, src/compiler/readings-areas.js.)
+export const vehicleNote = (base, note, notes = []) => ({
     ...base,
     automation: { level: "automatic" },
     targeting: { target: "1 vehicle", range: null, area: null },

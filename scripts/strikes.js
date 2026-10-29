@@ -441,7 +441,9 @@ async function strikeInstead({ message, context, actor, effect, rider, what }) {
 // (And the damage bonuses and rune dice off of 2026-10-27, strike.flat and strike.runeDice — Morphing Weapon's Weigh, Minotaur Chair's prone foe —:
 // its readied Strike kept for the damage roll, so PF2e's roll gets them. And resistance ignored in part, Awakened Adamantine Shot's: the core's
 // entry on that Effect, which the damage roll must find there.)
-const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.withoutRune || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash || (plan.strike?.flat ?? []).length || (plan.strike?.runeDice ?? []).length || plan.strike?.ignoreResistance);
+// (And its weapon's traits changed and a wider splash, Ice Zuggle Orb's after a spell — 2026-10-28: the damage roll must carry them, the
+// splash card reading its splash-radius option.)
+const addsToDamage = (plan) => Boolean((plan.strike?.damage ?? []).length || plan.strike?.alteration || plan.strike?.withoutRune || plan.strike?.material || plan.strike?.runes?.striking || plan.strike?.splash || (plan.strike?.flat ?? []).length || (plan.strike?.runeDice ?? []).length || plan.strike?.ignoreResistance || plan.strike?.traits || plan.strike?.splashRadius);
 async function damageWithRider(message) {
     const context = message.flags.pf2e.context;
     if (context.sourceType !== "attack") return;

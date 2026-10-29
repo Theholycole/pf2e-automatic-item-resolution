@@ -7,7 +7,7 @@
 
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { onlyHarms } from "../src/compiler/pf2e-rules.js";
-import { bombCardHTML, cloudLine, createBombCard, riderRow, saveFor, splashText, withChoices } from "../src/live/bomb-card.js";
+import { bombCardHTML, cloudLine, createBombCard, riderRow, saveFor, splashRadiusOf, splashText, withChoices } from "../src/live/bomb-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
 import { withUserDCs } from "./item-dcs.js";
 
@@ -71,7 +71,9 @@ async function cardForSplash(message, context, weapon, { claims = null } = {}) {
     const targetUuid = context.target?.token ?? message.flags.pf2e.target?.token ?? null;
     const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
     const target = targetToken?.actor ? entryOf(targetToken.object ?? targetToken, targetToken.actor) : null;
-    const near = target ? creaturesNear(targetToken, 5) : [];
+    // (Wider when its readied Strike says so, Ice Zuggle Orb's supercharged throw: src/live/bomb-card.js splashRadiusOf, 2026-10-28.)
+    const radius = splashRadiusOf(context.options);
+    const near = target ? creaturesNear(targetToken, radius) : [];
     if (!near.length && !(context.outcome === "failure" && target)) return;
     const actor = message.actor;
     if (!actor) return;
@@ -88,7 +90,8 @@ async function cardForSplash(message, context, weapon, { claims = null } = {}) {
         outcome: context.outcome,
         splash,
         near: await Promise.all(near.map(withTraits)),
-        harms
+        harms,
+        radius
     });
     const card = await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
     if (card) await message.update({ [`flags.${MODULE_ID}.coveredSplash`]: indices, [`flags.${MODULE_ID}.covered`]: card.id });
@@ -106,7 +109,8 @@ export async function cardForBomb(message, { claims = null } = {}) {
     const targetToken = targetUuid ? await fromUuid(targetUuid).catch(() => null) : null;
     const target = targetToken?.actor ? entryOf(targetToken.object ?? targetToken, targetToken.actor) : null;
     const { splash, indices } = splashOf(message, context.outcome);
-    const near = target ? creaturesNear(targetToken, 5) : [];
+    const radius = splashRadiusOf(context.options);
+    const near = target ? creaturesNear(targetToken, radius) : [];
     const row = riderRow({ plan, outcome: context.outcome });
     const riders = target && ((row?.effects ?? []).length || (row?.modifiers ?? []).length || row?.forcedMovement);
     const save = plan.item?.save ?? null;
@@ -125,7 +129,8 @@ export async function cardForBomb(message, { claims = null } = {}) {
         outcome: context.outcome,
         splash,
         near,
-        burst
+        burst,
+        radius
     });
     const card = await ChatMessage.create({ content: bombCardHTML(state, { canApply: true }), speaker: message.speaker, flags: { [MODULE_ID]: { [FLAG]: state } } });
     // PF2e's splash-only rolls are the card's: their apply buttons come off the message.

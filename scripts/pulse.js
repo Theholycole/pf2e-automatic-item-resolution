@@ -4,28 +4,39 @@
 // its time is up, the blast's card at every creature within the blast's radius, and it's gone. Out of an encounter, the blast once the
 // world's clock passes its end (Foundry's updateWorldTime).
 
-import { pulseDamagePlan, pulseFlag, pulseStep, pulseText } from "../src/live/pulse.js";
+import { pulseCards, pulseFits, pulseFlag, pulseStep, pulseText } from "../src/live/pulse.js";
 import { ABILITY_ID, MODULE_ID, creaturesNear, encounterOf, isActiveGM } from "./foundry.js";
 
 const PULSES = "pulses";
 
-// The tokens within that many feet of its user's token (and its own, own), as the canvas has them.
-function tokensAround(token, radius, own) {
+// The tokens within that many feet of its user's token (and its own, own), as the canvas has them — only its foes' or its allies' (who).
+function tokensAround(token, radius, own, who = null) {
     const placeable = token?.object ?? token;
     if (!placeable) return [];
-    const near = creaturesNear(placeable, radius).map((entry) => canvas.tokens.placeables.find((other) => other.document.uuid === entry.tokenUuid)).filter(Boolean);
+    const user = placeable.actor;
+    const allied = (other) => Boolean(user && other?.actor && (other.actor.isAllyOf?.(user) ?? other.actor.alliance === user.alliance));
+    const near = creaturesNear(placeable, radius).map((entry) => canvas.tokens.placeables.find((other) => other.document.uuid === entry.tokenUuid)).filter(Boolean).filter((other) => pulseFits(who, allied(other)));
     return [...(own ? [placeable] : []), ...near];
 }
 
-// Its card of that damage at the creatures around its user → its line.
+const WHOM = { foes: "foe", allies: "ally" };
+// Its cards at the creatures around its user → its line.
 async function postDamage(entry, { actor, token, item, blast = false }) {
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
     const label = blast ? `${item.name}: the blast` : `${item.name}: this round`;
-    const tokens = tokensAround(token, entry.radius, entry.own);
-    if (!postCard || !token) return `${label}: ${entry.formula} ${entry.type} damage to every creature within ${entry.radius} feet${entry.own ? " (its user too)" : ""} (by hand).`;
-    if (!tokens.length) return `${label}: no creature within ${entry.radius} feet.`;
-    await postCard({ plan: pulseDamagePlan({ ...entry, name: label }), item: { name: item.name, uuid: item.uuid ?? null }, sourceActor: actor, sourceToken: token.object ?? token, tokens, cause: label });
-    return `${label}: ${entry.formula} ${entry.type} damage for ${tokens.length} creature${tokens.length === 1 ? "" : "s"} within ${entry.radius} feet (its card follows).`;
+    if (!postCard || !token) return `${label}: ${entry.plan ? pulseText(entry) : `${entry.formula} ${entry.type} damage to every creature within ${entry.radius} feet${entry.own ? " (its user too)" : ""}`} (by hand).`;
+    const lines = [];
+    for (const { plan, who } of pulseCards(entry, label)) {
+        const tokens = tokensAround(token, entry.radius, entry.own && who !== "foes", who);
+        const whom = WHOM[who] ?? "creature";
+        if (!tokens.length) {
+            lines.push(`no ${whom} within ${entry.radius} feet`);
+            continue;
+        }
+        await postCard({ plan, item: { name: item.name, uuid: item.uuid ?? null }, sourceActor: actor, sourceToken: token.object ?? token, tokens, cause: label });
+        lines.push(entry.plan ? `its card for ${tokens.length} ${whom}${tokens.length === 1 ? "" : "s"} within ${entry.radius} feet follows` : `${entry.formula} ${entry.type} damage for ${tokens.length} creature${tokens.length === 1 ? "" : "s"} within ${entry.radius} feet (its card follows)`);
+    }
+    return `${label}: ${lines.join("; ")}.`;
 }
 
 // As it's used: its first card, and its time kept on its user → the card's line.
@@ -44,14 +55,18 @@ async function stepPulses(actor, token, { blastOnly = false } = {}) {
     if (!flags.length) return;
     const kept = [];
     const due = [];
+    let counted = false;
     for (const flag of flags) {
         const step = pulseStep(flag, game.time.worldTime);
         if (step === "tick") {
-            kept.push(flag);
+            // (A counted pulse's turn used up as its card comes.)
+            const ticked = Number.isInteger(flag.ticksLeft) && !blastOnly;
+            counted ||= ticked;
+            kept.push(ticked ? { ...flag, ticksLeft: flag.ticksLeft - 1 } : flag);
             if (!blastOnly) due.push([flag, false]);
         } else if (step === "blast") due.push([flag, true]);
     }
-    if (kept.length !== flags.length) await (kept.length ? actor.setFlag(MODULE_ID, PULSES, kept) : actor.unsetFlag(MODULE_ID, PULSES));
+    if (kept.length !== flags.length || counted) await (kept.length ? actor.setFlag(MODULE_ID, PULSES, kept) : actor.unsetFlag(MODULE_ID, PULSES));
     for (const [flag, blast] of due) {
         const item = { name: flag.item ?? "The item", uuid: flag.uuid ?? null };
         const line = await postDamage(blast ? flag.pulse.then : flag.pulse, { actor, token, item, blast });

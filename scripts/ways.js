@@ -1,7 +1,7 @@
 // Live play for a consumable used in one of several ways (src/compiler/ways.js, src/live/ways-card.js): the card after its Use;
 // "Use it" posts the picked way's own card through postCardFor (scripts/live.js), named for that way, its text that way's block.
 
-import { createWaysCard, waysCardHTML } from "../src/live/ways-card.js";
+import { createWaysCard, waysCardHTML, waysSpent } from "../src/live/ways-card.js";
 import { FLAG, MODULE_ID, encounterOf, entryOf, stateOf } from "./foundry.js";
 import { frequencyText, overLimit, perWord, usesNow, withUse, withoutUse } from "../src/live/activations-card.js";
 
@@ -49,7 +49,8 @@ export async function applyWaysCard(message, { choice = null } = {}, postCardFor
     await postCardFor({ message: null, plan: way.plan, used, actor, token });
     // (A way that isn't one of the activation's uses, Tengu Feather Fan's cantrip: the use activating it counted given back.)
     if (way.refund && state.item.uuid) await refundWay(state.item.uuid, way.plan);
-    // (Used once, a snare's crafted choice: closed.)
-    const next = { ...state, choice: index, ...(state.plan.once ? { status: "applied" } : {}), results: [...state.results, `${way.name}: ${way.plan.builtin === "zone" ? "placed" : "its card"}.`] };
+    // (Used once, a snare's crafted choice: closed; and one of so many uses, Hook Chain's, once they're spent.)
+    const after = { ...state, choice: index, results: [...state.results, `${way.name}: ${way.plan.builtin === "zone" ? "placed" : "its card"}.`] };
+    const next = waysSpent(after) ? { ...after, status: "applied" } : after;
     return message.update({ content: waysCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

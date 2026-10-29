@@ -11,10 +11,12 @@ import { attitudeOf, conjuredChanges, countNow, pickedPlan } from "../src/live/c
 import { SLAIN } from "./slain-wait.js";
 import { pauseItem } from "./paused-item.js";
 import { aroundZone, exemptSpec } from "../src/live/cube.js";
+import { vehicleFor, vehicleZone } from "../src/live/vehicle-aura.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
-export async function startItemZone({ plan, used, actor, token }) {
+// (userId: who used it — its targets, for an area round the vehicle it targets.)
+export async function startItemZone({ plan, used, actor, token, userId = null }) {
     const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
     // (The item may be used up already: its name, uuid and actor are all the zone needs.)
     const item = { name: used.data.name, uuid: used.data.uuid ?? null, actor, img: used.data.img ?? null };
@@ -39,6 +41,23 @@ export async function startItemZone({ plan, used, actor, token }) {
             await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(used.data.name)}</strong>: dismissed.</p>` });
             return null;
         }
+    }
+    // (Round the vehicle its user targets or stands on, as far out as it's long — Sea Dragon Figurehead's tempest, src/live/vehicle-aura.js,
+    // 2026-10-28: the zone at that token, attached to it.)
+    if (startZone && plan.zone?.centre === "vehicle") {
+        const own = token?.document ?? token;
+        const scene = own?.parent ?? canvas.scene;
+        const presser = (userId ? game.users?.get(userId) : null) ?? game.user;
+        const ship = vehicleFor({ targets: [...(presser?.targets ?? [])].map((target) => target.document ?? target), tokens: scene?.tokens?.contents ?? [...(scene?.tokens ?? [])], user: own, gridSize: scene?.grid?.size ?? 100 });
+        if (!ship || !scene) {
+            return ChatMessage.create({
+                speaker: ChatMessage.getSpeaker({ actor }),
+                whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id),
+                content: `<p><strong>${escape(used.data.name)}</strong>: no vehicle targeted or under its user, so its area isn't placed: mark it round the ship by hand (as far out as the ship is long).</p>`
+            });
+        }
+        const zone = vehicleZone(plan.zone, ship, { gridDistance: scene.grid?.distance ?? 5 });
+        return startZone({ item, plan: { ...plan, zone }, sourceToken: own, at: { scene, token: { id: ship.id, x: ship.x, y: ship.y, width: ship.width, height: ship.height, shape: ship.shape ?? 0 } } });
     }
     if (startZone) {
         // (A square round its user, Cube of Nex's walls: its grid squares, src/live/cube.js.)

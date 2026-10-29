@@ -48,6 +48,21 @@ function whenText(entry) {
 // A die in words: "4d6 mental", "1d4 persistent force", "1d8 precision", "1d6".
 export const dieText = (entry) => [entry.dieSize ? `${entry.diceNumber}${entry.dieSize}` : `${entry.diceNumber} weapon ${entry.diceNumber === 1 ? "die" : "dice"}`, entry.category, entry.damageType].filter(Boolean).join(" ");
 
+// Its degree adjustment in words (PF2e's AdjustDegreeOfSuccess): "one degree better" for all, else each step it makes ("a failure is a
+// success and a success a critical success", Ice Zuggle Orb's supercharged throw — 2026-10-28).
+const DEGREE_NAMES = { criticalFailure: "a critical failure", failure: "a failure", success: "a success", criticalSuccess: "a critical success" };
+const DEGREE_STEPS = ["criticalFailure", "failure", "success", "criticalSuccess"];
+function degreeLine(degree) {
+    if (degree?.all === "one-degree-better") return "Its attack roll's outcome is one degree better";
+    if (degree?.all === "one-degree-worse") return "Its attack roll's outcome is one degree worse";
+    const steps = DEGREE_STEPS.filter((step) => degree?.[step]).map((step) => {
+        const at = DEGREE_STEPS.indexOf(step);
+        const to = { "one-degree-better": at + 1, "one-degree-worse": at - 1, "two-degrees-better": at + 2, "two-degrees-worse": at - 2 }[degree[step]] ?? DEGREE_STEPS.indexOf(degree[step]);
+        return `${DEGREE_NAMES[step]} is ${DEGREE_NAMES[DEGREE_STEPS[Math.max(0, Math.min(3, to))]]}`;
+    });
+    return steps.length ? `On its attack roll ${steps.join(" and ")}` : "Its attack roll's outcome is one degree better";
+}
+
 // What the Strike carries, as lines: "On a hit: frightened 1", "On a critical hit: frightened 2", "On a hit: DC 22 Fortitude
 // save", "+4d6 mental damage", "+1 status bonus to the attack roll", "All its damage is fire", "Also: …" (what's left to the
 // table).
@@ -70,11 +85,15 @@ export function strikeLines(plan) {
         // (A volley's penalty is its own line.)
         strike.attack && !(strike.volley?.penalty && strike.attack.value === strike.volley.penalty) ? (strike.attack.value < 0 ? `${strike.attack.value} ${strike.attack.type === "untyped" ? "" : `${strike.attack.type} `}penalty to the attack roll` : `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll${strike.attack.against === "metal" ? ` against a creature made of metal or wearing metal armor${strike.attack.metalTarget === true ? " (its target is)" : strike.attack.metalTarget === false ? " (its target isn't: only against a metal creature)" : ""}` : ""}`) : null,
         strike.alteration ? `All its ${strike.alterationFrom ? `${strike.alterationFrom} ` : ""}damage is ${strike.alteration}` : null,
+        // (A trait it gains, the Agglomerative Cannonball's razing; or its own traits changed for it, Ice Zuggle Orb's after a spell of another
+        // trait: PF2e's AdjustStrike — 2026-10-28.)
+        ...(Array.isArray(strike.traits) ? strike.traits.map((trait) => `It gains the ${trait} trait`) : []),
+        strike.traits && !Array.isArray(strike.traits) ? `Its traits for it: ${[...(strike.traits.add ?? []).map((trait) => `${trait} added`), ...(strike.traits.remove ?? []).map((trait) => `${trait} gone`)].join(", ")}` : null,
+        // (A wider splash, Ice Zuggle Orb's supercharged one: the splash card's creatures within that many feet of the target — 2026-10-28.)
+        strike.splashRadius ? `Its splash reaches the creatures within ${strike.splashRadius} feet of the target` : null,
         strike.withoutRune ? `No ${strike.withoutRune} rune damage on it, nor that rune's critical effect, from a weapon with one${strike.runeDC ? ` (its save is DC ${strike.runeDC.dc} then)` : ""}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
-        // (A trait it gains, the Agglomerative Cannonball's razing: PF2e's AdjustStrike, 2026-10-28.)
-        ...(strike.traits ?? []).map((trait) => `It gains the ${trait} trait`),
-        strike.degree ? "Its attack roll's outcome is one degree better" : null,
+        strike.degree ? degreeLine(strike.degree) : null,
         strike.offGuard ? "Its target is Off-Guard to it" : null,
         ...(strike.options ?? []).map((option) => (option === "ignore-range-penalty" ? "No range increment penalty on it" : /^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
         ...(strike.suppress ?? []).map((penalty) => `No ${penalty} penalty`),
@@ -225,9 +244,15 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     // (A precious material for it: PF2e's AdjustStrike on the Strikes it's for.)
     if (strike.material) rules.push({ key: "AdjustStrike", mode: "add", property: "materials", value: strike.material, definition: weaponId ? [`item:id:${weaponId}`] : strike.unarmed ? ["item:category:unarmed"] : range ? [`item:${range}`] : [] });
     // (A trait for it, the Agglomerative Cannonball's razing: PF2e's AdjustStrike on the weapon firing the round — by the round's id, PF2e's
-    // weapon options' "item:ammo:id:…" or the roll's "ammo:id:…" — or the Strikes it's for, 2026-10-28.)
-    for (const trait of strike.traits ?? []) rules.push({ key: "AdjustStrike", mode: "add", property: "weapon-traits", value: trait, definition: ammoId ? [{ or: [`item:ammo:id:${ammoId}`, `ammo:id:${ammoId}`] }] : weaponId ? [`item:id:${weaponId}`] : strike.unarmed ? ["item:category:unarmed"] : range ? [`item:${range}`] : [] });
+    // weapon options' "item:ammo:id:…" or the roll's "ammo:id:…" — or the Strikes it's for, 2026-10-28. strike.traits a list of traits it
+    // gains, or { add, remove } — the Ice Zuggle Orb's, below: two groups' shapes, both read since the merge.)
+    for (const trait of Array.isArray(strike.traits) ? strike.traits : []) rules.push({ key: "AdjustStrike", mode: "add", property: "weapon-traits", value: trait, definition: ammoId ? [{ or: [`item:ammo:id:${ammoId}`, `ammo:id:${ammoId}`] }] : weaponId ? [`item:id:${weaponId}`] : strike.unarmed ? ["item:category:unarmed"] : range ? [`item:${range}`] : [] });
     if (strike.degree) rules.push({ key: "AdjustDegreeOfSuccess", selector: attackSelector, adjustment: strike.degree, ...(label ? { label } : {}), ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
+    // (Its own weapon's traits for it, Ice Zuggle Orb's after a spell of another trait: PF2e's AdjustStrike on that weapon alone — 2026-10-28.)
+    if (strike.traits && !Array.isArray(strike.traits) && weaponId) for (const [mode, traits] of [["remove", strike.traits.remove], ["add", strike.traits.add]]) for (const trait of traits ?? []) rules.push({ key: "AdjustStrike", mode, property: "weapon-traits", value: trait, definition: [`item:id:${weaponId}`] });
+    // (A wider splash, Ice Zuggle Orb's supercharged one: a roll option on that Strike's damage roll, which the splash card reads — scripts/bombs.js
+    // splashRadiusOf, 2026-10-28.)
+    if (strike.splashRadius) rules.push({ key: "RollOption", domain: damageSelector, option: `splash-radius:${strike.splashRadius}` });
     // (Its roll options for the attack — "ignore-range-penalty:2", Sniper's Bead —, a trait's penalty suppressed — kickback, Alchemist's
     // Damper —, flat splash damage — Jistkan War Crossbow.)
     for (const option of strike.options ?? []) rules.push({ key: "RollOption", domain: attackSelector, option });

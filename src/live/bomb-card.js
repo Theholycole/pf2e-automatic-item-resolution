@@ -11,11 +11,19 @@ const DEGREE_WORDS = { criticalSuccess: "critical hit", success: "hit", failure:
 // On a miss PF2e's damage (if rolled) is the splash alone, which the target takes too: it's listed first.
 // burst: the creatures within the save's radius of the target (a "burst" save's, not the target).
 // harms: the trait the item harms only creatures with (Holy Water's "unholy"); an entry's traits say whether it's ticked.
-export function createBombCard({ plan, item, user, target, outcome, splash = [], near = [], burst = [], harms = null }) {
+// radius: how far the splash reaches from the target, 5 feet unless the Strike's damage roll says more (splashRadiusOf).
+export function createBombCard({ plan, item, user, target, outcome, splash = [], near = [], burst = [], harms = null, radius = 5 }) {
     const fits = (entry) => !harms || (entry.traits ?? []).includes(harms);
     const splashed = [...(outcome === "failure" && target ? [target] : []), ...near].map(({ traits, ...entry }) => ({ ...entry, include: fits({ traits }) }));
     const { traits, ...hit } = target ?? {};
-    return { kind: "bomb", status: "open", plan, item, user, target: target ? hit : target, outcome, splash, splashed, burst, results: [], ...(harms ? { harms, hint: `${item.name} harms only creatures with the ${harms} trait${target && !fits(target) ? `; ${target.name} hasn't it, so PF2e's damage on it is left unapplied` : ""}.` } : {}) };
+    return { kind: "bomb", status: "open", plan, item, user, target: target ? hit : target, outcome, splash, splashed, burst, results: [], ...(radius !== 5 ? { radius } : {}), ...(harms ? { harms, hint: `${item.name} harms only creatures with the ${harms} trait${target && !fits(target) ? `; ${target.name} hasn't it, so PF2e's damage on it is left unapplied` : ""}.` } : {}) };
+}
+
+// How far a Strike's splash reaches, from its damage roll's options: a readied Strike's "splash-radius:10" (Ice Zuggle Orb's supercharged
+// throw, src/live/strike-card.js strikeRules — 2026-10-28), else 5 feet. Pure.
+export function splashRadiusOf(options = []) {
+    const wider = (options ?? []).map((option) => Number(/^splash-radius:(\d+)$/.exec(String(option))?.[1])).filter((feet) => feet > 0);
+    return Math.max(5, ...wider);
 }
 
 // Who attempts the bomb's save (plan.item.save): "splash" — the target and the creatures splashed (as ticked);
@@ -88,7 +96,7 @@ export function bombCardHTML(state, { canApply = false } = {}) {
     const degree = DEGREE_WORDS[state.outcome] ?? state.outcome;
     const splash = state.splash.length && state.splashed.length
         ? `<p class="aar-actions">Splash (${escape(splashText(state.splash))}):</p><ul class="aar-targets">${state.splashed.map((entry, index) => `<li class="aar-target"><label><input type="checkbox" data-air-splash="${index}"${entry.include ? " checked" : ""}${open && canApply ? "" : " disabled"}> ${escape(entry.name)}</label></li>`).join("")}</ul>`
-        : state.splash.length ? `<p class="aar-hint">No other creature within 5 feet of the target for the splash.</p>` : "";
+        : state.splash.length ? `<p class="aar-hint">No other creature within ${state.radius ?? 5} feet of the target for the splash.</p>` : "";
     const riders = open ? [...riderLines(state), ...(saveLine(state) ? [saveLine(state)] : []), ...(cloudLine(state) ? [cloudLine(state)] : [])] : [];
     if (open && state.hint) riders.unshift(state.hint);
     const riderList = riders.length ? `<ul class="aar-notes">${riders.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
