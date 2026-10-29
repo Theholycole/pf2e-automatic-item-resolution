@@ -189,8 +189,12 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             const immune = targetTokens.filter((target) => own(target) || ofKind(target) || (only.length && !only.some((trait) => traitsOf(target).includes(trait))));
             castTargets = targetTokens.filter((target) => !immune.includes(target));
             for (const target of immune) lines.push(own(target) ? `${target.name} is immune (its user): left out of the cast.` : ofKind(target) ? `${target.name} is immune (${state.plan.castTraits.immune.join(" or ")}): left out of the cast.` : `${target.name} isn't a ${only.join(" or ")}: left out of the cast.`);
-            for (const penalty of state.plan.castTraits.penalties) {
-                for (const target of castTargets.filter((one) => one.actor && penalty.traits.some((trait) => traitsOf(one).includes(trait)))) {
+            for (const given of state.plan.castTraits.penalties) {
+                // (Its value the weapon's damage dice, Blessed Reformer's: read off the weapon now, its runes as they are — 2026-10-29.)
+                const holder = given.valueFrom === "weapon-dice" ? await fromUuid(state.item.uuid).catch(() => null) : null;
+                const dice = holder ? Number(holder.system?.damage?.dice) || 1 : null;
+                const penalty = dice ? { ...given, value: -dice, rules: (given.rules ?? []).map((rule) => (rule.key === "FlatModifier" ? { ...rule, value: -dice } : rule)), words: `${given.words} (−${dice})` } : given;
+                for (const target of castTargets.filter((one) => one.actor && (penalty.all || (penalty.traits ?? []).some((trait) => traitsOf(one).includes(trait))))) {
                     await target.actor.createEmbeddedDocuments("Item", [castPenaltySource(penalty, spellName, { item: state.item, user: state.user, worldTime: game.time.worldTime, initiative: game.combat?.started ? game.combat.combatant?.initiative ?? null : null, moduleId: MODULE_ID })]);
                     lines.push(penalty.words ? `${target.name}: ${penalty.words.charAt(0).toLowerCase()}${penalty.words.slice(1)}.` : `${target.name}: ${penalty.value} ${penalty.type} to its ${penalty.selector} saves against it.`);
                 }

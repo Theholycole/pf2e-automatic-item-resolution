@@ -65,6 +65,12 @@ const EXCEPT_ADJUSTED = /^\s*This has the effect of [A-Z][\w' -]+?, except for t
 const TRAIT_INSTEAD = /^\s*The wall has the ([a-z]+) trait instead of ([a-z]+)(?: and ([a-z]+))?\.$/i;
 const DAMAGE_INSTEAD = /^\s*The wall deals ([a-z]+) damage instead of [a-z]+ damage\.$/i;
 const WALL_LINES = [/^\s*The weakness to [a-z]+ is instead weakness to [a-z]+ and to [a-z]+\.$/i, /^\s*Destroying a section of the wall with [a-z]+ or [a-z]+ \(rather than with [a-z]+\) causes a section to evaporate\.$/i];
+// (Blessed Reformer's Calm, 2026-10-29 — docs/spell-module-requests.md row 5, built here: cast at its user's focus-spell rank, half its level
+// rounded up (plan.castRank); at the creature it hit, one target (plan.castTargets); that creature's status penalty on its save against Calm the
+// weapon's damage dice (castTraits.penalties, every target, its value the weapon's, read live).)
+const FOCUS_RANK = /^\s*You cast [A-Z][\w' -]+? at the same rank as your champion focus spells\.$/i;
+const HIT_PENALTY = /^\s*It must target the creature you hit, and the creature takes a (status|circumstance|item) penalty on its save against the spell equal to the [\w' ]+?'s number of weapon damage dice\.$/i;
+const CRAFT_ONLY = /^\s*The initial materials must include \d+ gp of [a-z]+\.$/i;
 const GROWTH = /^\s*Once per turn, you can use a single action, which has the concentrate trait, to increase the emanation's radius by (\d+) feet\.$/i;
 
 // The plan, the item's source (its text's bead count) and the compile options (PF2e's spells by name) → the plan with its changes read,
@@ -127,7 +133,20 @@ export function withCastChanges(plan, item = null, options = {}) {
                 next.castWithoutTraits = [...new Set([...(next.castWithoutTraits ?? []), lacks[1].toLowerCase()])];
                 continue;
             }
-            if (EXCEPT_ADJUSTED.test(sentence)) continue;
+            if (EXCEPT_ADJUSTED.test(sentence) || CRAFT_ONLY.test(sentence)) continue;
+            if (FOCUS_RANK.test(sentence)) {
+                next.castRank = { round: "up", min: 1 };
+                continue;
+            }
+            const hitPenalty = HIT_PENALTY.exec(sentence);
+            if (hitPenalty && plan.spell?.name) {
+                const slug = plan.spell.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                const type = hitPenalty[1].toLowerCase();
+                next.castTargets = { max: 1 };
+                next.castTraits = { immune: [], penalties: [{ all: true, valueFrom: "weapon-dice", selector: "saving-throw", type, value: -1, name: `penalty against ${plan.spell.name}`, words: `A ${type} penalty to its save against ${plan.spell.name}, the weapon's damage dice`, rules: [{ key: "FlatModifier", selector: "saving-throw", type, value: -1, predicate: [`item:slug:${slug}`] }], duration: { value: 1, unit: "minutes", expiry: "turn-start" } }], said: [sentence] };
+                lines.push("Its user hit that creature with the weapon as its last action, and is a champion of the redemption cause (the GM's).");
+                continue;
+            }
             const instead = TRAIT_INSTEAD.exec(sentence);
             if (instead) {
                 next.castAddTraits = [...new Set([...(next.castAddTraits ?? []), instead[1].toLowerCase()])];
@@ -179,7 +198,7 @@ export function withCastChanges(plan, item = null, options = {}) {
         const rest = impulse ? joined.replace(impulse[0], " ").replace(/\s+/g, " ").trim() : joined;
         if (rest) kept.push(left.length === sentences(note).length && !impulse ? note : rest);
     }
-    const changed = ["castActions", "castArea", "castAddTraits", "castTraits", "castWithoutTraits", "castElementTrait", "castGrowth", "castDamageType"].some((key) => next[key] !== plan[key]);
+    const changed = ["castActions", "castArea", "castAddTraits", "castTraits", "castWithoutTraits", "castElementTrait", "castGrowth", "castDamageType", "castRank", "castTargets"].some((key) => next[key] !== plan[key]);
     if (!lines.length && !next.choices && !next.castImpulse && next.dc === plan.dc && !unplayed && !wielded && !changed) return plan;
     if (next.castImpulse && !next.choices?.some((choice) => choice.element)) delete next.castImpulse;
     if (kept.length) next.notes = kept;

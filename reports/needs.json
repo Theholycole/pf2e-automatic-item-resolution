@@ -1,19 +1,17 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 3,
+  "entries": 2,
   "results": {
-   "none": 2,
-   "partial": 1
+   "none": 2
   },
   "main": {
-   "triggers": 2,
-   "strike": 1
+   "triggers": 2
   },
   "any": {
    "triggers": 2,
-   "strike": 3,
-   "spells": 3,
+   "strike": 2,
+   "spells": 2,
    "objects": 2
   }
  },
@@ -31,19 +29,6 @@
     "strike",
     "spells",
     "objects"
-   ]
-  },
-  {
-   "name": "Blessed Reformer",
-   "kind": "activation",
-   "tier": "general",
-   "level": 14,
-   "result": "partial",
-   "main": "strike",
-   "work": "damage dice",
-   "needs": [
-    "strike",
-    "spells"
    ]
   },
   {

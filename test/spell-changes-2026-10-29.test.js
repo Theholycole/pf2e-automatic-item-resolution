@@ -94,3 +94,9 @@ test("Dreadsmoke Thurible: Mist's smoke the ability module's zone round its user
     const plan = compileActivations(item("Dreadsmoke Thurible"), { spells })[0].plan;
     assert.deepEqual([done(plan), routeOf(plan), plan.zone.area, plan.zone.centre, plan.zone.concealed, plan.zone.lasts.value, plan.zone.lasts.unit, plan.zone.notes.length], [true, "zone", { type: "burst", value: 20 }, "self", true, 1, "minutes", 3]);
 });
+
+test("Blessed Reformer's Calm: at its user's focus-spell rank, at the one creature hit, its status penalty on the save against Calm the weapon's damage dice", () => {
+    const plan = compileActivations(item("Blessed Reformer"), { spells })[1].plan;
+    const [penalty] = plan.castTraits.penalties;
+    assert.deepEqual([done(plan), plan.spell.name, plan.castRank, plan.castTargets, penalty.all, penalty.valueFrom, penalty.type, penalty.rules[0].predicate], [true, "Calm", { round: "up", min: 1 }, { max: 1 }, true, "weapon-dice", "status", ["item:slug:calm"]]);
+});
