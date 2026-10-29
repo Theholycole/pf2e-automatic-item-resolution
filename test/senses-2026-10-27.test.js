@@ -254,11 +254,12 @@ test("Implosion Dust: its failures shrink one or two steps (PF2e's CreatureSize 
 });
 
 // (Merged 2026-10-27: PF2e's own rules have no card of their own — src/compiler/pf2e-rules.js —, so Penetrating Ammunition's line Strike can't be
-// a line of one: not a one-off, partial still — work to build, one attack roll at each creature in the line, as volley.oneRoll's.)
-test("Penetrating Ammunition's line Strike: beside PF2e's own bleed rule, partial still (no card to hold its lines)", async () => {
+// a line of one: not a one-off. 2026-10-28: built, its Strike card's one attack roll at each creature in the line (volley.oneRoll, count null)
+// — test/wire-2026-10-28.test.js.)
+test("Penetrating Ammunition's line Strike: not a one-off, its Strike card now (no longer PF2e's rules alone)", async () => {
     const { oneOff } = await import("../src/compiler/one-offs.js");
     const ammo = activation("Penetrating Ammunition");
-    assert.deepEqual([ammo.builtin, ammo.partial, ammo.decided], ["pf2e-rules", true, undefined]);
+    assert.deepEqual([ammo.builtin, ammo.partial, ammo.decided, Boolean(ammo.strike?.volley?.oneRoll)], [undefined, undefined, undefined, true]);
     assert.equal(oneOff("Penetrating Ammunition"), null);
 });
 

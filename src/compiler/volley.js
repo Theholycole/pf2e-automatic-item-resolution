@@ -134,7 +134,9 @@ export function readVolley(text, sentence = null, whole = null) {
 export function volleyLines(volley, { uses = null } = {}) {
     if (!volley) return [];
     // (One attack roll at several, Hippopotamus Klar's Engulfing Jaws: the card compares it to each one's AC, 2026-10-27.)
-    const one = volley.oneRoll ? `One Strike at ${volley.oneRoll.upTo ? "up to " : "the "}${volley.oneRoll.count} creatures targeted${volley.oneRoll.adjacent ? " (adjacent to each other)" : ""}${volley.oneRoll.within ? ` within ${volley.oneRoll.within} feet of the first target` : ""}: one attack roll, compared to each one's AC (target them, then Apply); one damage roll, applied to each one it hits (double to one it critically hits)` : null;
+    // (Its count null, every creature in its area — Penetrating Ammunition's line, 2026-10-28.)
+    const many = volley.oneRoll && !Number.isFinite(volley.oneRoll.count) ? `each creature ${volley.area ? `in the ${volley.area}` : "in the area"}` : null;
+    const one = volley.oneRoll ? `One Strike at ${many ?? `${volley.oneRoll.upTo ? "up to " : "the "}${volley.oneRoll.count} creatures`} targeted${volley.oneRoll.adjacent ? " (adjacent to each other)" : ""}${volley.oneRoll.within ? ` within ${volley.oneRoll.within} feet of the first target` : ""}: one attack roll, compared to each one's AC (target them, then Apply); one damage roll, applied to each one it hits (double to one it critically hits)` : null;
     const who = one ?? (volley.each ? `One Strike at each ${volley.each} ${volley.area ? `in the ${volley.area}` : "in the area"} (target them all, then Apply)` : uses ? `Up to ${uses} Strikes` : null);
     return [
         who,

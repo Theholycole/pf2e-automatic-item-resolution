@@ -7,8 +7,8 @@
 // The ability module's zone, placed where it's unfolded (a 5-foot burst, there until removed): the save at each summoned creature entering it
 // (zone.saves only { traits: ["summoned"] }), a disrupted move a note Effect on it for that turn (PF2e can't undo an action: it's spent, to no
 // effect), the success's and failure's immunity for the round the module's temporary-immunity tracker (trigger.immunity). A summoned creature's
-// melee Strike at a creature in it is no zone event: that save stays the GM's (the zone's line), so the plan is still partial — it needs a
-// watch on summoned creatures' melee attack rolls at creatures in the seal. Pure.
+// melee Strike at a creature in it: the same save card on the attacker (the ability module's when "strike-into", 2026-10-28, its only read
+// for the attacker). Pure.
 
 const SEAL = /\bWhen a creature with the summoned trait attempts to enter the seal's area or make a melee Strike against a creature in that area, the summoned creature must attempt\b/i;
 const PLACED = /\bThe design covers an? @Template\[(?:type:)?burst\|distance:(\d+)\][^.]*? when unfolded and must be unfolded into an area free of major obstructions such as rocks or hostile creatures\./i;
@@ -37,12 +37,11 @@ export function withWardingSeal(plan, html) {
     }
     const slug = String(plan.source?.slug ?? plan.source?.name ?? "seal").toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const immunity = { scope: "target", raw: "the creature is immune to the effects of this portable seal this round", duration: { value: 1, unit: "rounds" }, degrees: ["criticalSuccess", "success", "failure"], against: "all", slug };
-    const save = { ...plan, trigger: { event: "zone", immunity }, targeting: { target: "a creature in the area", range: null, area: null }, resolution: { ...plan.resolution, outcomes: rows } };
+    const save = { ...plan, trigger: { event: "zone", immunity }, targeting: { target: "a summoned creature entering it or making a melee Strike into it", range: null, area: null }, resolution: { ...plan.resolution, outcomes: rows } };
     delete save.partial;
     delete save.item;
     delete save.notes;
-    const strikes = "A summoned creature's melee Strike against a creature in the seal calls for the same save (the GM's, rolled by hand: no zone event for it).";
-    const zone = { area: { type: "burst", value: Number(placed[1]) }, centre: "placed", range: Number(placed[1]), lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [{ when: ["enter"], only: { traits: ["summoned"] }, plan: save }], damage: [], effect: null, modifiers: [], notes: [`Unfold it into an area free of major obstructions such as rocks or hostile creatures; it stays until it's removed.`, strikes] };
-    const { resolution: _resolution, ...rest } = plan;
-    return { ...rest, builtin: "zone", automation: { level: "guided" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, actions: null, zone, notes: [strikes], partial: true };
+    const zone = { area: { type: "burst", value: Number(placed[1]) }, centre: "placed", range: Number(placed[1]), lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [{ when: ["enter", "strike-into"], only: { traits: ["summoned"] }, plan: save }], damage: [], effect: null, modifiers: [], notes: [`Unfold it into an area free of major obstructions such as rocks or hostile creatures; it stays until it's removed.`] };
+    const { resolution: _resolution, notes: _notes, partial: _partial, ...rest } = plan;
+    return { ...rest, builtin: "zone", automation: { level: "automatic" }, targeting: { target: null, range: null, area: null }, trigger: { event: "use" }, actions: null, zone };
 }

@@ -22,6 +22,13 @@
 //   much lower. Off-Guard for the minute on a hit at a construct or a creature adamantine gets past
 //   (a weakness to it, or a resistance it's an exception to): plan.ifTarget, as Moonlit Spellgun's silver (src/live/if-target.js). Its rarity's
 //   sentence a line of the card.
+// - A line Strike (2026-10-28): Penetrating Ammunition's "the Strike takes the shape of a 60-foot line originating from you. Roll one attack roll
+//   and compare the result to the AC of each target in the line. The ammunition ignores up to 10 of a target's resistance … If your attack roll
+//   result is a natural 20, you improve your degree of success only against the first target in the line" — its Strike card with the arrow
+//   loaded (strike.ammo), one Strike at each creature targeted in the line (strike.volley.oneRoll, count null: as many as it holds), rolled at
+//   the first, its natural 20 only that one's (oneRoll.naturalFirst: the others compared without it, scripts/strikes.js); every resistance 10
+//   lower (strike.ignoreResistance types ["*"], the core's). Its 1d6 bleed is PF2e's own rule on the arrow (the damage roll's); the walls it
+//   goes through and the bow's critical specialization only at the line's last square, lines of the card.
 // Pure.
 
 import { withTouchRetaliation } from "./touch-retaliation.js";
@@ -142,7 +149,45 @@ function withAwakenedShot(plan, html) {
     };
 }
 
+const LINE_STRIKE = [
+    /^This ammunition has a slender shape and a viciously pointed tip\.$/,
+    /^When you activate and shoot [\w' -]+?, the Strike takes the shape of a @Template\[(?:type:)?line\|distance:(\d+)\] originating from you\.$/,
+    /^Roll one attack roll and compare the result to the AC of each target in the line\.$/,
+    /^The ammunition ignores up to (\d+) of a target's resistance, and it can penetrate walls up to (\d+) foot thick with Hardness (\d+) or less\.$/,
+    /^Each target that takes damage from this ammunition also takes @Damage\[(\d+d\d+)\[bleed\]\]\.$/,
+    /^If your attack roll result is a natural 20, you improve your degree of success only against the first target in the line, but you can still score a critical hit on other targets if your result exceeds their AC by 10 or more\.$/,
+    /^If you have access to your bow's critical specialization effect, [\w' -]+? applies that effect only against a target in the last square of the line\.$/
+];
+function withLineStrike(plan, html) {
+    if (plan?.builtin !== "pf2e-rules" || plan.item?.type !== "ammo" || !(plan.rules ?? []).includes("DamageDice")) return plan;
+    const sentences = plain(html).replace(/^Activate\b.*?\)\s*/, "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    if (sentences.length !== LINE_STRIKE.length || !LINE_STRIKE.every((pattern, at) => pattern.test(sentences[at]))) return plan;
+    const [, line, , ignores, bleed] = LINE_STRIKE.map((pattern, at) => pattern.exec(sentences[at]));
+    const { builtin, rules, notes, partial, ...rest } = plan;
+    const hit = ["success", "criticalSuccess"];
+    return {
+        ...rest,
+        automation: { level: "automatic" },
+        targeting: { target: `each creature in the ${line[1]}-foot line`, range: null, area: { type: "line", value: Number(line[1]) } },
+        trigger: { event: "strike", on: hit, cost: "free" },
+        resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: { criticalSuccess: none(), success: none(), failure: none(), criticalFailure: none() } },
+        strike: {
+            range: "ranged", save: null, ammo: true, notes: [],
+            ignoreResistance: { value: Number(ignores[1]), types: ["*"] },
+            volley: { each: "creature", area: `${line[1]}-foot line`, oneRoll: { count: null, naturalFirst: true } },
+            lines: [
+                `Its ${line[1]}-foot line from its user: roll the Strike at the first creature in it.`,
+                `A natural 20 raises the degree only against that first one; the others are critical hits only at 10 or more over their AC (the card compares them so).`,
+                `Its damage counts each of a target's resistances as ${ignores[1]} lower (the resolution core).`,
+                `PF2e's own rule on it adds ${bleed[1]} bleed to the damage at each one it hits.`,
+                `It passes through walls up to ${ignores[2]} foot thick with Hardness ${ignores[3]} or less (the map's).`,
+                "The bow's critical specialization effect, its user's if they have it, only at the creature in the line's last square."
+            ]
+        }
+    };
+}
+
 // An activation's plan and its html → the plan as these read it.
 export function withActivationNeeds(plan, html) {
-    return withAwakenedShot(withTouchRetaliation(plan, html), html);
+    return withLineStrike(withAwakenedShot(withTouchRetaliation(plan, html), html), html);
 }

@@ -48,8 +48,9 @@ const targetedRow = (plan) => plan?.resolution?.kind === "check" && plan.resolut
         || (Boolean(plan.atTarget) && (plan.resolution.outcomes?.success?.noteEffects ?? []).length > 0));
 
 // Its user's own skill check against a creature's DC (The Crows' Thievery against the Reflex DC, Whip-Tongue Sling's Athletics against
-// the Fortitude DC): the ability module's card at the creatures the presser targets, its user's skill rolled (the core's check family).
-const targetedCheck = (plan) => plan?.resolution?.kind === "check" && ["skill", "perception"].includes(plan.resolution.check?.roll) && plan.resolution.check?.against?.dc === "target"
+// the Fortitude DC): the ability module's card at the creatures the presser targets, its user's skill rolled (the core's check family). Or
+// against a fixed DC, its rows on each creature targeted (2026-10-28, the ability module's: Mindsponge's DC 28 Medicine surgery).
+const targetedCheck = (plan) => plan?.resolution?.kind === "check" && ["skill", "perception"].includes(plan.resolution.check?.roll) && (plan.resolution.check?.against?.dc === "target" || (plan.resolution.check?.against?.dc === "fixed" && Number(plan.resolution.check.against.value) > 0))
     && !/^(?:the drinker|you|yourself|self|itself)$/i.test(String(plan.targeting?.target ?? "").trim());
 
 const playedOnItemCard = (plan) => ["healing", "effect"].includes(plan?.resolution?.kind) || (plan?.resolution?.kind === "check" && plan.resolution.check?.roll === "automatic");

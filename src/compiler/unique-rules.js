@@ -59,13 +59,20 @@
 //   worshippers of Urgathoa within this area take a –3 status penalty to those checks." Lit ("You light the candle"): the ability module's
 //   zone around its user for as long as it burns, its rules on each creature inside as PF2e's own Effect: Soulspark Candle has them (by
 //   deity, PF2e's deity:primary and self:mode:undead), and plan.ownLight, PF2e's TokenLight on its user (scripts/zones.js). Put out ("You put
-//   out the candle with ritual prayers"): item.putsOut — the item's zones and light gone (scripts/live.js), its limned undead's Effects then a
-//   minute more. Its other words (black flame by undead, no snuffing by weather, no heat, never used up) are the zone's lines.
-//   Its undead limned ("All undead creatures in the area are limned in blue, heatless fire …"): a note Effect on each undead targeted (only
-//   those, plan.onlyAgainst; haunts aren't creatures), with its visibility words and its mark — the light's end gives it its minute.
+//   out the candle with ritual prayers"): item.putsOut — the item's light gone and its zones ended by the ability module (api.live.endZones,
+//   scripts/live.js), what lingers of them kept its time. Its other words (black flame by undead, no snuffing by weather, no heat, never used
+//   up) are the zone's lines.
+//   Its undead limned ("All undead creatures in the area are limned in blue, heatless fire for as long as they remain in the area, plus 1
+//   minute after they leave the area or the light goes out", 2026-10-28): a second zone of its light's size on its user, its inside Effect for
+//   undead (not haunts) with its visibility words, kept a minute after it leaves (zone.inside lingers) — the light put out ends the zone, so
+//   its minute then too. Only those in the light as it's used, a zone line.
 //   "The candle is lit": plan.gate.lit, refused unless its user has its light (scripts/live.js).
-//   Its flames ("Any undead within the candle's light takes 20d8 fire damage (… basic save)"), the save as read: at each undead in its light
-//   (plan.onlyAgainst, the area its light's), only while it's lit (withCandleBlast).
+//   Its flames ("Any undead within the candle's light takes 20d8 fire damage (… basic save). Pharasma empowers these flames, allowing them to
+//   ignore fire resistance or immunity … Once the candle is Activated in this way, its light immediately goes out, and the candle can't be
+//   relit for 1 hour."), the save as read: at each undead in its light (plan.onlyAgainst, the area its light's), only while it's lit, every
+//   fire resistance and immunity ignored (resolution.ignoreResistance / ignoreImmunity, the core's applyDamage patch through the ability
+//   module's card, 2026-10-28), the candle put out as it's used (item.putsOut) and its lighting an hour's wait (trigger.recharge shared with
+//   that activation by its index). Its haunts' disabling check (+35, legendary): the card's line, a hazard's DC the GM's (withCandleBlast).
 // - A bond with a willing creature (withBond): The Marriage's "Choose one adjacent willing creature … you form a magical bond with that creature
 //   that persists until you activate The Marriage again … telepathy to a distance of 120 feet … you know the other's direction from you, distance
 //   from you, and any conditions affecting them. If your bonded target becomes Blinded, Confused, … or Stunned, you can use a reaction to attempt
@@ -356,7 +363,12 @@ function withFlyingGun(plan, { activation, index }, item) {
 
 const SHEDS = /\bWhen lit, the [\w' -]+? sheds bright light for (\d+) feet and dim light for a further (\d+) feet\./i;
 const CONSECRATED = /\bThe area within the [\w' -]+?'s light is a consecrated space\. Worshippers of ([A-Z]\w+) within this area gain a \+(\d+) status bonus to attack rolls, skill checks, saving throws, and Perception checks\. Undead creatures and worshippers of ([A-Z]\w+) within this area take a [–-](\d+) status penalty to those checks\./i;
-const LIMN_MARK = "limned-in-candlelight";
+// The index of the item's activation whose effect is that sentence (its "Activate" headings counted as splitActivations does), or null.
+const activationIndexOf = (item, pattern) => {
+    const blocks = String(item?.system?.description?.value ?? "").split(/(?=<strong>\s*Activat(?:e|ion)\b)/i).slice(1);
+    const at = blocks.findIndex((block) => pattern.test(effectOf(block)));
+    return at < 0 ? null : at;
+};
 // Its light and its area's rules, from the item's own text: { bright, dim, rules, deities } or null.
 function candleOf(item) {
     const text = plainText(item?.system?.description?.value);
@@ -398,7 +410,7 @@ const LIT = /^The candle is lit\b/i;
 function withPutOut(plan, { activation, index }, item) {
     if (!unread(plan) || !candleOf(item) || !LIT.test(String(activation.requirements ?? "")) || !/^You put out the [\w' -]+? with ritual prayers to [A-Z]\w+\.$/.test(effectOf(activation.html))) return plan;
     const base = keptBase(plan, item, { activation, index });
-    return { ...ownCard(base, {}), item: { ...base.item, putsOut: { lingers: { option: LIMN_MARK, duration: MINUTE } } }, gate: { lit: true } };
+    return { ...ownCard(base, {}), item: { ...base.item, putsOut: {} }, gate: { lit: true } };
 }
 
 const LIMNED = [
@@ -412,8 +424,25 @@ function withLimned(plan, { activation, index }, item) {
     const candle = candleOf(item);
     if (!unread(plan) || !candle || !LIT.test(String(activation.requirements ?? "")) || !matches(LIMNED, sentencesOf(effectOf(activation.html)))) return plan;
     const base = keptBase(plan, item, { activation, index });
-    const text = "Limned in blue, heatless fire: while visible it can't be Concealed, and while Invisible it's Concealed rather than Undetected. It lasts while it's in the candle's light, and 1 minute more once it leaves the light (the map's: set this Effect to 1 minute then) or the light goes out.";
-    return { ...ownCard({ ...base, targeting: { target: "each undead in the candle's light", range: null, area: { type: "emanation", value: candle.dim } } }, { noteEffects: [{ label: "Limned in blue fire", text, duration: null, rules: [{ key: "RollOption", domain: "all", option: LIMN_MARK }] }] }), atTarget: true, onlyAgainst: { traits: ["undead"] }, gate: { lit: true }, notes: ["Target the undead in the candle's light (haunts aren't affected)."] };
+    // (Its Effect inside, for undead but not haunts, kept a minute after leaving or the zone's end — the light put out ends it.)
+    const text = "Limned in blue, heatless fire: while visible it can't be Concealed, and while Invisible it's Concealed rather than Undetected.";
+    const area = { type: "emanation", value: candle.dim };
+    return {
+        ...base,
+        builtin: "zone",
+        automation: { level: "automatic" },
+        actions: null,
+        targeting: { target: null, range: null, area },
+        zone: {
+            area, centre: "self", range: null, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [], damage: [], effect: null, modifiers: [],
+            inside: [{ only: { traits: ["undead"], lacks: { traits: ["haunt"] } }, label: "Limned in blue fire", text, lingers: { value: 1, unit: "minutes" }, rules: [] }],
+            notes: [
+                "Only the undead in its light as it's commanded are limned (one coming in later isn't: end that Effect); haunts aren't.",
+                "It lasts while the candle burns: putting it out, or its flames, ends this area too, the limning then lasting 1 minute more."
+            ]
+        },
+        gate: { lit: true }
+    };
 }
 
 // --- A bond with a willing creature ----------------------------------------------------------------------------------------------------------------
@@ -714,14 +743,37 @@ function withSacrifice(plan, { activation }) {
     };
 }
 
-// (Its flames at each undead in its light, only while lit: the save the ability compiler read, at "1 creature" by touch before.)
+// (Its flames at each undead in its light, only while lit: the save the ability compiler read, at "1 creature" by touch before. Its other
+// sentences, each read: the fire resistance and immunity ignored, its haunts' check a line, put out as it's used and its lighting's wait.)
 const BLAST = /^Any (undead) within the candle's light takes @Damage\[\S+\] damage \(@Check\[\w+\|dc:\d+\|basic[^\]]*\]\)\.$/;
+const BLAST_REST = [
+    /^You command the candle to destroy the undead\.$/,
+    /^The candle's flame erupts into a mass of fire that burns away undead and haunts\.$/,
+    BLAST,
+    /^[A-Z]\w+ empowers these flames, allowing them to ignore (fire) resistance or immunity\.$/,
+    /^Any haunts in the area are instead subject to [A-Z]\w+'s banishing light\.$/,
+    /^The candle attempts a check to disable each haunt with a \+(\d+) modifier\.$/,
+    /^This check applies to any skills applicable to disable the haunt and always has legendary proficiency\.$/,
+    /^Once the candle is Activated in this way, its light immediately goes out, and the candle can't be relit for (\d+) (hours?|minutes?)\.$/
+];
 function withCandleBlast(plan, { activation }, item) {
     const candle = candleOf(item);
-    const said = candle ? sentencesOf(/\bEffect\b\s*(.*)$/s.exec(String(activation.html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "))?.[1] ?? "").map((sentence) => BLAST.exec(sentence)).find(Boolean) : null;
-    if (!said || plan?.resolution?.kind !== "save" || !LIT.test(String(activation.requirements ?? ""))) return plan;
+    const sentences = candle ? sentencesOf(/\bEffect\b\s*(.*)$/s.exec(String(activation.html ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " "))?.[1] ?? "") : [];
+    if (!candle || !matches(BLAST_REST, sentences) || plan?.resolution?.kind !== "save" || !LIT.test(String(activation.requirements ?? ""))) return plan;
+    const [said, ignores, haunts, relit] = [2, 3, 5, 7].map((at) => BLAST_REST[at].exec(sentences[at]));
     const { requirementUnread, ...rest } = plan;
-    return { ...rest, targeting: { target: `each ${said[1]} in the candle's light`, range: null, area: { type: "emanation", value: candle.dim } }, onlyAgainst: { traits: [said[1]] }, gate: { ...(plan.gate ?? {}), lit: true } };
+    // (Its lighting, the item's first activation that lights it, waits too: trigger.recharge's shared by that index.)
+    const lights = activationIndexOf(item, /^You light the [\w' -]+?\.$/);
+    return {
+        ...rest,
+        targeting: { target: `each ${said[1]} in the candle's light`, range: null, area: { type: "emanation", value: candle.dim } },
+        onlyAgainst: { traits: [said[1]] },
+        gate: { ...(plan.gate ?? {}), lit: true },
+        resolution: { ...plan.resolution, ignoreResistance: [{ value: null, types: [ignores[1]] }], ignoreImmunity: [ignores[1]] },
+        item: { ...(plan.item ?? {}), putsOut: {} },
+        trigger: { ...(plan.trigger ?? {}), recharge: { value: Number(relit[1]), unit: relit[2].replace(/s?$/, "s"), ...(lights !== null ? { shared: [lights], sharedWords: "lighting it" } : {}) } },
+        notes: [...(plan.notes ?? []), `A haunt in its light takes no damage: the candle's own +${haunts[1]} check (legendary) to disable it, with any skill that disables it, against its DC (the GM's).`]
+    };
 }
 
 // The cast's rank from a creature's level (plan.castRankBy): half of it rounded up, at least 1.

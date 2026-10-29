@@ -149,8 +149,10 @@ test("Cube of Force: Cube of Nex's ways card, each face for its table's time —
     assert.deepEqual([gas, nonliving, living, magic].map((plan) => [routeOf(plan), plan.zone.lasts.value, plan.zone.lasts.unit]), [["zone", 30, "minutes"], ["zone", 10, "minutes"], ["zone", 10, "minutes"], ["zone", 5, "minutes"]]);
     // (Its level 13: rank 7 for its +20 counteracts.)
     assert.deepEqual([gas.item.counteract.modifier, gas.item.counteract.rank, magic.item.counteract.rank], [20, 7, 7]);
-    assert.deepEqual([nonliving.zone.saves[0].when, living.zone.saves[0].only], [["enter", "exit"], { notTraits: ["construct", "undead"] }]);
-    assert.deepEqual([routeOf(force), force.structure.lasts, force.structure.invisible], ["walls-around", { value: 1, unit: "minutes" }, true]);
+    // (Crossing saves one each way since the merge, 2026-10-29: in, pushed back out; out, pulled back in.)
+    assert.deepEqual([nonliving.zone.saves.map((save) => save.when), living.zone.saves[0].only], [[["enter"], ["exit"]], { notTraits: ["construct", "undead"] }]);
+    // (Its walls the environment module's transparent ones since the merge, 2026-10-29 — two groups' words for it, one kept.)
+    assert.deepEqual([routeOf(force), force.structure.lasts, force.structure.transparent], ["walls-around", { value: 1, unit: "minutes" }, true]);
     assert.deepEqual(placedRecord(force.structure, { id: "c", sceneId: "sc", worldTime: 0 }), { id: "c", sceneId: "sc", endsAt: 60 });
     assert.match(cube.ways[0].name, /\(30 minutes\)$/);
     // (A table of two columns, Cube of Nex's: no durations.)

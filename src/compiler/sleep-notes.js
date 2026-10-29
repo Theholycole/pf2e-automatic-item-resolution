@@ -3,8 +3,9 @@
 //   during which it no longer attempts a save at the end of its turn. It wakes up automatically after 1 hour or if it takes damage, but not due
 //   to non-painful stimuli (such as noise or being nudged). When it wakes up, its slowed condition decreases by 1, though it must once again save
 //   at the end of each of its turns and might risk falling asleep again." — its Slowed and the saves at the end of its turns the ability
-//   module's (a save-ends condition that escalates); the sleep at no actions left a note Effect on the creature on a failure or worse, as long as
-//   that goes on (the GM's to remove).
+//   module's (a save-ends condition that escalates); asleep at no actions left, its Slowed 3, the ability module's Unconscious at that value
+//   (escalate.atValue, 2026-10-28; no higher by it, max 3: it saves no more asleep); its waking and the saves skipped while asleep a note Effect
+//   on the creature on a failure or worse, as long as that goes on (the GM's to remove).
 // - Urn of Ashes' own doom, "The ashes in the urn intervene, taking the doomed condition in your place … Each night when you get a full night's
 //   rest, you can reduce your own doomed condition or that of the urn, but not both", its Requirements "The ashes aren't doomed": a note Effect on
 //   its user for as long as the ashes are doomed, saying it can't be used again until a night's rest lowers the urn's doom (its user removes it
@@ -23,8 +24,10 @@ export function withSleepNotes(plan) {
     const slowed = (row) => (row?.effects ?? []).some((effect) => effect.slug === "slowed" && effect.duration?.saveEnds?.mode === "escalate");
     if (sleep && slowed(outcomes?.failure) && slowed(outcomes?.criticalFailure)) {
         const [note, found] = sleep;
-        const words = { label: "Drowsy", text: `If its Slowed takes all its actions, it falls deeply asleep: Unconscious, with no more saves at the end of its turns. It wakes after ${found[1]} ${found[2]} or when it takes damage (not from noise or a nudge); then its Slowed drops by 1 and those saves start again, so it may fall asleep again.`, duration: null };
-        const given = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => [degree, slowed(row) ? { ...row, noteEffects: [...(row.noteEffects ?? []), words] } : row]));
+        const words = { label: "Drowsy", text: `At Slowed 3 its actions are gone: deeply asleep, Unconscious (given), it attempts no saves at the end of its turns (skip them). It wakes after ${found[1]} ${found[2]} or when it takes damage (not from noise or a nudge): remove Unconscious, its Slowed 1 lower, and those saves start again, so it may fall asleep again.`, duration: null };
+        // (Its actions at 0, Slowed 3: Unconscious then — the ability module's escalate.atValue — and no higher by it.)
+        const asleep = (effect) => (effect.slug === "slowed" && effect.duration?.saveEnds?.mode === "escalate" ? { ...effect, duration: { ...effect.duration, saveEnds: { ...effect.duration.saveEnds, max: 3, escalate: { ...effect.duration.saveEnds.escalate, atValue: { 3: "unconscious" } } } } } : effect);
+        const given = Object.fromEntries(Object.entries(outcomes).map(([degree, row]) => [degree, slowed(row) ? { ...row, effects: row.effects.map(asleep), noteEffects: [...(row.noteEffects ?? []), words] } : row]));
         return { ...plan, resolution: { ...plan.resolution, outcomes: given }, ...done(plan, notes.filter((entry) => entry !== note)) };
     }
     const urn = notes.find((note) => URN.test(said(note)));

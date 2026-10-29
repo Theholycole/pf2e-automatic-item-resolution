@@ -3,14 +3,13 @@
 // and the item compiled again, the poison then Pseudo Afflictions' as any other. Its words beside the stages that no reading plays are lines of
 // the poison card, for the GM (the poison card shows plan.notes): how its victim notices it and the DCs to identify it, its secret saves
 // (Unending Itch); Taster's Folly's Recall Knowledge DC, its two compounds' onset and their detection, and its Sickened that can't be ended
-// while it lasts. And its onset where the stat block's own field ran on into the next ("Onset 10 minutes Maximum Duration 6 minutes" on one
-// line): resolution.afflictionHandoff.onset. Pure.
+// while it lasts. (Its onset where the stat block's own field ran on into the next, "Onset 10 minutes Maximum Duration 6 minutes" on one line,
+// read here before: the ability module's readAffliction stops a field at the next label now, 2026-10-28 — the plans the same without it.)
+// Pure.
 
 import { plainText } from "./rows.js";
 
 const RANGE = /<p>\s*<strong>\s*Stages (\d+)\s*[–-]\s*(\d+)\s*<\/strong>([\s\S]*?)<\/p>/i;
-const ONSET = /\bOnset (\d+) (rounds?|minutes?|hours?|days?)\b/i;
-const UNITS = { round: "rounds", minute: "minutes", hour: "hours", day: "days" };
 const check = (skill) => String.raw`@Check\[${skill}\|dc:(\d+)[^\]]*\](?:\{[^}]*\})?`;
 
 // Each sentence a line of its card, in its own words.
@@ -37,7 +36,7 @@ export function expandStageRange(html) {
     return String(html).replace(RANGE, Array.from({ length: last - first + 1 }, (_, index) => `<p><strong>Stage ${first + index}</strong>${found[3]}</p>`).join("\n"));
 }
 
-// The plan (a poison's) and the item's html → the plan with its lines and onset, or the same plan. Only when every sentence before its stat
+// The plan (a poison's) and the item's html → the plan with its lines, or the same plan. Only when every sentence before its stat
 // block is a line or flavor.
 export function withPoisonLines(plan, html) {
     const handoff = plan?.resolution?.afflictionHandoff;
@@ -55,14 +54,12 @@ export function withPoisonLines(plan, html) {
         } else if (FLAVOR.some((pattern) => pattern.test(sentence))) read.add(sentence);
         else return plan;
     }
-    const onset = !handoff.onset ? ONSET.exec(text) : null;
-    if (!lines.length && !onset) return plan;
+    if (!lines.length) return plan;
     // (Its notes that said those sentences again, now its lines.)
     const notes = [...(plan.notes ?? []).filter((note) => ![...read].some((sentence) => sentence.includes(said(note).slice(0, 50)) || said(note).includes(sentence.slice(0, 50)))), ...lines];
     const left = (plan.unread ?? []).length || Object.values(plan.resolution.outcomes ?? {}).some((row) => (row?.manualInstructions ?? []).length);
     return {
         ...plan,
-        resolution: { ...plan.resolution, afflictionHandoff: { ...handoff, ...(onset ? { onset: { value: Number(onset[1]), unit: UNITS[onset[2].toLowerCase().replace(/s$/, "")] } } : {}) } },
         ...(notes.length ? { notes } : {}),
         ...(plan.partial && !left ? { partial: undefined, automation: { ...(plan.automation ?? {}), level: "automatic" } } : {})
     };

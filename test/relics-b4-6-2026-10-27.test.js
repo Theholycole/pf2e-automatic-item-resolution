@@ -146,9 +146,11 @@ test("Lesser Cube of Nex: Cube of Nex's ways card — zones with counteracts and
     const [gas, nonliving, living, magic, force] = cube.ways.map((way) => way.plan);
     assert.deepEqual([gas.zone.area, gas.zone.centre, gas.item.counteract.modifier, gas.item.counteract.rank], [{ type: "square", value: 10 }, "around", 20, 10]);
     assert.deepEqual([magic.item.counteract.modifier, magic.item.counteract.free.name], [20, "the magical effect crossing its walls"]);
-    assert.deepEqual([nonliving.zone.saves[0].when, nonliving.zone.saves[0].only, nonliving.zone.saves[0].plan.resolution.check.against.value], [["enter", "exit"], { traits: ["construct", "undead"] }, 30]);
+    // (Crossing saves one each way since the merge, 2026-10-29: in, pushed back out; out, pulled back in.)
+    assert.deepEqual([nonliving.zone.saves.map((save) => save.when), nonliving.zone.saves[0].only, nonliving.zone.saves[0].plan.resolution.check.against.value], [[["enter"], ["exit"]], { traits: ["construct", "undead"] }, 30]);
     assert.deepEqual(living.zone.saves[0].only, { notTraits: ["construct", "undead"] });
-    assert.deepEqual([routeOf(force), force.structure.stats, force.structure.invisible], ["walls-around", { hardness: 30, hp: 60 }, true]);
+    // (Its walls the environment module's transparent ones since the merge, 2026-10-29 — two groups' words for it, one kept.)
+    assert.deepEqual([routeOf(force), force.structure.stats, force.structure.transparent], ["walls-around", { hardness: 30, hp: 60 }, true]);
 });
 
 test("Planar Ribbon's reach: the DC 42 Reflex save card at a foe within 60 feet, places traded and its allies Off-Guard on a failure", async () => {

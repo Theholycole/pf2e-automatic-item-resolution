@@ -598,8 +598,9 @@ const READINGS = [
         })
     },
     {
-        // (Hurled into the future for 1d4 rounds or minutes, or into another timeline: note Effects on the creature for that time (rolled; the
-        // average until the ability module rolls a note's time) — its token hidden and turns skipped, as the note says.)
+        // (Hurled into the future for 1d4 rounds or minutes, or into another timeline: note Effects on the creature for that time (rolled by the
+        // ability module as it's applied, duration.valueRoll — 2026-10-28; the average its fallback) — its token hidden and turns skipped, as the
+        // note says.)
         name: "Timeflaying Blade: Flay Time",
         over: true,
         sentences: [

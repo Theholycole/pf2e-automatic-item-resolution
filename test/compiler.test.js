@@ -1235,7 +1235,8 @@ test("a new save at its turns (src/compiler/save-ends.js, the ability's duration
     assert.match(oil.resolution.outcomes.criticalFailure.manualInstructions[0], /the rest by hand\): While Slowed 2 or more by it, it also can't use reactions\.$/);
     const [round] = compileActivations(item("Dreaming Round"));
     const outcomes = round.plan.resolution.outcomes;
-    assert.deepEqual([saveEnds(outcomes.failure, "slowed")?.escalate, saveEnds(outcomes.criticalFailure, "slowed")?.alsoEnds, saveEnds(outcomes.success, "slowed")], [{ criticalFailure: 1, failure: 1, success: -1, criticalSuccess: -1 }, ["fatigued"], undefined]);
+    // (2026-10-28: and Unconscious at Slowed 3, its actions gone — the ability module's escalate.atValue —, no higher by it.)
+    assert.deepEqual([saveEnds(outcomes.failure, "slowed")?.escalate, saveEnds(outcomes.failure, "slowed")?.max, saveEnds(outcomes.criticalFailure, "slowed")?.alsoEnds, saveEnds(outcomes.success, "slowed")], [{ criticalFailure: 1, failure: 1, success: -1, criticalSuccess: -1, atValue: { 3: "unconscious" } }, 3, ["fatigued"], undefined]);
     // (Its sleep at 0 actions, and waking: since 2026-10-27 a note Effect on its failing rows, done — src/compiler/sleep-notes.js.)
     assert.deepEqual([round.plan.partial, round.plan.notes, /\bUnconscious\b/.test(outcomes.failure.noteEffects[0].text)], [undefined, undefined, true]);
     // (A row's own save at its turns, with its DC, whatever the plan's check: Bewildering Spellgun's success.)

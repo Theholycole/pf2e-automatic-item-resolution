@@ -137,8 +137,8 @@ export function withAsThough(plan, html, item, options = {}) {
 
 // (Magnetic Suit's attract or repel for 10 minutes, the ways card's two buttons: its user's Effect with PF2e's rules — toggles for what PF2e can't
 // tell, an attack with a metal weapon and a metal object climbed (as Magnetic Shield's), and the creature's own metal trait for Grapple and
-// Shove; attracting, the allies within its emanation an Effect of their own after it (plan.again, the presser's targets): their bonus against
-// metal weapons while near its user.)
+// Shove; attracting, the ability module's zone on its user beside it for those minutes (plan.item.alsoZone): its allies inside get their bonus
+// against metal weapons, gone as they leave (zone.inside who "allies", 2026-10-28 — an Effect card of their own after it before).)
 const toggle = (option, label) => ({ key: "RollOption", domain: "all", option, toggleable: true, label });
 const bonus = (selector, value, predicate, label) => ({ key: "FlatModifier", selector, type: "status", value, predicate, label });
 const SUIT = [
@@ -164,16 +164,24 @@ function magneticSuit(sentences, own, item) {
     const lasts = { mode: "fixed", value: minutes, unit: "minutes", expiry: "turn-start", anchor: "effect-start" };
     const metal = (action) => [`action:${action}`, "target:trait:metal"];
     const climbing = ["action:climb", object];
-    const attract = { label: "Attracting metal", text: `−${attractAC} status penalty to AC against attacks with metal weapons (its toggle on against one); +${attractBonus} status bonus to Athletics checks to Climb metal objects (its toggle on for one) and to Grapple metal creatures, −${attractPenalty} status penalty to Shove metal creatures. Allies within ${radius} feet get +${alliesAC} status bonus to AC against metal weapons (their own card follows).`, duration: lasts, rules: [toggle(weapon, "Attacked with a metal weapon"), toggle(object, "Climbing a metal object"), bonus("ac", -attractAC, [weapon], item.name), bonus("athletics", attractBonus, climbing, item.name), bonus("athletics", attractBonus, metal("grapple"), item.name), bonus("athletics", -attractPenalty, metal("shove"), item.name)] };
+    const attract = { label: "Attracting metal", text: `−${attractAC} status penalty to AC against attacks with metal weapons (its toggle on against one); +${attractBonus} status bonus to Athletics checks to Climb metal objects (its toggle on for one) and to Grapple metal creatures, −${attractPenalty} status penalty to Shove metal creatures. Allies within ${radius} feet get +${alliesAC} status bonus to AC against metal weapons (its area's Effect on them).`, duration: lasts, rules: [toggle(weapon, "Attacked with a metal weapon"), toggle(object, "Climbing a metal object"), bonus("ac", -attractAC, [weapon], item.name), bonus("athletics", attractBonus, climbing, item.name), bonus("athletics", attractBonus, metal("grapple"), item.name), bonus("athletics", -attractPenalty, metal("shove"), item.name)] };
     const repel = { label: "Repelling metal", text: `+${repelAC} status bonus to AC against attacks with metal weapons (its toggle on against one); +${repelBonus} status bonus to Athletics checks to Shove metal creatures, −${repelPenalty} status penalty to Climb metal objects (its toggle on for one) and to Grapple metal creatures.`, duration: lasts, rules: [toggle(weapon, "Attacked with a metal weapon"), toggle(object, "Climbing a metal object"), bonus("ac", repelAC, [weapon], item.name), bonus("athletics", repelBonus, metal("shove"), item.name), bonus("athletics", -repelPenalty, climbing, item.name), bonus("athletics", -repelPenalty, metal("grapple"), item.name)] };
     const near = `${slug}-drawn`;
-    const allies = { label: "Metal drawn away", text: `+${alliesAC} status bonus to AC against attacks with metal weapons (its toggle on against one), while within ${radius} feet of the suit's wearer, who draws them.`, duration: lasts, rules: [toggle(near, "Attacked with a metal weapon"), bonus("ac", alliesAC, [near], item.name)] };
-    const none = { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] };
-    const alliesPlan = { ...own, automation: { level: "automatic" }, targeting: { target: "your allies in the area", range: null, area: { type: "emanation", value: radius } }, trigger: { event: "use" }, resolution: { kind: "check", check: { roll: "automatic", statistic: "automatic" }, outcomes: { criticalSuccess: none, success: { ...none, noteEffects: [allies] }, failure: none, criticalFailure: none } }, allyArea: true };
+    const area = { type: "emanation", value: radius };
+    const zone = {
+        ...own,
+        automation: { level: "automatic" },
+        trigger: { event: "use" },
+        builtin: "zone",
+        actions: null,
+        targeting: { target: null, range: null, area },
+        zone: { area, centre: "self", range: null, lasts, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [], damage: [], effect: null, modifiers: [], inside: [{ who: "allies", label: "Metal drawn away", text: `+${alliesAC} status bonus to AC against attacks with metal weapons (its toggle on against one), drawn to the suit's wearer.`, rules: [toggle(near, "Attacked with a metal weapon"), bonus("ac", alliesAC, [near], item.name)] }], notes: [`Its allies within ${radius} feet: +${alliesAC} status bonus to AC against metal weapons while they're inside.`] }
+    };
     // (The ways card shows no notes of its own: each way's card says it.)
     const spent = `After its ${minutes} minutes the magnets burn out and the suit is useless.`;
+    const attracting = ownCard(own, { noteEffects: [attract] }, [spent]);
     const ways = [
-        { name: "Attract", html: "", plan: { ...ownCard(own, { noteEffects: [attract] }, [`Its allies within ${radius} feet: target them on the card that follows.`, spent]), again: { plan: alliesPlan, later: false } } },
+        { name: "Attract", html: "", plan: { ...attracting, item: { ...(attracting.item ?? {}), alsoZone: zone } } },
         { name: "Repel", html: "", plan: ownCard(own, { noteEffects: [repel] }, [spent]) }
     ];
     return { ...own, builtin: "ways", automation: { level: "automatic" }, ways, once: true };

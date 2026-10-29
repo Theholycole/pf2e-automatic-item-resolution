@@ -131,7 +131,8 @@ export function strikeLines(plan) {
         strike.save && strike.criticalSaveBonus ? `After a critical hit, ${strike.criticalSaveBonus.value} ${strike.criticalSaveBonus.type} to that save` : null,
         strike.save && (strike.criticalWorse ?? []).length ? `After a critical hit, ${strike.criticalWorse.join(" and ")} on the save's success too (only its critical success escapes)` : null,
         ...(strike.around ?? []).map((entry) => `On a hit: ${saveText(entry.plan)} for the creatures within ${entry.radius} feet of the target${entry.includeTarget ? " and the target" : ""}`),
-        strike.zone ? `On a hit: a ${strike.zone.area.value}-foot aura on the target for ${strike.zone.lasts?.value ?? "?"} ${strike.zone.lasts?.unit ?? ""}, the same save for the others in it` : null,
+        // (A zone made where the creature hit stands, Godsbreath Bow's vortex: its own line, strike.lines.)
+        strike.zone && strike.zoneAt !== "target" ? `On a hit: a ${strike.zone.area.value}-foot aura on the target for ${strike.zone.lasts?.value ?? "?"} ${strike.zone.lasts?.unit ?? ""}, the same save for the others in it` : null,
         strike.cast ? `On a hit: ${strike.cast.name}${strike.cast.rank ? ` (rank ${strike.cast.rank}` : ""}${strike.cast.dc ? `${strike.cast.rank ? ", " : " ("}DC ${strike.cast.dc}` : ""}${strike.cast.rank || strike.cast.dc ? ")" : ""} cast at the target${strike.cast.saveFirst ? ` if it fails a DC ${strike.cast.saveFirst.dc} ${strike.cast.saveFirst.statistic} save` : ""}${strike.cast.attackFromHit ? ", the hit for its attack roll" : ""}` : null,
         // (A maneuver after the hit, Iron Cube's Trip: its own card.)
         strike.follow ? `On a hit: its ${strike.follow.action?.name ?? strike.follow.action?.slug ?? "maneuver"} card at the creature hit${strike.follow.action?.damage ? " (with its damage on a success)" : ""}` : null,
@@ -167,7 +168,7 @@ export function strikeHint(plan, name, { uses = null } = {}) {
     // (2026-10-27: every Strike for a while, strike.every — Nightmare Cudgel's minute, Whip of Compliance's turn: none spends it.)
     if (strike.every) return `${name}'s ${strikeWord(plan)}s ${EVERY_WORDS[strike.until] ?? "this turn"} each carry it on a hit; none spends it.`;
     const count = uses ?? strike.uses;
-    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${untilWords(strike)}, at ${strike.volley.oneRoll.upTo ? "up to " : "the "}${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
+    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${untilWords(strike)}, at ${Number.isFinite(strike.volley.oneRoll.count) ? `${strike.volley.oneRoll.upTo ? "up to " : "the "}${strike.volley.oneRoll.count} creatures` : "each creature"} targeted when it's readied: its one attack roll is each one's${strike.volley.oneRoll.naturalFirst ? " (a natural 20 only the first one's)" : ""}.`;
     if (strike.volley?.each && !count) return `${name}'s next ${strikeWord(plan)}s this turn, one at each ${strike.volley.each} targeted when it's readied, carry it; a miss spends that one.`;
     const which = count > 1 ? `next ${NUMBER_WORDS[count] ?? count} ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
     if (strike.volley && count > 1) return `${name}'s ${which} ${untilWords(strike)} carry it${strike.volley.each ? `, one at each ${strike.volley.each} targeted` : strike.volley.different ? ", each at a different creature" : ""}; a miss spends that one.`;

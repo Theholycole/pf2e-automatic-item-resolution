@@ -503,7 +503,7 @@ const READINGS = [
     },
     {
         // (Its net thrown, read before: its riders now until the creature Escapes at DC 44 (the ability module's escape), a demon's Escapes rolled
-        // twice keeping the lower (PF2e's RollTwice on a note Effect, plan.ifTarget), and on a hit the counteract card at the creature for its
+        // twice keeping the lower (PF2e's RollTwice on a note Effect, plan.ifTarget, ended by that Escape too — 2026-10-28), and on a hit the counteract card at the creature for its
         // teleportation and planar travel (rank 9, +38; rolled twice, the higher kept, against a demon — plan.heldCounteract, scripts/hit-counteract.js).)
         name: "Halcyon Heart",
         sentences: [
@@ -520,7 +520,8 @@ const READINGS = [
             if (!plan?.ownCheck || !outcomes?.criticalSuccess?.effects?.some((effect) => effect.slug === "immobilized")) return null;
             const escape = { dc: Number(numbers[1]) };
             const held = (row) => ({ ...row, effects: (row.effects ?? []).map((effect) => (effect.kind === "condition" ? { ...effect, duration: effect.duration ? { ...effect.duration, escape } : { mode: "until-escape", escape } } : effect)), modifiers: (row.modifiers ?? []).map((modifier) => ({ ...modifier, escape })) });
-            const misfortune = { label: "Netted demon", text: "It rolls twice and takes the lower result on every attempt to Escape the halcyon heart's net (a misfortune effect). Remove this once it escapes.", duration: null, rules: [{ key: "RollTwice", selector: ["skill-check", "attack-roll"], keep: "lower", predicate: ["action:escape"] }] };
+            // (Ended by its Escape too, the ability module's note Effect escape { dc } — 2026-10-28, its "remove this" gone.)
+            const misfortune = { label: "Netted demon", text: "It rolls twice and takes the lower result on every attempt to Escape the halcyon heart's net (a misfortune effect).", duration: null, escape, rules: [{ key: "RollTwice", selector: ["skill-check", "attack-roll"], keep: "lower", predicate: ["action:escape"] }] };
             return {
                 keep: true,
                 notes: [

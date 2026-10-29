@@ -9,6 +9,7 @@
 import { effectWords, sentencesOf } from "./lasting.js";
 import { LEVEL_DCS } from "./counteract.js";
 import { plainText } from "./rows.js";
+import { paradigmCubePlan } from "./paradigm-cube.js";
 
 const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
 const UNITS = { round: "rounds", rounds: "rounds", minute: "minutes", minutes: "minutes", hour: "hours", hours: "hours", day: "days", days: "days" };
@@ -477,6 +478,90 @@ const READINGS = [
             saves: [{ when: ["end"], plan: null, note: `If it's sickened or has an affliction, it may attempt a new save against one of them now (its own roll, against that condition's or affliction's DC); after a save against an affliction, the perfume can't help it against that one for ${immune[1]} ${immune[2]}.` }],
             notes: ["No time of its own: it lasts while the incense burns (end the zone then)."]
         }))
+    },
+    {
+        // Globe of Shrouds' Light Incense (2026-10-28, docs/needs.md "remains concealed"): "An ally in the aura is Concealed and gains a +2 status
+        // bonus to Stealth checks. Any enemy in the aura that is or becomes Invisible appears as a translucent shape to you and your allies—it's
+        // no longer Hidden, but it remains concealed." Its haze around its user (the ability module's zone, its allies' and foes' inside rules,
+        // who "allies" / "foes", 2026-10-28): an ally inside Concealed (PF2e's condition granted) with +2 status to Stealth; a foe inside that's
+        // invisible Concealed too (its GrantItem re-tested as it turns invisible, as Candle of Revealing's), its Effect's words saying it's only
+        // concealed, not hidden, to the user's side. The wisps kept until the start of its next turn once it leaves (lingers "turn-start"). No
+        // time given: while the incense burns, a card line.
+        names: ["Globe of Shrouds: Light Incense"],
+        sentences: [
+            /^As you light the incense, barely visible smoke issues from the censer in a hazy (\d+)-foot emanation\.$/,
+            /^Creatures that are in the haze or later enter it are wreathed in wisps of smoke; these wisps last while the creature is in the smoke's aura and until the start of its next turn if it leaves the haze\.$/,
+            /^An ally in the aura is Concealed and gains a \+(\d) (status) bonus to Stealth checks\.$/,
+            /^Any enemy in the aura that is or becomes Invisible appears as a translucent shape to you and your allies\s*[—–-]\s*it's no longer Hidden, but it remains concealed\.$/
+        ],
+        card: ([haze, , ally]) => {
+            const concealed = (predicate) => ({ key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.DmAIPqOBomZ7H95W", ...(predicate ? { predicate, reevaluateOnUpdate: true } : {}), allowDuplicate: false, onDeleteActions: { granter: "cascade", grantee: "cascade" } });
+            return zoneCard(zoneOf({
+                area: { type: "emanation", value: Number(haze[1]) },
+                inside: [
+                    { who: "allies", label: "wisps of smoke", lingers: "turn-start", text: `Wreathed in the censer's smoke: Concealed, and +${ally[1]} ${ally[2]} to Stealth checks. Kept until the start of its next turn once it leaves the haze.`, rules: [concealed(null), bonus("stealth", ally[2], Number(ally[1]))] },
+                    { who: "foes", label: "wisps of smoke", lingers: "turn-start", text: "Wreathed in the censer's smoke: while invisible, it shows as a translucent shape to the censer's user and their allies — not hidden from them, only concealed. Kept until the start of its next turn once it leaves the haze.", rules: [concealed(["self:condition:invisible"])] }
+                ],
+                notes: ["No time of its own: it lasts while the incense burns (end the zone then)."]
+            }));
+        }
+    },
+    {
+        // Paradigm Cube's Change Paradigm (2026-10-28): its six colours on the ways card, each a zone of its allies' bonuses (src/compiler/
+        // paradigm-cube.js) — over the note-only plan read before.
+        names: ["Paradigm Cube: Change Paradigm"],
+        read: (plan, { html, base, info }) => (!plan || plan.noteOnly ? paradigmCubePlan(html, { base, info }) : null)
+    },
+    {
+        // Strand of the Seven Births' Hero-God's Whisper (2026-10-28): its allies in the image's bright light +2 status to saves against
+        // auditory effects; its enemies entering or ending a turn in that light a DC 23 Will save, Fascinated on a failure with a −2 status
+        // penalty to auditory Perception checks while they stay in it. The image's bright light a 20-foot zone where it's made, for the hour: its allies' bonus inside (who "allies"), the save
+        // card of the plan read before at a foe entering or ending its turn there (who "foes", its 24-hour immunity kept), a failure's note
+        // Effect — Fascinated (PF2e's condition granted) and the penalty, its toggle on for a check by hearing — while it stays inside
+        // (whileInside: the ability module's, 2026-10-28). Its light, the map's; its charm used up, a card line.
+        names: ["Strand of the Seven Births: Hero-God's Whisper"],
+        over: (plan) => plan?.resolution?.kind === "save" && !!plan.trigger?.immunity,
+        sentences: [
+            /^You detach a charm, which creates a glowing ghostly image of the hero-god depicted on it\.$/,
+            /^This image sheds bright light in a (\d+)-foot radius \(and dim light for the next (\d+) feet\) for (\d+) (hours?|minutes?)\.$/,
+            /^Allies within the image's bright light hear the constant whispers of Ekriathe or her successor's voice, and they gain a \+(\d) (status) bonus to saving throws against auditory effects\.$/,
+            /^Enemies entering or ending their (?:term|turn) in the image's radius of bright light must attempt a @Check\[(will)\|dc:(\d+)\] save\.$/,
+            /^On a failure, the target is Fascinated and takes a [-–](\d) (status) penalty to auditory-based Perception checks while they remain in the radius\.$/,
+            /^Creatures that succeed against this effect are temporarily immune for the next (\d+) hours\.$/
+        ],
+        card: ([, light, ally, save, failed], plan) => {
+            const option = "strand-seven-births:hearing";
+            const held = {
+                label: "Hero-God's Whisper",
+                text: `Fascinated by the hero-god's image, and a –${failed[1]} ${failed[2]} penalty to Perception checks by hearing (its toggle on for those), while it stays in the image's bright light.`,
+                duration: null,
+                whileInside: true,
+                rules: [
+                    { key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.AdPVz7rbaVSRxHFg", allowDuplicate: false, onDeleteActions: { granter: "cascade", grantee: "cascade" } },
+                    toggle(option, "A Perception check by hearing"),
+                    bonus("perception", failed[2], -Number(failed[1]), [option])
+                ]
+            };
+            const { notes: _notes, partial: _partial, item: _item, ...own } = plan;
+            const row = { ...none(), noteEffects: [held] };
+            const whisper = {
+                ...own,
+                automation: { level: "automatic" },
+                trigger: { event: "zone", immunity: plan.trigger.immunity },
+                targeting: { target: "a foe in the image's bright light", range: null, area: null },
+                resolution: { ...own.resolution, check: { roll: "save", statistic: save[1], basic: false, against: { dc: "fixed", value: Number(save[2]) } }, outcomes: { criticalSuccess: none(), success: none(), failure: row, criticalFailure: row } }
+            };
+            return zoneCard(zoneOf({
+                area: { type: "burst", value: Number(light[1]) },
+                lasts: timeOf(light[3], light[4]),
+                inside: [{ who: "allies", rules: [bonus("saving-throw", ally[2], Number(ally[1]), ["item:trait:auditory"])] }],
+                saves: [{ when: ["enter", "end"], who: "foes", plan: whisper }],
+                notes: [
+                    `A charm detached for its image where its user stands: bright light ${light[1]} feet around it, dim light ${light[2]} feet further (the map's lighting). With every charm used, the strand is inert.`,
+                    `Its allies in the bright light hear the hero-god's whispers: +${ally[1]} ${ally[2]} to saves against auditory effects.`
+                ]
+            }));
+        }
     },
     {
         // Candle of Revealing: for its minute, around its user, an invisible creature is only concealed — PF2e's Concealed granted to an

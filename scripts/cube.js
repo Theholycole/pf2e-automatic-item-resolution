@@ -21,7 +21,7 @@ export async function placeWallsAround({ plan, used, actor, token }) {
     if (!own) results.push(`${user.name}'s token isn't on a scene: place the walls by hand.`);
     else if (!place) results.push("The environment module isn't active: draw the walls by hand.");
     else {
-        const placed = await place(own.parent, { name: `${used.data.name}: ${structure.name}`, token: own, shape: structure.shape, feet: structure.feet, stats: structure.stats, pushOut: structure.pushOut ?? false, ...(structure.invisible ? { invisible: true } : {}), source: { actorUuid: actor?.uuid ?? null, itemUuid: used.data.uuid ?? null, name: used.data.name } });
+        const placed = await place(own.parent, { name: `${used.data.name}: ${structure.name}`, token: own, shape: structure.shape, feet: structure.feet, stats: structure.stats, pushOut: structure.pushOut ?? false, ...(structure.invisible || structure.transparent ? { transparent: true } : {}), source: { actorUuid: actor?.uuid ?? null, itemUuid: used.data.uuid ?? null, name: used.data.name } });
         // (2026-10-28: walls for a time, Cube of Force's minute — the item keeps them as the structure card's, scripts/structure.js removing
         // them once it's up.)
         const item = structure.lasts && placed?.id && used.data.uuid ? await fromUuid(used.data.uuid).catch(() => null) : null;

@@ -44,8 +44,9 @@ export async function applyStrikeCard(message, choices = {}) {
     const volley = state.plan.strike?.volley;
     const targets = volley?.each ? [...new Set(choices.targets ?? [])] : null;
     if (targets && !targets.length) throw new Error(`Target each ${volley.each} ${volley.area ? `in the ${volley.area}` : "in the area"} first, then ready the Strikes.`);
-    // (One roll at several, Hippopotamus Klar's: that many creatures targeted, one Strike.)
-    if (volley?.oneRoll && (volley.oneRoll.upTo ? targets.length > volley.oneRoll.count : targets.length !== volley.oneRoll.count)) throw new Error(`Target ${volley.oneRoll.upTo ? "up to " : "the "}${volley.oneRoll.count} creatures${volley.oneRoll.adjacent ? " adjacent to each other" : ""}${volley.oneRoll.within ? ` within ${volley.oneRoll.within} feet of the first target` : ""} first, then ready the Strike.`);
+    // (One roll at several, Hippopotamus Klar's: that many creatures targeted, one Strike. Its count null, as many as its area holds —
+    // Penetrating Ammunition's line, 2026-10-28.)
+    if (volley?.oneRoll && Number.isFinite(volley.oneRoll.count) && (volley.oneRoll.upTo ? targets.length > volley.oneRoll.count : targets.length !== volley.oneRoll.count)) throw new Error(`Target ${volley.oneRoll.upTo ? "up to " : "the "}${volley.oneRoll.count} creatures${volley.oneRoll.adjacent ? " adjacent to each other" : ""}${volley.oneRoll.within ? ` within ${volley.oneRoll.within} feet of the first target` : ""} first, then ready the Strike.`);
     // (One readied Strike at a time: a new one replaces the old.)
     const old = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.[MODULE_KEY]);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old.map((effect) => effect.id));
@@ -154,9 +155,11 @@ export async function strikeWithRider(message) {
         const at = context.target?.token ?? message.flags?.pf2e?.target?.token ?? null;
         const roll = message.rolls?.[0];
         const natural = roll?.dice?.[0]?.total ?? null;
+        // (Its natural 20 only the first target's, Penetrating Ammunition's line — the creature rolled at: the others without it, 2026-10-28.)
+        const theirs = volley.oneRoll.naturalFirst && Number(natural) === 20 ? null : natural;
         const others = await Promise.all((rider.targets ?? []).filter((uuid) => uuid !== at).map((uuid) => fromUuid(uuid).catch(() => null)));
         const said = others.filter(Boolean).map((token) => {
-            const degree = degreeAgainst({ total: roll?.total, natural, dc: token.actor?.attributes?.ac?.value ?? token.actor?.system?.attributes?.ac?.value });
+            const degree = degreeAgainst({ total: roll?.total, natural: theirs, dc: token.actor?.attributes?.ac?.value ?? token.actor?.system?.attributes?.ac?.value });
             return `${token.name}: ${degree ? degreeWords(degree) : "compare the roll to its AC by hand"}`;
         });
         if (said.length) await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(rider.item.name)}</strong>: the same attack roll (${escape(roll?.total ?? "?")}) — ${escape(said.join("; "))}. One damage roll for all: apply it to each one hit (double to one critically hit).</p>` });
@@ -240,10 +243,10 @@ export async function strikeWithRider(message) {
     // (Temporary Hit Points from the damage the hit deals, Reaper's Toll's Reaper's Claim — src/compiler/strike-damage.js: the creature hit marked
     // before its damage roll, scripts/drain.js giving its user that share of what the damage takes off it, after its resistances.)
     const drained = rider.plan.strike?.drain && what === "hit" ? await drainOnHit({ drain: rider.plan.strike.drain, message, context, actor, rider }) : null;
-    // (Nothing for the target on this degree: the hit, and what its damage roll adds.)
+    // (Nothing for the target on this degree: the hit, and what its damage roll adds. A zone on the hit is something — 2026-10-28, Godsbreath Bow's.)
     const row = rider.plan.resolution?.outcomes?.[context.outcome];
     // (A note for the creature hit counts: Magekiller Bullet's curse.)
-    if (!rider.plan.strike?.save && !(rider.plan.ifTarget ?? []).length && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !rider.plan.strike?.recover?.[context.outcome] && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
+    if (!rider.plan.strike?.save && !rider.plan.strike?.zone && !(rider.plan.ifTarget ?? []).length && !rider.plan.strike?.cast && !rider.plan.strike?.counteract && !rider.plan.strike?.recover?.[context.outcome] && !(rider.plan.strike?.around ?? []).length && !(row?.effects ?? []).length && !(row?.modifiers ?? []).length && !row?.forcedMovement && !(row?.noteEffects ?? []).length) {
         const adds = (rider.plan.strike?.damage ?? []).map((entry) => `+${dieText(entry)}`).join(", ");
         await ChatMessage.create({ speaker, content: `<p><strong>${escape(rider.item.name)}</strong>: the Strike hit${adds ? `; its damage roll adds ${escape(adds)}` : ""}${follow ? `; its ${escape(follow.action?.name ?? "maneuver")} card follows` : ""}${drained ? `; ${escape(drained)}` : ""}.</p>` });
         return;
@@ -320,14 +323,21 @@ export async function strikeWithRider(message) {
             lines.push(`${saveText(entry.plan)} for ${tokens.length} creature${tokens.length === 1 ? "" : "s"} within ${entry.radius} feet of ${target.name}`);
         } else lines.push(`${saveText(entry.plan)} for the creatures within ${entry.radius} feet of ${target.name} (roll it by hand)`);
     }
-    // (An aura on the creature hit, src/compiler/hit-auras.js — Ghoul Stiletto's stench: the ability module's zone on its token.)
+    // (An aura on the creature hit, src/compiler/hit-auras.js — Ghoul Stiletto's stench: the ability module's zone on its token. Or, zoneAt
+    // "target" (2026-10-28, Godsbreath Bow's vortex): its user's zone where the creature hit stands, not attached to it — made by the user.)
     const zone = rider.plan.strike?.zone;
     if (zone) {
         const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
-        if (startZone) {
+        const at = rider.plan.strike.zoneAt === "target";
+        const userToken = at ? message.token ?? (rider.user.tokenUuid ? await fromUuid(rider.user.tokenUuid).catch(() => null) : null) : null;
+        const struck = targetToken.document ?? targetToken;
+        if (startZone && at) {
+            await startZone({ item: { name: rider.item.name, uuid: rider.item.uuid ?? null, actor }, plan: { builtin: "zone", source: rider.plan.source, zone }, sourceToken: userToken, at: { token: { id: struck.id, x: struck.x, y: struck.y, width: struck.width, height: struck.height, shape: struck.shape }, scene: struck.parent } });
+            lines.push(`its ${zone.area.value}-foot area around ${target.name}`);
+        } else if (startZone) {
             await startZone({ item: { name: rider.item.name, uuid: rider.item.uuid ?? null, actor }, plan: { builtin: "zone", source: rider.plan.source, zone }, sourceToken: targetToken });
             lines.push(`${target.name}: its ${zone.area.value}-foot aura is on its token`);
-        } else lines.push(`${target.name}: mark its ${zone.area.value}-foot aura by hand`);
+        } else lines.push(`${target.name}: mark its ${zone.area.value}-foot ${at ? "area" : "aura"} by hand`);
     }
     // (A spell cast at the creature hit: the spell module's, its own save at the item's DC — Stone Bullet's Petrify.)
     const cast = rider.plan.strike?.cast;

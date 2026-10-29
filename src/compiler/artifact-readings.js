@@ -43,7 +43,8 @@ const ESSENCES = [["mental", ["arcana", "occultism"]], ["material", ["arcana", "
 const READINGS = [
     {
         // (Its user's secret skill check, DC 30, the skill one of a tradition using the essence picked: the card's pick of the eight. A success
-        // sets the prism for the quality chosen, a failure for another — the GM's, the check being secret.)
+        // sets the prism for the quality chosen, a failure for another — the GM's, the check being secret (check.secret: the ability module's
+        // blind roll, its result lines the GM's alone; a skill rolled as the save, the core's — both 2026-10-28).)
         name: "Essence Prism",
         index: 0,
         sentences: [
@@ -56,7 +57,7 @@ const READINGS = [
             const choices = ESSENCES.flatMap(([essence, skills]) => skills.map((statistic) => ({ label: `${essence.charAt(0).toUpperCase()}${essence.slice(1)} essence: ${SKILL_LABEL[statistic]}`, statistic, essence })));
             return {
                 ...ownCheck({ choices, dc: Number(check[1]), secret: true, rows: ({ essence }) => ({ criticalSuccess: set(essence, true), success: set(essence, true), failure: set(essence, false), criticalFailure: set(essence, false) }) }),
-                notes: ["Pick the essence of the quality and the skill of a tradition that uses it (arcane: material, mental; divine: spiritual, vital; occult: mental, spiritual; primal: material, vital). The check is secret: the GM rolls it and keeps the result.", "Its user names the quality to the GM."]
+                notes: ["Pick the essence of the quality and the skill of a tradition that uses it (arcane: material, mental; divine: spiritual, vital; occult: mental, spiritual; primal: material, vital). The check is secret (PF2e's blind roll): its result is for the GM alone.", "Its user names the quality to the GM."]
             };
         }
     },

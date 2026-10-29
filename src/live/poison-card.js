@@ -43,6 +43,8 @@ export function saveText(plan) {
     // (A check with the item's own modifier: "Athletics +13 against the target's Fortitude DC", "attack +14 against AC".)
     if (check.roll === "skill") {
         const words = (name) => (name === "ac" ? "AC" : `${String(name ?? "").charAt(0).toUpperCase()}${String(name ?? "").slice(1)}`);
+        // (Its user's skill at a fixed DC, its rows on each creature targeted — Mindsponge's surgery, 2026-10-28: "DC 28 Medicine check".)
+        if (check.against?.dc === "fixed") return `DC ${check.against.value ?? "?"} ${words([].concat(check.statistic)[0])} check${check.secret ? " (secret)" : ""}`;
         return `${words([].concat(check.statistic)[0])}${Number.isFinite(check.modifier) ? ` +${check.modifier}` : ""} against ${check.against?.statistic === "ac" ? "AC" : `${words(check.against?.statistic)} DC`}`;
     }
     const statistic = String(check.statistic ?? "fortitude");

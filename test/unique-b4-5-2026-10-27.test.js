@@ -81,8 +81,8 @@ test("Hunter's Dawn: the javelin's three ways (its user's thrown attack with the
     assert.deepEqual([routeOf(javelin), javelin.ways.map((way) => way.plan.thenSave.maxTargets), javelin.ways.map((way) => way.plan.activation.time)], ["ways", [1, 2, 3], ["1", "2", "3"]]);
     const [one] = javelin.ways;
     assert.deepEqual([one.plan.ownCheck, one.plan.resolution.sharedDamage.components[0].formula, one.plan.thenSave.resolution.sharedDamage.components[0].formula, one.plan.targeting.range], [{ kind: "attack", modifier: null, choose: ["thrown"], within: 60, itemBonus: 3 }, "3d6+4", "2d6+4", "60 feet"]);
-    // (Its ghost touch alone left: the ability module's damage roll options, requested.)
-    assert.deepEqual([javelin.partial, one.plan.damageOptions], [true, ["item:rune:property:ghost-touch"]]);
+    // (2026-10-28: its ghost touch the ability module's damage roll options now, on the javelin and the gazelle — done.)
+    assert.deepEqual([done(javelin), one.plan.damageOptions, one.plan.thenSave.damageOptions], [true, ["item:rune:property:ghost-touch"], ["item:rune:property:ghost-touch"]]);
     const attack = withAttackChoice(one.plan, { attackChoices: [{ kind: "thrown", label: "Thrown", modifier: 20 }], attackChoice: 0, attackPenalty: 0 });
     assert.equal(attack.resolution.check.modifier, 23);
     const [marking, locate] = mark.ways;
@@ -99,9 +99,9 @@ test("Spiral Athame: its Circle of Protection against undead a 10-foot ward arou
     const rules = ward.zone.inside[0].rules;
     assert.deepEqual(rules.filter((rule) => rule.key === "FlatModifier").map((rule) => [rule.value, rule.predicate]), [[1, ["origin:trait:undead"]], [3, ["origin:trait:undead", "origin:trait:summoned"]], [3, ["origin:trait:undead", "spiral-athame-ward:controlling"]]]);
     const [save] = ward.zone.saves;
-    assert.deepEqual([save.when, save.only, save.plan.resolution.check.statistic, save.plan.resolution.check.against.value], [["enter"], { traits: ["undead"], all: ["undead", "summoned"] }, "will", 44]);
-    // (Its save for summoned undead alone waits for the ability module's all-traits filter: partial for that.)
-    assert.equal(ward.partial, true);
+    // (2026-10-28: only.all, the ability module's — summoned undead alone; done.)
+    assert.deepEqual([save.when, save.only, save.plan.resolution.check.statistic, save.plan.resolution.check.against.value], [["enter"], { all: ["undead", "summoned"] }, "will", 44]);
+    assert.equal(done(ward), true);
 });
 
 test("Red Hand's Satchel: one more batch of infused reagents past its daily count, lost unused at the end of its user's next turn", () => {
@@ -155,7 +155,8 @@ test("The Carnival, The Empty Throne, The Owl: a whispered vision with its secre
 
 test("The Uprising: a 20-foot burst of grabbing figures for a minute, its user's unarmed Strike against each creature's Fortitude DC as it rises and at turns' ends", () => {
     const [mob] = plans("The Uprising");
-    assert.deepEqual([routeOf(mob), mob.zone.area, mob.zone.range, mob.zone.lasts.value, mob.zone.lasts.unit, mob.partial], ["zone", { type: "burst", value: 20 }, 120, 1, "minutes", true]);
+    // (Done since the ability module's only.conditions and only.lacks.conditions — 2026-10-28.)
+    assert.deepEqual([routeOf(mob), mob.zone.area, mob.zone.range, mob.zone.lasts.value, mob.zone.lasts.unit, done(mob)], ["zone", { type: "burst", value: 20 }, 120, 1, "minutes", true]);
     const [rises, grabs] = mob.zone.saves;
     assert.deepEqual([rises.when, rises.plan.resolution.check.against.statistic, rises.plan.resolution.check.attackFrom, rises.plan.resolution.sharedDamage.components[0].formula, rises.plan.resolution.outcomes.success.effects[0].duration.escape], [["initial"], "fortitude", "unarmed", "3d6", { ownerDC: "class" }]);
     assert.deepEqual([grabs.when, grabs.only, grabs.plan.resolution.outcomes.success.damage.mode, mob.zone.damage[0]], [["end"], { lacks: { conditions: ["grabbed"] } }, "none", { when: "end", only: { conditions: ["grabbed"] }, formulas: ["1d6[bludgeoning]"] }]);
@@ -223,7 +224,8 @@ test("Mindsponge: the surgery its user's Medicine check at DC 28 (a failure the 
     const absorb = sponge.find((entry) => entry.activation.name === "Absorb Memories").plan;
     const wipe = sponge.find((entry) => entry.activation.name === "Wipe Memories").plan;
     const [prepare, harvest, squeeze] = absorb.ways.map((way) => way.plan);
-    assert.deepEqual([routeOf(absorb), prepare.resolution.check.statistic, prepare.resolution.check.against, prepare.resolution.outcomes.failure.terminal, absorb.partial], ["ways", "medicine", { dc: "fixed", value: 28, statistic: "fortitude" }, { kind: "death" }, true]);
+    // (2026-10-28: the ability module's skill check at a fixed DC, its rows on the creature — no statistic of the target's; done.)
+    assert.deepEqual([routeOf(absorb), routeOf(prepare), prepare.resolution.check.statistic, prepare.resolution.check.against, prepare.resolution.outcomes.failure.terminal, done(absorb)], ["ways", "save", "medicine", { dc: "fixed", value: 28 }, { kind: "death" }, true]);
     assert.deepEqual([routeOf(harvest), harvest.item.store, harvest.resolution.outcomes.success.noteEffects[0].rules[0].key, squeeze.item.store, wipe.item.storeFull], ["item", { max: 4, add: 1 }, "AdjustDegreeOfSuccess", { max: 4, release: true }, 4]);
     assert.deepEqual([storeAfter(3, harvest.item.store, "Mindsponge"), storeAfter(4, harvest.item.store, "Mindsponge").full, storeAfter(4, squeeze.item.store, "Mindsponge").count], [{ count: 4, line: "Mindsponge now holds 4 of 4" }, "Mindsponge is full (4 of 4): squeeze it out first", 0]);
 });

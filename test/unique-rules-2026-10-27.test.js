@@ -170,11 +170,11 @@ test("Soulspark Candle: lit, a 40-foot zone around its user with PF2e's deity ru
     assert.deepEqual([blessed.predicate, blessed.value, cursed.predicate, cursed.value], [["deity:primary:pharasma"], 3, [{ or: ["deity:primary:urgathoa", "self:mode:undead"] }], -3]);
     assert.deepEqual(light.ownLight, { bright: 20, dim: 40, duration: null, note: "until it's put out" });
     assert.ok(light.zone.notes.some((note) => /turns black/.test(note)));
-    assert.deepEqual([out.builtin, out.gate, out.item.putsOut.lingers.option, routeOf(out)], [undefined, { lit: true }, "limned-in-candlelight", "item"]);
-    assert.deepEqual([limn.atTarget, limn.onlyAgainst, limn.gate, routeOf(limn)], [true, { traits: ["undead"] }, { lit: true }, "save"]);
-    const [note] = success(limn).noteEffects;
-    assert.deepEqual([note.duration, note.rules[0].option], [null, "limned-in-candlelight"]);
-    assert.match(note.text, /Concealed rather than Undetected/);
+    // (2026-10-28: put out, its zones ended by the ability module's endZones — what lingers of them keeps its own time, no mark of its own;
+    // its undead limned as a zone's inside Effect kept a minute after, test/wire-2026-10-28.test.js.)
+    assert.deepEqual([out.builtin, out.gate, out.item.putsOut, routeOf(out)], [undefined, { lit: true }, {}, "item"]);
+    assert.deepEqual([limn.builtin, limn.gate, routeOf(limn), limn.zone.inside[0].lingers], ["zone", { lit: true }, "zone", { value: 1, unit: "minutes" }]);
+    assert.match(limn.zone.inside[0].text, /Concealed rather than Undetected/);
 });
 
 test("The Marriage: a bond with the willing creature targeted, both sides' Effects; its condition countered by the counteract card, the user's on a failure", async () => {

@@ -68,10 +68,11 @@ test("Cube of Nex: its face picked on the ways card — zones round its user, th
     // (Its walls' route renamed at the merge, beside the Guiding Chisel's structure card — 2026-10-27.)
     assert.deepEqual([routeOf(gas), routeOf(force)], ["zone", "walls-around"]);
     assert.deepEqual([gas.zone.area, gas.zone.centre, gas.zone.lasts, gas.item.counteract.modifier, gas.item.counteract.rank, magic.item.counteract.free.name], [{ type: "square", value: 10 }, "around", null, 20, 13, "the magical effect crossing its walls"]);
+    // (2026-10-28: a save for crossing in, one for crossing out — pushed back out, or pulled back in; its walls transparent, not invisible.)
     const save = nonliving.zone.saves[0];
-    assert.deepEqual([save.when, save.only, save.plan.resolution.check.against.value, save.plan.resolution.outcomes.failure.forcedMovement.distance], [["enter", "exit"], { traits: ["construct", "undead"] }, 30, 5]);
-    assert.deepEqual(living.zone.saves[0].only, { notTraits: ["construct", "undead"] });
-    assert.deepEqual([force.structure.stats, force.structure.feet, force.structure.pushOut, force.structure.invisible], [{ hardness: 30, hp: 60 }, 10, false, true]);
+    assert.deepEqual([save.when, save.only, save.plan.resolution.check.against.value, save.plan.resolution.outcomes.failure.forcedMovement.distance], [["enter"], { traits: ["construct", "undead"] }, 30, 5]);
+    assert.deepEqual(living.zone.saves.map((entry) => [entry.when, entry.only]), [[["enter"], { notTraits: ["construct", "undead"] }], [["exit"], { notTraits: ["construct", "undead"] }]]);
+    assert.deepEqual([force.structure.stats, force.structure.feet, force.structure.pushOut, force.structure.transparent], [{ hardness: 30, hp: 60 }, 10, false, true]);
     assert.deepEqual([inert.builtin, routeOf(inert), inert.inert.within, done(inert)], ["inert", "inert", 60, true]);
     assert.ok(namedInert(inert.inert, "Cube of Force") && namedInert(inert.inert, "Lesser Cube of Nex") && !namedInert(inert.inert, "Cube of Nex"));
     assert.match(inertCardHTML(createInertCard({ plan: inert, item: { name: "Cube of Nex" }, user: { name: "Ezren" }, candidates: [{ itemUuid: "x", name: "Cube of Force", holder: "Seelah" }] }), { canApply: true }), /Make it inert/);
@@ -169,7 +170,8 @@ test("The Eclipse: its aura the ability module's zone on its user (−2 item to 
     const [plan] = activations("The Eclipse");
     const note = plan.resolution.outcomes.success.noteEffects[0];
     const zone = plan.item.alsoZone.zone;
-    assert.deepEqual([plan.partial, routeOf(plan), plan.item.recipient, note.rules.map((rule) => rule.value), note.duration.value], [true, "item", "targets", [-3, -3], 1]);
+    // (Done since the ability module's zone.inside who "foes" — 2026-10-28.)
+    assert.deepEqual([done(plan), routeOf(plan), plan.item.recipient, note.rules.map((rule) => rule.value), note.duration.value], [true, "item", "targets", [-3, -3], 1]);
     assert.deepEqual([zone.area, zone.centre, zone.inside[0].who, zone.inside[0].rules.map((rule) => [rule.selector, rule.value]), zone.lasts.unit], [{ type: "emanation", value: 30 }, "self", "foes", [["saving-throw", -2], ["strike-attack-roll", -2]], "minutes"]);
 });
 

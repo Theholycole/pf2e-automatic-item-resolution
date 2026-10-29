@@ -261,7 +261,7 @@ const READINGS = [
     },
     {
         // The Eclipse: an aura of doubt — the ability module's zone on its user, −2 item to saving throws and Strikes for the foes inside
-        // (zone.inside who "foes": asked of the ability module, partial till then) and the light dimmed, the map's — and the triggering foe's own
+        // (zone.inside who "foes": the ability module's, 2026-10-28) and the light dimmed, the map's — and the triggering foe's own
         // note Effect: its critical success a success, −3 to its saves and Strikes instead, for the minute it can be Sustained.
         names: ["The Eclipse"],
         trigger: /^A foe that you're aware of and who is within (\d+) feet achieves a critical success on a saving throw or a Strike$/,
@@ -288,8 +288,6 @@ const READINGS = [
                 targeting: { target: "the triggering foe", range: null, area: null },
                 resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [], noteEffects: [{ label: "Overwhelmed by doubt", text: `Its critical success that triggered this is only a success (apply it so). Its saving throws and Strikes take a −${penalty[2]} item penalty while the aura lasts.`, duration: time, rules: penalties(penalty[2]) }] } } },
                 notes: ["Target the foe whose critical success triggered it."],
-                partial: true,
-                automation: { level: "guided" },
                 item: { recipient: "targets", alsoZone: zone }
             };
         }

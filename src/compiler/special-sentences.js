@@ -131,8 +131,8 @@ const READINGS = [
     },
     {
         // (Its memories harvested from a prepared creature as it dies: the ways card's three ways — the 10-minute surgery, its user's Medicine
-        // check at DC 28 against the creature (a failure its death; the ability module's card for a skill check at a fixed DC, requested:
-        // partial for that alone); the harvest, the creature's corpse a note Effect for good (PF2e's AdjustDegreeOfSuccess, its save against
+        // check at DC 28 against the creature (a failure its death; the ability module's card for a skill check at a fixed DC, 2026-10-28: its
+        // rows on the creature); the harvest, the creature's corpse a note Effect for good (PF2e's AdjustDegreeOfSuccess, its save against
         // Talking Corpse one degree worse), one more of the sponge's four (item.store, scripts/live.js: refused once full, the item's other
         // activation too); squeezing it out, all of them gone.)
         name: "Mindsponge: Absorb Memories",
@@ -151,9 +151,8 @@ const READINGS = [
             const prepare = own({
                 activation: { ...(base?.activation ?? {}), time: `${surgery[1]} minutes` },
                 targeting: { target: "1 willing or helpless creature", range: "touch", area: null },
-                resolution: { kind: "check", check: { roll: "skill", statistic: check[1].toLowerCase(), against: { dc: "fixed", value: Number(check[2]), statistic: "fortitude" } }, sharedDamage: null, outcomes: { criticalSuccess: { ...none(), noteEffects: [{ label: "Prepared for the mindsponge", text: "Its brain partly exposed by surgery, without killing it: the mindsponge can harvest its memories as it dies.", duration: null }] }, success: { ...none(), noteEffects: [{ label: "Prepared for the mindsponge", text: "Its brain partly exposed by surgery, without killing it: the mindsponge can harvest its memories as it dies.", duration: null }] }, failure: { ...none(), terminal: { kind: "death" } }, criticalFailure: { ...none(), terminal: { kind: "death" } } } },
-                notes: [`A ${surgery[1]}-minute surgery: its user's ${check[1]} check at DC ${check[2]} (it must be a ${check[3]} in ${check[1]}). On a failure, the creature dies before the mindsponge is used.`],
-                partial: true
+                resolution: { kind: "check", check: { roll: "skill", statistic: check[1].toLowerCase(), against: { dc: "fixed", value: Number(check[2]) } }, sharedDamage: null, outcomes: { criticalSuccess: { ...none(), noteEffects: [{ label: "Prepared for the mindsponge", text: "Its brain partly exposed by surgery, without killing it: the mindsponge can harvest its memories as it dies.", duration: null }] }, success: { ...none(), noteEffects: [{ label: "Prepared for the mindsponge", text: "Its brain partly exposed by surgery, without killing it: the mindsponge can harvest its memories as it dies.", duration: null }] }, failure: { ...none(), terminal: { kind: "death" } }, criticalFailure: { ...none(), terminal: { kind: "death" } } } },
+                notes: [`A ${surgery[1]}-minute surgery: its user's ${check[1]} check at DC ${check[2]} (it must be a ${check[3]} in ${check[1]}). On a failure, the creature dies before the mindsponge is used.`]
             });
             const harvest = own({
                 ...ownRow({
@@ -163,7 +162,7 @@ const READINGS = [
                 item: { ...info, recipient: "targets", store: { max, add: 1 } }
             });
             const squeeze = own({ ...ownRow({ notes: ["The memories drip out as cold ectoplasm, which soon evaporates unless it's used or contained."] }), activation: { ...(base?.activation ?? {}), time: "1", traits: ["concentrate"] }, item: { ...info, store: { max, release: true } } });
-            return { builtin: "ways", targeting: { target: null, range: null, area: null }, partial: true, ways: [{ name: "Prepare the creature (surgery)", html: "<p>The surgery.</p>", plan: prepare }, { name: "Absorb its memories", html: "<p>The harvest.</p>", plan: harvest }, { name: "Squeeze it out (Interact)", html: "<p>Squeezed.</p>", plan: squeeze }] };
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, ways: [{ name: "Prepare the creature (surgery)", html: "<p>The surgery.</p>", plan: prepare }, { name: "Absorb its memories", html: "<p>The harvest.</p>", plan: harvest }, { name: "Squeeze it out (Interact)", html: "<p>Squeezed.</p>", plan: squeeze }] };
         }
     },
     // (Emerald Fulcrum Lens's possession: src/compiler/whole-artifacts.js's, the three fulcrum lenses' one reading — 2026-10-28.)
@@ -400,9 +399,8 @@ const READINGS = [
     {
         // (A mob of shadowy figures in a 20-foot burst within 120 feet, for a minute: a zone, its user's unarmed Strike against each creature's
         // Fortitude DC as it rises (Grabbed for the minute or until it Escapes against its user's class DC, and 3d6 bludgeoning), again at the end
-        // of each turn a creature not yet grabbed ends there, and 1d6 bludgeoning at the end of each turn of one that is. Those last two need the
-        // ability module's condition filters on a zone's entries (only.conditions, only.lacks — requested): partial for that alone. The figures'
-        // AC and Hit Points, moving the burst from 15th level, and ground that can't hold it are the zone card's lines (the map's).)
+        // of each turn a creature not yet grabbed ends there, and 1d6 bludgeoning at the end of each turn of one that is (the ability module's
+        // condition filters on a zone's entries, only.conditions and only.lacks.conditions, 2026-10-28). The figures' AC and Hit Points, moving the burst from 15th level, and ground that can't hold it are the zone card's lines (the map's).)
         name: "The Uprising",
         sentences: [
             /^The card calls forth a mob of shadowy figures who batter and hinder your enemies\.$/,
@@ -427,8 +425,6 @@ const READINGS = [
             return {
                 builtin: "zone",
                 actions: null,
-                partial: true,
-                automation: { level: "guided" },
                 targeting: { target: null, range: `${burst[2]} feet`, area: { type: "burst", value: Number(burst[1]) } },
                 zone: {
                     area: { type: "burst", value: Number(burst[1]) },
@@ -650,7 +646,7 @@ const READINGS = [
         // (3rd-rank Circle of Protection against undead in place of an alignment, a 10-foot emanation around the athame: a zone on its user for a
         // minute, each creature inside +1 status to AC against undead creatures' attacks and to saves against their effects, +3 against a summoned
         // undead's attacks and (its toggle) an undead's effect that directly controls it; a summoned undead entering attempts a Will save at the
-        // athame's level DC to come in. That save only for summoned undead needs the ability module's all-traits filter (requested): partial.)
+        // athame's level DC to come in — only a summoned undead, by the ability module's only.all (2026-10-28).)
         name: "Spiral Athame",
         over: true,
         sentences: [
@@ -666,15 +662,13 @@ const READINGS = [
                 builtin: "zone",
                 actions: null,
                 targeting: { target: null, range: null, area: { type: "emanation", value: 10 } },
-                partial: true,
-                automation: { level: "guided" },
                 zone: {
                     area: { type: "emanation", value: 10 },
                     centre: "self",
                     range: null,
                     lasts: timeOf(1, "minute"),
                     untilReused: false, concealed: false, terrain: [], others: false, hazard: null, damage: [], effect: null, modifiers: [],
-                    saves: [{ when: ["enter"], only: { traits: ["undead"], all: ["undead", "summoned"] }, plan: { modelVersion: plan.modelVersion, source: plan.source, rank: 3, traits: ["divine", "necromancy"], trigger: { event: "zone" }, targeting: { target: "a summoned undead entering", range: null, area: null }, automation: { level: "automatic" }, resolution: keep } }],
+                    saves: [{ when: ["enter"], only: { all: ["undead", "summoned"] }, plan: { modelVersion: plan.modelVersion, source: plan.source, rank: 3, traits: ["divine", "necromancy"], trigger: { event: "zone" }, targeting: { target: "a summoned undead entering", range: null, area: null }, automation: { level: "automatic" }, resolution: keep } }],
                     inside: [{ rules: [
                         { key: "FlatModifier", slug: "spiral-athame-ward", selector: ["ac", "saving-throw"], type: "status", value: 1, predicate: ["origin:trait:undead"] },
                         { key: "FlatModifier", slug: "spiral-athame-ward-summoned", selector: "ac", type: "status", value: 3, predicate: ["origin:trait:undead", "origin:trait:summoned"] },
@@ -683,7 +677,7 @@ const READINGS = [
                     ] }],
                     notes: [
                         "A 10-foot ward around the athame's holder for 1 minute: inside, +1 status to AC against undead's attacks and to saves against their effects; +3 against a summoned undead's attack, and (switch it on) against an undead's effect directly controlling the creature.",
-                        `A summoned undead entering attempts a DC ${dc} Will save (the athame's level DC: the GM may change it); failing, it can't willingly enter, its later tries using that result. Only a summoned one attempts it (until the ability module filters by both traits).`
+                        `A summoned undead entering attempts a DC ${dc} Will save (the athame's level DC: the GM may change it); failing, it can't willingly enter, its later tries using that result.`
                     ]
                 }
             };
@@ -693,8 +687,8 @@ const READINGS = [
         // (A conjured javelin's ranged Strike — a javelin's, with the club's +3 and its damage dice — and its gazelle's leap to as many creatures
         // near the one hit as the actions spent: the ways card's three ways, each its user's thrown attack (Dexterity and simple weapon
         // proficiency, +3 item) at a creature within 60 feet, its hit's second step the gazelle's damage at up to that many creatures its
-        // presser targets within 20 feet of the first (thenSave, maxTargets). The javelin's ghost touch needs the ability module to roll the
-        // damage with the rune's roll option (requested): partial for that alone.)
+        // presser targets within 20 feet of the first (thenSave, maxTargets). The javelin's and the gazelle's ghost touch: plan.damageOptions,
+        // the rune's roll option on their damage (the ability module's, 2026-10-28).)
         name: "Hunter's Dawn",
         sentences: [
             /^You swing Hunter's Dawn and launch a magically conjured javelin at a target within (\d+) feet, making a ranged Strike\.$/,
@@ -730,14 +724,12 @@ const READINGS = [
                         thenSave: gazelle,
                         notes: [
                             `A conjured javelin, gone once it hits or misses: its user's thrown attack${potency ? ` with the club's +${potency}` : ""}.`,
-                            `On a hit, the gazelle leaps on: target up to ${COUNT[actions - 1]} other creature${actions === 1 ? "" : "s"} within ${hit[3]} feet of the one hit, then press its step (nothing on a miss).`,
-                            "Ghost touch: an incorporeal creature's resistance doesn't hold against it (by hand until the ability module rolls the rune's option)."
-                        ],
-                        partial: true
+                            `On a hit, the gazelle leaps on: target up to ${COUNT[actions - 1]} other creature${actions === 1 ? "" : "s"} within ${hit[3]} feet of the one hit, then press its step (nothing on a miss).`
+                        ]
                     }
                 };
             };
-            return { builtin: "ways", targeting: { target: null, range: null, area: null }, once: true, ways: [1, 2, 3].map(way), partial: true };
+            return { builtin: "ways", targeting: { target: null, range: null, area: null }, once: true, ways: [1, 2, 3].map(way) };
         }
     },
     {

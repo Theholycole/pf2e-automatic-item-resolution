@@ -149,11 +149,12 @@ export async function activate(itemUuid, index, userId = game.user.id) {
     if (recharge) {
         const rolled = recharge.formula ? (await new Roll(recharge.formula).evaluate()).total : null;
         const until = at.worldTime + rechargeSeconds(recharge, rolled);
-        const shared = (recharge.shared ?? []).map((one) => playable(item).find((other) => String(other.activation?.name ?? "").toLowerCase() === String(one).toLowerCase())?.index).filter((index) => index !== undefined);
+        // (Shared by name, or by the activation's index when it has none — Soulspark Candle's lighting, its flames' hour: sharedWords naming it.)
+        const shared = (recharge.shared ?? []).map((one) => playable(item).find((other) => (Number.isInteger(one) ? other.index === one : String(other.activation?.name ?? "").toLowerCase() === String(one).toLowerCase()))?.index).filter((index) => index !== undefined);
         const next = { ...waits };
         for (const index of [entry.index, ...shared]) next[index] = until;
         await item.setFlag(MODULE_ID, WAITS, next);
-        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: item.actor }), whisper: (game.users?.filter?.((user) => user.isGM || item.actor.testUserPermission?.(user, "OWNER")) ?? []).map((user) => user.id), content: `<p><strong>${escape(name)}</strong>: usable again in ${waitText(until - at.worldTime)}${recharge.formula ? ` (rolled ${escape(recharge.formula)} = ${rolled})` : ""}${shared.length ? `, and so is ${escape(recharge.shared.join(" and "))}` : ""}.</p>` });
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: item.actor }), whisper: (game.users?.filter?.((user) => user.isGM || item.actor.testUserPermission?.(user, "OWNER")) ?? []).map((user) => user.id), content: `<p><strong>${escape(name)}</strong>: usable again in ${waitText(until - at.worldTime)}${recharge.formula ? ` (rolled ${escape(recharge.formula)} = ${rolled})` : ""}${shared.length ? `, and so is ${escape(recharge.sharedWords ?? recharge.shared.join(" and "))}` : ""}.</p>` });
     }
     return card;
 }

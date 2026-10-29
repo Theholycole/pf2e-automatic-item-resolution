@@ -691,6 +691,57 @@ const READINGS = [
             resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), noteEffects: [{ label: "Moonkeep lily", text: "Its curse of the werecreature is partly inert: its jaws Strike doesn't pass on the curse.", duration: timeOf(7 * Number(week[1]), "days") }] } } },
             item: info
         })
+    },
+    {
+        // Godsbreath Bow (2026-10-28, the ability module's zone.incoming and only.moving): "For the next 3 minutes, any physical ranged attacks that
+        // would strike a target within the vortex deal an additional 1d8 bludgeoning damage. The vortex is difficult terrain, and creatures
+        // attempting to fly through the vortex using a move action must attempt a … Fortitude save, losing its move action on a failed save."
+        // The Strike card with the bow itself, ranged (the Strike reader's, its notes and extra dice taken over); on a hit, its vortex — the ability module's zone, a 30-foot burst made by its user at the
+        // creature hit (strike.zoneAt "target", scripts/strikes.js) for the 3 minutes: difficult terrain (on the ground and in the air, a vortex
+        // of air), a physical ranged attack's damage at a creature inside rolled with 1d8 bludgeoning more beside it (zone.incoming, doubled on a
+        // critical hit — the arrow's own additional 1d8 that same extra, as it hits inside), and the Fortitude save at a creature flying in or
+        // within (when ["enter", "move"], only.moving "fly"; its user's too), a failure its move action lost (a note Effect for that turn). Its
+        // gases cleared, the zone card's line (the map's).
+        names: ["Godsbreath Bow"],
+        over: (plan) => plan?.strike?.range === "ranged" && plan.strike.own && !plan.strike.zone && plan.strike.notes?.length === 5,
+        sentences: [
+            /^You make a (ranged) Strike\.$/,
+            /^On a hit, a vortex of air trails the arrow as it travels\.$/,
+            /^When the arrow strikes its target, the vortex expands to a (\d+)-foot radius from its point of impact\.$/,
+            /^The arrow deals an additional (\d+d\d+) (\w+) damage against its target\.$/,
+            /^For the next (\d+) (minutes?|rounds?), any physical ranged attacks that would strike a target within the vortex deal an additional (\d+d\d+) (\w+) damage\.$/,
+            /^The vortex is difficult terrain, and creatures attempting to fly through the vortex using a move action must attempt a @Check\[(fortitude|reflex|will)\|dc:(\d+)[^\]]*\] save, losing its move action on a failed save\.$/,
+            /^Any gases within the vortex are cleared by the winds\.$/
+        ],
+        card: ([, , vortex, arrow, after, fly], plan) => {
+            const [dice] = plan.strike.damage ?? [];
+            if (arrow[1] !== after[3] || arrow[2] !== after[4] || plan.strike.damage?.length !== 1 || `${dice.diceNumber}${dice.dieSize}` !== arrow[1]) return null;
+            const lost = { label: "Godsbreath vortex", text: "Its move action is lost: it doesn't fly through the vortex (put it back where that move began).", duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } };
+            const save = {
+                modelVersion: plan.modelVersion,
+                source: plan.source,
+                rank: plan.rank,
+                traits: ["evocation", "magical"],
+                automation: { level: "automatic" },
+                trigger: { event: "zone" },
+                targeting: { target: "a creature flying through the vortex", range: null, area: null },
+                resolution: { kind: "save", check: { roll: "save", statistic: fly[1], basic: false, against: { dc: "fixed", value: Number(fly[2]) } }, sharedDamage: null, outcomes: { criticalSuccess: none(), success: none(), failure: { ...none(), noteEffects: [lost] }, criticalFailure: { ...none(), noteEffects: [lost] } } }
+            };
+            const zone = zoneOf({
+                area: { type: "burst", value: Number(vortex[1]) },
+                lasts: timeOf(after[1], after[2]),
+                terrain: [{ movement: ["walk", "fly"], difficulty: 2 }],
+                incoming: { damage: `${after[3]}[${after[4].toLowerCase()}]`, attacks: ["ranged", "physical"] },
+                saves: [{ when: ["enter", "move"], own: true, only: { moving: "fly" }, plan: save }],
+                notes: [
+                    `A physical ranged attack's damage at a creature inside gets ${after[3]} ${after[4]} more, rolled beside it (the arrow's own too).`,
+                    `Difficult terrain; a creature flying through it attempts a DC ${fly[2]} ${fly[1].replace(/^\w/, (letter) => letter.toUpperCase())} save, a failure losing that move action.`,
+                    "The winds clear any gases inside it (the map's)."
+                ]
+            });
+            // (Its extra dice not on the Strike: the vortex's extra on the arrow's damage roll is that 1d8, not a second one.)
+            return strikeWith(plan, { damage: [], notes: [], zone, zoneAt: "target", lines: [...(plan.strike.lines ?? []), `On a hit: its vortex, a ${vortex[1]}-foot burst around the creature hit for ${after[1]} ${after[2]}; the arrow's additional ${arrow[1]} ${arrow[2]} is the vortex's, rolled beside its damage`] });
+        }
     }
 ];
 

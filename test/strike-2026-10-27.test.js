@@ -264,7 +264,8 @@ test("Mamlambo Scale's Luminous Lure: the zone on its wearer for the light's min
 test("Portable Seal (all three): a placed zone whose save is for summoned creatures entering it (zone only.traits), a disrupted move a note Effect, the round's immunity tracked; a summoned creature's Strike still the GM's (partial)", () => {
     for (const grade of ["Lesser", "Moderate", "Major"]) {
         const seal = compileItem(item(`Portable Seal (${grade})`));
-        assert.deepEqual([seal.builtin, seal.partial, seal.zone.centre, seal.zone.saves[0].when, seal.zone.saves[0].only], ["zone", true, "placed", ["enter"], { traits: ["summoned"] }], grade);
+        // (2026-10-28: a summoned creature's melee Strike into it the ability module's when "strike-into" now — no longer partial.)
+        assert.deepEqual([seal.builtin, seal.partial, seal.zone.centre, seal.zone.saves[0].when, seal.zone.saves[0].only], ["zone", undefined, "placed", ["enter", "strike-into"], { traits: ["summoned"] }], grade);
         const rows = seal.zone.saves[0].plan.resolution.outcomes;
         assert.deepEqual([rows.failure.noteEffects[0].label, rows.success.manualInstructions, seal.zone.saves[0].plan.trigger.immunity.degrees], ["Disrupted", undefined, ["criticalSuccess", "success", "failure"]], grade);
     }

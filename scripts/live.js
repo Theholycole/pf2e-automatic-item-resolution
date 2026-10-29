@@ -356,6 +356,12 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     }
     // (Only while its own light is on its user, Soulspark Candle's "The candle is lit": refused otherwise — src/compiler/unique-rules.js, 2026-10-27.)
     if (plan?.gate?.lit && !litBy(actor, used.data)) throw new Error(`${used.data.name} isn't lit.`);
+    // (Put out as it's used, Soulspark Candle's flames — "its light immediately goes out": now, on a card that isn't the item card, which puts it
+    // out as it applies — 2026-10-28.)
+    if (plan?.item?.putsOut && route !== "item" && actor) {
+        const out = await putOut({ item: { name: used.data.name, uuid: used.data.uuid ?? null }, user: { name: actor.name }, plan }, actor).catch((error) => (console.error(`${MODULE_ID} | put out`, error), []));
+        if (out.length) await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p>${escapeHTML(out.join("; "))}.</p>` });
+    }
     // (A condition its user takes beside the save, Pharasmin Visor's Dazzled: given as it's used, src/compiler/user-conditions.js.)
     if (plan?.userEffects?.length && actor) await giveUserConditions(plan.userEffects, { actor, token, used }).catch((error) => console.error(`${MODULE_ID} | user conditions`, error));
     // (A healing of the item's own stopped for a while, Splithead Bow's Two-Headed Arrow: its PF2e toggle off, scripts/toggle-off.js.)
@@ -1644,27 +1650,17 @@ function litBy(actor, item) {
     return (actor?.itemTypes?.effect ?? []).some((effect) => effect.flags?.[MODULE_ID]?.light && (uuid ? effect.system?.context?.origin?.item === uuid : effect.flags[MODULE_ID].from === item?.name));
 }
 
-// The item put out (plan.item.putsOut, Soulspark Candle's): its light on its user gone, its zones on every scene gone (the ability module's
-// Regions, flagged with the item's uuid), and the Effects it marked on creatures of this scene given what's left of their time. → lines.
+// The item put out (plan.item.putsOut, Soulspark Candle's): its light on its user gone, and its zones on every scene ended by the ability
+// module (api.live.endZones, 2026-10-28: what they gave those inside taken away, an inside Effect that lingers kept its time — the limned
+// undead's minute). → lines.
 async function putOut(state, actor) {
-    const lines = [];
     const uuid = state.item.uuid ?? null;
     const lights = (actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.light && (uuid ? effect.system?.context?.origin?.item === uuid : effect.flags[MODULE_ID].from === state.item.name)).map((effect) => effect.id);
     if (lights.length) await actor.deleteEmbeddedDocuments("Item", lights);
-    let zones = 0;
-    for (const scene of game.scenes ?? []) {
-        const ids = (scene.regions?.contents ?? [...(scene.regions ?? [])]).filter((region) => uuid && region.flags?.[ABILITY_ID]?.zone?.itemUuid === uuid).map((region) => region.id);
-        if (ids.length) await scene.deleteEmbeddedDocuments("Region", ids);
-        zones += ids.length;
-    }
-    lines.push(`${state.item.name} is out: ${lights.length ? "its light gone" : "no light of it on " + state.user.name}${zones ? `, its area${zones > 1 ? "s" : ""} gone` : ""}`);
-    const lingers = state.plan.item.putsOut.lingers;
-    if (lingers?.option) {
-        const marked = (canvas.tokens?.placeables ?? []).map((token) => token.actor).filter(Boolean).flatMap((other) => (other.itemTypes?.effect ?? []).filter((effect) => (effect.system?.rules ?? []).some((rule) => rule?.key === "RollOption" && rule.option === lingers.option)).map((effect) => ({ other, effect })));
-        for (const { effect } of marked) await effect.update({ "system.duration.value": lingers.duration.value, "system.duration.unit": lingers.duration.unit, "system.duration.expiry": lingers.duration.expiry ?? "turn-start", "system.start.value": game.time.worldTime });
-        if (marked.length) lines.push(`${[...new Set(marked.map(({ other }) => other.name))].join(", ")}: ${marked.length === 1 ? "its" : "their"} limning lasts ${lingers.duration.value} more ${lingers.duration.unit.replace(/s$/, "")}`);
-    }
-    return lines;
+    const endZones = game.modules.get(ABILITY_ID)?.api?.live?.endZones;
+    const zones = uuid && endZones ? await endZones({ itemUuid: uuid }) : 0;
+    const left = uuid && !endZones ? " (end its areas on their cards: the ability module can't here)" : "";
+    return [`${state.item.name} is out: ${lights.length ? "its light gone" : "no light of it on " + state.user.name}${zones ? `, its area${zones > 1 ? "s" : ""} ended` : ""}${left}`];
 }
 
 // Its user's own save as it's used (plan.alsoUserSave, the Oculus of Abaddon's): the ability module's save card at its user's token — none for

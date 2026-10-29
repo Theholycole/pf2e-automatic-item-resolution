@@ -5,9 +5,9 @@
 // sixth Dismisses), each the ability module's zone — the 10-foot square round its user, its grid squares as the environment module lays a
 // square structure out (centre "around", the item module's: src/live/cube.js), never placed, never attached, until
 // dismissed: gas and wind kept out, or magical effects, by the counteract card beside it (+20, the item's rank: its level halved, rounded up);
-// nonliving or living creatures crossing in its save, Will DC 30, a failure pushing them back out (their move wasted); the fifth face's walls
-// of force the environment module's structure (plan.structure, scripts/cube.js: their Wall of Force numbers, its user inside not
-// pushed out). And its second activation, "A cube of force or Lesser Cube of Nex within 60 feet of you becomes inert. It can't be Activated,
+// nonliving or living creatures crossing either way in its save, Will DC 30, a failure sending them back to their side (their move wasted);
+// the fifth face's walls of force the environment module's structure (plan.structure, scripts/cube.js: their Wall of Force numbers,
+// its user inside not pushed out, transparent — 2026-10-28, its walls that only stop movement). And its second activation, "A cube of force or Lesser Cube of Nex within 60 feet of you becomes inert. It can't be Activated,
 // any current activation ends, and any constant abilities it has cease to function": plan.item.inert, the item module's card (scripts/inert.js).
 // Pure.
 
@@ -31,17 +31,26 @@ export function cubeFaces(html) {
     });
 }
 
-// The crossing save: Will at its DC, a failure its move wasted — pushed back out of the square, away from its user inside.
-function crossingSave(base, dc, who) {
-    const back = { ...none(), forcedMovement: { kind: "push", distance: 5, upTo: false, optional: false, direction: "away" }, noteEffects: [{ label: "Kept out by the cube", text: `Its move action is wasted: it doesn't cross the cube's walls.`, duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } }] };
+// The crossing save: Will at its DC, a failure its move wasted — back on its own side of the walls: one coming in pushed back out, away from
+// its user inside; one going out (the ability module's "exit" saves, 2026-10-28) pulled back in, toward its user.
+function crossingSave(base, dc, who, way = "in") {
+    const move = way === "out" ? { kind: "pull", distance: 5, upTo: false, optional: false, direction: "toward" } : { kind: "push", distance: 5, upTo: false, optional: false, direction: "away" };
+    const back = { ...none(), forcedMovement: move, noteEffects: [{ label: "Kept out by the cube", text: `Its move action is wasted: it doesn't cross the cube's walls.`, duration: { mode: "fixed", value: 0, unit: "rounds", expiry: "turn-end", anchor: "target-turn" } }] };
     return {
         ...base,
         automation: { level: "automatic" },
-        targeting: { target: `a ${who} creature crossing its walls`, range: null, area: null },
+        targeting: { target: `a ${who} creature crossing its walls ${way === "out" ? "outward" : "inward"}`, range: null, area: null },
         trigger: { event: "zone" },
         resolution: { kind: "save", check: { roll: "save", statistic: "will", basic: false, against: { dc: "fixed", value: dc } }, outcomes: { criticalSuccess: none(), success: none(), failure: back, criticalFailure: back } }
     };
 }
+
+// Its zone's saves for that kind crossing: coming in (when "enter"), going out (when "exit"); only those creatures (only.traits, or
+// only.notTraits: a living one, neither undead nor construct — the ability module's, 2026-10-28).
+const crossings = (base, dc, who, only) => [
+    { when: ["enter"], only, plan: crossingSave(base, dc, who, "in") },
+    { when: ["exit"], only, plan: crossingSave(base, dc, who, "out") }
+];
 
 const FACE_READINGS = [
     {
@@ -54,13 +63,13 @@ const FACE_READINGS = [
         face: 2,
         pattern: /^The walls block nonliving matter from crossing; a nonliving creature must succeed at a @Check\[will\|dc:(\d+)\] save to cross the threshold, wasting their move action on a failure, and unattended objects can't cross\. Non-magical ranged attacks can't cross either and instead attack the wall\. A living creature can bring attended objects across the walls without needing to attempt a saving throw\.$/,
         name: "2: nonliving matter kept out",
-        build: ([, dc], { base }) => ({ saves: [{ when: ["enter", "exit"], only: { traits: NONLIVING }, plan: crossingSave(base, Number(dc), "nonliving") }], notes: [`A nonliving creature (construct or undead) crossing its walls attempts a DC ${dc} Will save: a failure wastes its move, and it stays out`, "Unattended objects can't cross; a living creature brings attended ones across freely", "A non-magical ranged attack can't cross: it hits the wall instead"] })
+        build: ([, dc], { base }) => ({ saves: crossings(base, Number(dc), "nonliving", { traits: NONLIVING }), notes: [`A nonliving creature (construct or undead) crossing its walls attempts a DC ${dc} Will save: a failure wastes its move, and it stays out`, "Unattended objects can't cross; a living creature brings attended ones across freely", "A non-magical ranged attack can't cross: it hits the wall instead"] })
     },
     {
         face: 3,
         pattern: /^The walls block living matter from crossing; a living creature must succeed at a @Check\[will\|dc:(\d+)\] save to cross the threshold, wasting their move action on a failure\.$/,
         name: "3: living matter kept out",
-        build: ([, dc], { base }) => ({ saves: [{ when: ["enter", "exit"], only: { notTraits: NONLIVING }, plan: crossingSave(base, Number(dc), "living") }], notes: [`A living creature crossing its walls attempts a DC ${dc} Will save: a failure wastes its move, and it stays out`] })
+        build: ([, dc], { base }) => ({ saves: crossings(base, Number(dc), "living", { notTraits: NONLIVING }), notes: [`A living creature crossing its walls attempts a DC ${dc} Will save: a failure wastes its move, and it stays out`] })
     },
     {
         face: 4,
@@ -72,7 +81,7 @@ const FACE_READINGS = [
         face: 5,
         pattern: /^The walls block everything, with the effects of Wall of Force\.$/,
         name: "5: walls of force",
-        build: () => ({ structure: { name: "Cube of walls of force", shape: "square", feet: 10, stats: { hardness: WALL_OF_FORCE.hardness, hp: WALL_OF_FORCE.hp }, ac: WALL_OF_FORCE.ac, invisible: true, pushOut: false, lines: ["Walls of force: they block everything physical, incorporeal and ethereal creatures too; teleportation and what's seen pass through (invisible)", "Immune to critical hits and precision damage, and to counteracting of their level or lower; a Disintegrate destroys them"] } })
+        build: () => ({ structure: { name: "Cube of walls of force", shape: "square", feet: 10, stats: { hardness: WALL_OF_FORCE.hardness, hp: WALL_OF_FORCE.hp }, ac: WALL_OF_FORCE.ac, transparent: true, pushOut: false, lines: ["Walls of force: they block everything physical, incorporeal and ethereal creatures too; teleportation and what's seen pass through (invisible walls: sight, light and sound pass)", "Immune to critical hits and precision damage, and to counteracting of their level or lower; a Disintegrate destroys them"] } })
     },
     {
         face: 6,

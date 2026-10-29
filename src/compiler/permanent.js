@@ -187,10 +187,11 @@ const field = (block, name) => {
 // "once per day", "once per hour", "once per 10 minutes", "three times per day" → { max, per, raw }.
 // (And a week's or a month's, Passage Pane's "once per week", or a year's or a century's, Void Mirror's — and the Oculus of Abaddon's
 // Binding Circle and its mass suggestion —: the activations card counts those too, 2026-10-27.)
+// (Up to ten in words, 2026-10-28: Paradigm Cube's and Rod of Razors' "six times per day" — read as "once per day" or not at all before.)
 export function readFrequency(text) {
-    const match = /\b(once|twice|three times|(\d+) times) per (round|turn|minute|10 minutes|hour|day|week|month|year|century|encounter)\b/i.exec(String(text ?? ""));
+    const match = /\b(once|twice|(?:three|four|five|six|seven|eight|nine|ten) times|(\d+) times) per (round|turn|minute|10 minutes|hour|day|week|month|year|century|encounter)\b/i.exec(String(text ?? ""));
     if (!match) return text ? { raw: text } : null;
-    const max = match[2] ? Number(match[2]) : { once: 1, twice: 2, "three times": 3 }[match[1].toLowerCase()];
+    const max = match[2] ? Number(match[2]) : { once: 1, twice: 2, "three times": 3, "four times": 4, "five times": 5, "six times": 6, "seven times": 7, "eight times": 8, "nine times": 9, "ten times": 10 }[match[1].toLowerCase()];
     return { max, per: match[3].toLowerCase().replace(" ", "-"), raw: text };
 }
 

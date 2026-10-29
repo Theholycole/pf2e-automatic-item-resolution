@@ -1,118 +1,54 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 32,
+  "entries": 19,
   "results": {
-   "partial": 20,
-   "none": 7,
-   "note-only": 5
+   "partial": 9,
+   "note-only": 4,
+   "none": 6
   },
   "main": {
-   "creatures": 6,
-   "visibility": 2,
-   "strike": 5,
    "cast-changes": 3,
-   "areas": 6,
-   "dying": 1,
+   "strike": 4,
+   "areas": 3,
    "triggers": 2,
    "senses": 1,
    "reader": 1,
    "spells": 1,
    "retaliation": 1,
-   "forms": 2,
+   "creatures": 1,
+   "forms": 1,
    "objects": 1
   },
   "any": {
-   "creatures": 6,
-   "lasting": 8,
-   "strike": 14,
-   "several": 5,
-   "visibility": 2,
-   "areas": 12,
-   "reader": 11,
    "cast-changes": 3,
+   "strike": 6,
+   "reader": 6,
+   "areas": 6,
    "immunity": 5,
-   "objects": 8,
-   "dying": 4,
-   "mind": 4,
    "triggers": 2,
-   "spells": 7,
-   "situational": 4,
-   "speech": 3,
+   "spells": 6,
+   "objects": 3,
    "senses": 2,
    "from-events": 4,
-   "afflictions": 5,
-   "counteract": 3,
-   "information": 5,
-   "out-of-combat": 5,
+   "afflictions": 4,
+   "dying": 3,
+   "counteract": 2,
+   "situational": 2,
+   "lasting": 3,
+   "information": 4,
+   "out-of-combat": 4,
    "retaliation": 1,
-   "forms": 2,
+   "creatures": 1,
    "speeds": 1,
    "moving": 1,
    "range": 1,
-   "illusions": 1,
-   "actions": 1,
-   "choice": 1
+   "mind": 2,
+   "speech": 2,
+   "forms": 1
   }
  },
  "entries": [
-  {
-   "name": "Spiral Athame",
-   "kind": "activation",
-   "tier": "special",
-   "level": 22,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "lasting"
-   ]
-  },
-  {
-   "name": "Hunter's Dawn",
-   "kind": "activation",
-   "tier": "special",
-   "level": 23,
-   "result": "partial",
-   "main": "creatures",
-   "work": "conjured",
-   "needs": [
-    "creatures",
-    "strike",
-    "several"
-   ]
-  },
-  {
-   "name": "Globe of Shrouds",
-   "kind": "activation",
-   "tier": "general",
-   "level": 8,
-   "activation": "Light Incense",
-   "result": "none",
-   "main": "visibility",
-   "work": "remains concealed",
-   "needs": [
-    "visibility",
-    "areas",
-    "lasting",
-    "several"
-   ]
-  },
-  {
-   "name": "The Uprising",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "strike",
-   "work": "they strike",
-   "needs": [
-    "strike",
-    "lasting",
-    "reader"
-   ]
-  },
   {
    "name": "Fan of Soothing Winds (Greater)",
    "kind": "activation",
@@ -153,35 +89,6 @@
    ]
   },
   {
-   "name": "Portable Seal (Moderate)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 12,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "strike",
-    "objects"
-   ]
-  },
-  {
-   "name": "Mindsponge",
-   "kind": "activation",
-   "tier": "special",
-   "level": 9,
-   "activation": "Absorb Memories",
-   "result": "partial",
-   "main": "dying",
-   "work": "dies",
-   "needs": [
-    "dying",
-    "objects",
-    "mind"
-   ]
-  },
-  {
    "name": "Starless Scope",
    "kind": "activation",
    "tier": "special",
@@ -210,37 +117,6 @@
    ]
   },
   {
-   "name": "Portable Seal (Major)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 18,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "strike",
-    "objects"
-   ]
-  },
-  {
-   "name": "Strand of the Seven Births",
-   "kind": "activation",
-   "tier": "adventure",
-   "level": 7,
-   "activation": "Hero-God's Whisper",
-   "result": "partial",
-   "main": "areas",
-   "work": "bright light",
-   "needs": [
-    "areas",
-    "situational",
-    "several",
-    "reader",
-    "speech"
-   ]
-  },
-  {
    "name": "Dreadsmoke Thurible",
    "kind": "activation",
    "tier": "general",
@@ -250,20 +126,6 @@
    "work": "smoke",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Portable Seal (Lesser)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "partial",
-   "main": "creatures",
-   "work": "summoned",
-   "needs": [
-    "creatures",
-    "strike",
-    "objects"
    ]
   },
   {
@@ -286,21 +148,6 @@
     "lasting",
     "reader",
     "information",
-    "out-of-combat"
-   ]
-  },
-  {
-   "name": "Godsbreath Bow",
-   "kind": "activation",
-   "tier": "general",
-   "level": 15,
-   "result": "partial",
-   "main": "areas",
-   "work": "radius",
-   "needs": [
-    "areas",
-    "strike",
-    "reader",
     "out-of-combat"
    ]
   },
@@ -390,19 +237,6 @@
    ]
   },
   {
-   "name": "The Eclipse",
-   "kind": "activation",
-   "tier": "special",
-   "level": 20,
-   "result": "partial",
-   "main": "areas",
-   "work": "bright light",
-   "needs": [
-    "areas",
-    "lasting"
-   ]
-  },
-  {
    "name": "Fan of Soothing Winds",
    "kind": "activation",
    "tier": "general",
@@ -412,24 +246,6 @@
    "main": "cast-changes",
    "needs": [
     "cast-changes"
-   ]
-  },
-  {
-   "name": "Penetrating Ammunition",
-   "kind": "activation",
-   "tier": "general",
-   "level": 12,
-   "result": "partial",
-   "main": "forms",
-   "work": "takes the shape",
-   "needs": [
-    "forms",
-    "areas",
-    "strike",
-    "situational",
-    "several",
-    "objects",
-    "reader"
    ]
   },
   {
@@ -520,32 +336,6 @@
    "work": "emanation centered",
    "needs": [
     "areas"
-   ]
-  },
-  {
-   "name": "Paradigm Cube",
-   "kind": "activation",
-   "tier": "adventure",
-   "level": 14,
-   "activation": "Change Paradigm",
-   "result": "note-only",
-   "main": "visibility",
-   "work": "hide",
-   "needs": [
-    "visibility",
-    "illusions",
-    "areas",
-    "strike",
-    "actions",
-    "afflictions",
-    "spells",
-    "counteract",
-    "lasting",
-    "choice",
-    "several",
-    "reader",
-    "mind",
-    "information"
    ]
   }
  ]

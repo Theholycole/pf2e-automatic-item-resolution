@@ -279,7 +279,7 @@ test("Battle Medic's Baton: Battle Medicine its user's own, the creature's immun
 const spells = spellIndex(readDocuments(path.join(PACKS, "spells")).filter((doc) => doc.collection === "items"));
 const rulesOf = (note) => note.rules.map((rule) => [rule.key, rule.selector ?? rule.option, rule.value ?? null, rule.predicate ?? null]);
 
-test("Magnetic Suit's attract or repel, the ways card: its user's Effect with toggles for metal weapons and objects, then the allies' card", () => {
+test("Magnetic Suit's attract or repel, the ways card: its user's Effect with toggles for metal weapons and objects, its allies' zone beside it", () => {
     for (const [name, value, radius] of [["Magnetic Suit", 1, 10], ["Magnetic Suit (Greater)", 2, 15], ["Magnetic Suit (Major)", 3, 20]]) {
         const suit = compileItem(item(name));
         assert.ok(done(suit), name);
@@ -289,11 +289,12 @@ test("Magnetic Suit's attract or repel, the ways card: its user's Effect with to
         assert.deepEqual([attract.duration.value, attract.duration.unit], [10, "minutes"]);
         assert.deepEqual(rulesOf(attract).slice(2), [["FlatModifier", "ac", -value, [`${slug}-metal-weapon`]], ["FlatModifier", "athletics", value, ["action:climb", `${slug}-metal-object`]], ["FlatModifier", "athletics", value, ["action:grapple", "target:trait:metal"]], ["FlatModifier", "athletics", -value, ["action:shove", "target:trait:metal"]]], name);
         assert.deepEqual(rulesOf(repel).slice(2).map(([, selector, amount, predicate]) => [selector, amount, predicate[0]]), [["ac", value, `${slug}-metal-weapon`], ["athletics", value, "action:shove"], ["athletics", -value, "action:climb"], ["athletics", -value, "action:grapple"]]);
-        // (Attracting, its allies within the emanation: their own card after, the presser's targets.)
-        const allies = suit.ways[0].plan.again.plan;
-        assert.deepEqual([allies.allyArea, allies.targeting.area, routeOf(allies)], [true, { type: "emanation", value: radius }, "save"]);
-        assert.deepEqual(rulesOf(allies.resolution.outcomes.success.noteEffects[0])[1], ["FlatModifier", "ac", value, [`${slug}-drawn`]]);
-        assert.equal(suit.ways[1].plan.again, undefined);
+        // (Attracting, its allies within the emanation: 2026-10-28, the ability module's zone on its user beside the card, its allies' Effect inside
+        // (who "allies") — their own card after it before.)
+        const allies = suit.ways[0].plan.item.alsoZone;
+        assert.deepEqual([suit.ways[0].plan.again, allies.zone.area, allies.zone.centre, allies.zone.lasts.value, routeOf(allies)], [undefined, { type: "emanation", value: radius }, "self", 10, "zone"]);
+        assert.deepEqual([allies.zone.inside[0].who, rulesOf(allies.zone.inside[0])[1]], ["allies", ["FlatModifier", "ac", value, [`${slug}-drawn`]]]);
+        assert.equal(suit.ways[1].plan.item?.alsoZone, undefined);
     }
 });
 
