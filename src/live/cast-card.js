@@ -91,6 +91,36 @@ export function castLinkSource(template, link, { markUuid = null, item = {}, use
     return source;
 }
 
+// The item's changes to its spell for the spell module's castFromItem (2026-10-29): plan.castWithoutTraits, plan.castAddTraits and the chosen
+// spell's element (plan.castElementTrait), plan.castArea and plan.castActions → { options, lines }: each one the spell module takes (its
+// castFromItemOptions) an option, each other one a line to do it by hand.
+export function castChanges(plan, chosen = {}, takes = []) {
+    const options = {};
+    const lines = [];
+    const give = (option, value, words) => {
+        if (takes.includes(option)) options[option] = value;
+        else lines.push(`${words}: by hand (the spell module doesn't take ${option} yet).`);
+    };
+    const without = plan?.castWithoutTraits ?? [];
+    if (without.length) give("withoutTraits", without, `The spell without its ${without.join(" and ")} trait`);
+    const added = [...new Set([...(plan?.castAddTraits ?? []), ...(plan?.castElementTrait && chosen?.element ? [chosen.element] : [])])];
+    if (added.length) give("addTraits", added, `The spell with the ${added.join(" and ")} trait`);
+    if (plan?.castArea) give("area", plan.castArea, `Its area a ${plan.castArea.value}-foot ${plan.castArea.type}`);
+    if (plan?.castActions) give("actions", plan.castActions, `Its ${plan.castActions}-action version`);
+    return { options, lines };
+}
+
+// The item's changes to its spell in words, for the card (castChanges' own).
+function castChangeWords(plan) {
+    const words = [];
+    if (plan?.castTraits?.only?.length && !plan.castTraits.immune?.length) words.push(`Only ${plan.castTraits.only.map((trait) => `${trait}s`).join(" and ")}: the others targeted are left out`);
+    if (plan?.castWithoutTraits?.length) words.push(`Cast without its ${plan.castWithoutTraits.join(" and ")} trait`);
+    if (plan?.castAddTraits?.length) words.push(`Cast with the ${plan.castAddTraits.join(" and ")} trait`);
+    if (plan?.castElementTrait) words.push("Cast with the trait of the element it's attuned to");
+    if (plan?.castArea || plan?.castActions) words.push([plan.castActions ? `Its ${plan.castActions}-action version` : null, plan.castArea ? `in a ${plan.castArea.value}-foot ${plan.castArea.type}` : null].filter(Boolean).join(", "));
+    return words;
+}
+
 export function castCardHTML(state, { canApply = false } = {}) {
     const open = state.status === "open";
     const plan = state.plan;
@@ -110,7 +140,7 @@ export function castCardHTML(state, { canApply = false } = {}) {
             ? `<p class="aar-actions">Drinker: <select data-air-field="drinker">${state.drinkers.map((entry, index) => `<option value="${index}"${index === state.drinker ? " selected" : ""}>${escape(entry.name)}${index === 0 ? " (self)" : ""}</option>`).join("")}</select></p>`
             : `<p class="aar-actions">Drinker: ${escape(caster.name)}</p>`;
     // (And its lines, what's its user's, the map's or the GM's to do — src/compiler/cast-changes.js castLines — before its notes.)
-    const said = [...(plan.castLines ?? []), ...(plan.castLinks?.length ? [castLinksWords(plan.castLinks)] : []), ...(plan.castDamage ? [`All of its damage is ${plan.castDamage.type} damage (PF2e's DamageAlteration on its caster)`] : []), ...(plan.notes ?? [])];
+    const said = [...(plan.castLines ?? []), ...(plan.castLinks?.length ? [castLinksWords(plan.castLinks)] : []), ...(plan.castDamage ? [`All of its damage is ${plan.castDamage.type} damage (PF2e's DamageAlteration on its caster)`] : []), ...castChangeWords(plan), ...(plan.notes ?? [])];
     const notes = open && said.length ? `<ul class="aar-notes">${said.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>` : "";
     const results = state.results.length ? `<ul class="aar-applied">${state.results.map((line) => `<li>${escape(line)}</li>`).join("")}</ul>` : "";
     const label = plan.choices?.length > 1 && open ? "the chosen spell" : chosen.spell.name ?? "the spell";

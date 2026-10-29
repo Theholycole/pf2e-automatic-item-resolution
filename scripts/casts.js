@@ -2,7 +2,7 @@
 // through PF2e (its api.castFromItem), so its own cast handling resolves it as any cast.
 
 import { CONTRACT, contractChoices, contractRefusal, dayOf, withContractCast } from "../src/live/contract-spells.js";
-import { castCardHTML, castLinkSource, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
+import { castCardHTML, castChanges, castLinkSource, castRequest, chosenSpell, createCastCard, darkLightCounteract, needsTargets, selfOf } from "../src/live/cast-card.js";
 import { postCounteractAt } from "./counteract.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { FLAG, MODULE_ID, creaturesNear, destroyUsedItem, entryOf, originOptionsOf, ownerDCsOf, spaceOf, stateOf } from "./foundry.js";
@@ -212,15 +212,21 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         // (Sacred Valkyrie Helm's "all electricity" too, plan.castDamage: the spell module rolls some spells' damage itself, Weapon Storm's
         // weapon dice, where PF2e's DamageAlteration never reaches — found by the 2026-10-28 case writers; its damageType when it takes one.)
         const wanted = state.plan.castDamageType ?? state.plan.castDamage ?? null;
-        const typed = wanted && (game.modules.get(SPELL_ID)?.api?.castFromItemOptions ?? []).includes("damageType") ? { damageType: wanted.type } : {};
+        const takes = game.modules.get(SPELL_ID)?.api?.castFromItemOptions ?? [];
+        const typed = wanted && takes.includes("damageType") ? { damageType: wanted.type } : {};
         if (wanted && !typed.damageType) lines.push(`All its damage is ${wanted.type}: change its type by hand on the spell's damage${state.plan.castDamage ? " where it isn't already" : ""}.`);
+        // (The item's other changes to the spell, made by the spell module's castFromItem on its copy — 2026-10-29: Ivory Baton's Dominate without
+        // mental, Fan of Soothing Winds' 3-action Heal in a cone with air, Gate Attenuator's spell with its element's trait; by hand where it
+        // doesn't take them.)
+        const changes = castChanges(state.plan, chosenSpell(state), takes);
+        lines.push(...changes.lines);
         // (A contract's spell cast today already, or not its signer's selection: refused.)
         const holder = state.plan.contract && state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
         const refused = holder ? contractRefusal(state.plan, holder.getFlag(MODULE_ID, CONTRACT), chosenSpell(state), dayOf(game.time.worldTime)) : null;
         if (refused) throw new Error(`${state.item.name}: ${refused}.`);
         const knows = state.plan.castBonus?.ifKnows?.toLowerCase();
         const casterKnew = Boolean(knows) && (actor.itemTypes?.spell ?? []).some((spell) => spell.name.toLowerCase() === knows);
-        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item, ...typed });
+        const cast = await castFromItem({ actor, token: token ?? undefined, spell: request.spell, rank: request.rank ?? undefined, dc: request.dc ?? undefined, counteract: request.counteract ?? undefined, targets: castTargets, item: request.item, ...typed, ...changes.options });
         lines.push(`${actor.name} casts ${spellName}${cast?.rank ? ` at rank ${cast.rank}` : ""}${castTargets.length && !selfOf(state) ? ` at ${castTargets.map((target) => target.name).join(", ")}` : ""}.`);
         if (holder) await holder.setFlag(MODULE_ID, CONTRACT, withContractCast(holder.getFlag(MODULE_ID, CONTRACT), chosenSpell(state), dayOf(game.time.worldTime)));
         // (The item's duration for the spell's Effects: scripts/cast-duration.js.)

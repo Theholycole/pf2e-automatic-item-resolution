@@ -51,15 +51,13 @@ test("Wildwood Ink: its 10 minutes the cast's own, its recharge by its user's ow
     assert.ok(ink.castLines.every((line) => /recharge|again/.test(line)));
 });
 
-test("Fan of Soothing Winds: its beads a choice of Heal's rank, six uses a day, the undead's DC; its cone and air trait still notes", () => {
+test("Fan of Soothing Winds: its beads a choice of Heal's rank, six uses a day, the undead's DC; its 3-action cone and air trait the spell module's castFromItem changes (2026-10-29)", () => {
     for (const [name, ranks, dc] of [["Fan of Soothing Winds", [4, 3, 2], 28], ["Fan of Soothing Winds (Greater)", [6, 5, 4], 34]]) {
         const fan = activation(name, "Healing Wind");
         assert.deepEqual(fan.choices.map((choice) => [choice.spell.name, choice.rank]), ranks.map((rank) => ["Heal", rank]), name);
         assert.deepEqual(fan.choices.map((choice) => choice.when), ["the first two beads", "the center two beads", "the last two beads"]);
         assert.deepEqual([fan.dc, fan.trigger.frequency.max, fan.item.activation.frequency.max], [dc, 6, 6]);
-        assert.equal(fan.partial, true);
-        assert.ok(fan.notes.some((note) => /cone/.test(note)) && fan.notes.some((note) => /air trait/.test(note)));
-        assert.ok(!fan.notes.some((note) => /which bead/.test(note)));
+        assert.deepEqual([fan.partial, fan.notes, fan.castActions, fan.castArea, fan.castAddTraits], [undefined, undefined, 3, { type: "cone", value: 30 }, ["air"]]);
     }
     const fan = activation("Fan of Soothing Winds", "Healing Wind");
     const state = { ...createCastCard({ plan: fan, item: { name: "Fan of Soothing Winds" }, user }), choice: 1 };
@@ -80,7 +78,7 @@ test("Rime Foil: Phantom Prison at DC 22, or DC 24 after a shattered plan's dama
     assert.equal(castRequest({ ...state, choice: 1 }).dc, 24);
 });
 
-test("Gate Attenuator: each spell's element, a kineticist's impulse numbers when better; the base one partial for Thunderstrike's metal trait", () => {
+test("Gate Attenuator: each spell's element, a kineticist's impulse numbers when better; the base one's element trait the spell module's addTraits (2026-10-29)", () => {
     for (const name of ["Gate Attenuator (Greater)", "Gate Attenuator (Major)"]) {
         const plan = activation(name, "Elemental Spell");
         assert.ok(done(plan), name);
@@ -90,8 +88,7 @@ test("Gate Attenuator: each spell's element, a kineticist's impulse numbers when
         assert.ok(!(plan.notes ?? []).some((note) => /kineticist/.test(note)), name);
     }
     const base = activation("Gate Attenuator", "Elemental Spell");
-    assert.equal(base.partial, true);
-    assert.ok(base.notes.some((note) => /element's trait/.test(note)));
+    assert.deepEqual([done(base), base.castElementTrait, (base.notes ?? []).some((note) => /element's trait/.test(note))], [true, true, false]);
     assert.ok(base.castImpulse);
     const major = activation("Gate Attenuator (Major)", "Elemental Spell");
     const state = createCastCard({ plan: major, item: { name: "Gate Attenuator (Major)" }, user });

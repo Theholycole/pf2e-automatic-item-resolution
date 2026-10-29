@@ -10,15 +10,21 @@
 //   Plants (its user's spell; the activations card warns the GM of a second use as of any other).
 // - A rank by the part used, Fan of Soothing Winds' "the first two beads cast 4th-rank heal , the center two cast 3rd-rank heal , and the last
 //   two cast 2nd-rank heal": plan.choices, the spell at each rank with its beads (the card's picker), "once per day per bead" six uses a day;
-//   and "the save DC for an undead creature is 28", plan.dc. Its cone and its air trait stay notes, the spell module's to play.
+//   and "the save DC for an undead creature is 28", plan.dc. Its "3-action Heal spell with an area of a 30-foot cone instead of a 30-foot
+//   emanation" plan.castActions and plan.castArea, its "This spell gains the air trait" plan.castAddTraits — the spell module's castFromItem
+//   actions, area and addTraits (2026-10-29; scripts/casts.js says what to do by hand when the spell module doesn't take them).
 // - Another DC on a condition its user knows, Rime Foil's "If the target has been damaged by a shattered plan in the last round, the DC is
 //   instead DC 24": a second choice of the same spell at that DC.
 // - A kineticist's own numbers, Gate Attenuator's "If you're a kineticist and the spell's element matches one of your kinetic elements, you can
 //   use your impulse attack modifier instead of the spell attack modifier or your impulse DC instead of the spell DC": plan.castImpulse { said }
 //   and each choice's element (from "air Gust of Wind earth Pummeling Rubble …") — live, scripts/casts.js casts at the better of the item's
 //   and its caster's impulse numbers when the caster's kinetic elements include the spell's. "It gains that element's trait if it doesn't
-//   already have it": a line when each spell has it already (options.spells' traits), else a note, the plan partial — the spell module adds
-//   no trait to a cast.
+//   already have it": a line when each spell has it already (options.spells' traits), else plan.castElementTrait — the chosen spell's
+//   element given it by the spell module's castFromItem addTraits (2026-10-29).
+// - Only creatures of a kind, and a trait the spell lacks, Ivory Baton's "This has the effects of Dominate with a DC of 30, but it affects only
+//   constructs. It lacks the mental trait and functions on mindless constructs.": plan.castTraits.only and plan.castWithoutTraits (the spell
+//   module's castFromItem withoutTraits); "It also ignores any golem antimagic …" and its duration's end with the baton lines of the card (the
+//   target's own ability and the baton's whereabouts: the GM's).
 // Innermost in the chains (src/compiler/permanent.js, index.js): src/compiler/honest.js withCastNotes then reads what's left. Pure.
 
 import { isWielderSection } from "./wielder-riders.js";
@@ -46,6 +52,11 @@ const DC_IF = /^If (the target has been [^,]+?), the DC is instead DC (\d+)(?: (
 const IMPULSE = /If you're a kineticist\b[^.]*\bkinetic elements\b[^.]*\bimpulse attack modifier\b[^.]*\bimpulse DC\b[^.]*\./;
 const BY_ELEMENT = /^The spell corresponds to the element\b[^:]*\bgains that element's trait\b[^:]*: (.+)$/i;
 const ELEMENTS = ["air", "earth", "fire", "metal", "water", "wood"];
+const ACTIONS_AREA = /^The [\w' ]+? casts an? (\d)-action [A-Z][\w' -]+? spell with an area of an? (\d+)-foot (cone|burst|line|emanation) instead of an? \d+-foot (?:cone|burst|line|emanation)\b/i;
+const GAINS_TRAIT = /^\s*This spell gains the ([a-z]+) trait\.$/i;
+const ONLY_KIND = /^\s*This has the effects of (?:\d+(?:st|nd|rd|th)-rank )?[A-Z][\w' -]+? with a DC of \d+, but it affects only ([a-z]+?)s\.$/i;
+const LACKS_TRAIT = /^\s*It lacks the ([a-z]+) trait and functions on mindless [a-z]+\.$/i;
+const OWN_LINES = [/^\s*It also ignores any golem antimagic\b[^.]*\.$/i, /^\s*The effect's duration ends\s*if the [\w' ]+? is destroyed\b[^.]*\.$/i];
 
 // The plan, the item's source (its text's bead count) and the compile options (PF2e's spells by name) → the plan with its changes read,
 // or the same plan.
@@ -83,6 +94,34 @@ export function withCastChanges(plan, item = null, options = {}) {
             // (Its DC, the undead's save: Heal's only save.)
             const undead = UNDEAD_DC.exec(sentence);
             if (undead && !Number.isFinite(Number(next.dc ?? NaN))) next.dc = Number(undead[1]);
+            // (A variant's actions and another area, Fan of Soothing Winds' 3-action Heal in a cone — its undead DC in the same sentence.)
+            const actionsArea = ACTIONS_AREA.exec(sentence);
+            if (actionsArea) {
+                next.castActions = Number(actionsArea[1]);
+                next.castArea = { type: actionsArea[3].toLowerCase(), value: Number(actionsArea[2]) };
+                const rest = sentence.slice(actionsArea[0].length).replace(/^\s*;?\s*/, "");
+                if (!rest || rest === "." || (undead && /^the save DC for an undead creature is \d+\.$/i.test(rest))) continue;
+            }
+            const gains = GAINS_TRAIT.exec(sentence);
+            if (gains) {
+                next.castAddTraits = [...new Set([...(next.castAddTraits ?? []), gains[1].toLowerCase()])];
+                continue;
+            }
+            // (Only creatures of a kind, and the spell without a trait: Ivory Baton's constructs, its Dominate without mental.)
+            const only = ONLY_KIND.exec(sentence);
+            if (only) {
+                next.castTraits = { immune: [], only: [only[1].toLowerCase()], penalties: [], said: [sentence] };
+                continue;
+            }
+            const lacks = LACKS_TRAIT.exec(sentence);
+            if (lacks) {
+                next.castWithoutTraits = [...new Set([...(next.castWithoutTraits ?? []), lacks[1].toLowerCase()])];
+                continue;
+            }
+            if (OWN_LINES.some((pattern) => pattern.test(sentence))) {
+                lines.push(sentence);
+                continue;
+            }
             const dcIf = DC_IF.exec(sentence);
             if (dcIf && plan.spell?.uuid && Number.isFinite(Number(plan.dc)) && !plan.choices?.length) {
                 next.choices = [{ spell: plan.spell, rank: plan.rank ?? null, dc: plan.dc }, { spell: plan.spell, rank: plan.rank ?? null, dc: Number(dcIf[2]), when: `if ${dcIf[1].replace(/^the target has been\b/i, "the target was")}` }];
@@ -96,10 +135,7 @@ export function withCastChanges(plan, item = null, options = {}) {
                     // (Each spell with its element's trait already: nothing more to give it.)
                     const lacking = plan.choices.filter((choice, index) => !(options.spells?.[String(choice.spell?.name ?? "").toLowerCase()]?.traits ?? []).includes(elements[index]));
                     if (!lacking.length) lines.push(sentence);
-                    else {
-                        unplayed = true;
-                        left.push(sentence);
-                    }
+                    else next.castElementTrait = true;
                     continue;
                 }
             }
@@ -112,7 +148,8 @@ export function withCastChanges(plan, item = null, options = {}) {
         const rest = impulse ? joined.replace(impulse[0], " ").replace(/\s+/g, " ").trim() : joined;
         if (rest) kept.push(left.length === sentences(note).length && !impulse ? note : rest);
     }
-    if (!lines.length && !next.choices && !next.castImpulse && next.dc === plan.dc && !unplayed && !wielded) return plan;
+    const changed = ["castActions", "castArea", "castAddTraits", "castTraits", "castWithoutTraits", "castElementTrait"].some((key) => next[key] !== plan[key]);
+    if (!lines.length && !next.choices && !next.castImpulse && next.dc === plan.dc && !unplayed && !wielded && !changed) return plan;
     if (next.castImpulse && !next.choices?.some((choice) => choice.element)) delete next.castImpulse;
     if (kept.length) next.notes = kept;
     else delete next.notes;

@@ -26,7 +26,8 @@ test("a wait said at a paragraph's end: Madcap Top's 1d4 hours its recharge, as 
 test("one-off rules of this group: their card's lines, counted done", () => {
     const plans = [
         // (2026-10-28: Instant Fortress no longer one — the structure card's fortress, test/b5-leftovers-2026-10-28.test.js.)
-        activation("Ivory Baton"), activation("Ivory Baton (Greater)"), compileItem(item("Eldritch Flare")), activation("Ooze Skin"),
+        // (2026-10-29: Ivory Baton (both) no longer one — the spell module's castFromItem withoutTraits, test/spell-changes-2026-10-29.test.js.)
+        compileItem(item("Eldritch Flare")), activation("Ooze Skin"),
         activation("Flurrying"), compileItem(item("Time Shield Potion")), activation("Deck of illusions"), activation("Lucky Draw Bandolier", "Secret Ace"),
         activation("Lucky Draw Bandolier (Greater)"), activation("Madcap Top", "Spin the Top"), activation("Jabali's Dice", "Jabali's Gamble"), activation("Rod of Wonder")
     ];
@@ -35,9 +36,8 @@ test("one-off rules of this group: their card's lines, counted done", () => {
         assert.equal(plan.decided, "one-off", plan.source.name);
         assert.ok(done(plan), plan.source.name);
     }
-    // (The cast and the table still play what they can: Ivory Baton's Dominate at DC 30, Rod of Wonder's spells at DC 27.)
-    assert.deepEqual([plans[0].builtin, plans[0].spell.name, plans[0].dc], ["cast-spell", "Dominate", 30]);
-    assert.deepEqual([plans[11].builtin, plans[11].table.dc, plans[11].table.attack], ["table", 27, 17]);
+    // (The table still plays what it can: Rod of Wonder's spells at DC 27.)
+    assert.deepEqual([plans[9].builtin, plans[9].table.dc, plans[9].table.attack], ["table", 27, 17]);
 });
 
 test("more one-offs, and note-only items checked: card lines, counted done", () => {
