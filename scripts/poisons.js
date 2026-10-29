@@ -3,7 +3,7 @@
 // card on the target (the ability module's api.live.postCard, the affliction
 // handed to Pseudo Afflictions as for monster venom); a critical miss wastes it.
 
-import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, distancePenalty, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, coatableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice } from "../src/live/poison-card.js";
+import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, distancePenalty, isOwnSave, createPoisonCard, exposureCardHTML, poisonCardHTML, poisonEffectSource, poisonStrike, poisonableWeapons, coatableWeapons, repeatsLater, saveText, withAttackChoice, withCheckChoice, worseSave } from "../src/live/poison-card.js";
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { scaledPlan } from "../src/compiler/scaled.js";
@@ -143,6 +143,9 @@ export function attackChoices(actor, kinds, { atLeast = null } = {}) {
         ...(kinds.includes("melee") && !Number.isFinite(melee) && Number.isFinite(meleeStrike) ? [{ kind: "melee", label: `Melee attack ${sign(meleeStrike)}`, modifier: meleeStrike }] : []),
         ...(kinds.includes("thrown") && Number.isFinite(thrown) ? [{ kind: "thrown", label: `Thrown (simple weapon) ${sign(thrown)}`, modifier: thrown }] : []),
         ...(kinds.includes("thrown") && !Number.isFinite(thrown) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
+        // (A ray aimed as a simple weapon, Miniaturization Device's: the same numbers as a thrown one, 2026-10-28.)
+        ...(kinds.includes("simple-ranged") && Number.isFinite(thrown) ? [{ kind: "simple-ranged", label: `Ranged (simple weapon) ${sign(thrown)}`, modifier: thrown }] : []),
+        ...(kinds.includes("simple-ranged") && !Number.isFinite(thrown) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
         ...(kinds.includes("ranged-proficiency") && Number.isFinite(proficient) ? [{ kind: "ranged-proficiency", label: `Ranged (highest proficiency) ${sign(proficient)}`, modifier: proficient }] : []),
         ...(kinds.includes("ranged-proficiency") && !Number.isFinite(proficient) && Number.isFinite(ranged) ? [{ kind: "ranged", label: `Ranged attack ${sign(ranged)}`, modifier: ranged }] : []),
         ...(kinds.includes("proficiency") && Number.isFinite(proficient) ? [{ kind: "proficiency", label: `Ranged attack (best weapon proficiency) ${sign(proficient)}`, modifier: proficient }] : []),
@@ -157,14 +160,14 @@ export function attackChoices(actor, kinds, { atLeast = null } = {}) {
 }
 
 // targets: the token uuids the presser had targeted.
-export async function applyExposureCard(message, { targets = [], damageChoice = null, attackChoice = null, checkChoice = null, scaled = null } = {}) {
+export async function applyExposureCard(message, { targets = [], damageChoice = null, attackChoice = null, checkChoice = null, scaled = null, critical = false } = {}) {
     let state = stateOf(message);
     if (!state || state.kind !== "expose" || state.status !== "open") return null;
     // (The check picked: Twisting Twine's Disarm or Trip.)
     if (Number.isInteger(checkChoice) && state.plan?.checkChoices?.[checkChoice]) state = { ...state, checkChoice };
     // (A spellgun's attack, as picked; with none its user has, the GM rolls it.)
     if (Number.isInteger(attackChoice) && state.attackChoices?.[attackChoice]) state = { ...state, attackChoice };
-    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.some((kind) => kind === "thrown" || kind === "ranged-proficiency") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("proficiency") ? "ranged weapon proficiency or ranged Strike" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
+    if (state.plan?.ownCheck?.choose && !(state.attackChoices ?? []).length) throw new Error(`${state.user.name} has no ${state.plan.ownCheck.choose.includes("simple-ranged") ? "ranged attack to aim it with" : state.plan.ownCheck.choose.some((kind) => kind === "thrown" || kind === "ranged-proficiency") ? "attack to throw it with" : state.plan.ownCheck.choose.includes("proficiency") ? "ranged weapon proficiency or ranged Strike" : state.plan.ownCheck.choose.includes("ranged") ? "spell attack or ranged Strike" : "spell attack or firearm Strike"}: roll ${state.item.name}'s attack by hand.`);
     // (The damage picked: Necklace of Fireballs' bead.)
     if (Number.isInteger(damageChoice) && state.plan?.damageChoices?.[damageChoice]) state = { ...state, damageChoice };
     // (Its damage's amount, typed: Twisting Gale's Strike damage, Conflagration Club's charges.)
@@ -228,8 +231,11 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     // (At no more creatures than it reaches, Hunter's Dawn's gazelle: thenSave.maxTargets, 2026-10-27.)
     if (state.step === "then" && Number(state.plan?.thenSave?.maxTargets) > 0 && tokens.length > Number(state.plan.thenSave.maxTargets)) throw new Error(`${state.item.name}: target up to ${state.plan.thenSave.maxTargets} creature${Number(state.plan.thenSave.maxTargets) === 1 ? "" : "s"} for its second step.`);
     if (state.step === "then" && state.plan?.thenSave) {
+        // (After a critical hit, a save one degree worse when the item says so — Miniaturization Device's, its box ticked: plan.thenCritical.)
+        const worse = critical === true && state.plan.thenCritical === "worse";
+        if (worse) lines.push("After a critical hit: its save one degree worse.");
         if (postCard && actor) {
-            await postCard({ plan: state.plan.thenSave, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: `${state.item.name} hit` });
+            await postCard({ plan: worse ? worseSave(state.plan.thenSave) : state.plan.thenSave, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: `${state.item.name} hit` });
             lines.push(`${names}: its save card follows.`);
         } else lines.push(`${names}: ${saveText(state.plan.thenSave)} (roll it by hand).`);
         const done = { ...state, status: "applied", step: null, results: [...state.results, ...lines].slice(-6) };

@@ -93,8 +93,10 @@ async function withinResults(action, outcome, token, state) {
         const present = action.reduce.choose.map((slug) => [slug, Number(actor.getCondition?.(slug)?.value) || 0]).filter(([, value]) => value > 0).sort((a, b) => b[1] - a[1]);
         if (!present.length) lines.push(`${name} has none of ${action.reduce.choose.join(", ")}: nothing to lower`);
         else {
-            for (let step = 0; step < action.reduce.by; step++) await actor.decreaseCondition(present[0][0]);
-            lines.push(`${name}'s ${present[0][0]} lowered by ${action.reduce.by}`);
+            // (More on a critical success, Curative Aglaophotis's Doomed: reduce.criticalBy, 2026-10-28.)
+            const by = outcome === "criticalSuccess" && Number(action.reduce.criticalBy) > 0 ? Number(action.reduce.criticalBy) : action.reduce.by;
+            for (let step = 0; step < by; step++) await actor.decreaseCondition(present[0][0]);
+            lines.push(`${name}'s ${present[0][0]} lowered by ${by}`);
         }
     }
     if (action.stage && won) {

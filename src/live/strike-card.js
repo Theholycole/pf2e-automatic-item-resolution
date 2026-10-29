@@ -125,6 +125,8 @@ const RANGE_WORDS = { melee: "melee Strike", ranged: "ranged Strike" };
 export const strikeWord = (plan) => (plan.strike?.unarmed ? "unarmed Strike" : RANGE_WORDS[plan.strike?.range] ?? "Strike");
 const UNTIL_WORDS = { "turn-end": "this turn", "next-turn-end": "before the end of the next turn", "next-turn-start": "before the start of the next turn", minute: "within a minute" };
 const EVERY_WORDS = { "turn-end": "for the rest of this turn", "next-turn-end": "until the end of the next turn", "next-turn-start": "until the start of the next turn", minute: "for the next minute" };
+// (Or its own time, Power Gauntlet's 10 minutes to a day — strike.lasts { value, unit }, 2026-10-28.)
+const untilWords = (strike) => (strike?.lasts ? `within ${strike.lasts.value} ${strike.lasts.value === 1 ? strike.lasts.unit.replace(/s$/, "") : strike.lasts.unit}` : UNTIL_WORDS[strike?.until] ?? "this turn");
 
 // The card's hint: which Strike carries it and what spends it.
 // (uses: how many it readied, a volley at each creature targeted.)
@@ -135,12 +137,12 @@ export function strikeHint(plan, name, { uses = null } = {}) {
     // (2026-10-27: every Strike for a while, strike.every — Nightmare Cudgel's minute, Whip of Compliance's turn: none spends it.)
     if (strike.every) return `${name}'s ${strikeWord(plan)}s ${EVERY_WORDS[strike.until] ?? "this turn"} each carry it on a hit; none spends it.`;
     const count = uses ?? strike.uses;
-    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${UNTIL_WORDS[strike.until] ?? "this turn"}, at ${strike.volley.oneRoll.upTo ? "up to " : "the "}${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
+    if (strike.volley?.oneRoll) return `${name}'s next ${strikeWord(plan)} ${untilWords(strike)}, at ${strike.volley.oneRoll.upTo ? "up to " : "the "}${strike.volley.oneRoll.count} creatures targeted when it's readied: its one attack roll is each one's.`;
     if (strike.volley?.each && !count) return `${name}'s next ${strikeWord(plan)}s this turn, one at each ${strike.volley.each} targeted when it's readied, carry it; a miss spends that one.`;
     const which = count > 1 ? `next ${NUMBER_WORDS[count] ?? count} ${strikeWord(plan)}s` : `next ${strikeWord(plan)}`;
-    if (strike.volley && count > 1) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carry it${strike.volley.each ? `, one at each ${strike.volley.each} targeted` : strike.volley.different ? ", each at a different creature" : ""}; a miss spends that one.`;
-    if (strike.instead) return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} carries it; its attack roll posts the damage to roll, so don't roll the weapon's own.`;
-    return `${name}'s ${which} ${UNTIL_WORDS[strike.until] ?? "this turn"} ${count > 1 ? "carry" : "carries"} it; ${strike.missKeeps ? "only a hit spends it" : "a miss spends it"}.`;
+    if (strike.volley && count > 1) return `${name}'s ${which} ${untilWords(strike)} carry it${strike.volley.each ? `, one at each ${strike.volley.each} targeted` : strike.volley.different ? ", each at a different creature" : ""}; a miss spends that one.`;
+    if (strike.instead) return `${name}'s ${which} ${untilWords(strike)} carries it; its attack roll posts the damage to roll, so don't roll the weapon's own.`;
+    return `${name}'s ${which} ${untilWords(strike)} ${count > 1 ? "carry" : "carries"} it; ${strike.missKeeps ? "only a hit spends it" : "a miss spends it"}.`;
 }
 
 // Damage in place of the weapon's for the attack's degree (Big Rock Bullet's): the ability module's card of it — the check
@@ -215,8 +217,9 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     const metalOnly = strike.attack?.against === "metal" && strike.attack.metalTarget !== true ? ["target:trait:metal"] : [];
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`, ...metalOnly] } : metalOnly.length ? { predicate: metalOnly } : {}) });
     // (Only the damage of the type it replaces, Grisly Scythe's slashing: PF2e's predicate on each die's and modifier's own type, so a rune's
-    // persistent bleed stays bleed — 2026-10-28, from the case writers' reading.)
-    if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration, ...(strike.alterationFrom ? { predicate: [`damage:type:${strike.alterationFrom}`] } : {}) });
+    // persistent bleed stays bleed — 2026-10-28, from the case writers' reading; and only a weapon of a base, strike.base, the strike group's.)
+    const altered = [...(strike.alterationFrom ? [`damage:type:${strike.alterationFrom}`] : []), ...(strike.base ? [`item:base:${strike.base}`] : [])];
+    if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration, ...(altered.length ? { predicate: altered } : {}) });
     // (A property rune it doesn't benefit from, Storm Arrow's shock: that rune's dice — PF2e slugs them by the rune — none.)
     if (strike.withoutRune) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "dice-number", value: 0, slug: strike.withoutRune });
     // (A precious material for it: PF2e's AdjustStrike on the Strikes it's for.)
@@ -277,7 +280,7 @@ export function strikeEffectSource({ state, img = null, worldTime = 0, initiativ
         flags: { [moduleId]: { [MODULE_KEY]: { plan: state.plan, item: state.item, user: state.user, weaponId, ammoId, uses: uses ?? strike.uses ?? 1, awaiting: Boolean(strike.hit), ...(strike.volley ? { targets: targets ?? [], struck: [] } : {}) } }, ...ignores, ...ignoredResistanceFlag(strike, { weaponId, ammoId }) },
         system: {
             description: { value: `<p>${escape(strikeHint(state.plan, "Its user", { uses }))} ${escape(strikeLines(state.plan).join("; "))}.</p>` },
-            duration: { ...(DURATIONS[strike.until] ?? DURATIONS["turn-end"]), sustained: false },
+            duration: { ...(strike.lasts ? { value: strike.lasts.value, unit: strike.lasts.unit, expiry: "turn-start" } : DURATIONS[strike.until] ?? DURATIONS["turn-end"]), sustained: false },
             start: { value: worldTime, initiative },
             rules: strikeRules(state.plan, { weaponId, ammoId, label: state.item.name })
         }
@@ -291,6 +294,8 @@ export function riderFor(plan, { ranged = false, outcome, options = [], weaponId
     if (plan.strike?.range === "melee" && ranged) return null;
     if (plan.strike?.range === "ranged" && !ranged) return null;
     if (weaponId && !options.includes(`item:id:${weaponId}`)) return null;
+    // (Only with a weapon of that base, Power Gauntlet's gauntlet: PF2e's "item:base:…", 2026-10-28.)
+    if (plan.strike?.base && !options.includes(`item:base:${plan.strike.base}`)) return null;
     // (Activated ammunition: a Strike with that ammunition, when PF2e's roll names its ammunition.)
     // ("ammo:id:…", or PF2e's weapon options' "item:ammo:id:…".)
     if (ammoId && options.some((option) => /(?:^|:)ammo:id:/.test(option)) && !options.some((option) => option === `ammo:id:${ammoId}` || option.endsWith(`:ammo:id:${ammoId}`))) return null;

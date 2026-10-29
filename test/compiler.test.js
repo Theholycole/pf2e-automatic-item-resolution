@@ -803,7 +803,8 @@ test("third-party bonuses read from their own packs (their words not kept here):
     const support = find("pf2e-team-plus-magic", "items", "Steady Support");
     if (support) assert.deepEqual(mods(support)[0], [["saving-throw", 2, "item", "1 rounds", JSON.stringify(["forced-movement"])], ["fortitude-dc", 2, "item", "1 rounds", JSON.stringify(["forced-movement"])]]);
     const pearl = find("pf2e-team-plus-tian-xia", "player-options", "Black Pearl of Mewru");
-    if (pearl) assert.deepEqual(mods(pearl), [[["saving-throw", 2, "status", "1 minutes", JSON.stringify(["item:trait:curse"])]], 1]);
+    // (2026-10-28: its better degree on the triggering save no longer a line — the fortune card beside it, src/compiler/triggering-save.js.)
+    if (pearl) assert.deepEqual(mods(pearl), [[["saving-throw", 2, "status", "1 minutes", JSON.stringify(["item:trait:curse"])]], 0]);
     const steak = find("pf2e-team-plus-alchemists", "pf2e-items", "Draconic Steak");
     if (steak) assert.deepEqual(mods(steak)[0], [["intimidation", 2, "circumstance", "24 hours", "null"]]);
     const voice = find("pf2e-team-plus-alchemists", "pf2e-items", "Honeyed Voice");

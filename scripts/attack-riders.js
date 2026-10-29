@@ -6,20 +6,24 @@
 
 import { attackRidersText } from "../src/compiler/attack-riders.js";
 import { itemNoteSource } from "../src/live/card.js";
-import { ABILITY_ID, MODULE_ID, isActiveGM } from "./foundry.js";
+import { ABILITY_ID, CORE_ID, MODULE_ID, isActiveGM } from "./foundry.js";
 
 export const WATCH_KEY = "attackRiders";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 // The watch Effect on its user, for the item's time (unlimited with none); a whetstone's, the weapon picked on the card ({ id, name }).
-export function attackRidersEffectSource(entry, { item = {}, user = {}, weapon = null, worldTime = 0, initiative = null } = {}) {
+// (Gone when its creature's Rage ends, Instinct Crown (Wrecker)'s — entry.untilRage, scripts/live.js; and the resolution core's ignoreResistance
+// on it, its value its creature's level when perLevel — level — 2026-10-28.)
+export function attackRidersEffectSource(entry, { item = {}, user = {}, weapon = null, worldTime = 0, initiative = null, level = null } = {}) {
+    const { perLevel, ...ignores } = entry.ignoreResistance ?? {};
+    const ignoreResistance = entry.ignoreResistance ? { ...ignores, value: perLevel ? Math.max(1, Number(level) || 1) * perLevel : ignores.value } : null;
     const duration = entry.duration?.mode === "fixed" ? { value: entry.duration.value, unit: entry.duration.unit, expiry: entry.duration.expiry ?? "turn-start", sustained: false } : { value: -1, unit: "unlimited", expiry: null, sustained: false };
     return {
         name: weapon ? `${item.name ?? "Item"} (${weapon.name})` : `${item.name ?? "Item"}: melee attack riders`,
         type: "effect",
         img: item.img ?? "icons/svg/sword.svg",
-        flags: { [MODULE_ID]: { [WATCH_KEY]: { riders: entry.riders, item: { name: item.name ?? null, uuid: item.uuid ?? null }, user, ...(weapon ? { weapon: { id: weapon.id, name: weapon.name } } : {}) } } },
+        flags: { [MODULE_ID]: { [WATCH_KEY]: { riders: entry.riders, item: { name: item.name ?? null, uuid: item.uuid ?? null }, user, ...(weapon ? { weapon: { id: weapon.id, name: weapon.name } } : {}) }, ...(entry.untilRage ? { untilRage: true } : {}) }, ...(ignoreResistance ? { [CORE_ID]: { ignoreResistance } } : {}) },
         // (A whetstone's own rules for its weapon, Pinpoint Arrowhead's: on that weapon alone, by its id.)
         system: { description: { value: `<p>${escape(attackRidersText(entry.riders, weapon?.name ?? null))}, from <strong>${escape(item.name ?? "the item")}</strong>.</p>` }, duration, start: { value: worldTime, initiative }, rules: weapon?.id ? (entry.riders ?? []).flatMap((rider) => rider.rules ?? []).map((rule) => ({ ...rule, predicate: [...(rule.predicate ?? []), `item:id:${weapon.id}`] })) : [] }
     };
@@ -46,6 +50,19 @@ async function learnOf(effect, watch, actor, target) {
     await ChatMessage.create({ content: `<p><strong>${item}</strong> (GM): ${words}.</p>`, speaker: ChatMessage.getSpeaker({ actor }), whisper: gmIds() });
     return null;
 }
+
+// (A rider's predicate against the attack's roll options: PF2e's own test, else every plain term there, one of an "or", none of a "not". Pure.)
+export function predicateFits(predicate, options) {
+    if (!Array.isArray(predicate) || !predicate.length) return true;
+    const Predicate = globalThis.game?.pf2e?.Predicate;
+    if (Predicate) return new Predicate(predicate).test(new Set(options));
+    const has = new Set(options);
+    return predicate.every((term) => (typeof term === "string" ? has.has(term) : Array.isArray(term?.or) ? term.or.some((one) => has.has(one)) : typeof term?.not === "string" ? !has.has(term.not) : true));
+}
+// (Its class DC: PF2e's, else the best of its class DCs.)
+const classDCOf = (actor) => Math.max(...[actor?.classDC?.value, ...Object.values(actor?.classDCs ?? {}).map((entry) => entry?.value), actor?.system?.attributes?.classDC?.value].map(Number).filter(Number.isFinite));
+// (The save at that DC. Pure.)
+export const withSaveDC = (plan, dc) => ({ ...plan, resolution: { ...plan.resolution, check: { ...plan.resolution.check, against: { dc: "fixed", value: dc } } } });
 
 // A melee attack roll by a creature with a watch Effect: its riders for the degree rolled.
 export async function attackRidersRolled(message) {
@@ -77,6 +94,20 @@ export async function attackRidersRolled(message) {
             if (!rider.on.includes(context.outcome) || (rider.melee && !melee) || (rider.own && !own) || (rider.weapon && !weapon)) continue;
             if (rider.learn) {
                 await learnOf(effect, watch, actor, targetToken?.actor ?? null);
+                continue;
+            }
+            // (A save at the creature hit, only one its predicate fits — the attack's roll options —, at its user's class DC: the ability module's
+            // save card, Instinct Crown (Wrecker)'s critical hit, 2026-10-28.)
+            if (rider.save) {
+                if (!targetToken?.actor || !predicateFits(rider.save.predicate, context.options ?? [])) continue;
+                const dc = rider.save.dc === "class" ? classDCOf(actor) : Number(rider.save.dc);
+                const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
+                if (!Number.isFinite(dc) || !postCard) {
+                    lines.push(`${targetToken.name}: ${rider.words}${Number.isFinite(dc) ? "" : ` (${actor.name} has no class DC)`} — roll it by hand`);
+                    continue;
+                }
+                await postCard({ plan: withSaveDC(rider.save.plan, dc), item: { name: watch.item?.name ?? "Item", uuid: watch.item?.uuid ?? null }, sourceActor: actor, sourceToken, tokens: [targetToken.object ?? targetToken], cause: `${watch.item?.name ?? "Item"}: a critical hit` });
+                lines.push(`${targetToken.name}: its save card follows (DC ${dc})`);
                 continue;
             }
             if (!ability?.applyChange) {

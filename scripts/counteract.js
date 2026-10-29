@@ -118,6 +118,15 @@ async function castAfter(thenSpell, state) {
     return `Then ${actor.name} gains the effects of ${entry.name}${lasts ? ` — ${lasts.replace(/^It lasts/, "it lasts").replace(/\.$/, "")}` : ""}.`;
 }
 
+// Its user's latest roll of a PF2e action in the recent chat (its roll options' "action:…") → { total, natural } or null.
+function latestActionRoll(actorUuid, action) {
+    const option = `action:${action}`;
+    const found = (game.messages?.contents ?? []).slice(-40).reverse().find((entry) => (entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null)) === actorUuid && (entry.flags?.pf2e?.context?.options ?? []).includes(option) && entry.rolls?.[0]);
+    if (!found) return null;
+    const roll = found.rolls[0];
+    return { total: Number(roll.total), natural: Number(roll.dice?.[0]?.total ?? NaN) };
+}
+
 export async function applyCounteractCard(message, { drinker = null, rows = null, ownRank = null, amount = null, targets = [] } = {}) {
     let state = stateOf(message);
     if (!state || state.kind !== "counteract" || state.status !== "open") return null;
@@ -168,9 +177,13 @@ export async function applyCounteractCard(message, { drinker = null, rows = null
         // (Rolled twice, the higher kept, against some kinds — Halcyon Heart's net against a demon, a fortune effect: counteract.fortuneVs, the
         // creature's traits, 2026-10-27.)
         const twice = (state.counteract.fortuneVs ?? []).some((trait) => (state.counteract.struckTraits ?? []).includes(trait));
-        const roll = await new Roll(`${twice ? "2d20kh" : "1d20"} + ${state.counteract.modifier}`).evaluate();
-        await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: counteract ${row.name} (DC ${row.dc}, rank ${row.rank})` });
-        const natural = Number(roll.dice?.[0]?.total ?? NaN);
+        // (Its check another roll's result, Curative Aglaophotis's Treat Wounds: its user's latest roll of that action in the recent chat, its
+        // total and die — counteract.fromRoll, 2026-10-28.)
+        const given = state.counteract.fromRoll ? latestActionRoll(state.user.actorUuid, state.counteract.fromRoll.action) : null;
+        if (state.counteract.fromRoll && !given) throw new Error(`No ${state.counteract.fromRoll.action.replace(/-/g, " ")} roll by ${state.user.name} in the recent chat: roll it first.`);
+        const roll = given ?? await new Roll(`${twice ? "2d20kh" : "1d20"} + ${state.counteract.modifier}`).evaluate();
+        if (!given) await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: counteract ${row.name} (DC ${row.dc}, rank ${row.rank})` });
+        const natural = Number(given ? given.natural : roll.dice?.[0]?.total ?? NaN);
         let { degree, removed } = counteractResult({ total: roll.total, natural: Number.isFinite(natural) ? natural : null, dc: row.dc, ours, theirs: row.rank });
         // (A failure that's a success against some creatures, Awakened Silver Shot's devils and werecreatures: the creature hit's traits.)
         const upFor = state.counteract.failToSuccess?.traits ?? [];

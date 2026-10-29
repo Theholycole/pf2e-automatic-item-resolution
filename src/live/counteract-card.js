@@ -111,7 +111,9 @@ function counteractOwnText(counteract) {
     // (Nothing at its rank, Razmiri Mask's Mercy at rank 2: said so, with the rank it starts at — not an empty "one effect ;", 2026-10-27.)
     const from = (counteract.afflictionsByRank ?? [])[0];
     if (!what) return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${from ? `nothing at this rank (a ${list(from.afflictions ?? [])} from rank ${from.rank})` : how}`;
-    return `Counteract +${counteract.modifier}, rank ${counteract.rank}: ${how} ${what}${counteract.failToSuccess ? ` (a failure is a success against a ${list(counteract.failToSuccess.traits)})` : ""}`;
+    // (Its check another roll's, Curative Aglaophotis's Treat Wounds: "Counteract with its user's latest Treat Wounds roll, rank 7: …", 2026-10-28.)
+    const check = counteract.fromRoll ? `Counteract with ${counteract.fromRoll.words ?? `its user's latest ${counteract.fromRoll.action.replace(/-/g, " ")} roll`}` : `Counteract +${counteract.modifier}`;
+    return `${check}, rank ${counteract.rank}: ${how} ${what}${counteract.failToSuccess ? ` (a failure is a success against a ${list(counteract.failToSuccess.traits)})` : ""}`;
 }
 
 export function counteractCardHTML(state, { canApply = false } = {}) {

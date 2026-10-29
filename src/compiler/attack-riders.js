@@ -115,6 +115,8 @@ export function readAttackRiders(html) {
 // (A whetstone's: "On a hit with the weapon picked: you are quickened for 1 round (its extra action only to Stride toward a foe or Strike)".)
 export function attackRidersText(riders, weaponName = null) {
     const parts = (riders ?? []).map((rider) => {
+        // (A save at the creature hit, its own words: Instinct Crown (Wrecker)'s critical hit, 2026-10-28.)
+        if (rider.save && rider.words) return rider.words;
         const weapon = weaponName ?? "the weapon picked";
         if (rider.weapon && rider.heal) return `Hit Point damage ${weapon} deals to a living creature heals you half as much`;
         if (rider.weapon && rider.rules) return `With ${weapon}: ${rider.words}`;

@@ -193,6 +193,14 @@ export function withCheckChoice(plan, index = 0) {
     return choice ? { ...plan, resolution: choice.resolution } : plan;
 }
 
+// The save with its result one degree worse (Miniaturization Device's after a critical hit, plan.thenCritical "worse"): each degree's row the one
+// below it, a critical failure's its own. Pure.
+export function worseSave(plan) {
+    const rows = plan?.resolution?.outcomes;
+    if (!rows) return plan;
+    return { ...plan, resolution: { ...plan.resolution, outcomes: { criticalSuccess: rows.success, success: rows.failure, failure: rows.criticalFailure, criticalFailure: rows.criticalFailure } } };
+}
+
 // The plan with the attack modifier picked: a spellgun's check at its user's spell or firearm attack modifier.
 // (state.attackPenalty: what its target's distance takes off — range increments past the first, a volley's –2 — src/compiler/thrown.js.)
 export function withAttackChoice(plan, state) {
@@ -241,7 +249,7 @@ export function exposureCardHTML(state, { canApply = false } = {}) {
     // (Until its user's rage ends, Instinct Crown (Dragon)'s.)
     const again = !state.repeat ? "" : state.plan?.retaliation?.untilRage ? ` It stays open until ${state.user?.name ?? "its user"}'s rage ends${used}.` : state.attacker || state.when ? ` It stays open until its time is up${used}.` : ` It can be used again${used} until its time is up, after each recharge.`;
     const hint = !open ? "" : state.step === "then"
-        ? `<p class="aar-hint">If the attack hit: target the creature hit and press the button for its ${escape(saveText(state.plan.thenSave))}.</p>`
+        ? `<p class="aar-hint">If the attack hit: target the creature hit and press the button for its ${escape(saveText(state.plan.thenSave))}.</p>${state.plan.thenCritical === "worse" && canApply ? `<p class="aar-actions"><label><input type="checkbox" data-air-field="critical"> It was a critical hit: its save one degree worse</label></p>` : ""}`
         : state.own
         ? `<p class="aar-hint">${escape(state.user.name)}'s own ${/ save\b/.test(saveText(state.plan)) ? "save" : "check"} (${escape(saveText(state.plan))}).</p>`
         : state.attacker && state.plan?.retaliation?.who
