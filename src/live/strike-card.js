@@ -72,6 +72,8 @@ export function strikeLines(plan) {
         strike.alteration ? `All its ${strike.alterationFrom ? `${strike.alterationFrom} ` : ""}damage is ${strike.alteration}` : null,
         strike.withoutRune ? `No ${strike.withoutRune} rune damage on it, nor that rune's critical effect, from a weapon with one${strike.runeDC ? ` (its save is DC ${strike.runeDC.dc} then)` : ""}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
+        // (A trait it gains, the Agglomerative Cannonball's razing: PF2e's AdjustStrike, 2026-10-28.)
+        ...(strike.traits ?? []).map((trait) => `It gains the ${trait} trait`),
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
         strike.offGuard ? "Its target is Off-Guard to it" : null,
         ...(strike.options ?? []).map((option) => (option === "ignore-range-penalty" ? "No range increment penalty on it" : /^ignore-range-penalty:(\d+)$/.exec(option) ? `No range penalty out to its ${["", "first", "second", "third", "fourth", "fifth"][Number(/\d+$/.exec(option)[0])] ?? option.split(":")[1]} range increment` : `Roll option ${option}`)),
@@ -219,6 +221,9 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     if (strike.withoutRune) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "dice-number", value: 0, slug: strike.withoutRune });
     // (A precious material for it: PF2e's AdjustStrike on the Strikes it's for.)
     if (strike.material) rules.push({ key: "AdjustStrike", mode: "add", property: "materials", value: strike.material, definition: weaponId ? [`item:id:${weaponId}`] : strike.unarmed ? ["item:category:unarmed"] : range ? [`item:${range}`] : [] });
+    // (A trait for it, the Agglomerative Cannonball's razing: PF2e's AdjustStrike on the weapon firing the round — by the round's id, PF2e's
+    // weapon options' "item:ammo:id:…" or the roll's "ammo:id:…" — or the Strikes it's for, 2026-10-28.)
+    for (const trait of strike.traits ?? []) rules.push({ key: "AdjustStrike", mode: "add", property: "weapon-traits", value: trait, definition: ammoId ? [{ or: [`item:ammo:id:${ammoId}`, `ammo:id:${ammoId}`] }] : weaponId ? [`item:id:${weaponId}`] : strike.unarmed ? ["item:category:unarmed"] : range ? [`item:${range}`] : [] });
     if (strike.degree) rules.push({ key: "AdjustDegreeOfSuccess", selector: attackSelector, adjustment: strike.degree, ...(label ? { label } : {}), ...(weaponId && range ? { predicate: [`item:${range}`] } : {}) });
     // (Its roll options for the attack — "ignore-range-penalty:2", Sniper's Bead —, a trait's penalty suppressed — kickback, Alchemist's
     // Damper —, flat splash damage — Jistkan War Crossbow.)

@@ -47,6 +47,8 @@ export function fallEases(actor) {
 // (2026-10-27) A net spread on the ground below the token, Invisible Net's: the ability module's zone flagged fall { noDamage } (src/compiler/
 // moving-readings.js) whose area holds the token's centre, tested at the zone's own bottom (the token may be in the air still) → [{ noDamage,
 // source }]. The zone gone when its minute is up, it eases nothing more.
+// (2026-10-28: or a softer square, Impact Jelly's fall { shorter, nonlethal, landCheck } — src/compiler/fall-zones.js: its shorter fall the
+// environment module's now, its nonlethal damage and its check to land standing passed on for when it reads them.)
 export function netsUnder(token, abilityId = ABILITY_ID) {
     const doc = token?.document ?? token;
     const scene = doc?.parent ?? null;
@@ -55,9 +57,11 @@ export function netsUnder(token, abilityId = ABILITY_ID) {
     const out = [];
     for (const region of scene?.regions?.contents ?? [...(scene?.regions ?? [])]) {
         const flags = region?.flags?.[abilityId]?.zone;
-        if (!flags?.zone?.fall?.noDamage || typeof region.testPoint !== "function") continue;
+        const fall = flags?.zone?.fall;
+        if (!(fall?.noDamage || Number(fall?.shorter) > 0) || typeof region.testPoint !== "function") continue;
         const bottom = Number(region.elevation?.bottom);
-        if (region.testPoint({ ...centre, elevation: Number.isFinite(bottom) ? bottom : 0 })) out.push({ noDamage: true, source: flags.itemName ?? region.name ?? "a net" });
+        const eased = fall.noDamage ? { noDamage: true } : { shorter: Number(fall.shorter), ...(fall.nonlethal ? { nonlethal: true } : {}), ...(fall.landCheck ? { landCheck: fall.landCheck } : {}) };
+        if (region.testPoint({ ...centre, elevation: Number.isFinite(bottom) ? bottom : 0 })) out.push({ ...eased, source: flags.itemName ?? region.name ?? "a net" });
     }
     return out;
 }

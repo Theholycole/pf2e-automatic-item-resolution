@@ -359,7 +359,9 @@ export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, i
     // entry.replaces — scripts/until-rest.js; true for one of that name, "any" for one of any item, or a word for one of that kind, Kaldemash's
     // Lament's damage type: 2026-10-27.)
     // (The saves it calls for at creatures' turns near its bearer, Clockwork Sun's illumination: entry.turnAuras, scripts/turn-auras.js.)
-    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: entry.replaces } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}), ...(entry.turnAuras ? { turnAuras: entry.turnAuras, from: item.name ?? null } : {}) }, item, user, worldTime, initiative, moduleId });
+    // (2026-10-28: the trail its creature's Strides leave while it lasts, Instinct Crown (Breach)'s — entry.trail, scripts/trails.js —, and gone
+    // when its rage ends — entry.untilRage, scripts/live.js.)
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.trail ? { trail: entry.trail } : {}), ...(entry.untilRage ? { untilRage: true } : {}), ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: entry.replaces } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}), ...(entry.turnAuras ? { turnAuras: entry.turnAuras, from: item.name ?? null } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".

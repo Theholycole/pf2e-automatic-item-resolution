@@ -112,7 +112,10 @@ export const NOTES_CHECKED = new Map([
     ["Wraithweave Patch (Type III)", "the patch and the object wrapped in it incorporeal while its incorporeal user Sustains it, held only by incorporeal creatures, torn and its object lost or lodged if solid again inside a solid object (the GM's): an object's state"],
     // (2026-10-27, the adventure books': each note checked for anything a card could play.)
     ["Recording Rod (Basic)", "a minute of what its lens sees and hears, recorded and played back to its holder: an object's record, out of combat"],
-    ["Recording Rod (Reusable)", "a minute of what its lens sees and hears, recorded and played back to its holder, erased to record again: an object's record, out of combat"]
+    ["Recording Rod (Reusable)", "a minute of what its lens sees and hears, recorded and played back to its holder, erased to record again: an object's record, out of combat"],
+    // (2026-10-28, the moving group's modules' items: its user's own jump, and the map's or the GM's spirits'.)
+    ["Lily Landing Pad", "a pad under its user where its jump (its own Leap, High Jump or Long Jump) lands on water, solid ground for a minute (a round in rough water), anchored in shallow water or drifting with the current at the GM's say: the map's"],
+    ["Spirit Box", "for its minute, spirits within 80 feet hear through the box and answer through it a word at a time: speech, the GM's spirits to play"]
 ]);
 
 export const notesChecked = (name) => NOTES_CHECKED.has(String(name ?? ""));

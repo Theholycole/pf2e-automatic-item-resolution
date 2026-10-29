@@ -78,6 +78,7 @@ import { setUpCube } from "./cube.js";
 import { setUpDecoyDouble } from "./decoy-double.js";
 import { setUpPairedStone } from "./paired-stone.js";
 import { setUpSkillSwap } from "./skill-swap.js";
+import { setUpTrails } from "./trails.js";
 import { setUpAdjacentBonus } from "./adjacent-bonus.js";
 import { setUpArcaneDrain } from "./arcane-drain.js";
 import { setUpPortals } from "./portals.js";
@@ -235,6 +236,8 @@ Hooks.once("ready", async () => {
     setUpPairedStone();
     // (Two skills' ranks swapped for a while, The Trader's: scripts/skill-swap.js.)
     setUpSkillSwap();
+    // (The difficult terrain its user's Strides leave while an Effect lasts, Instinct Crown (Breach)'s: scripts/trails.js, 2026-10-28.)
+    setUpTrails();
     // (A bonus for each adjacent enemy, Vambrace of Gorum's Blade of Iron: scripts/adjacent-bonus.js.)
     setUpAdjacentBonus();
     // (A creature's spell or slot lost once its save card is applied, Belimarius's Invidious Halberd's Absorb Arcana: scripts/arcane-drain.js.)

@@ -165,7 +165,7 @@ export async function applyTeleportCard(message, { destination = null, targets =
     const options = place ? { teleport: true, animate: false, "pf2e-resolution-core": { forcedMovement: true, reason: state.item.name }, [MODULE_ID]: { placed: true } }
         : move ? { [MODULE_ID]: { moved: true } } : { teleport: true, animate: false, [MODULE_ID]: { teleported: true } };
     await token.update({ x: at.x, y: at.y }, options);
-    const VERBED = { Stride: "Strides", Step: "Steps", Leap: "Leaps", Burrow: "Burrows", Fly: "Flies", Swim: "Swims", Climb: "Climbs" };
+    const VERBED = { Stride: "Strides", Step: "Steps", Leap: "Leaps", Burrow: "Burrows", Fly: "Flies", Swim: "Swims", Climb: "Climbs", Crawl: "Crawls" };
     const done = place ? `is ${place.teleport ? "teleported" : "moved"}${place.by?.name ? ` by ${place.by.name}` : ""}` : move ? (VERBED[move.verb] ?? "moves").replace(/^./, (letter) => letter.toLowerCase()) : "teleports";
     const results = [summoned ? `${summoned.name} teleports to ${state.user.name}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.` : `${state.user.name} ${done}${aimed ? ` beside ${aimed.name}` : ""}${Number.isFinite(range) ? ` (within ${range} feet)` : ""}.`];
     // (Others along, teleport.with: Bring Me Near's, Blink Blade's target, Transposition Ammunition's.)
