@@ -66,7 +66,8 @@ export function withWeaponPotency(html, weapon) {
 export function etchedRuneActivations(item, index, options = {}) {
     if (!ETCHED_ONTO.includes(item?.type) || !index?.size) return [];
     const found = [];
-    for (const key of etchedKeys(item)) {
+    // (Each rune once: Forgefather's Seal takes the place of two property runes, its key twice — src/compiler/etching.js.)
+    for (const key of new Set(etchedKeys(item))) {
         const source = index.get(key);
         if (!source) continue;
         // (Its text with the weapon's own numbers: "1d8 per weapon damage die of the etched weapon".)

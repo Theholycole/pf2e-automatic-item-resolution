@@ -92,11 +92,22 @@ export function etchUpdate(rune, item, { keys = null, abp = false, energy = null
     const sameFamily = existing.filter((other) => familyOf(other)[0] === family);
     if (sameFamily.some((other) => familyOf(other)[1] > grade)) return { problem: `${item.name} already has a stronger ${rune.name.replace(/\s*\([^)]*\)$/, "")} rune.` };
     const kept = existing.filter((other) => !sameFamily.includes(other));
+    const width = slotsTaken(rune);
     if (!abp) {
         const slots = (Number(runes.potency) || 0) + (item.system?.material?.type === "orichalcum" ? 1 : 0);
-        if (kept.length >= slots) return { problem: slots ? `${item.name} has no free property rune slot (its potency rune gives ${slots}).` : `${item.name} has no potency rune, so it has no slot for a property rune.` };
+        if (width > 1 && slots < width) return { problem: `${rune.name} goes only onto armor that can bear ${width} or more property runes, and ${item.name} can bear ${slots}.` };
+        if (kept.length + width > slots) return { problem: !slots ? `${item.name} has no potency rune, so it has no slot for a property rune.` : width > 1 ? `${rune.name} takes the place of ${width} property runes, and ${item.name} has ${Math.max(0, slots - kept.length)} free (its potency rune gives ${slots}).` : `${item.name} has no free property rune slot (its potency rune gives ${slots}).` };
     }
-    return { update: { "system.runes.property": [...kept, key] }, words: `${rune.name}${needsEnergy(rune) ? ` (${energy})` : ""} on ${item.name}`, replaced: sameFamily };
+    return { update: { "system.runes.property": [...kept, ...Array(width).fill(key)] }, words: `${rune.name}${needsEnergy(rune) ? ` (${energy})` : ""} on ${item.name}`, replaced: sameFamily };
+}
+
+// (A rune that takes the place of more than one property rune, Forgefather's Seal's "can be etched only onto armor that can bear two or more
+// property runes, and it is so powerful that it takes the place of two property runes" (2026-10-29): its key that many times on the item, so
+// PF2e's armor counts its slots so — src/compiler/runes.js reads it once.)
+const WIDTH = { two: 2, three: 3, four: 4 };
+export function slotsTaken(rune) {
+    const said = /\btakes\s+the\s+place\s+of\s+(two|three|four)\s+property\s+runes\b/i.exec(String(rune?.system?.description?.value ?? ""));
+    return said ? WIDTH[said[1].toLowerCase()] : 1;
 }
 
 // PF2e's DC for a level (GM Core's table), adjusted for rarity.

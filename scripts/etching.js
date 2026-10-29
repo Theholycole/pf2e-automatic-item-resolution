@@ -4,6 +4,9 @@
 // success, or with no check, the rune goes onto the item and the runestone is used up (one of a stack); on a failure it
 // stays and nothing changes. The rune's own activations are pressed from the item it's etched onto (src/compiler/runes.js),
 // not from the runestone.
+// (A rune key PF2e's rune selects have no option for, Forgefather's Seal's on armor: PF2e's weapon and armor sheets rebuild
+// system.runes.property from those selects on any edit, so each such select gets the key's option, chosen — the sheet's next save keeps
+// it. 2026-10-29, src/compiler/worn-rune.js.)
 
 import { ENERGIES, etchUpdate, fitProblem, needsEnergy, runeDC } from "../src/compiler/etching.js";
 import { isRuneItem } from "../src/compiler/runes.js";
@@ -13,7 +16,8 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) =>
 const dataOf = (item) => ({ ...item.toObject(false), uuid: item.uuid });
 const ONTO = ["weapon", "armor", "shield"];
 
-export function setUpEtching() {
+// runes: PF2e's rune items by key (src/compiler/runes.js runeIndex), read as it's needed (it's indexed at ready).
+export function setUpEtching({ runes = () => new Map() } = {}) {
     Hooks.on("renderCreatureSheetPF2e", (sheet, html) => {
         try {
             addButtons(sheet, html);
@@ -21,6 +25,29 @@ export function setUpEtching() {
             console.error(`${MODULE_ID} | etch buttons`, error);
         }
     });
+    Hooks.on("renderItemSheet", (sheet, html) => {
+        try {
+            keepUnknownKeys(sheet.item ?? sheet.document, html instanceof HTMLElement ? html : html?.[0], runes());
+        } catch (error) {
+            console.error(`${MODULE_ID} | rune selects`, error);
+        }
+    });
+}
+
+// The item's property rune selects (PF2e's "system.runes.property.<n>"): the key in that slot, when the select has no option for it, added
+// and chosen, named as PF2e's rune item is.
+function keepUnknownKeys(item, root, index) {
+    if (!item || !ONTO.includes(item.type) || !root?.querySelectorAll) return;
+    const keys = item.system?.runes?.property ?? [];
+    for (const select of root.querySelectorAll('select[name^="system.runes.property."]')) {
+        const key = Array.isArray(keys) ? keys[Number(select.name.split(".").pop())] : null;
+        if (typeof key !== "string" || !key || [...select.options].some((option) => option.value === key)) continue;
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = index?.get?.(key)?.name ?? key;
+        select.append(option);
+        select.value = key;
+    }
 }
 
 function addButtons(sheet, html) {

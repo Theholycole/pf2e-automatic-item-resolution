@@ -7,7 +7,8 @@
 
 import { plainText } from "./rows.js";
 
-const WORN = /\bWhile wearing armor etched with an? [\w' -]+?\s*, you gain\b/i;
+// (Its rule while worn, the seal's either form's: src/compiler/worn-rune.js too.)
+export const WORN = /\bWhile wearing armor etched with an? [\w' -]+?\s*, you gain\b/i;
 const REPAIRS = /\bIn addition, any shield you wield automatically recovers (\d+) Hit Points at the start of your turn each round\./i;
 
 // The item's text (html or plain) → { hp } or null.
