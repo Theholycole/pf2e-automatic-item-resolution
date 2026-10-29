@@ -1,20 +1,19 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 40,
+  "entries": 32,
   "results": {
-   "partial": 24,
-   "none": 8,
-   "note-only": 6,
-   "builtin:no-effect": 2
+   "partial": 20,
+   "none": 7,
+   "note-only": 5
   },
   "main": {
-   "areas": 10,
-   "creatures": 9,
+   "creatures": 6,
    "visibility": 2,
    "strike": 5,
    "cast-changes": 3,
-   "dying": 2,
+   "areas": 6,
+   "dying": 1,
    "triggers": 2,
    "senses": 1,
    "reader": 1,
@@ -24,21 +23,18 @@
    "objects": 1
   },
   "any": {
-   "areas": 19,
-   "strike": 17,
-   "counteract": 5,
-   "immunity": 8,
-   "lasting": 11,
-   "objects": 14,
-   "creatures": 9,
-   "several": 6,
-   "moving": 2,
-   "range": 2,
-   "reader": 13,
-   "mind": 5,
+   "creatures": 6,
+   "lasting": 8,
+   "strike": 14,
+   "several": 5,
    "visibility": 2,
+   "areas": 12,
+   "reader": 11,
    "cast-changes": 3,
-   "dying": 5,
+   "immunity": 5,
+   "objects": 8,
+   "dying": 4,
+   "mind": 4,
    "triggers": 2,
    "spells": 7,
    "situational": 4,
@@ -46,34 +42,20 @@
    "senses": 2,
    "from-events": 4,
    "afflictions": 5,
+   "counteract": 3,
    "information": 5,
-   "out-of-combat": 6,
+   "out-of-combat": 5,
    "retaliation": 1,
    "forms": 2,
    "speeds": 1,
+   "moving": 1,
+   "range": 1,
    "illusions": 1,
    "actions": 1,
    "choice": 1
   }
  },
  "entries": [
-  {
-   "name": "Cube of Nex",
-   "kind": "activation",
-   "tier": "special",
-   "level": 25,
-   "result": "partial",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
-    "strike",
-    "counteract",
-    "immunity",
-    "lasting",
-    "objects"
-   ]
-  },
   {
    "name": "Spiral Athame",
    "kind": "activation",
@@ -99,26 +81,6 @@
     "creatures",
     "strike",
     "several"
-   ]
-  },
-  {
-   "name": "Pistol of Wonder",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Wonder Shot",
-   "result": "partial",
-   "main": "creatures",
-   "work": "summon",
-   "needs": [
-    "creatures",
-    "moving",
-    "areas",
-    "range",
-    "lasting",
-    "objects",
-    "reader",
-    "mind"
    ]
   },
   {
@@ -177,23 +139,6 @@
    ]
   },
   {
-   "name": "Testudo Shield (Greater)",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Tortoise Form",
-   "result": "builtin:no-effect",
-   "main": "creatures",
-   "work": "conjured",
-   "needs": [
-    "creatures",
-    "areas",
-    "strike",
-    "immunity",
-    "objects"
-   ]
-  },
-  {
    "name": "Everburning Coal",
    "kind": "activation",
    "tier": "general",
@@ -218,21 +163,6 @@
    "needs": [
     "creatures",
     "strike",
-    "objects"
-   ]
-  },
-  {
-   "name": "Cube of Force",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "result": "none",
-   "main": "areas",
-   "work": "cube",
-   "needs": [
-    "areas",
-    "counteract",
-    "lasting",
     "objects"
    ]
   },
@@ -360,23 +290,6 @@
    ]
   },
   {
-   "name": "Testudo Shield",
-   "kind": "activation",
-   "tier": "general",
-   "level": 5,
-   "activation": "Tortoise Form",
-   "result": "builtin:no-effect",
-   "main": "creatures",
-   "work": "conjured",
-   "needs": [
-    "creatures",
-    "areas",
-    "strike",
-    "immunity",
-    "objects"
-   ]
-  },
-  {
    "name": "Godsbreath Bow",
    "kind": "activation",
    "tier": "general",
@@ -389,19 +302,6 @@
     "strike",
     "reader",
     "out-of-combat"
-   ]
-  },
-  {
-   "name": "Bomb Snare",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 6,
-   "result": "partial",
-   "main": "areas",
-   "work": "first creature to enter",
-   "needs": [
-    "areas",
-    "several"
    ]
   },
   {
@@ -427,18 +327,6 @@
    "needs": [
     "strike",
     "lasting"
-   ]
-  },
-  {
-   "name": "Kraken Bottle",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 18,
-   "result": "partial",
-   "main": "areas",
-   "work": "cloud of",
-   "needs": [
-    "areas"
    ]
   },
   {
@@ -658,21 +546,6 @@
     "reader",
     "mind",
     "information"
-   ]
-  },
-  {
-   "name": "Anointing Oil (Greater)",
-   "kind": "consumable",
-   "tier": "general",
-   "level": 10,
-   "result": "note-only",
-   "main": "dying",
-   "work": "dead",
-   "needs": [
-    "dying",
-    "objects",
-    "reader",
-    "out-of-combat"
    ]
   }
  ]

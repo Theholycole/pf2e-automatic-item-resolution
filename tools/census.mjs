@@ -16,6 +16,7 @@ import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability
 import { CORE_FAMILIES, createRegistry } from "../../pf2e-resolution-core/src/index.js";
 import { SPELL_MODULE_CATEGORIES, compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { equipmentEffectIndex } from "../src/compiler/degree-effects.js";
+import { bombIndex } from "../src/compiler/bomb-snare.js";
 import { compileBomb } from "../src/compiler/bombs.js";
 import { routeOf } from "../src/live/route.js";
 
@@ -34,6 +35,8 @@ const spellEffects = spellEffectIndex(readDocuments(path.join(packsDirectory, "s
 const itemEffects = equipmentEffectIndex(readDocuments(path.join(packsDirectory, "equipment-effects")).filter((doc) => doc.collection === "items"));
 const spells = spellIndex(readDocuments(path.join(packsDirectory, "spells")).filter((doc) => doc.collection === "items"));
 const basicActions = compileBasicActions(readDocuments(path.join(packsDirectory, "actions")).filter((doc) => doc.collection === "items" && BASIC_ACTIONS.includes(doc.system?.slug)));
+// (PF2e's alchemical bombs, for a snare loaded with them — Bomb Snare's: src/compiler/bomb-snare.js, 2026-10-28.)
+const bombIndexed = bombIndex(readDocuments(path.join(packsDirectory, "equipment")).filter((doc) => doc.collection === "items" && doc.type === "weapon"));
 // The spell module's claims (its src/compiler/item-claims.js, by its id next to this folder), when it's there.
 const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-claims.js").then((module) => module.claims).catch(() => null);
 
@@ -78,7 +81,7 @@ function resolveGaps(plan) {
 function classify(item, text) {
     let plan = null;
     try {
-        plan = compileItem(withOwner(item), { basicActions, spellEffects, spells, claims, itemEffects });
+        plan = compileItem(withOwner(item), { basicActions, spellEffects, spells, claims, itemEffects, bombs: bombIndexed });
     } catch (error) {
         return { result: "error", error: error.message.slice(0, 160) };
     }

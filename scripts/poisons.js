@@ -211,7 +211,8 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     // (Damage as its user's Strike of that slug deals it now, Dinosaur Boots' Trample with the foot its Effect gives: PF2e's formula, each
     // instance its own type — src/live/strike-as.js.)
     // (A weapon fighting on its own, Animated's: its Strike from the weapon's potency and dice — src/live/self-fighting.js.)
-    if (state.plan?.selfFighting && state.step !== "then") {
+    // (Its own numbers already, Feather Token (Whip)'s whip — no weapon item to read: selfFighting.own, 2026-10-28.)
+    if (state.plan?.selfFighting && !state.plan.selfFighting.own && state.step !== "then") {
         const weapon = state.item?.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
         if (!weapon) throw new Error(`${state.item.name} isn't there any more: roll its Strike by hand.`);
         state = { ...state, plan: withWeaponStrike(state.plan, weapon) };
@@ -352,6 +353,12 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
     if (fighting?.flat) {
         const flat = await new Roll("1d20").evaluate();
         await flat.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: flat check (DC ${fighting.flat})` });
+        if (flat.total < fighting.flat && fighting.vanishes) {
+            // (Gone, not waiting: Feather Token (Whip)'s whip vanishes — 2026-10-28.)
+            lines.push(`Flat check ${flat.total} (DC ${fighting.flat}): it vanishes.`);
+            const over = { ...state, status: "applied", results: [...state.results, ...lines].slice(-6) };
+            return message.update({ content: exposureCardHTML(over, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: over });
+        }
         if (flat.total < fighting.flat) {
             const weapon = state.item?.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
             const seconds = Number(fighting.wait?.value ?? 10) * (fighting.wait?.unit === "rounds" ? 6 : 60);

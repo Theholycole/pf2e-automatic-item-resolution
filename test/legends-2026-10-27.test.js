@@ -18,7 +18,7 @@ import { periodOf } from "../src/live/activations-card.js";
 import { nightsHitPoints } from "../scripts/rest.js";
 import { diceOf, scrapedFormula } from "../scripts/scrape.js";
 import { THRICE, thriceTotals } from "../scripts/initiative-thrice.js";
-import { uninvests } from "../scripts/uninvest.js";
+import { possessedBy } from "../scripts/possession.js";
 import { heldBy } from "../scripts/hit-counteract.js";
 import { reflection, createCounteractCard, counteractCardHTML } from "../src/live/counteract-card.js";
 import { planFor } from "../src/live/if-target.js";
@@ -202,8 +202,10 @@ test("Ochre Fulcrum Lens: its +21 melee spell attack possesses the creature hit 
     const [, possess] = activations("Ochre Fulcrum Lens");
     assert.deepEqual([done(possess), routeOf(possess), possess.ownCheck, possess.resolution.check.modifier], [true, "save", { kind: "attack", modifier: 21 }, 21]);
     assert.deepEqual(rowOf(possess).nativeEffects, [{ uuid: "Compendium.pf2e.equipment-effects.Item.5KXsyN9J78glG25I", label: "Effect: Ochre Fulcrum Lens" }]);
-    assert.deepEqual([rowOf(possess, "failure").nativeEffects, possess.uninvest.degrees], [undefined, ["success", "criticalSuccess"]]);
-    assert.deepEqual([uninvests(possess.uninvest, [{ degree: "failure" }]), uninvests(possess.uninvest, [{ degree: "criticalSuccess" }])], [false, true]);
+    // (2026-10-28: the three fulcrum lenses' one reading, src/compiler/possession.js — plan.possess, scripts/possession.js, in place of
+    // plan.uninvest and scripts/uninvest.js; its activations refused while the possession lasts too.)
+    assert.deepEqual([rowOf(possess, "failure").nativeEffects, possess.possess.degrees, possess.possess.effect], [undefined, ["criticalSuccess", "success"], "Compendium.pf2e.equipment-effects.Item.5KXsyN9J78glG25I"]);
+    assert.deepEqual([possessedBy(possess.possess, [{ degree: "failure" }]), possessedBy(possess.possess, [{ degree: "criticalSuccess", name: "Orc" }])?.name], [null, "Orc"]);
 });
 
 test("The Dance: its user's next initiative rolled three times, the best set (src/live: scripts/initiative-thrice.js)", () => {

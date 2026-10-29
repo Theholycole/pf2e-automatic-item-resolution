@@ -404,7 +404,10 @@ export async function fakeFoundry() {
     const { etchedRuneActivations, runeIndex } = await import("../../src/compiler/runes.js");
     const runes = runeIndex(readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items").map((doc) => ({ ...doc, uuid: `Compendium.pf2e.equipment-srd.Item.${doc._id}` })));
     const { etchedCritRiders } = await import("../../src/compiler/rune-strikes.js");
-    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects, spells, basicActions }), compileActivations: (data) => [...compileActivations(data, { spellEffects, spells, basicActions }), ...etchedRuneActivations(data, runes, { spellEffects, spells, basicActions })], runeRiders: (weapon) => etchedCritRiders(typeof weapon?.toObject === "function" ? weapon.toObject() : weapon, runes) });
+    // (PF2e's alchemical bombs, as main.js indexes them: Bomb Snare's ways, src/compiler/bomb-snare.js — 2026-10-28.)
+    const { bombIndex } = await import("../../src/compiler/bomb-snare.js");
+    const bombs = bombIndex(readDocuments(path.join(PACKS, "equipment")).filter((doc) => doc.collection === "items" && doc.type === "weapon"));
+    setUpLivePlay({ compileItem: (data) => compileItem(data, { spellEffects, spells, basicActions, bombs }), compileActivations: (data) => [...compileActivations(data, { spellEffects, spells, basicActions }), ...etchedRuneActivations(data, runes, { spellEffects, spells, basicActions })], runeRiders: (weapon) => etchedCritRiders(typeof weapon?.toObject === "function" ? weapon.toObject() : weapon, runes) });
     return shared;
 }
 

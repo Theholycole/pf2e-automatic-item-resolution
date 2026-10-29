@@ -5,6 +5,7 @@
 
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { createInertCard, inertCardHTML, namedInert, structureCardHTML } from "../src/live/cube.js";
+import { placedRecord } from "../src/live/structure-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, SOCKET, entryOf, isActiveGM, mayApply, stateOf } from "./foundry.js";
 
 const ENV_ID = "pf2e-automatic-environment-resolution";
@@ -21,7 +22,11 @@ export async function placeWallsAround({ plan, used, actor, token }) {
     else if (!place) results.push("The environment module isn't active: draw the walls by hand.");
     else {
         const placed = await place(own.parent, { name: `${used.data.name}: ${structure.name}`, token: own, shape: structure.shape, feet: structure.feet, stats: structure.stats, pushOut: structure.pushOut ?? false, ...(structure.invisible ? { invisible: true } : {}), source: { actorUuid: actor?.uuid ?? null, itemUuid: used.data.uuid ?? null, name: used.data.name } });
-        results.push(`${placed?.walls?.length ?? 0} walls placed round ${user.name}${placed?.id ? " (the environment module's structure: remove it from its menu once dismissed)" : ""}.`);
+        // (2026-10-28: walls for a time, Cube of Force's minute — the item keeps them as the structure card's, scripts/structure.js removing
+        // them once it's up.)
+        const item = structure.lasts && placed?.id && used.data.uuid ? await fromUuid(used.data.uuid).catch(() => null) : null;
+        if (item?.setFlag) await item.setFlag(MODULE_ID, "structure", placedRecord(structure, { id: placed.id, sceneId: own.parent.id, worldTime: game.time.worldTime }));
+        results.push(`${placed?.walls?.length ?? 0} walls placed round ${user.name}${placed?.id ? ` (the environment module's structure: ${structure.lasts ? `gone after ${structure.lasts.value} ${structure.lasts.value === 1 ? structure.lasts.unit.replace(/s$/, "") : structure.lasts.unit}, or ` : ""}remove it from its menu once dismissed)` : ""}.`);
     }
     return ChatMessage.create({ content: structureCardHTML({ item: { name: used.data.name }, user, structure, results }), speaker: ChatMessage.getSpeaker({ actor }) });
 }

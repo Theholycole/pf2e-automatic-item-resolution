@@ -52,9 +52,10 @@ export function castRequest(state, { targetUuids = [] } = {}) {
 }
 
 // The item's duration for the spell (src/compiler/cast-duration.js): "lasts 10 minutes (1 hour from 17th level)".
-const timeWords = (time) => (time.unit === "unlimited" ? "with no time limit" : `${time.value} ${time.value === 1 ? time.unit.replace(/s$/, "") : time.unit}`);
-// (A rolled one, Rumbustious Robes' Dragon Form: "lasts 1d8 rounds (rolled)" — 2026-10-28.)
-export const lastsWords = (castDuration) => (castDuration ? `lasts ${castDuration.formula ? `${castDuration.formula} ${castDuration.unit} (rolled)` : timeWords(castDuration)}${castDuration.sustained === "item" ? " at most, while the item Sustains it with an action of its own, not its user's (end it sooner if it stops)" : castDuration.sustained ? " at most, while its user Sustains it (end it sooner if they stop)" : ""}${castDuration.atLevel ? ` (${timeWords(castDuration.atLevel)} from level ${castDuration.atLevel.level})` : ""}` : null);
+// (Or one rolled as it's cast, Pistol of Wonder's Cloak of Colors: "1d10 rounds", its valueRoll — and Rumbustious Robes' Dragon Form's 1d8
+// rounds: one field for both since the merge, 2026-10-28.)
+const timeWords = (time) => (time.unit === "unlimited" ? "with no time limit" : time.valueRoll ? `${time.valueRoll} ${time.unit}` : `${time.value} ${time.value === 1 ? time.unit.replace(/s$/, "") : time.unit}`);
+export const lastsWords = (castDuration) => (castDuration ? `lasts ${timeWords(castDuration)}${castDuration.sustained === "item" ? " at most, while the item Sustains it with an action of its own, not its user's (end it sooner if it stops)" : castDuration.sustained ? " at most, while its user Sustains it (end it sooner if they stop)" : ""}${castDuration.atLevel ? ` (${timeWords(castDuration.atLevel)} from level ${castDuration.atLevel.level})` : ""}` : null);
 
 // Its light spells against darkness (src/compiler/dark-light.js plan.darkLight, Dawnlight's): the chosen spell's counteract card against the
 // magical darkness once it's cast — the item's counteract modifier, the spell's rank and rankUp more —, the flash's save card after a success;

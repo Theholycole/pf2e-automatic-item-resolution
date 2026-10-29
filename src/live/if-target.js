@@ -43,7 +43,9 @@ const fits = (entry, actor) => (entry.lacks ? !fitsKind({ ...entry, lacks: false
 // (A kind PF2e gives no trait of its own by its creatures' name, Flawed Orb of Gold Dragonkind's gold dragons — "Gold Dragon (Ancient)": named,
 // 2026-10-27.)
 const named = (actor, words) => new RegExp(`\\b${String(words).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(String(actor?.name ?? ""));
-const fitsKind = (entry, actor) => (entry.named ? named(actor, entry.named) : entry.breathes ? breathes(actor) : entry.sunlight ? sunlightVulnerable(actor) : entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
+// (Or one with a condition now, PF2e's condition slugs: Feather Token (Whip)'s prone target, its Strike instead of its Trip — 2026-10-28.)
+const conditionsOf = (actor) => new Set([...(actor?.conditions?.active ?? actor?.itemTypes?.condition ?? [])].map((condition) => condition?.slug).filter(Boolean));
+const fitsKind = (entry, actor) => (entry.conditions ? entry.conditions.some((slug) => conditionsOf(actor).has(slug)) : entry.named ? named(actor, entry.named) : entry.breathes ? breathes(actor) : entry.sunlight ? sunlightVulnerable(actor) : entry.weakness ? weaknessOf(actor, entry.weakness) > 0 : entry.material ? materialGetsPast(actor, entry.material) : entry.living ? living(actor) : entry.traits ? entry.traits.some((trait) => traitsOf(actor).has(trait)) : entry.senses ? entry.senses.some((sense) => sensesOf(actor).includes(sense)) : false);
 
 // The plan for that creature: its riders added to their degree's effects when it fits; a save's bonus or penalty for its kind (Lamentation of
 // the Faithless's holy creatures' –2); null for a kind immune to it (its unholy ones).
@@ -54,6 +56,9 @@ export function planFor(plan, actor) {
     const riders = (plan?.ifTarget ?? []).filter((entry) => fits(entry, actor));
     if (!riders.length) return plan;
     if (riders.some((entry) => entry.immune)) return null;
+    // (Another plan for those creatures, instead: the whip's Strike at a prone target.)
+    const instead = riders.find((entry) => entry.instead);
+    if (instead) return instead.instead;
     const heal = riders.find((entry) => entry.heal);
     if (heal) return { ...plan, kindHeal: heal.heal };
     // (Its weakness triggered again in place of the damage, Freedom's Flame's holy one: that weakness's value, untyped.)

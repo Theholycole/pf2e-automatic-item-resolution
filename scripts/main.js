@@ -61,7 +61,6 @@ import { setUpShieldTemp } from "./shield-temp.js";
 import { setUpLater } from "./later.js";
 import { setUpAfflictedTurns } from "./afflicted-turns.js";
 import { setUpFelled } from "./felled.js";
-import { setUpUninvest } from "./uninvest.js";
 import { setUpInitiativeThrice } from "./initiative-thrice.js";
 import { setUpHitCounteract } from "./hit-counteract.js";
 import { setUpSoulBinding } from "./soul-binding.js";
@@ -77,6 +76,8 @@ import { setUpGrantedSpells } from "./grimoire.js";
 import { setUpAfterRest } from "./after-rest.js";
 import { setUpSphere, sphereTouched } from "./sphere.js";
 import { setUpCube } from "./cube.js";
+import { setUpStructures } from "./structure.js";
+import { bombIndex } from "../src/compiler/bomb-snare.js";
 import { setUpDecoyDouble } from "./decoy-double.js";
 import { setUpPairedStone } from "./paired-stone.js";
 import { setUpSkillSwap } from "./skill-swap.js";
@@ -85,7 +86,6 @@ import { setUpAdjacentBonus } from "./adjacent-bonus.js";
 import { setUpArcaneDrain } from "./arcane-drain.js";
 import { setUpPortals } from "./portals.js";
 import { setUpSouls } from "./souls.js";
-import { setUpLensPossession } from "./lens-possession.js";
 import { setUpReservoir } from "./reservoir.js";
 import { setUpBackbiting } from "./backbiting.js";
 
@@ -109,6 +109,8 @@ let runes = new Map();
 // when it's compiled, its text read instead when they don't match (src/compiler/unverified-links.js).
 let moduleEffects = new Map();
 let conditionNames = null;
+// PF2e's alchemical bombs by name, for a snare loaded with them (src/compiler/bomb-snare.js: Bomb Snare's ways), from its equipment pack.
+let bombs = {};
 const moduleEffect = (uuid) => moduleEffects.get(uuid) ?? null;
 
 // A Foundry item as plain data, keeping its uuid (the compiler is pure).
@@ -126,7 +128,7 @@ const spellModuleReads = (item) => {
     if (typeof api?.itemShapes?.read !== "function" || typeof api?.itemCasts?.read !== "function") return null;
     return { shapes: (api.itemShapes.read(item)?.activations ?? []).map((activation) => activation.label), casts: (api.itemCasts.read(item)?.casts ?? []).map((cast) => cast.uuid) };
 };
-const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims, claimsWhy, spellModuleReads, itemEffects, moduleEffect, ...(conditionNames ? { conditionNames } : {}) });
+const options = () => ({ basicActions: basicActions(), spellEffects, spells, claims, claimsWhy, spellModuleReads, itemEffects, moduleEffect, bombs, ...(conditionNames ? { conditionNames } : {}) });
 
 const compile = (item) => compileItem(dataOf(item), options());
 const handles = (item) => handlesItem(dataOf(item), { claims });
@@ -160,6 +162,14 @@ Hooks.once("ready", async () => {
         spells = pack ? spellIndex([...(await pack.getIndex({ fields: ["system.area", "system.target", "system.ritual", "system.level.value", "system.traits.value", "system.duration", "system.range", "system.traits.rarity", "system.traits.traditions", "system.publication.title", "system.defense"] }))]) : {};
     } catch (error) {
         console.warn(`${MODULE_ID} | PF2e's spells couldn't be indexed.`, error);
+    }
+    try {
+        // (Only its bombs' documents: their damage, persistent damage and riders' words.)
+        const pack = game.packs.get("pf2e.equipment-srd");
+        const ids = pack ? [...(await pack.getIndex({ fields: ["system.group", "system.traits.value"] }))].filter((entry) => entry.type === "weapon" && entry.system?.group === "bomb" && (entry.system?.traits?.value ?? []).includes("alchemical")).map((entry) => entry._id) : [];
+        bombs = ids.length ? bombIndex((await pack.getDocuments({ _id__in: ids })).map((doc) => doc.toObject(false))) : {};
+    } catch (error) {
+        console.warn(`${MODULE_ID} | PF2e's bombs couldn't be indexed.`, error);
     }
     try {
         const pack = game.packs.get("pf2e.conditionitems");
@@ -205,8 +215,6 @@ Hooks.once("ready", async () => {
     setUpAfflictedTurns();
     // (A reward for felling the creature marked, Doom Switch's Bragging Rights: scripts/felled.js.)
     setUpFelled();
-    // (Its user no longer invested once its attack hits, Ochre Fulcrum Lens' possession: scripts/uninvest.js.)
-    setUpUninvest();
     // (An initiative rolled three times, the best kept, The Dance's: scripts/initiative-thrice.js.)
     setUpInitiativeThrice();
     // (A counteract card at the creature an attack hit, kept for when it tries to get away, Halcyon Heart's net: scripts/hit-counteract.js.)
@@ -233,6 +241,8 @@ Hooks.once("ready", async () => {
     setUpSphere();
     // (A cube's walls and the cubes it makes inert, Cube of Nex's: scripts/cube.js.)
     setUpCube();
+    // (A placed structure's end on its own, after its time or as its door opens or breaks — Warding Escutcheon's: scripts/structure.js.)
+    setUpStructures();
     // (A double that takes what's aimed at its user, Shadewither Key's: scripts/decoy-double.js.)
     setUpDecoyDouble();
     // (Creatures teleported to a paired stone once its save card is applied, Jahan Waystone's: scripts/paired-stone.js.)
@@ -249,8 +259,6 @@ Hooks.once("ready", async () => {
     setUpPortals();
     // (Souls a weapon keeps from its kills, Reaper's Grasp's: scripts/souls.js.)
     setUpSouls();
-    // (An item's essence possessing the creature it hits, Crimson Fulcrum Lens's: scripts/lens-possession.js.)
-    setUpLensPossession();
     // (A weapon's poison reservoir, Reaper's Lancet's: scripts/reservoir.js.)
     setUpReservoir();
     // (A worn Impact Foam Chassis used up after the environment module's fall, its foam around the creature: scripts/falls.js.)
@@ -283,7 +291,7 @@ Hooks.once("ready", async () => {
     setUpMarkEnds();
     // (A curse that holds its creature unconscious for a day, then a save or it dies, Hex Blaster's: scripts/doom-hex.js.)
     setUpDoomHex();
-    // (An item whose essence possesses the creature it hits, its user uninvested meanwhile — Emerald Fulcrum Lens: scripts/possession.js.)
+    // (An item whose essence possesses the creature it hits, its user uninvested meanwhile — the fulcrum lenses: scripts/possession.js.)
     setUpPossession();
     // (A weapon's runes raised for good as its critical hit slays, Meloth's Lifedrinker's: scripts/lifedrink.js.)
     setUpLifedrink();

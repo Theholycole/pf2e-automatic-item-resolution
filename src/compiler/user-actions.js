@@ -296,15 +296,18 @@ function burningNote(sentences, own) {
 }
 
 // (Anointing Oil's "Applying anointing oil to a corpse casts Peaceful Rest on it. The effects last for 24 hours": the spell module's cast at the
-// corpse its user targets; what undead touching it suffer, its one-off line — src/compiler/one-offs.js.)
-const ANOINTS = /^Applying [\w' -]+? to a corpse casts (Peaceful Rest) on it\.$/i;
+// corpse its user targets; what undead touching it suffer, its one-off line — src/compiler/one-offs.js. 2026-10-28: the greater oil's "casts
+// a 5th-rank Peaceful Rest on it", at that rank; its Knights' funerary rites flavor.)
+const ANOINTS = /^Applying [\w' -]+? to a corpse casts (?:an? (\d+)(?:st|nd|rd|th)-rank )?(Peaceful Rest) on it\.$/i;
+const ANOINT_FLAVOR = [/^Carried by many\b/i, /^The funerary rites of the Knights of Lastwall sometimes include\b/i];
 function anointedCorpse(sentences, own, item, options) {
     const at = sentences.findIndex((sentence) => ANOINTS.test(sentence));
-    const spell = at >= 0 ? options.spells?.[ANOINTS.exec(sentences[at])[1].toLowerCase()] : null;
+    const cast = at >= 0 ? ANOINTS.exec(sentences[at]) : null;
+    const spell = cast ? options.spells?.[cast[2].toLowerCase()] : null;
     if (!spell) return null;
     const lasts = /^The effects last for (\d+) (hours?|days?)\.$/i.exec(sentences[at + 1] ?? "");
-    const rest = sentences.filter((sentence, index) => index !== at && !(lasts && index === at + 1) && !/^Carried by many\b/i.test(sentence));
-    return { ...own, builtin: "cast-spell", automation: { level: "guided" }, targeting: { target: "the corpse", range: "touch", area: null }, spell: { uuid: spell.uuid, name: spell.name }, rank: spell.rank, dc: null, attack: null, tradition: null, self: false, notes: [...(lasts ? [`Its effects last ${lasts[1]} ${lasts[2].toLowerCase()}.`] : []), ...rest], area: false, targets: true, partial: true };
+    const rest = sentences.filter((sentence, index) => index !== at && !(lasts && index === at + 1) && !ANOINT_FLAVOR.some((pattern) => pattern.test(sentence)));
+    return { ...own, builtin: "cast-spell", automation: { level: "guided" }, targeting: { target: "the corpse", range: "touch", area: null }, spell: { uuid: spell.uuid, name: spell.name }, rank: cast[1] ? Number(cast[1]) : spell.rank, dc: null, attack: null, tradition: null, self: false, notes: [...(lasts ? [`Its effects last ${lasts[1]} ${lasts[2].toLowerCase()}.`] : []), ...rest], area: false, targets: true, partial: true };
 }
 
 // --- The readers ---------------------------------------------------------------------------------------------------------------------------------

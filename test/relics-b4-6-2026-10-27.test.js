@@ -138,15 +138,17 @@ test("Clockwork Sun's Set Cycle: a sunny day's light to a mile, and its two save
     assert.equal(auraFits(pain, { at: "start", distance: 900, abilities: ["darkvision"] }), false);
 });
 
-test("Lesser Cube of Nex: six faces on the ways card — zones with counteracts and crossing saves, Wall of Force's walls, dismissed", () => {
+// (2026-10-28: Lesser Cube of Nex read as Cube of Nex is, src/compiler/cube-faces.js withCubeWalls — its own reading's zones, entering-only
+// saves and item.structure walls gone; the leftovers group's test/b5-leftovers-2026-10-28.test.js.)
+test("Lesser Cube of Nex: Cube of Nex's ways card — zones with counteracts and crossing saves both ways, walls of force round its user", () => {
     const [cube] = activations("Lesser Cube of Nex");
-    assert.deepEqual([routeOf(cube), done(cube), cube.ways.length, cube.trigger.frequency.per], ["ways", true, 6, "hour"]);
-    const [gas, nonliving, living, magic, force, dismissed] = cube.ways.map((way) => way.plan);
-    assert.deepEqual([gas.zone.area, gas.zone.untilReused, gas.item.counteract.modifier, gas.item.counteract.rank], [{ type: "square", value: 10 }, true, 20, 10]);
-    assert.deepEqual([magic.item.counteract.modifier, magic.item.counteract.free.name], [20, "magical effect"]);
-    assert.deepEqual([nonliving.zone.saves[0].when, nonliving.zone.saves[0].only, nonliving.zone.saves[0].plan.resolution.check.against.value], [["enter"], { traits: ["undead", "construct"] }, 30]);
-    assert.equal(living.zone.saves[0].plan.resolution.outcomes.failure.noteEffects[0].duration.unit, "rounds");
-    assert.deepEqual([routeOf(force), force.item.structure.stats, routeOf(dismissed), dismissed.item.removeStructures], ["item", { hardness: 30, hp: 60, bt: 0 }, "item", true]);
+    assert.deepEqual([routeOf(cube), done(cube), cube.ways.length, cube.trigger.frequency.per], ["ways", true, 5, "hour"]);
+    const [gas, nonliving, living, magic, force] = cube.ways.map((way) => way.plan);
+    assert.deepEqual([gas.zone.area, gas.zone.centre, gas.item.counteract.modifier, gas.item.counteract.rank], [{ type: "square", value: 10 }, "around", 20, 10]);
+    assert.deepEqual([magic.item.counteract.modifier, magic.item.counteract.free.name], [20, "the magical effect crossing its walls"]);
+    assert.deepEqual([nonliving.zone.saves[0].when, nonliving.zone.saves[0].only, nonliving.zone.saves[0].plan.resolution.check.against.value], [["enter", "exit"], { traits: ["construct", "undead"] }, 30]);
+    assert.deepEqual(living.zone.saves[0].only, { notTraits: ["construct", "undead"] });
+    assert.deepEqual([routeOf(force), force.structure.stats, force.structure.invisible], ["walls-around", { hardness: 30, hp: 60 }, true]);
 });
 
 test("Planar Ribbon's reach: the DC 42 Reflex save card at a foe within 60 feet, places traded and its allies Off-Guard on a failure", async () => {

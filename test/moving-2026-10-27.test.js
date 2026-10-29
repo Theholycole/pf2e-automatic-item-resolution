@@ -174,7 +174,7 @@ test("the free spaces beside a creature's landing space: touching it, none taken
     assert.equal(freeSpacesBeside(space, { w: 100, h: 100 }, [], { grid, bounds: { x: 500, y: 500, width: 1000, height: 1000 } }).length, 3);
 });
 
-test("what holds a creature or a way in place, words on its user's note Effect: Magnetizing, Immovable Arm, Warding Escutcheon's door (the shield's own numbers, an hour)", () => {
+test("what holds a creature or a way in place, words on its user's note Effect: Magnetizing, Immovable Arm; Warding Escutcheon's door (the shield's own numbers, an hour)", () => {
     const magnet = activation("Magnetizing");
     assert.ok(done(magnet));
     assert.match(magnet.resolution.outcomes.success.noteEffects[0].text, /each square is difficult terrain/);
@@ -182,12 +182,12 @@ test("what holds a creature or a way in place, words on its user's note Effect: 
     const arm = activation("Immovable Arm");
     assert.ok(done(arm));
     assert.match(arm.resolution.outcomes.success.noteEffects[0].text, /8,000 pounds of pressure or a DC 40 Athletics check to Force Open it moves the arm; a DC 25 Perception check to Seek/);
-    for (const [name, numbers, dc] of [["Warding Escutcheon", "Hardness 10, HP 40, BT 20", 25], ["Warding Escutcheon (Greater)", "Hardness 20, HP 80, BT 40", 43]]) {
+    // (2026-10-28: Warding Escutcheon's door is the structure card's now, the environment module's locked door on the map for the hour —
+    // src/compiler/placed-structures.js, test/b5-leftovers-2026-10-28.test.js.)
+    for (const [name, numbers, dc] of [["Warding Escutcheon", { hardness: 10, hp: 40, bt: 20 }, 25], ["Warding Escutcheon (Greater)", { hardness: 20, hp: 80, bt: 40 }, 43]]) {
         const door = activation(name);
         assert.ok(done(door), name);
-        const [note] = door.resolution.outcomes.success.noteEffects;
-        assert.ok(note.text.includes(numbers) && note.text.includes(`DC ${dc} Athletics`), name);
-        assert.deepEqual(note.duration, { mode: "fixed", value: 1, unit: "hours", expiry: "turn-start", anchor: "effect-start" });
+        assert.deepEqual([door.builtin, door.structure.door.stats, door.structure.door.forceOpen, door.structure.door.lock.dc, door.structure.lasts], ["structure", numbers, dc, dc, { value: 1, unit: "hours" }], name);
     }
 });
 

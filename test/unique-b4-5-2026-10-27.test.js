@@ -175,13 +175,16 @@ test("Void Mirror: Speak to the Void its skills legendary for the check and a fa
     assert.deepEqual([done(become), become.trigger.frequency.per, become.resolution.check.against.value, become.resolution.sharedDamage.components[0].formula, rows.criticalFailure.terminal, rows.criticalFailure.noteEffects[0].duration.value], [true, "century", 40, "10d6+40", { kind: "death" }, 7]);
 });
 
-test("Slithermaw's Bane's Terrain Adaptation: heat or cold, and the terrain its user picks on its Effect (PF2e's ChoiceSet): its difficult terrain ignored, +1 to saves against its hazards", () => {
+// (2026-10-28: its Heroic grade's reading for both grades, src/compiler/artifact-readings.js — the ChoiceSet note Effect had no end at the next
+// daily preparations and PF2e's terrain roll option wrong; a way for each terrain and side now, its Effect gone at rest.)
+test("Slithermaw's Bane's Terrain Adaptation: a way for each terrain and heat or cold, its Effect ignoring that terrain's non-magical difficult terrain, +1 to saves against its hazards, until its user's next daily preparations", () => {
     const adapt = compileActivations(item("Slithermaw's Bane"), options).find((entry) => entry.activation.name === "Terrain Adaptation").plan;
-    assert.deepEqual([done(adapt), routeOf(adapt), adapt.ways.map((way) => way.name)], [true, "ways", ["Heat", "Cold"]]);
-    const [heat] = adapt.ways;
-    const note = heat.plan.resolution.outcomes.success.noteEffects.at(-1);
-    assert.deepEqual([heat.plan.partial, heat.plan.temperature.counts["extreme-heat"], note.rules.map((rule) => rule.key), note.rules[0].choices.length], [undefined, "mild-heat", ["ChoiceSet", "ActiveEffectLike", "FlatModifier"], 9]);
-    assert.deepEqual(note.rules[2].predicate, ["environment:{item|flags.pf2e.rulesSelections.terrain}", { or: ["environment", "origin:trait:environmental"] }]);
+    assert.deepEqual([done(adapt), routeOf(adapt), adapt.ways.length, adapt.ways[10].name], [true, "ways", 18, "Plains, protected from heat"]);
+    const plains = adapt.ways[10].plan;
+    const [effect] = plains.item.ruleEffects;
+    assert.deepEqual([plains.partial, plains.temperature.counts["extreme-heat"], plains.temperature.untilRest, effect.rules.map((rule) => rule.key), effect.untilRest, effect.replaces], [undefined, "mild-heat", true, ["ActiveEffectLike", "FlatModifier"], true, undefined]);
+    assert.deepEqual([effect.rules[0].value, effect.rules[1].value, effect.rules[1].predicate[0]], [{ environment: "plains", feature: "all" }, 1, "terrain:plains"]);
+    assert.match(effect.words, /non-magical difficult terrain/);
 });
 
 test("What Doors We Open's door a container as a Spacious Pouch (Type II); Spectacles of Discernment's language and mark, then its secret counteract to see through", () => {
@@ -210,7 +213,9 @@ test("Emerald Fulcrum Lens: its splinter possessing the creature its +20 spell a
     const [, possess] = plans("Emerald Fulcrum Lens");
     const [effect] = possess.resolution.outcomes.success.noteEffects;
     assert.deepEqual([done(possess), routeOf(possess), possess.resolution.check.modifier, possess.resolution.check.against.statistic, possess.possess.degrees, effect.duration], [true, "save", 20, "ac", ["criticalSuccess", "success"], null]);
-    assert.deepEqual(effect.rules.map((rule) => rule.key), ["ActiveEffectLike", "FlatModifier", "RollOption"]);
+    // (2026-10-28: the three fulcrum lenses' one reading, src/compiler/possession.js — its benefits PF2e's own Effect: Emerald Fulcrum Lens on the
+    // creature, its user's taken away; the note Effect's RollOption alone.)
+    assert.deepEqual([effect.rules.map((rule) => rule.key), possess.resolution.outcomes.success.nativeEffects[0].label, possess.possess.effect], [["RollOption"], "Effect: Emerald Fulcrum Lens", "Compendium.pf2e.equipment-effects.Item.vlTiBE0h2kyw5J9o"]);
 });
 
 test("Mindsponge: the surgery its user's Medicine check at DC 28 (a failure the creature's death), the harvest one more of four (the corpse's Talking Corpse save worse), squeezing them out", () => {

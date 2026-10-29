@@ -168,7 +168,8 @@ test("a chaos table read row by row (Rumbustious Robes' Pocket Full of Chaos): e
     const [ask, chaos] = robes;
     assert.deepEqual([done(ask), ask.decided, done(chaos), routeOf(chaos), chaos.table.rows.every((row) => row.plan)], [true, "one-off", true, "table", true]);
     const row = (low) => chaos.table.rows.find((entry) => entry.low === low).plan;
-    assert.deepEqual([row(2).item.swapPlaces, routeOf(row(4)), row(4).creatures[0].count, routeOf(row(6)), row(7).userEffects[0].slug, row(8).castDuration.formula, row(8).self, row(12).resolution.native.healing.components[0].formula, row(13).userEffects[0].slug, routeOf(row(14)), row(14).ways.length], [true, "conjure", { formula: "1d12" }, "save", "prone", "1d8", true, "32", "stunned", "ways", 2]);
+    // (Its rolled 1d8 rounds castDuration.valueRoll since the merge, one field with Pistol of Wonder's — 2026-10-29.)
+    assert.deepEqual([row(2).item.swapPlaces, routeOf(row(4)), row(4).creatures[0].count, routeOf(row(6)), row(7).userEffects[0].slug, row(8).castDuration.valueRoll, row(8).self, row(12).resolution.native.healing.components[0].formula, row(13).userEffects[0].slug, routeOf(row(14)), row(14).ways.length], [true, "conjure", { formula: "1d12" }, "save", "prone", "1d8", true, "32", "stunned", "ways", 2]);
     assert.deepEqual([row(15).resolution.check.statistic, row(15).resolution.check.against.value, row(15).targeting.area, row(17).zone.concealed, row(17).zone.area.value, row(18).whisper.flat.dc, row(20).table.rolls, row(20).table.ignore, row(20).table.rows.find((entry) => entry.low === 20).plan], ["reflex", 34, { type: "emanation", value: 5 }, true, 20, 7, 2, [20], undefined]);
     assert.match(row(5).notes.at(-1), /on a 1, its user is the target instead/);
     const vial = activations("pf2e-team-plus-alchemists", "pf2e-misc", "Protoplasmic Template");

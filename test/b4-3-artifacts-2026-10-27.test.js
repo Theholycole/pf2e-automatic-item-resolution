@@ -62,7 +62,8 @@ test("the sphere's steps toward its user, by PF2e's grid, and the creatures in i
 
 test("Cube of Nex: its face picked on the ways card — zones round its user, the counteract card, crossing saves, walls of force; its other activation makes a cube inert", () => {
     const [walls, inert] = activations("Cube of Nex");
-    assert.deepEqual([walls.builtin, walls.partial, walls.ways.length, walls.trigger.frequency.per], ["ways", true, 5, "hour"]);
+    // (2026-10-28: whole now — the ability module's exit saves and only.notTraits, the environment module's invisible walls, are built.)
+    assert.deepEqual([walls.builtin, walls.partial, walls.ways.length, walls.trigger.frequency.per], ["ways", undefined, 5, "hour"]);
     const [gas, nonliving, living, magic, force] = walls.ways.map((way) => way.plan);
     // (Its walls' route renamed at the merge, beside the Guiding Chisel's structure card — 2026-10-27.)
     assert.deepEqual([routeOf(gas), routeOf(force)], ["zone", "walls-around"]);
@@ -236,7 +237,9 @@ test("Reaper's Grasp: its kills' souls kept (sapient, living or undead, ten at m
 test("Crimson Fulcrum Lens's possession: its own melee spell attack (+18), a hit giving the target PF2e's Effect: Crimson Fulcrum Lens and the possession's note Effect (the lens inert while it lasts)", () => {
     const plan = activations("Crimson Fulcrum Lens")[1];
     const hit = plan.resolution.outcomes.success;
-    assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.modifier, hit.nativeEffects[0].label, hit.noteEffects[0].label, plan.possession.label, plan.traits.includes("possession")], [true, "save", 18, "Effect: Crimson Fulcrum Lens", "Possessed by Nhimbaloth's essence", "Possessed by Nhimbaloth's essence", true]);
+    // (2026-10-28: the three fulcrum lenses' one reading, src/compiler/possession.js — plan.possess, scripts/possession.js; its note Effect's
+    // RollOption the possession's mark, no longer plan.possession and scripts/lens-possession.js.)
+    assert.deepEqual([done(plan), routeOf(plan), plan.resolution.check.modifier, hit.nativeEffects[0].label, hit.noteEffects[0].label, plan.possess.option, plan.traits.includes("possession")], [true, "save", 18, "Effect: Crimson Fulcrum Lens", "Possessed by Nhimbaloth's splinter", "air-possessed-by:crimson-fulcrum-lens", true]);
 });
 
 test("The Hollow Star: its reaction's note Effect for the turn (+1 item to linguistic spell attacks, their DC 1 higher), and its conjured aberration (a common one of level 3 or lower, picked)", () => {

@@ -157,7 +157,7 @@ export default (h) => {
                     const [region] = trail();
                     const zone = region.flags[ABILITY].zone;
                     h.assert(zone.zone.hazard?.formulas?.[0] === "3d6[fire]" && zone.zone.lasts?.value === 1 && zone.zone.lasts?.unit === "minutes", `hazardous 3d6 fire for 1 minute (${JSON.stringify({ hazard: zone.zone.hazard, lasts: zone.zone.lasts })})`);
-                    h.assert(region.behaviors.some((behavior) => behavior.type === "executeScript"), "its zone behaviour kept through the shapes' update");
+                    h.assert(region.behaviors.some((behavior) => behavior.type === "executeScript"), "its zone behaviour on its squares");
                     const zoneCards = game.messages.contents.filter((message) => message.timestamp >= since && (message.flags?.[ABILITY]?.zoneCard?.regionUuids ?? []).includes(region.uuid));
                     h.assert(zoneCards.length === 1, `a single zone card (${zoneCards.length})`);
                     await h.until(() => resultsOf(card).some((line) => /The 5 squares it moved through: hazardous terrain/.test(line)), `the card's trail result (${resultsOf(card).join(" / ")})`, { timeout: 8000 });

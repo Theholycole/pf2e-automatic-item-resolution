@@ -38,6 +38,63 @@ const area = (type, value, target = "the creatures in the area") => ({ target, r
 // (What it tells: whispered to the GM and its user, the GM filling in what it shows — the user's ruling, src/compiler/decided.js.)
 const whisper = (text) => ({ builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text } });
 const forTargets = { recipient: "targets" };
+const COUNTS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+
+// A bottled creature's arms (2026-10-28: Octopus Bottle, Kraken Bottle): the ways card's two ways — opened in water, its ink cloud too (the
+// ability module's zone beside the save card, a burst round its user for its time: Undetected inside, no smell its note Effect inside, the
+// kraken's poison its save on each creature inside as it's made or enters — the affliction's item its own, named live by scripts/zones.js);
+// or on the ground, its arms only. Each the Fortitude save card at the creatures grasped within its reach, moved to a space in that reach on
+// a failure (src/compiler/placed.js), Grabbed as they're moved when the text says so (to the end of its user's turn: the GM's to change).
+function bottledGrasp({ base, info }, { what, size, count, reach, dc, grabbed = false, ink, lasts, poison = null }) {
+    const held = { kind: "condition", slug: "grabbed", value: null, duration: TURN_END };
+    const row = (failed) => ({ ...none(), effects: failed && grabbed ? [held] : [], noteEffects: [] });
+    const save = (statistic, value, rows) => ({ kind: "save", check: { roll: "save", statistic, basic: false, against: { dc: "fixed", value } }, sharedDamage: null, outcomes: rows });
+    const whom = count > 1 ? `up to ${count} creatures` : "1 creature";
+    const arms = {
+        ...base,
+        automation: { level: "automatic" },
+        trigger: { event: "use" },
+        targeting: { target: whom, range: `${reach} feet`, area: null },
+        resolution: save("fortitude", dc, { criticalSuccess: row(false), success: row(false), failure: row(true), criticalFailure: row(true) }),
+        placed: { rows: { failure: { within: reach * 2 }, criticalFailure: { within: reach * 2 } }, nearSource: reach, optional: false, lines: [], byHand: `On a failure, move it to another space within the ${what}'s ${reach}-foot reach (its user picks).` },
+        notes: [`A ${size} ${what} bursts out beside its user: target the ${count > 1 ? `creatures (${whom})` : "creature"} its arms grasp within ${reach} feet; on a failed save its user moves ${count > 1 ? "each" : "it"} to another space in that reach.`, ...(grabbed ? ["Those it moves are Grabbed by its arms to the end of its user's turn (the GM may change how long)."] : [])],
+        item: { ...info }
+    };
+    const exposed = poison ? {
+        ...base,
+        source: { ...(base?.source ?? {}), name: `${base?.source?.name ?? "Kraken Bottle"}: kraken ink poison` },
+        traits: [...new Set([...(base?.traits ?? []), "poison"])],
+        automation: { level: "automatic" },
+        trigger: { event: "zone" },
+        targeting: { target: "a creature in the ink", range: null, area: null },
+        // (Its item's own stages, Pseudo Afflictions' to track: "item", the bottle's uuid filled in once it's used.)
+        resolution: save("fortitude", poison.dc, { criticalSuccess: { ...none() }, success: { ...none() }, failure: { ...none(), affliction: { name: base?.source?.name ?? "Kraken Bottle", stage: 1, dc: poison.dc, uuid: "item" } }, criticalFailure: { ...none(), affliction: { name: base?.source?.name ?? "Kraken Bottle", stage: 2, dc: poison.dc, uuid: "item" } } })
+    } : null;
+    const cloud = {
+        ...base,
+        automation: { level: "automatic" },
+        trigger: { event: "use" },
+        builtin: "zone",
+        actions: null,
+        targeting: { target: null, range: null, area: { type: "burst", value: ink } },
+        zone: {
+            area: { type: "burst", value: ink }, centre: "self", range: null, lasts, untilReused: false, concealed: false, undetected: true, terrain: [], others: false, hazard: null,
+            saves: exposed ? [{ when: ["initial", "enter"], plan: exposed }] : [], damage: [], effect: null, modifiers: [],
+            inside: [{ label: `${what[0].toUpperCase()}${what.slice(1)} ink`, text: "In the ink cloud: Undetected, and it can't use its sense of smell." }],
+            notes: [`Its ink: a ${ink}-foot emanation round the ${what} for ${lasts.value} ${lasts.value === 1 ? lasts.unit.replace(/s$/, "") : lasts.unit}, only in water.`, "Creatures inside are Undetected and can't use their sense of smell.", ...(exposed ? [`Each creature inside is exposed to kraken ink poison (Fortitude DC ${poison.dc}, at most ${poison.rounds} rounds); krakens are immune: dismiss a kraken's card.`] : [])]
+        },
+        item: { ...info }
+    };
+    return {
+        builtin: "ways",
+        targeting: { target: null, range: null, area: null },
+        ways: [
+            { name: `Opened in water: its arms, then its ink`, html: "", plan: { ...arms, item: { ...arms.item, alsoZone: cloud } } },
+            { name: `Opened on the ground: its arms only`, html: "", plan: arms }
+        ],
+        notes: [`It can come out in water rather than on the ground: its ink cloud only there (it has no effect out of water).`]
+    };
+}
 
 // Hiding with nothing to hide behind, but no Sneaking without it (Chameleon Suit's and Camouflaging Chromatophores' words).
 const HIDE_ANYWHERE = /^\bFor (\d+|an?|one) (minutes?|hours?), you can Hide without needing cover\b.*\.$/;
@@ -205,19 +262,19 @@ const READINGS = [
     },
     {
         // (A Fortitude save card at the creature its arms grasp, moved within the octopus's reach on a failure — src/compiler/placed.js's
-        // teleport card, its user picking the space; its ink cloud under water a line, the map's.)
+        // teleport card, its user picking the space. 2026-10-28: its ink cloud the ability module's zone beside the card, Undetected inside —
+        // the ways card's way for a bottle opened in water, bottledGrasp below.)
         name: "Octopus Bottle",
         sentences: [/^\bMiniature octopus arms press\b.*\.$/, /^\bWhen opened, a Huge octopus bursts forth\b.*\.$/, /^\bIts arms attempt to grasp a creature\b.*\breach of (\d+) feet\.$/, /^\bThe octopus repositions that creature\b.*\bwithin its reach\b.* @Check\[fortitude\|dc:(\d+)\] save\.$/, /^\bIf the octopus is in water\b.*\bcloud of ink in a (\d+)-foot emanation\.$/, /^\bThis cloud has no effect outside of water\.$/, /^\bCreatures inside the cloud are undetected\b.*\bsense of smell\.$/, /^\bThe cloud dissipates after (\d+|an?|one) (minutes?|rounds?)\.$/],
-        card: ([, , grasp, save, ink, , , lasts]) => {
-            const reach = Number(grasp[1]);
-            const row = () => ({ ...none(), noteEffects: [] });
-            return {
-                targeting: { target: "1 creature", range: `${reach} feet`, area: null },
-                resolution: { kind: "save", check: { roll: "save", statistic: "fortitude", basic: false, against: { dc: "fixed", value: Number(save[1]) } }, sharedDamage: null, outcomes: { criticalSuccess: row(), success: row(), failure: row(), criticalFailure: row() } },
-                placed: { rows: { failure: { within: reach * 2 }, criticalFailure: { within: reach * 2 } }, nearSource: reach, optional: false, lines: [], byHand: `On a failure, move it to another space within the octopus's ${reach}-foot reach (its user picks).` },
-                notes: [`A Huge octopus bursts out beside its user (in water, if there's water there): target the creature its arms grasp within ${reach} feet; on a failed save its user moves it to another space in that reach.`, `In water, it then releases ink in a ${ink[1]}-foot emanation for ${lasts[1]} ${lasts[2]}: those inside are Undetected and can't smell (the map's). Out of water, no cloud.`]
-            };
-        }
+        card: ([, , grasp, save, ink, , , lasts], _plan, given) => bottledGrasp(given, { what: "octopus", size: "Huge", count: 1, reach: Number(grasp[1]), dc: Number(save[1]), ink: Number(ink[1]), lasts: time(lasts[1], lasts[2]) })
+    },
+    {
+        // (2026-10-28, the leftovers group: the octopus's bigger kin — up to four creatures within 60 feet, Grabbed as they're moved, and its
+        // ink's kraken ink poison, the zone's save on each creature inside as it's made or enters; krakens' immunity a line.)
+        name: "Kraken Bottle",
+        over: (plan) => !plan || plan.partial || plan.noteOnly,
+        sentences: [/^\bCoiled tentacles make it\b.*\.$/, /^\bWhen opened, a Gargantuan kraken bursts forth\b.*\.$/, /^\bIts arms attempt to grasp up to (\w+) creatures\b.*\breach of (\d+) feet\.$/, /^\bThe kraken repositions Grabbed creatures\b.*\bwithin its reach\b.* @Check\[fortitude\|dc:(\d+)\] save\.$/, /^\bIf the kraken is in water\b.*\bcloud of ink in an? (\d+)-foot emanation\.$/, /^\bThis cloud has no effect outside of water\.$/, /^\bCreatures inside the cloud are undetected, can't use their sense of smell, and are exposed to kraken ink poison\.$/, /^\bThe cloud dissipates after (\d+|an?|one) (minutes?|rounds?)\.$/, /^\bKrakens are immune to this poison\.$/, /^Saving Throw @Check\[fortitude\|dc:(\d+)\|traits:poison\] Maximum Duration (\d+) rounds Stage 1 .* Stage 2 .*$/],
+        card: ([, , grasp, save, ink, , , lasts, , poison], _plan, given) => bottledGrasp(given, { what: "kraken", size: "Gargantuan", count: COUNTS[grasp[1].toLowerCase()] ?? Number(grasp[1]), reach: Number(grasp[2]), dc: Number(save[1]), grabbed: true, ink: Number(ink[1]), lasts: time(lasts[1], lasts[2]), poison: { dc: Number(poison[1]), rounds: Number(poison[2]) } })
     },
     {
         // (The creature in the square pinpointed to the end of its user's turn.)

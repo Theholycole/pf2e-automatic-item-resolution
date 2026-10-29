@@ -16,6 +16,7 @@ import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability
 import { CORE_FAMILIES, createRegistry } from "../../pf2e-resolution-core/src/index.js";
 import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { equipmentEffectIndex } from "../src/compiler/degree-effects.js";
+import { bombIndex } from "../src/compiler/bomb-snare.js";
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { compileActivations, handlesPermanent } from "../src/compiler/permanent.js";
 import { plainText } from "../src/compiler/rows.js";
@@ -41,7 +42,9 @@ const claims = await import("../../pf2e-automatic-resolution/src/compiler/item-c
 const spellModule = await Promise.all([import("../../pf2e-automatic-resolution/src/compiler/item-claims.js"), import("../../pf2e-automatic-resolution/src/compiler/item-spellshape.js"), import("../../pf2e-automatic-resolution/src/compiler/item-casts.js")]).catch(() => null);
 const claimsWhy = spellModule ? (item) => spellModule[0].itemClaims(item) : null;
 const spellModuleReads = spellModule ? (item) => ({ shapes: (spellModule[1].readItemSpellshape(item)?.activations ?? []).map((activation) => activation.label), casts: (spellModule[2].readItemCasts(item)?.casts ?? []).map((cast) => cast.uuid) }) : null;
-const options = { basicActions, spellEffects, spells, claims, claimsWhy, spellModuleReads, itemEffects };
+// (PF2e's alchemical bombs, for a snare loaded with them — Bomb Snare's: src/compiler/bomb-snare.js, 2026-10-28.)
+const bombs = bombIndex(readDocuments(path.join(pf2ePacks, "equipment")).filter((doc) => doc.collection === "items" && doc.type === "weapon"));
+const options = { basicActions, spellEffects, spells, claims, claimsWhy, spellModuleReads, itemEffects, bombs };
 
 const GEAR = new Set(["consumable", "equipment", "weapon", "armor", "shield", "ammo", "backpack"]);
 const STARFINDER = /^(?:sf|sf2e)[-_]/i;

@@ -930,7 +930,7 @@ function compileEach(item, options = {}) {
         // (A creature sent to another plane on a row, src/compiler/far-moves.js: Maw of Hungry Shadows' critical failure.)
         plan = withPlaneSent(plan);
         // (What holds a creature or a way in place, words on its user's note Effect, and stepping stones' lines, src/compiler/moving-notes.js:
-        // Magnetizing, Immovable Arm, Warding Escutcheon's door, Stepping Stone Shot; Guangu of the Steppe's two Effects, the ways card.)
+        // Magnetizing, Immovable Arm, Stepping Stone Shot; Guangu of the Steppe's two Effects, the ways card.)
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = movingNotesPlan(activation.html, base, item) ?? plan;
         if (!plan || plan.noteOnly || plan.builtin === "no-effect") plan = hoovesPlan(activation.html, base, { own: { index, name: activation.name, time: activation.time, frequency: activation.frequency?.max ? activation.frequency : null, trigger: activation.trigger }, level: Number(item.system?.level?.value) || 0, type: item.type }) ?? plan;
         // (Its user's shield raised, src/compiler/raise-shield.js: Shield of Snakes' Snap Up — PF2e's own Raise a Shield on Apply.)

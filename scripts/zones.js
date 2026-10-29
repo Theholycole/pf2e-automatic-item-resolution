@@ -12,12 +12,15 @@ import { SLAIN } from "./slain-wait.js";
 import { pauseItem } from "./paused-item.js";
 import { aroundZone, exemptSpec } from "../src/live/cube.js";
 import { vehicleFor, vehicleZone } from "../src/live/vehicle-aura.js";
+import { withAfflictionItem } from "../src/live/zone-afflictions.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 // (userId: who used it — its targets, for an area round the vehicle it targets.)
-export async function startItemZone({ plan, used, actor, token, userId = null }) {
+export async function startItemZone({ plan: given, used, actor, token, userId = null }) {
     const startZone = game.modules.get(ABILITY_ID)?.api?.live?.startZone;
+    // (Its saves' affliction the item's own, Kraken Bottle's ink: the item's compendium source, which outlasts the bottle used up — 2026-10-28.)
+    const plan = withAfflictionItem(given, used.data._stats?.compendiumSource ?? used.data.flags?.core?.sourceId ?? used.data.uuid ?? null);
     // (The item may be used up already: its name, uuid and actor are all the zone needs.)
     const item = { name: used.data.name, uuid: used.data.uuid ?? null, actor, img: used.data.img ?? null };
     // (Its user's own PF2e Effect beside the zone, src/compiler/aura-zones.js: Horn of Rust's +1 item bonus to AC.)

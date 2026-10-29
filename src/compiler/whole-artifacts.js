@@ -11,6 +11,7 @@ import { dragonArmyOf } from "./spectral-army.js";
 import { contractSpellsOf } from "./contract-spells.js";
 import { decoyDoublePlanOf } from "./decoy-double.js";
 import { pairedStonePlanOf } from "./paired-stone.js";
+import { lensPossession } from "./possession.js";
 
 // Each reading: the source names it's for (an activation's "Item: Activation"), whether it reads over the plan read before (by default only
 // none, note-only, or the GM's no-effect), its Requirements line's pattern when it has one, a pattern for each of its effect's sentences —
@@ -36,8 +37,8 @@ const READINGS = [
     },
     {
         // Cube of Nex: the cube of walls, its face picked on the ways card (src/compiler/cube-faces.js): each a zone or the walls of force,
-        // until dismissed. (Its zones' crossing saves wait on the ability module's "exit" saves and only.notTraits, its walls of force on the
-        // environment module's invisible walls: partial till then.)
+        // until dismissed. (2026-10-28: whole — its zones' crossing saves are the ability module's "exit" saves and only.notTraits, its walls
+        // of force the environment module's invisible walls, both built since.)
         names: ["Cube of Nex"],
         index: 0,
         sentences: [
@@ -49,8 +50,7 @@ const READINGS = [
             /^The walls have the AC, Hit Points, and Hardness of a Wall of Force\.\s*You must first Dismiss any previous activation before you use it again\.$/
         ],
         card: (_found, _plan, { itemHtml, base, info }) => {
-            const ways = cubeWaysOf(itemHtml, { base, info });
-            return ways ? { ...ways, partial: true, automation: { level: "guided" } } : null;
+            return cubeWaysOf(itemHtml, { base, info });
         }
     },
     {
@@ -462,33 +462,21 @@ const READINGS = [
         })
     },
     {
-        // Crimson Fulcrum Lens's second activation: its own melee spell attack (+18) at the creature targeted; a hit gives it PF2e's Effect: Crimson
-        // Fulcrum Lens (the invested benefits) and the possession's note Effect, its user no longer invested and the lens inert while it lasts
-        // (plan.possession, scripts/lens-possession.js).
-        names: ["Crimson Fulcrum Lens"],
+        // The fulcrum lenses' possession (Crimson's, Emerald's, Ochre's second activation): its own melee spell attack at the creature targeted; a
+        // hit gives it the lens's own PF2e Effect (the invested benefits) and the possession's note Effect, its user no longer invested and the
+        // lens without its magic while it lasts (src/compiler/possession.js, plan.possess, scripts/possession.js — 2026-10-28, one mechanism for
+        // the three, built three ways in batch 4). Over whatever was read before.
+        names: ["Crimson Fulcrum Lens", "Emerald Fulcrum Lens", "Ochre Fulcrum Lens"],
         index: 1,
+        over: () => true,
         sentences: [
-            /^While grasping the lens, make a melee spell attack roll with a modifier of @Check\[crimson-fulcrum-lens\|against:ac\]\{\+(\d+)\}\.$/,
+            /^While grasping the lens, make a melee spell attack roll with a modifier of @Check\[(?:crimson|emerald|ochre)-fulcrum-lens\|against:ac\]\{\+(\d+)\}\.$/,
             /^On a hit, you force the splinter of Nhimbaloth's essence from the lens to possess the target\.$/,
             /^You're no longer invested in the lens, and the target gains the benefits as though it had invested the lens but can't activate the lens's other abilities\.$/,
             /^This effect is permanent, but it can be ended by any effect that removes a possession effect\.$/,
             /^The lens doesn't have any magical abilities until the possession effect ends; when it does, the essence returns to the lens\.$/
         ],
-        card: ([attack], _plan, { itemHtml, base }) => {
-            const link = /@UUID\[(Compendium\.pf2e\.equipment-effects\.Item\.[A-Za-z0-9]+)\]\{(Effect: Crimson Fulcrum Lens)\}/.exec(String(itemHtml ?? ""));
-            if (!link) return null;
-            const none = () => ({ damage: { mode: "none", multiplier: 0, sourceComponentIds: [] }, effects: [], modifiers: [] });
-            const label = "Possessed by Nhimbaloth's essence";
-            const hit = () => ({ ...none(), nativeEffects: [{ uuid: link[1], label: link[2] }], noteEffects: [{ label, text: "A splinter of Nhimbaloth's essence possesses it: it has the lens's invested benefits (its Effect), though it can't activate the lens. Permanent, until an effect that removes a possession effect ends it (delete this Effect then; the essence returns to the lens).", duration: null }] });
-            return {
-                traits: [...new Set([...(base?.traits ?? []), "attack", "possession"])],
-                targeting: { target: "1 creature", range: "touch", area: null },
-                ownCheck: { kind: "attack", modifier: Number(attack[1]) },
-                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: Number(attack[1]) }, outcomes: { criticalSuccess: hit(), success: hit(), failure: none(), criticalFailure: none() } },
-                possession: { label, itemUuid: base?.source?.uuid ?? null },
-                notes: ["Its user must be grasping the lens; on a hit they're no longer invested in it, and it has no magic until the possession ends."]
-            };
-        }
+        card: ([attack], _plan, { itemHtml, base }) => lensPossession([attack], { itemHtml, base })
     },
     {
         // The Hollow Star's reaction to its user's linguistic spell or effect: Aklo spoken, +1 item to its spell attack roll and the saves against

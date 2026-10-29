@@ -535,7 +535,7 @@ export const CREATURE_READINGS = [
     {
         // (The chaos table's rows each a card of its own, read by its number: places traded with the target (item.swapPlaces), mice as the
         // ability module's markers for a minute (a rolled count), a rock's Clumsy until it's shaken out, both Prone, the robe's Dragon Form for
-        // a rolled 1d8 rounds (castDuration.formula), the robe's cry on its user too (its success, Stunned 1), two torrents on the ways card,
+        // a rolled 1d8 rounds (castDuration.valueRoll), the robe's cry on its user too (its success, Stunned 1), two torrents on the ways card,
         // the sand's Reflex save, a billow of concealment (the ability module's zone), its healing, what Recall Knowledge tells (whispered, with
         // the flat check that tells the target as much), its looks the card's lines, and a 20's two more rolls with 20s ignored (table.rolls).)
         name: "Rumbustious Robes: Pocket Full of Chaos",
@@ -584,7 +584,7 @@ export const CREATURE_READINGS = [
                 }),
                 6: at([{ kind: "condition", slug: "clumsy", value: Number(found[6][1]), duration: null }], { notes: ["A rock in its shoes: Clumsy until it spends a single manipulate action to take it out (remove the condition then). A creature wearing no footwear isn't affected."] }),
                 7: at([{ kind: "condition", slug: "prone", value: null, duration: null }], { userEffects: [{ slug: "prone", value: null, duration: null }], notes: ["Its user is knocked prone too."] }),
-                8: cast("5c692cCcTDXjSEzk", found[8][1], 6, { self: true, castDuration: { value: 1, unit: "rounds", formula: found[8][2], said: `${found[8][2]} rounds` } }),
+                8: cast("5c692cCcTDXjSEzk", found[8][1], 6, { self: true, castDuration: { value: 1, unit: "rounds", valueRoll: found[8][2], said: `${found[8][2]} rounds` } }),
                 9: look(`An inch of snow falls at once, then flurries for ${timeWords(timeOf(found[9][1], found[9][2]))} (the scene's look).`),
                 10: look(`For the next ${found[10][1]} minutes everyone hears an unseen voice narrating its user's actions.`),
                 12: own({ targeting: { target: "self", range: null, area: null }, resolution: { kind: "healing", native: { healing: { components: [{ id: "healing", formula: String(2 * level), kinds: ["healing"] }], recipients: "living" } } } }),

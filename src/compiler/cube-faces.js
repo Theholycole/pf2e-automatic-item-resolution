@@ -6,7 +6,7 @@
 // square structure out (centre "around", the item module's: src/live/cube.js), never placed, never attached, until
 // dismissed: gas and wind kept out, or magical effects, by the counteract card beside it (+20, the item's rank: its level halved, rounded up);
 // nonliving or living creatures crossing in its save, Will DC 30, a failure pushing them back out (their move wasted); the fifth face's walls
-// of force the environment module's structure (plan.item.structure, scripts/structure.js: their Wall of Force numbers, its user inside not
+// of force the environment module's structure (plan.structure, scripts/cube.js: their Wall of Force numbers, its user inside not
 // pushed out). And its second activation, "A cube of force or Lesser Cube of Nex within 60 feet of you becomes inert. It can't be Activated,
 // any current activation ends, and any constant abilities it has cease to function": plan.item.inert, the item module's card (scripts/inert.js).
 // Pure.
@@ -18,12 +18,17 @@ export const WALL_OF_FORCE = { ac: 10, hardness: 30, hp: 60, immune: ["critical-
 const WALLS_LINE = `Its walls: AC ${WALL_OF_FORCE.ac}, Hardness ${WALL_OF_FORCE.hardness}, ${WALL_OF_FORCE.hp} Hit Points, immune to critical hits and precision damage (a Wall of Force's)`;
 const NONLIVING = ["construct", "undead"];
 
-// The table's faces from the item's text: [{ face, words }] (its rows' words, a link's its label, an inline roll kept), or null.
+// The table's faces from the item's text: [{ face, words, duration }] (its rows' words, a link's its label, an inline roll kept; a Duration
+// column's time, Cube of Force's — { value, unit }, null for its "-" or none), or null.
 const cell = (html) => String(html ?? "").replace(/<[^>]+>/g, " ").replace(/@UUID\[[^\]]*\]\{([^}]*)\}/g, "$1").replace(/\s+/g, " ").trim();
+const TIME = /^(\d+) (round|minute|hour)s?$/;
 export function cubeFaces(html) {
-    const rows = [...String(html ?? "").matchAll(/<tr>\s*<td>\s*(\d)\s*<\/td>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/g)];
+    const rows = [...String(html ?? "").matchAll(/<tr>\s*<td>\s*(\d)\s*<\/td>\s*(?:<td>\s*([^<]*?)\s*<\/td>\s*(?=<td>))?<td>([\s\S]*?)<\/td>\s*<\/tr>/g)];
     if (rows.length !== 6) return null;
-    return rows.map((row) => ({ face: Number(row[1]), words: cell(row[2]) }));
+    return rows.map((row) => {
+        const time = TIME.exec(cell(row[2] ?? ""));
+        return { face: Number(row[1]), words: cell(row[3]), duration: time ? { value: Number(time[1]), unit: `${time[2]}s` } : null };
+    });
 }
 
 // The crossing save: Will at its DC, a failure its move wasted — pushed back out of the square, away from its user inside.
@@ -77,22 +82,25 @@ const FACE_READINGS = [
     }
 ];
 
-// The item's whole text (its table after the other activation) and { base, info } → the ways card, or null.
-export function cubeWaysOf(itemHtml, { base, info }) {
+// The item's whole text (its table after the other activation) and { base, info } → the ways card, or null. (2026-10-28: each face's
+// duration, Cube of Force's, its zone's or walls' time; notes: the ways card's own, Cube of Nex's dismissed first by default.)
+const DISMISS_FIRST = "Its user must Dismiss the cube's walls before activating it again.";
+export function cubeWaysOf(itemHtml, { base, info, notes = [DISMISS_FIRST] }) {
     const faces = cubeFaces(itemHtml);
     if (!faces) return null;
     const rank = Math.max(1, Math.ceil((Number(info?.level) || 0) / 2));
     const built = [];
-    for (const { face, words } of faces) {
+    for (const { face, words, duration } of faces) {
         const reading = FACE_READINGS.find((entry) => entry.face === face);
         const match = reading?.pattern.exec(words);
         if (!match) return null;
         const parts = reading.build(match, { base, rank });
         if (!parts) continue;
         const square = { type: "square", value: 10 };
+        const lasts = duration ? { mode: "fixed", ...duration, expiry: "turn-start", anchor: "effect-start" } : UNTIL_DISMISSED;
         const lines = [WALLS_LINE, "Centred on its user; a face a creature or object overlaps doesn't appear, and a Huge or larger user gets nothing (its space is larger than the cube)", "The sixth face Dismisses it with an Interact (no activation): delete the zone then", ...(parts.notes ?? [])];
         const plan = parts.structure
-            ? { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, builtin: "structure", targeting: { target: null, range: null, area: square }, structure: { ...parts.structure, lines: [...(parts.structure.lines ?? []), ...lines.slice(1, 3)] }, item: { ...info } }
+            ? { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, builtin: "structure", targeting: { target: null, range: null, area: square }, structure: { ...parts.structure, ...(duration ? { lasts: { ...duration } } : {}), lines: [...(parts.structure.lines ?? []), ...lines.slice(1, 3)] }, item: { ...info } }
             : {
                 ...base,
                 automation: { level: "automatic" },
@@ -100,12 +108,36 @@ export function cubeWaysOf(itemHtml, { base, info }) {
                 builtin: "zone",
                 actions: null,
                 targeting: { target: null, range: null, area: square },
-                zone: { area: square, centre: "around", range: null, lasts: UNTIL_DISMISSED, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: parts.saves ?? [], damage: [], effect: null, modifiers: [], notes: lines.map((line) => `${line}.`) },
+                zone: { area: square, centre: "around", range: null, lasts, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: parts.saves ?? [], damage: [], effect: null, modifiers: [], notes: lines.map((line) => `${line}.`) },
                 item: { ...info, ...(parts.counteract ? { counteract: parts.counteract } : {}) }
             };
-        built.push({ name: `Face ${reading.name}`, html: `<p>${words}</p>`, plan });
+        built.push({ name: `Face ${reading.name}${duration ? ` (${duration.value} ${duration.value === 1 ? duration.unit.replace(/s$/, "") : duration.unit})` : ""}`, html: `<p>${words}</p>`, plan });
     }
-    return { builtin: "ways", targeting: { target: null, range: null, area: null }, ways: built, notes: ["Its user must Dismiss the cube's walls before activating it again."] };
+    return { builtin: "ways", targeting: { target: null, range: null, area: null }, ways: built, ...(notes.length ? { notes } : {}) };
+}
+
+// Cube of Force's activation and Lesser Cube of Nex's (2026-10-28, docs/needs.md "areas"; the leftovers group's — Lesser Cube of Nex's own
+// reading of batch 4, src/compiler/relic-readings.js, gone for this one): "You hold the cube aloft and depress one of its six faces … The
+// duration and effect of the six walls depends on which face of the cube you press", their table in the activation's own block — Cube of
+// Force's with a Duration column (30 minutes, 10, 10, 5 and 1). The ways card above, each face's zone or walls for its time; Lesser Cube of
+// Nex's previous activation dismissed first, a line.
+const CUBE = [
+    /^You hold the cube aloft and depress one of its six faces for several seconds\.$/,
+    /^The cube creates six walls around you, creating a cube 10 feet on each side centered on you \(typically centered on the top of your space if you're a Medium creature\)\.$/,
+    /^If a creature or object overlaps any of these walls, that face of the cube doesn't appear; this also means if you're Huge or larger, the activation has no effect, as your space is larger than the cube would be\.$/,
+    /^The (?:duration and )?effect of the six walls depends on which face of the cube you press when you Activate the cube, as seen on the Cube Effects table \(below\)\.$/,
+    /^Pressing the sixth cube face with a simple Interact action Dismisses the effect; doing so isn't an activation and thus doesn't count against the cube's frequency\.$/,
+    /^The walls have the AC, Hit Points, and Hardness of a Wall of Force\.(\s*You must first Dismiss any previous activation before you use it again\.)?$/
+];
+const CUBES = ["Cube of Force", "Lesser Cube of Nex"];
+export function withCubeWalls(plan, { kind, words, html, base, info, frequency, item }) {
+    if (kind !== "activation" || !CUBES.includes(item?.name)) return plan;
+    const sentences = String(words ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+    if (sentences.length < CUBE.length + 1 || !CUBE.every((pattern, index) => pattern.test(sentences[index])) || !/^Cube Face (?:Duration )?Effect 1 /.test(sentences[CUBE.length])) return plan;
+    const dismissFirst = Boolean(CUBE.at(-1).exec(sentences[CUBE.length - 1])[1]);
+    const ways = cubeWaysOf(html, { base, info, notes: dismissFirst ? [DISMISS_FIRST] : [] });
+    if (!ways) return plan;
+    return { ...base, automation: { level: "automatic" }, trigger: { event: "use", ...(frequency ? { frequency } : {}) }, ...ways, item: { ...info } };
 }
 
 // Its second activation's cube made inert: the creature holding one of those within that many feet (the presser's target), its item flagged

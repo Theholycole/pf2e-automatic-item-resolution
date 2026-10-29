@@ -21,11 +21,15 @@ export function setUpCastDurations() {
 
 // After the cast: the mark on its message, and the Effects already made on the caster and its targets set to the duration. → a line or none.
 export async function rememberCastDuration(cast, castDuration, { actor, targets = [] } = {}) {
-    // (A rolled time, Rumbustious Robes' Dragon Form for 1d8 rounds: castDuration.formula, rolled as it's cast — 2026-10-28.)
-    const rolled = castDuration?.formula ? await new Roll(String(castDuration.formula)).evaluate().catch(() => null) : null;
-    if (rolled) await rolled.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `Its duration (${castDuration.formula} ${castDuration.unit})` }).catch(() => null);
-    const time = rolled ? { value: Math.max(1, Number(rolled.total) || 1), unit: castDuration.unit } : castDurationAt(castDuration, actor?.level);
+    let time = castDurationAt(castDuration, actor?.level);
     if (!time || !cast?.spellUuid) return null;
+    // (A time the item rolls, Pistol of Wonder's Cloak of Colors "with a duration of 1d10 rounds": castDuration.valueRoll, rolled now, its
+    // roll in the chat — 2026-10-28.)
+    if (typeof castDuration?.valueRoll === "string" && castDuration.valueRoll.trim() && !castDuration.atLevel) {
+        const roll = await new Roll(castDuration.valueRoll).evaluate();
+        await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `Its time (${castDuration.valueRoll} ${time.unit})` });
+        time = { ...time, value: Math.max(1, Number(roll.total) || 1) };
+    }
     if (cast.message) await cast.message.setFlag(MODULE_ID, "castDuration", { spellUuid: cast.spellUuid, ...time }).catch(() => null);
     const actors = [actor, ...targets.map((token) => token?.actor ?? token?.document?.actor ?? null)].filter(Boolean);
     for (const one of new Set(actors)) for (const effect of (one.itemTypes?.effect ?? []).filter((entry) => originOf(entry) === cast.spellUuid)) await effect.update(update(time));

@@ -331,34 +331,20 @@ const READINGS = [
             /^You're also protected from severe and extreme heat or severe and extreme cold \(your choice when you activate this ability\)\.$/,
             /^This effect lasts until your next daily preparations or the next time you activate it, whichever comes first\.$/
         ],
-        card: ([, bonus]) => {
-            const terrains = [["aquatic", "Aquatic"], ["arctic", "Arctic"], ["desert", "Desert"], ["forest", "Forest"], ["mountain", "Mountain"], ["plain", "Plains"], ["sky", "Sky"], ["swamp", "Swamp"], ["underground", "Underground"]];
-            const sides = [["heat", { "severe-heat": "mild-heat", "extreme-heat": "mild-heat" }], ["cold", { "severe-cold": "mild-cold", "extreme-cold": "mild-cold" }]];
-            const way = ([key, label], [side, counts]) => ({
-                name: `${label}, protected from ${side}`,
-                plan: {
-                    targeting: { target: null, range: null, area: null },
-                    automation: { level: "automatic" },
-                    trigger: { event: "use" },
-                    resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
-                    temperature: { counts, duration: null, until: "Until its user's next daily preparations", untilRest: true, replaces: true },
-                    item: {
-                        ruleEffects: [{
-                            name: "Terrain Adaptation",
-                            words: `Adapted to ${label.toLowerCase()} terrain until its next daily preparations or next Terrain Adaptation: it ignores difficult terrain there, and gets a +${bonus[1]} circumstance bonus to saves against that terrain's environmental hazards, natural disasters and extreme temperatures`,
-                            rules: [
-                                { key: "ActiveEffectLike", mode: "add", path: "system.movement.terrain.difficult.ignored", value: { environment: key, feature: "all" } },
-                                { key: "FlatModifier", selector: "saving-throw", type: "circumstance", value: Number(bonus[1]), predicate: [`terrain:${key}`, { or: ["environment", "origin:trait:environmental"] }], label: "Terrain Adaptation" }
-                            ],
-                            duration: null,
-                            untilRest: true,
-                            replaces: true
-                        }]
-                    }
-                }
-            });
-            return { builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways: terrains.flatMap((terrain) => sides.map((side) => way(terrain, side))), notes: ["Its save bonus holds where the scene or region is of that terrain (PF2e's environment types)."] };
-        }
+        card: ([, bonus]) => terrainAdaptation(Number(bonus[1]), { nonMagical: false, replaces: true })
+    },
+    {
+        // (2026-10-28: the first grade's the same reading — its non-magical difficult terrain, +1, until its next daily preparation (once a day,
+        // so no use replaces another) — in place of special-readings.js's ChoiceSet note Effect, which had no end and PF2e's terrain option
+        // wrong: one mechanism for both, the batch-5 leftovers' merge.)
+        name: "Slithermaw's Bane: Terrain Adaptation",
+        sentences: [
+            /^You alter the exterior of the armor to better adapt to the surrounding terrain: aquatic, arctic, desert, forest, mountain, plains, sky, swamp, or underground\.$/,
+            /^You ignore non-magical difficult terrain within the chosen environment and gain a \+(\d+) circumstance bonus to saving throws against environmental hazards, natural disasters, and extreme temperatures that originate from that terrain\.$/,
+            /^You are also protected from severe and extreme heat or severe and extreme cold \(your choice when you activate this ability\)\.$/,
+            /^This effect lasts until your next daily preparations?\.$/
+        ],
+        card: ([, bonus]) => terrainAdaptation(Number(bonus[1]), { nonMagical: true, replaces: false })
     },
     {
         // (Its user healed twice its level, read before, and its pledged follower's Hit Points lost by its level, nothing lowering them —
@@ -780,6 +766,40 @@ const READINGS = [
         }
     },
 ];
+
+// Slithermaw's Bane's Terrain Adaptation (both grades): the ways card of a terrain and a side, heat or cold — each an Effect ignoring that
+// terrain's difficult terrain (PF2e's own entry, { environment, feature: "all" }, which the environment module reads: its features are all
+// non-magical) and its bonus to saves against what that terrain's environment throws at it (PF2e's terrain:<type> roll option, the scene's or
+// region's environment types), with the protection from heat or cold the environment module reads; until its user's next daily preparations
+// (untilRest), in place of the last one (replaces) when its text says so. "Sky" is no PF2e environment type: its Effect's words alone.
+const TERRAINS = [["aquatic", "Aquatic"], ["arctic", "Arctic"], ["desert", "Desert"], ["forest", "Forest"], ["mountain", "Mountain"], ["plains", "Plains"], ["sky", "Sky"], ["swamp", "Swamp"], ["underground", "Underground"]];
+const SIDES = [["heat", { "severe-heat": "mild-heat", "extreme-heat": "mild-heat" }], ["cold", { "severe-cold": "mild-cold", "extreme-cold": "mild-cold" }]];
+function terrainAdaptation(bonus, { nonMagical, replaces }) {
+    const way = ([key, label], [side, counts]) => ({
+        name: `${label}, protected from ${side}`,
+        plan: {
+            targeting: { target: null, range: null, area: null },
+            automation: { level: "automatic" },
+            trigger: { event: "use" },
+            resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: none() } },
+            temperature: { counts, duration: null, until: "Until its user's next daily preparations", untilRest: true, ...(replaces ? { replaces: true } : {}) },
+            item: {
+                ruleEffects: [{
+                    name: "Terrain Adaptation",
+                    words: `Adapted to ${label.toLowerCase()} terrain until its next daily preparations${replaces ? " or next Terrain Adaptation" : ""}: it ignores ${nonMagical ? "non-magical " : ""}difficult terrain there, and gets a +${bonus} circumstance bonus to saves against that terrain's environmental hazards, natural disasters and extreme temperatures`,
+                    rules: [
+                        { key: "ActiveEffectLike", mode: "add", path: "system.movement.terrain.difficult.ignored", value: { environment: key, feature: "all" } },
+                        { key: "FlatModifier", selector: "saving-throw", type: "circumstance", value: bonus, predicate: [`terrain:${key}`, { or: ["environment", "origin:trait:environmental"] }], label: "Terrain Adaptation" }
+                    ],
+                    duration: null,
+                    untilRest: true,
+                    ...(replaces ? { replaces: true } : {})
+                }]
+            }
+        }
+    });
+    return { builtin: "ways", once: true, targeting: { target: null, range: null, area: null }, ways: TERRAINS.flatMap((terrain) => SIDES.map((side) => way(terrain, side))), notes: ["Its save bonus holds where the scene or region is of that terrain (PF2e's environment types)."] };
+}
 
 // Whether a reading is for this source name (an activation's "Item: Activation").
 export const hasArtifactReading = (name) => READINGS.some((entry) => entry.name === name);

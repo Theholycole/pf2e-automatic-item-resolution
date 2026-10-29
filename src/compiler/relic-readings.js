@@ -19,15 +19,11 @@ const ownRow = ({ noteEffects = [], effects = [], notes = [] }) => ({
     resolution: { kind: "check", check: { roll: "automatic" }, outcomes: { success: { ...none(), effects, ...(noteEffects.length ? { noteEffects } : {}) } } },
     ...(notes.length ? { notes } : {})
 });
-const ownRowWith = (row, item) => ({ ...ownRow(row), item });
-// (The ability module's zone, its fields as its compiler gives them — area-readings.js's shape.)
-const zoneOf = (fields) => ({ area: null, centre: "self", range: null, lasts: null, untilReused: false, concealed: false, terrain: [], others: false, hazard: null, saves: [], damage: [], effect: null, modifiers: [], notes: [], ...fields });
 
 // A save card's plan at one creature: its statistic and DC, the conditions on a failure and a critical failure.
 const condition = (slug, value = null, duration = null) => ({ kind: "condition", slug: String(slug).toLowerCase(), value, ...(duration ? { duration } : {}) });
-// (failureNote: a note Effect on a failure and a critical failure — Lesser Cube of Nex's move action wasted.)
-function savePlan({ name, statistic, dc, failure = [], criticalFailure = [], base = null, failureNote = null }) {
-    const failed = (effects) => ({ ...none(), effects, ...(failureNote ? { noteEffects: [failureNote] } : {}) });
+function savePlan({ name, statistic, dc, failure = [], criticalFailure = [], base = null }) {
+    const failed = (effects) => ({ ...none(), effects });
     return {
         modelVersion: base?.modelVersion ?? 13,
         source: { ...(base?.source ?? {}), name },
@@ -243,48 +239,7 @@ const READINGS = [
             };
         }
     },
-    {
-        // Lesser Cube of Nex: the ways card's six faces, each a 10-foot cube of walls round its user — the ability module's zone the GM places
-        // over its user's space, lasting until dismissed. Face 1 keeps out gas and wind, face 4 magical effects: the counteract card at +20
-        // (rank 10, its level's half) for each that crosses. Faces 2 and 3 block nonliving and living matter: a DC 30 Will save for a creature
-        // of that kind entering (by its traits: undead and constructs nonliving), its move action wasted on a failure. Face 5 is Wall of
-        // Force: the environment module's walls round its user, Wall of Force's Hardness 30 and 60 Hit Points (scripts/item-structures.js).
-        // Face 6 dismisses it, no activation (its walls removed; a zone ended on its own card). What overlaps a wall, a Huge user, and the
-        // previous one dismissed first: its card's lines.
-        name: "Lesser Cube of Nex",
-        sentences: [
-            /^You hold the cube aloft and depress one of its six faces for several seconds\.$/,
-            /^The cube creates six walls around you, creating a cube (\d+) feet on each side centered on you \(typically centered on the top of your space if you're a Medium creature\)\.$/,
-            /^If a creature or object overlaps any of these walls, that face of the cube doesn't appear; this also means if you're Huge or larger, the activation has no effect, as your space is larger than the cube would be\.$/,
-            /^The effect of the six walls depends on which face of the cube you press when you Activate the cube, as seen on the Cube Effects table \(below\)\.$/,
-            /^Pressing the sixth cube face with a simple Interact action Dismisses the effect; doing so isn't an activation and thus doesn't count against the cube's frequency\.$/,
-            /^The walls have the AC, Hit Points, and Hardness of a Wall of Force\.\s*You must first Dismiss any previous activation before you use it again\.$/,
-            /^Cube Face Effect 1 The walls keep out gas and wind, attempting to counteract such effects that cross the threshold with a \+(\d+) counteract modifier but allowing all other things through\. 2 The walls block nonliving matter from crossing; a nonliving creature must succeed at a @Check\[(will)\|dc:(\d+)\] save to cross the threshold, wasting their move action on a failure, and unattended objects can't cross\.$/,
-            /^Non-magical ranged attacks can't cross either and instead attack the wall\.$/,
-            /^A living creature can bring attended objects across the walls without needing to attempt a saving throw\. 3 The walls block living matter from crossing; a living creature must succeed at a @Check\[(will)\|dc:(\d+)\] save to cross the threshold, wasting their move action on a failure\. 4 The walls keep out magical effects that cross the threshold, attempting to counteract magical effects with a \+(\d+) counteract modifier, though they don't prevent a creature with magical items or effects from entering\. 5 The walls block everything, with the effects of Wall of Force\. 6 The cube is Dismissed \(this takes only an Interact action and isn't an activation\)\.$/
-        ],
-        card: ([, cube, , , , , gas, , living], plan, { base, info }) => {
-            const side = Number(cube[1]);
-            const rank = Math.max(1, Math.ceil((Number(info?.level) || 20) / 2));
-            const walls = (notes, extra = {}) => ({ builtin: "zone", actions: null, targeting: { target: null, range: null, area: { type: "square", value: side } }, zone: zoneOf({ area: { type: "square", value: side }, centre: "placed", range: null, untilReused: true, notes: [`A ${side}-foot cube of walls round its user (place it over its space); a face a creature or object overlaps doesn't appear.`, ...notes], ...extra }) });
-            const counteract = (modifier, what) => ({ modifier: Number(modifier), rank, conditions: [], traits: [], afflictions: [], free: { name: what }, pick: "one", notes: [`Each ${what} that crosses its walls: this counteract (the GM's call which cross).`] });
-            const crossing = (kind, statistic, dc, only) => ({ when: ["enter"], only, plan: savePlan({ name: `Lesser Cube of Nex: ${kind} crossing`, statistic, dc: Number(dc), failure: [], criticalFailure: [], base: plan, failureNote: { label: "Lesser Cube of Nex: not crossed", text: "Its move action is wasted: it doesn't cross the cube's wall (put it back where it was).", duration: timeOf(0, "rounds", "turn-end") } }) });
-            const way = (name, wayPlan) => ({ name, html: "", plan: { ...base, automation: { level: "automatic" }, trigger: { event: "use" }, ...wayPlan, item: { ...info, ...(wayPlan.item ?? {}) } } });
-            return {
-                builtin: "ways",
-                targeting: { target: null, range: null, area: null },
-                notes: ["One face for each activation: dismiss the one before (face 6, an Interact, not an activation) first. A Huge or larger user's space is too big: nothing happens."],
-                ways: [
-                    way("Face 1: gas and wind kept out", { ...walls(["Gas and wind can't cross its walls; everything else can."]), item: { counteract: counteract(gas[1], "gas or wind effect") } }),
-                    way("Face 2: nonliving matter blocked", walls(["Unattended objects and non-magical ranged attacks can't cross (an attack hits the wall instead); a living creature brings what it carries across."], { saves: [crossing("a nonliving creature", gas[2], gas[3], { traits: ["undead", "construct"] })] })),
-                    way("Face 3: living matter blocked", walls(["Each living creature crossing attempts the save (a nonliving one, an undead or construct, doesn't: dismiss its card)."], { saves: [crossing("a living creature", living[1], living[2], undefined)] })),
-                    way("Face 4: magic kept out", { ...walls(["A creature with magical items or effects can still enter."]), item: { counteract: counteract(living[3], "magical effect") } }),
-                    way("Face 5: Wall of Force", ownRowWith({ notes: ["The walls block everything, as Wall of Force: AC 10, Hardness 30, 60 Hit Points, immune to critical hits and precision damage."] }, { structure: { name: "walls of force", shape: "square", feet: side, invisible: true, stats: { hardness: 30, hp: 60, bt: 0 }, words: `a ${side}-foot cube of walls of force round its user` } })),
-                    way("Face 6: dismissed", ownRowWith({ notes: ["Dismissed with an Interact action, not an activation: its walls go (end its zone on the zone's own card)."] }, { removeStructures: true }))
-                ]
-            };
-        }
-    },
+    // (Lesser Cube of Nex: src/compiler/cube-faces.js withCubeWalls since 2026-10-28 — one reading with Cube of Nex's and Cube of Force's.)
     {
         // Planar Ribbon's second activation: the DC 42 Reflex save card at a foe within 60 feet; on a failure (or worse) its user and it trade
         // places and its allies are Off-Guard to its user until the end of its user's turn (plan.swap, scripts/swap.js, once the save card is

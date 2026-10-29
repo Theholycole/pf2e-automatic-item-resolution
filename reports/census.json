@@ -13,11 +13,11 @@
   },
   "activatedPermanent": 2679,
   "results": {
-   "builtin:cast-spell": 34,
-   "builtin:zone": 147,
-   "resolves": 1097,
+   "builtin:cast-spell": 35,
+   "builtin:zone": 146,
+   "resolves": 1096,
    "builtin:readied-bonus": 24,
-   "builtin:ways": 62,
+   "builtin:ways": 65,
    "builtin:item-action": 19,
    "builtin:conjure": 13,
    "builtin:counteract": 42,
@@ -29,8 +29,7 @@
    "builtin:objects": 9,
    "none": 2,
    "builtin:roll-twice": 2,
-   "partial": 1,
-   "note-only": 3
+   "note-only": 2
   }
  },
  "byCategory": {
@@ -39,8 +38,8 @@
    "results": {
     "builtin:cast-spell": 12,
     "builtin:zone": 41,
-    "resolves": 371,
-    "builtin:ways": 41,
+    "resolves": 370,
+    "builtin:ways": 43,
     "builtin:readied-bonus": 9,
     "builtin:teleport": 5,
     "builtin:conjure": 4,
@@ -49,7 +48,6 @@
     "builtin:item-action": 3,
     "none": 2,
     "builtin:objects": 1,
-    "partial": 1,
     "note-only": 2
    },
    "mechanisms": {
@@ -166,8 +164,8 @@
   "snare": {
    "count": 82,
    "results": {
-    "builtin:zone": 78,
-    "builtin:ways": 2,
+    "builtin:zone": 77,
+    "builtin:ways": 3,
     "builtin:whisper": 1,
     "resolves": 1
    },
@@ -225,11 +223,10 @@
    "results": {
     "resolves": 50,
     "builtin:conjure": 8,
-    "builtin:cast-spell": 3,
+    "builtin:cast-spell": 4,
     "builtin:counteract": 2,
     "builtin:ways": 1,
-    "builtin:item-action": 1,
-    "note-only": 1
+    "builtin:item-action": 1
    },
    "mechanisms": {
     "linked-effect": 17,
@@ -323,7 +320,7 @@
   },
   "fixed-dc": {
    "count": 491,
-   "resolves": 364,
+   "resolves": 363,
    "gaps": 0,
    "none": 0
   },
@@ -384,14 +381,14 @@
  },
  "live": {
   "totals": {
-   "cast": 34,
-   "zone": 147,
-   "item": 741,
+   "cast": 35,
+   "zone": 146,
+   "item": 740,
    "fortune": 26,
-   "none": 17,
-   "save": 134,
+   "none": 16,
+   "save": 133,
    "expose": 89,
-   "ways": 62,
+   "ways": 65,
    "action": 19,
    "conjure": 13,
    "counteract": 42,
@@ -408,9 +405,9 @@
    "other": {
     "cast": 12,
     "zone": 41,
-    "none": 11,
-    "ways": 41,
-    "save": 88,
+    "none": 10,
+    "ways": 43,
+    "save": 87,
     "item": 267,
     "fortune": 9,
     "teleport": 5,
@@ -467,8 +464,8 @@
     "save": 1
    },
    "snare": {
-    "zone": 78,
-    "ways": 2,
+    "zone": 77,
+    "ways": 3,
     "whisper": 1,
     "save": 1
    },
@@ -487,9 +484,9 @@
     "item": 68
    },
    "oil": {
-    "item": 49,
+    "item": 48,
     "conjure": 8,
-    "cast": 3,
+    "cast": 4,
     "save": 1,
     "later": 1,
     "counteract": 2,
@@ -518,7 +515,7 @@
    }
   },
   "noCard": {
-   "triggered": 11,
+   "triggered": 10,
    "other": 4,
    "no-plan": 2
   }
@@ -19003,9 +19000,9 @@
     "fixed-dc",
     "condition"
    ],
-   "result": "builtin:zone",
+   "result": "builtin:ways",
    "kind": null,
-   "live": "zone"
+   "live": "ways"
   },
   {
    "name": "Toothy Knife",
@@ -20949,10 +20946,9 @@
    "mechanisms": [
     "fixed-dc"
    ],
-   "result": "resolves",
-   "kind": "save",
-   "gaps": [],
-   "live": "save"
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Runestone",
@@ -24067,9 +24063,9 @@
     "condition",
     "duration"
    ],
-   "result": "partial",
-   "kind": "save",
-   "live": null
+   "result": "builtin:ways",
+   "kind": null,
+   "live": "ways"
   },
   {
    "name": "Wounding Oil",
@@ -30976,9 +30972,9 @@
     "condition",
     "duration"
    ],
-   "result": "note-only",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:cast-spell",
+   "kind": null,
+   "live": "cast"
   },
   {
    "name": "Lockpicker's Oil (Major)",

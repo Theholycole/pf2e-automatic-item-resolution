@@ -451,30 +451,7 @@ const READINGS = [
         ],
         card: (found, plan, { base, info }) => doorRite(["Only once the door is attuned."], { name: "The seventh day: it opens", html: "<p>The door opens.</p>", card: { builtin: "whisper", targeting: { target: null, range: null, area: null }, whisper: { text: "The Doomsday Door opens, releasing an apocalypse tied to the place it's attuned to: regional and far-reaching, as the GM determines (one attuned to the Void might raise the dead for hundreds of miles around)." } } }, { base, info })
     },
-    {
-        // (Its own melee spell attack at +21: on a hit, the creature possessed — the lens's own PF2e Effect on it (its benefits, as invested)
-        // and a note Effect of the possession, for good — and its user no longer invested, its Effect gone (plan.uninvest, scripts/uninvest.js).)
-        name: "Ochre Fulcrum Lens",
-        sentences: [
-            /^While grasping the lens, make a melee spell attack roll with a modifier of @Check\[ochre-fulcrum-lens\|against:ac\]\{\+(\d+)\}\.$/,
-            /^On a hit, you force the splinter of Nhimbaloth's essence from the lens to possess the target\.$/,
-            /^You're no longer invested in the lens, and the target gains the benefits as though it had invested the lens but can't activate the lens's other abilities\.$/,
-            /^This effect is permanent, but it can be ended by any effect that removes a possession effect\.$/,
-            /^The lens doesn't have any magical abilities until the possession effect ends; when it does, the essence returns to the lens\.$/
-        ],
-        card: ([attack]) => {
-            const modifier = Number(attack[1]);
-            const effect = "Compendium.pf2e.equipment-effects.Item.5KXsyN9J78glG25I";
-            const possessed = { ...row({ noteEffects: [{ label: "Possessed by Nhimbaloth's splinter", text: "The splinter of Nhimbaloth's essence from the Ochre Fulcrum Lens possesses it: it has the lens's benefits as if it had invested it (the lens's Effect beside this), but can't activate the lens. For good, unless an effect that removes a possession ends it; then the essence returns to the lens (remove both Effects).", duration: null }] }), nativeEffects: [{ uuid: effect, label: "Effect: Ochre Fulcrum Lens" }] };
-            return {
-                targeting: { target: "1 creature", range: "touch", area: null },
-                ownCheck: { kind: "attack", modifier },
-                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier }, outcomes: rowsOf({ criticalSuccess: possessed, success: possessed }) },
-                uninvest: { degrees: ["success", "criticalSuccess"], effect },
-                notes: ["A melee spell attack while grasping the lens.", "While the possession lasts, the lens has no magical abilities: its activations don't work."]
-            };
-        }
-    },
+    // (Ochre Fulcrum Lens's possession: src/compiler/whole-artifacts.js's, the three fulcrum lenses' one reading — 2026-10-28.)
     {
         // (Its next initiative rolled three times, the result of its choice kept — a fortune effect: an Effect on its user with PF2e's RollOption
         // "air-initiative-thrice", scripts/initiative-thrice.js; Performance for initiative its own pick.)

@@ -166,30 +166,7 @@ const READINGS = [
             return { builtin: "ways", targeting: { target: null, range: null, area: null }, partial: true, ways: [{ name: "Prepare the creature (surgery)", html: "<p>The surgery.</p>", plan: prepare }, { name: "Absorb its memories", html: "<p>The harvest.</p>", plan: harvest }, { name: "Squeeze it out (Interact)", html: "<p>Squeezed.</p>", plan: squeeze }] };
         }
     },
-    {
-        // (Its splinter of Nhimbaloth's essence possessing the creature hit: its melee spell attack at the lens's own +20 against AC, the hit a
-        // note Effect on the creature for good — the lens's invested benefits as PF2e's rules (void healing, +4 status to the Hit Points Harm
-        // restores), ended by what ends a possession —; its user no longer invested, the lens without its magic until then (plan.possess,
-        // scripts/possession.js).)
-        name: "Emerald Fulcrum Lens",
-        sentences: [
-            /^While grasping the lens, make a melee spell attack roll with a modifier of @Check\[emerald-fulcrum-lens\|against:ac\]\{\+(\d+)\}\.$/,
-            /^On a hit, you force the splinter of Nhimbaloth's essence from the lens to possess the target\.$/,
-            /^You're no longer invested in the lens, and the target gains the benefits as though it had invested the lens but can't activate the lens's other abilities\.$/,
-            /^This effect is permanent, but it can be ended by any effect that removes a possession effect\.$/,
-            /^The lens doesn't have any magical abilities until the possession effect ends; when it does, the essence returns to the lens\.$/
-        ],
-        card: ([attack]) => {
-            const possessed = [{ label: "Possessed by Nhimbaloth's splinter", text: "Possessed by the splinter of Nhimbaloth's essence from the Emerald Fulcrum Lens, for good: its flesh waxen and pallid, it has void healing, and Harm restores 4 more Hit Points to it (a status bonus). Anything that removes a possession effect ends it, and the essence goes back to the lens.", rules: [{ key: "ActiveEffectLike", mode: "override", path: "system.attributes.hp.negativeHealing", value: true }, { key: "FlatModifier", selector: "healing-received", type: "status", value: 4, predicate: ["item:slug:harm"] }, { key: "RollOption", domain: "all", option: "air-possessed-by:emerald-fulcrum-lens" }], duration: null }];
-            const hit = { ...none(), noteEffects: possessed };
-            return {
-                targeting: { target: "1 creature", range: "touch", area: null },
-                resolution: { kind: "check", check: { roll: "skill", statistic: "attack", against: { dc: "target", statistic: "ac" }, modifier: Number(attack[1]) }, sharedDamage: null, outcomes: { criticalSuccess: hit, success: hit, failure: none(), criticalFailure: none() } },
-                possess: { degrees: ["criticalSuccess", "success"], option: "air-possessed-by:emerald-fulcrum-lens" },
-                notes: ["While grasping the lens: its melee spell attack, the lens's own +20. On a hit its user is no longer invested in it, and it has no magic until the possession ends."]
-            };
-        }
-    },
+    // (Emerald Fulcrum Lens's possession: src/compiler/whole-artifacts.js's, the three fulcrum lenses' one reading — 2026-10-28.)
     {
         // (A hex of impending doom on a creature its user sees, for a minute: the item card marks it; its Will save card (DC 28), kept open for
         // that minute, is pressed at the end of each of its user's turns they hit it with the hex blaster — one save a turn, however many hits.

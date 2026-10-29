@@ -15,6 +15,7 @@ import { compileBasicActions, BASIC_ACTIONS } from "../../pf2e-automatic-ability
 import { CORE_FAMILIES, createRegistry } from "../../pf2e-resolution-core/src/index.js";
 import { compileItem, handlesItem, spellEffectIndex, spellIndex } from "../src/compiler/index.js";
 import { equipmentEffectIndex } from "../src/compiler/degree-effects.js";
+import { bombIndex } from "../src/compiler/bomb-snare.js";
 import { isBomb } from "../src/compiler/bombs.js";
 import { compileActivations, handlesPermanent } from "../src/compiler/permanent.js";
 import { isRuneItem, withArmorPotency } from "../src/compiler/runes.js";
@@ -122,6 +123,8 @@ function entriesOf(docs, base = {}) {
 }
 
 const equipment = documents(path.join(pf2ePacks, "equipment")).filter((doc) => doc.type === "consumable" || (!["treasure", "kit"].includes(doc.type)));
+// (PF2e's alchemical bombs, for a snare loaded with them — Bomb Snare's: src/compiler/bomb-snare.js, 2026-10-28.)
+options.bombs = bombIndex(equipment);
 const pf2e = entriesOf(equipment);
 
 // The installed modules' item packs, as tools/census-third-party.mjs reads them (their Starfinder copies and our own modules left out).

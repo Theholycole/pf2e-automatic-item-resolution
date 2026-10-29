@@ -222,11 +222,15 @@ test("Alchemical Atomizer: one of its user's elixirs, oils or potions, picked, u
     assert.match(foundry.messages.find((message) => message.id === card.id).content, /Elixir of Life \(Minor\) used through it/);
 });
 
-test("Octopus Bottle: a DC 24 Fortitude save card at the creature grasped, moved within the octopus's reach on a failure, its ink a line", () => {
+// (2026-10-28: its ink the ability module's zone beside the save card when it's opened in water — the ways card's two ways, as Kraken
+// Bottle's; test/b5-leftovers-2026-10-28.test.js.)
+test("Octopus Bottle: a DC 24 Fortitude save card at the creature grasped, moved within the octopus's reach on a failure, its ink a zone in water", () => {
     const bottle = compileItem(item("Octopus Bottle"), options);
-    assert.deepEqual([bottle.resolution.kind, bottle.resolution.check.statistic, bottle.resolution.check.against.value, bottle.targeting.range, routeOf(bottle, "")], ["save", "fortitude", 24, "15 feet", "save"]);
-    assert.deepEqual(bottle.placed.rows, { failure: { within: 30 }, criticalFailure: { within: 30 } });
-    assert.equal(bottle.placed.nearSource, 15);
-    assert.ok(bottle.notes.some((line) => /Undetected and can't smell/.test(line)));
+    assert.deepEqual([routeOf(bottle, ""), bottle.ways.length], ["ways", 2]);
+    const [water, ground] = bottle.ways.map((way) => way.plan);
+    assert.deepEqual([ground.resolution.kind, ground.resolution.check.statistic, ground.resolution.check.against.value, ground.targeting.range, routeOf(ground, "")], ["save", "fortitude", 24, "15 feet", "save"]);
+    assert.deepEqual(ground.placed.rows, { failure: { within: 30 }, criticalFailure: { within: 30 } });
+    assert.equal(ground.placed.nearSource, 15);
+    assert.deepEqual([water.item.alsoZone.zone.undetected, water.item.alsoZone.zone.area, ground.item.alsoZone], [true, { type: "burst", value: 30 }, undefined]);
     assert.ok(done(bottle));
 });

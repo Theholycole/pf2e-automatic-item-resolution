@@ -3,6 +3,25 @@
 // activation's), item, entry (an activation's), options, decide(plan) (the user's rulings applied again, for a plan still partial) }.
 // → the new plan, or the same one. Pure.
 
+import { withBombSnare } from "./bomb-snare.js";
+import { withCubeWalls } from "./cube-faces.js";
+import { withDancingWhip } from "./dancing-whip.js";
+import { withPlacedStructure } from "./placed-structures.js";
+import { withWonderRows } from "./wonder-table.js";
+
+const READINGS = [
+    // (Instant Fortress, Warding Escutcheon's door, Testudo Shield's barrier: the structure card — src/compiler/placed-structures.js.)
+    withPlacedStructure,
+    // (Cube of Force and Lesser Cube of Nex: the cube's faces on the ways card, as Cube of Nex's — src/compiler/cube-faces.js.)
+    withCubeWalls,
+    // (Feather Token (Whip): the animated weapon's card, a Trip or a Strike each round — src/compiler/dancing-whip.js.)
+    withDancingWhip,
+    // (Bomb Snare: a way for each bomb it can be loaded with, options.bombs — src/compiler/bomb-snare.js.)
+    withBombSnare,
+    // (Pistol of Wonder: its d% table's rows built on what plays them, the rest its card's lines — src/compiler/wonder-table.js.)
+    withWonderRows
+];
+
 export function withLeftoversGroup(plan, context) {
-    return plan;
+    return READINGS.reduce((next, reading) => reading(next, context) ?? next, plan);
 }

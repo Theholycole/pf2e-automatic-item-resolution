@@ -264,12 +264,13 @@ test("bonuses against what a creature makes, what an effect gives, or ranged att
 
 test("an item with a time and nothing else the module reads: a note of its text on the drinker, counted apart", () => {
     // (2026-10-27: Potion of Passing Fancy for Hovering Potion, whose climb Speed is read now — src/compiler/aloft.js. Later that day Anointing
-    // Oil (Greater) for Potion of Passing Fancy, whose changed looks are now its own reading's note Effect — src/compiler/lasting.js.)
-    const plan = compileItem(item("Anointing Oil (Greater)"));
+    // Oil (Greater) for Potion of Passing Fancy, whose changed looks are now its own reading's note Effect — src/compiler/lasting.js. 2026-10-28:
+    // Phoenix Cinder for Anointing Oil (Greater), whose 5th-rank Peaceful Rest is now cast — src/compiler/user-actions.js.)
+    const plan = compileItem(item("Phoenix Cinder"));
     assert.equal(plan.noteOnly, true);
     const [note] = plan.resolution.outcomes.success.noteEffects;
-    assert.equal(note.label, undefined, "the ability module calls it \"Anointing Oil (Greater): note\"");
-    assert.deepEqual([note.duration.value, note.duration.unit], [24, "hours"]);
+    assert.equal(note.label, undefined, "the ability module calls it \"Phoenix Cinder: note\"");
+    assert.deepEqual([note.duration.value, note.duration.unit], [3, "days"]);
     assert.doesNotMatch(note.text, /^Activate/);
     const result = registry.resolveSync(plan, context(), io());
     assert.deepEqual(result.changes.map((change) => [change.op, change.target, change.effect?.kind]), [["effect", "drinker", "note"]]);

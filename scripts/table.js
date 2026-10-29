@@ -31,6 +31,20 @@ export async function drawLinked(state, compileRow) {
     return { text: text || "(an empty row)", ...(plan ? { plan } : {}) };
 }
 
+// A row rolled: its own card (postCardFor), or its card lines (row.lines: what's cosmetic, the item's own, its user's to do), or its words for
+// the GM. → the card's lines.
+async function playRow(state, row, { actor, token }, postCardFor) {
+    if (row.plan) {
+        const span = row.low === row.high ? `${row.low}` : `${row.low}–${row.high}`;
+        const data = state.item.data ?? { name: state.item.name, system: {} };
+        const used = { data: { ...data, name: `${state.item.name} (${span})`, system: { ...(data.system ?? {}), description: { value: `<p>${row.text}</p>` } } }, actor };
+        await postCardFor({ message: null, plan: row.plan, used, actor, token });
+        return ["Its card follows."];
+    }
+    if (row.lines?.length) return [...row.lines];
+    return ["The GM resolves it."];
+}
+
 // postCardFor: scripts/live.js's, passed in. total: a given roll (a harness's), else the die is rolled. compileRow: for a RollTable's row.
 export async function applyTableCard(message, { total = null } = {}, postCardFor, compileRow = null) {
     const state = stateOf(message);
@@ -68,14 +82,19 @@ export async function applyTableCard(message, { total = null } = {}, postCardFor
         }
         const row = rowFor(state.plan.table, rolled);
         if (!row) throw new Error(`No row of ${state.item.name}'s table for ${rolled}.`);
-        const span = row.low === row.high ? `${row.low}` : `${row.low}–${row.high}`;
-        lines.push(`${rolled}: ${row.text}`);
-        if (row.plan) {
-            const data = state.item.data ?? { name: state.item.name, system: {} };
-            const used = { data: { ...data, name: `${state.item.name} (${span})`, system: { ...(data.system ?? {}), description: { value: `<p>${row.text}</p>` } } }, actor };
-            await postCardFor({ message: null, plan: row.plan, used, actor, token });
-            lines.push("Its card follows.");
-        } else lines.push("The GM resolves it.");
+        lines.push(`${rolled}: ${row.text}`, ...(await playRow(state, row, { actor, token }, postCardFor)));
+        // (Rolled again, Pistol of Wonder's 100 — row.again { count, skip }, src/compiler/wonder-table.js: that many rolls more, each row played in
+        // turn; the row itself again does nothing. Two groups' table rolls joined at the merge, 2026-10-29.)
+        for (let index = 0; index < (row.again?.count ?? 0); index++) {
+            const roll = await new Roll(state.plan.table.die).evaluate();
+            await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: its table again (${index + 1} of ${row.again.count})` });
+            const again = rowFor(state.plan.table, roll.total);
+            if (!again || again === row) {
+                lines.push(`${roll.total}: no effect.`);
+                continue;
+            }
+            lines.push(`${roll.total}: ${again.text}`, ...(await playRow(state, again, { actor, token }, postCardFor)));
+        }
     }
     const next = { ...state, status: "applied", rolled, results: lines };
     return message.update({ content: tableCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
