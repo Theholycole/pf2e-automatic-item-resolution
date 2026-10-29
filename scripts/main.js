@@ -92,6 +92,7 @@ import { setUpBackbiting } from "./backbiting.js";
 import { setUpBoons } from "./boons.js";
 import { setUpItemForms } from "./item-form.js";
 import { setUpLegacyPredicates } from "./legacy-predicates.js";
+import { setUpCastCurses } from "./cast-curse.js";
 
 const MODULE_ID = "pf2e-automatic-item-resolution";
 const ABILITY_ID = "pf2e-automatic-ability-resolution";
@@ -311,6 +312,8 @@ Hooks.once("ready", async () => {
     setUpItemForms();
     // (An item's rules in PF2e's old predicate form rewritten as it's added to an actor — Battlezoo's four, question 9: scripts/legacy-predicates.js.)
     setUpLegacyPredicates();
+    // (A curse on a creature's spellcasting, Magekiller Bullet's flat check and damage at each cast: scripts/cast-curse.js.)
+    setUpCastCurses();
     // (Damage each time a creature moves farther than half its Speed, Poison Barbs Snare's barbs: scripts/move-damage.js.)
     setUpMoveDamage();
     // (Damage back each time its foot Strike deals damage, Hoof Stakes Snare's stakes: scripts/foot-damage.js.)

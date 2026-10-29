@@ -13,6 +13,7 @@ import { withSecondaryRules } from "./secondary-rules.js";
 import { withTrailString } from "./trail-string.js";
 import { withTriggeringSave } from "./triggering-save.js";
 import { withinTreatment } from "./within-treatment.js";
+import { withCastCurse } from "./cast-curse.js";
 
 const said = (entry) => String(typeof entry === "string" ? entry : entry?.text ?? "").trim();
 const done = (plan) => {
@@ -36,7 +37,7 @@ function withPickedRoll(plan, { kind }) {
     return done({ ...plan, notes: [`Press Apply just before the roll you pick, once within the hour after it's eaten: +${first.value} ${first.type} bonus to that one ${which}.`] });
 }
 
-const READINGS = [withPickedRoll, withSecondaryRules, withReleasedStrikes, withPlantActions, withTriggeringSave, withHeldOrWorn, withAttackThenSave, withRageRiders, withGauntletShots, withTrailString, withinTreatment];
+const READINGS = [withPickedRoll, withSecondaryRules, withReleasedStrikes, withPlantActions, withTriggeringSave, withHeldOrWorn, withAttackThenSave, withRageRiders, withGauntletShots, withTrailString, withinTreatment, withCastCurse];
 
 export function withStrikeGroup(plan, context) {
     return READINGS.reduce((next, reading) => reading(next, context) ?? next, plan);

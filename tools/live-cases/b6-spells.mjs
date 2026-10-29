@@ -44,6 +44,41 @@ export default (h) => {
     const pressResolve = (cast) => document.querySelector(`[data-message-id="${cast.id}"] .pf2e-auto-runtime-resolve`)?.click();
 
     return {
+        // Magekiller Bullet (src/compiler/cast-curse.js, scripts/cast-curse.js): for a week, whenever its target casts, a flat check (DC 11) and
+        // 2d12 force when it's failed. Its sling Strike's hit (AC 1): the target's week-long
+        // note Effect with the curse's option; the target then casts a cantrip (the spell module's castFromItem, through PF2e's cast) with every
+        // d20 a 5: the flat check failed, 2d12 force applied.
+        async b6MagekillerCastCurse(scene) {
+            assertSpells();
+            const { actor: slinger, token: slingerToken } = await h.creature(scene, "Magekiller Slinger", { type: "character", x: 2, y: 16, level: 16 });
+            const { actor: mage, token: mageToken } = await h.creature(scene, "Magekiller Mage", { x: 5, y: 16, ac: 1, hp: 300, alliance: "opposition", level: 10 });
+            const sling = await h.give(slinger, "Sling");
+            const bullets = await h.give(slinger, "Magekiller Bullet");
+            await sling.update({ ...held(1), "system.selectedAmmoId": bullets.id });
+            let since = Date.now();
+            await api().activate(bullets.uuid, 0);
+            const card = await h.messageAfter(since, h.itemCard("strike"), { what: "the bullet's Strike card" });
+            await api().apply(card.id);
+            await h.wait(600);
+            await slingerToken.object?.control?.();
+            await h.target(mageToken);
+            const { attack } = await h.withDie(15, () => h.strike(slinger, sling));
+            h.assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
+            const cursed = () => mage.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => rule.option === "air-cast-curse:11:2d12:force"));
+            await h.until(cursed, `the curse's note Effect on the mage (${mage.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });
+            h.assert(cursed().system.duration.value === 7 && cursed().system.duration.unit === "days", `for the week (${JSON.stringify(cursed().system.duration)})`);
+            const before = Number(mage.system.attributes.hp.value);
+            since = Date.now();
+            await h.withDie(5, async () => {
+                await game.modules.get(SPELLS).api.castFromItem({ actor: mage, token: mageToken, spell: "Compendium.pf2e.spells-srd.Item.gYjPm7YwGtEa1oxh", targets: [], item: { name: "Magekiller check", uuid: null } });
+                await h.until(() => game.messages.contents.some((message) => Number(message.timestamp ?? 0) >= since && /DC 11 flat check as/.test(String(message.flavor ?? ""))), "the curse's flat check as it casts", { timeout: 10000 });
+            });
+            const check = game.messages.contents.filter((message) => Number(message.timestamp ?? 0) >= since && /DC 11 flat check as/.test(String(message.flavor ?? ""))).at(-1);
+            h.assert(/a failure/.test(check.flavor) && Number(check.rolls?.[0]?.total) === 5, `a failed flat check (${check.flavor}; ${check.rolls?.[0]?.total})`);
+            await h.until(() => Number(mage.system.attributes.hp.value) < before, `its 2d12 force damage (${mage.system.attributes.hp.value} of ${before})`, { timeout: 10000 });
+            return { flat: check.rolls[0].total, lost: before - Number(mage.system.attributes.hp.value) };
+        },
+
         // Ivory Baton: "the effects of Dominate with a DC of 30, but it affects only constructs. It lacks the mental trait and functions on
         // mindless constructs." Targeted at a mindless construct and a human: the human left out, Dominate cast at the construct from a copy
         // without mental, and the spell module's save card at it (the mindless construct not immune).
