@@ -54,6 +54,13 @@ Four consumables are boons with stages that last days to months: Elder Seed (9 d
 - **B:** the same Effect and rules, but a stage only advances when the GM presses a button on its card.
 - **C:** keep them listed, as now.
 
+## 8. The items waiting on the spell module (2026-10-29)
+
+Fifteen of the 19 PF2e entries left need something only the spell module can do. The list, with the shape each needs, is in docs/spell-module-requests.md (rows 1–18): casts with a changed area, traits or damage type (Fan of Soothing Winds, Everburning Coal, Gate Attenuator, Soulcutter, Shining Wayfinder, Dreadsmoke Thurible); riders on the user's next spell (Tome of Scintillating Sleet, Starless Scope, In the Shadows of Toil); Spell Reservoir; Blessed Reformer's casts; Phoenix Fighting Fan's Sustain by Strikes; and Sorshen's Sinuous Guisarme becoming a staff. No session works on the spell module now, and I never edit its tree.
+
+- **A (suggested):** open a session on the spell module (or tell me to work on it myself) to build those requests; the item module then plays them, and these entries leave the list.
+- **B:** leave them as they are: each card does everything else and says what to do by hand for the spell part.
+
 ## Answers (2026-10-26)
 
 The user answered all five with **A**: 1 no-rules items counted done; 2 a cast counted partial when a note adds a rule it doesn't play; 3 a note-only item counted done once checked for anything a card could play, those parts built first; 4 a GM's-discretion clause a line of the card, counted done; 5 a counteract check with no modifier at the item level's DC − 10, a condition with no value at 1 when another row gives more, the GM free to change either.
