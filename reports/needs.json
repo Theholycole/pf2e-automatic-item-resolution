@@ -1,23 +1,22 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 8,
+  "entries": 6,
   "results": {
    "note-only": 1,
-   "none": 4,
+   "none": 2,
    "partial": 3
   },
   "main": {
-   "strike": 4,
+   "strike": 3,
    "triggers": 2,
-   "areas": 1,
-   "spells": 1
+   "areas": 1
   },
   "any": {
-   "strike": 6,
+   "strike": 5,
    "reader": 1,
    "triggers": 2,
-   "spells": 5,
+   "spells": 3,
    "objects": 2,
    "areas": 1,
    "lasting": 1
@@ -88,33 +87,6 @@
    "needs": [
     "strike",
     "lasting"
-   ]
-  },
-  {
-   "name": "Spell Reservoir",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Channeled Release",
-   "result": "none",
-   "main": "strike",
-   "work": "strike with",
-   "needs": [
-    "strike",
-    "spells"
-   ]
-  },
-  {
-   "name": "Spell Reservoir",
-   "kind": "activation",
-   "tier": "general",
-   "level": 13,
-   "activation": "Safe Release",
-   "result": "none",
-   "main": "spells",
-   "work": "stored spell",
-   "needs": [
-    "spells"
    ]
   },
   {

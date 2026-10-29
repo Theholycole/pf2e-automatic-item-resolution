@@ -56,3 +56,8 @@ test("Everburning Coal: Wall of Ice made fire — its fire trait for cold and wa
     assert.deepEqual([done(plan), plan.castAddTraits, plan.castWithoutTraits, plan.castDamageType.type, plan.castLines.length, plan.notes], [true, ["fire"], ["cold", "water"], "fire", 2, undefined]);
     assert.deepEqual(castChanges(plan, {}, ALL).options, { withoutTraits: ["cold", "water"], addTraits: ["fire"] });
 });
+
+test("Animate Dreamer's Unleash Spell: its Spell Reservoir's spell cast at its own numbers (+25, DC 33) at a creature within 120 feet — the spell module's reservoirCast", () => {
+    const plan = compileActivations(item("Animate Dreamer"), { spells }).map((entry) => entry.plan).find((one) => one?.objects?.op === "cast-reservoir");
+    assert.deepEqual([done(plan), routeOf(plan), plan.objects], [true, "objects", { op: "cast-reservoir", self: true, attack: 25, dc: 33, within: 120 }]);
+});

@@ -92,6 +92,12 @@ const HARNESS = /\bYour harness ripples, pulling the required instrument into yo
 const NO_REACTIONS = /^You Interact to draw the required instrument, but this manipulate action doesn't trigger reactions\.$/i;
 const RULE = /\b(?:bonus|penalty|saving throws?|saves?|resistance|weakness|Strike|check|DC|attack|Speed|Hit Points|damage|condition|can't be activated again|can be activated again|can't Retrieve Item again)\b/i;
 const SENTENCES = (text) => String(text ?? "").split(/(?<=[.!?])\s+(?=[A-Z])/).map((sentence) => sentence.trim()).filter(Boolean);
+// (A weapon's own release of the spell its Spell Reservoir rune holds, Animate Dreamer's Unleash Spell: at its own numbers, at a creature within
+// its reach — op "cast-reservoir", the spell module's itemCasts.reservoirCast, 2026-10-29.)
+const RESERVOIR_CAST = /^\s*The [\w' -]+? casts its stored spell at a target that meets the requirements\./i;
+const RESERVOIR_NUMBERS = /\bhas a spell attack roll of \+(\d+) and a spell DC of (\d+) with the stored spell\./i;
+const RESERVOIR_REACH = /\band that creature's within (\d+) feet of\b/i;
+const RESERVOIR_EMPTY = /^\s*This empties the spell from the weapon and allows a spell to be cast into it again\.$/i;
 
 // The activation's plain text (from its Effect on), the item's name and type, the item's whole text → { op, maxBulk?, self?, said } or null.
 export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
@@ -100,6 +106,11 @@ export function readObjects(body, { name = "", type = null, whole = "" } = {}) {
     // keeps and casts itself.)
     const stored = /^Spell Reservoir\b/.test(name) ? null : readStoredSpell(text, whole);
     if (stored) return { ...stored, self: stored.op !== "cast-stored", said: stored.said[0], also: stored.said[1] ?? null };
+    const numbers = RESERVOIR_CAST.test(text) ? RESERVOIR_NUMBERS.exec(text) : null;
+    if (numbers) {
+        const reach = RESERVOIR_REACH.exec(String(whole ?? ""));
+        return { op: "cast-reservoir", self: true, attack: Number(numbers[1]), dc: Number(numbers[2]), ...(reach ? { within: Number(reach[1]) } : {}), said: SENTENCES(text).find((one) => RESERVOIR_CAST.test(one)), also: SENTENCES(text).find((one) => RESERVOIR_EMPTY.test(one)) ?? null };
+    }
     const store = STORE.exec(text);
     if (store && type === "backpack") return { op: "store", maxBulk: BULK(store[1]), said: store[0] };
     if (RETRIEVE.test(text) && type === "backpack") return { op: "retrieve", said: RETRIEVE.exec(text)[0] };
@@ -174,7 +185,7 @@ export function objectsPlan(html, base, item = {}) {
     // (Its forms' own words, Twining Staff's: lines of the card, or said with the line after them.)
     const formLine = (sentence) => FORM_LINES.find(([pattern]) => pattern.test(sentence));
     const formLines = read.op === "reshape" ? SENTENCES(body).map((sentence) => formLine(sentence)?.[1](formLine(sentence)[0].exec(sentence))).filter(Boolean) : [];
-    const notes = SENTENCES(body).filter((sentence) => !sentence.includes(read.said) && !(read.also && (sentence.includes(read.also) || read.also.includes(sentence))) && !(read.op === "reshape" && formLine(sentence)) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
+    const notes = SENTENCES(body).filter((sentence) => !sentence.includes(read.said) && !(read.also && (sentence.includes(read.also) || read.also.includes(sentence))) && !(read.op === "reshape" && formLine(sentence)) && !(read.op === "cast-reservoir" && RESERVOIR_NUMBERS.test(sentence)) && RULE.test(sentence) && !/^(?:Activate|Usage|Trigger|Requirements?|Frequency)\b/.test(sentence));
     const { said, also, line, ...objects } = read;
     // (The GM's share of a number the card applies — Rust Scrub's "The GM determines what portion of damage to an item was caused by rust if
     // that value isn't known": your ruling for numbers left to the GM, the text's applied and the GM may change it — a card line.)

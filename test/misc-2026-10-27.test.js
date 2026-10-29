@@ -43,9 +43,10 @@ test("one-off rules of this group: their card's lines, counted done", () => {
 test("more one-offs, and note-only items checked: card lines, counted done", () => {
     const plans = [
         // (2026-10-28: Feather Token (Whip) no longer one — the animated weapon's card, test/b5-leftovers-2026-10-28.test.js.)
+        // (2026-10-29: Animate Dreamer's Unleash Spell no longer one — the spell module's reservoirCast, test/spell-changes-2026-10-29.test.js.)
         activation("Prismatic Plate"), compileItem(item("Krasovnatype")), activation("Chronicler Wayfinder"), activation("Cunning"), activation("Demilich Eye Gem"),
         activation("Prankster's Perpetual Pieplate", "Project Pastry"), compileItem(item("Neophyte's Fipple")),
-        activation("Kraken Figurehead", "Grab Them!"), activation("Animate Dreamer", "Unleash Spell"), compileItem(item("Iron Equalizer")),
+        activation("Kraken Figurehead", "Grab Them!"), compileItem(item("Iron Equalizer")),
         compileItem(item("Octopus Potion (Lesser)")), compileItem(item("Octopus Potion (Moderate)")), compileItem(item("Octopus Potion (Greater)")),
         compileItem(item("Reactive Flash")), activation("Chimera Flail", "Pouncing Whirl"),
         activation("Ulfen Shieldbreaker", "Battering Blow"), compileItem(item("Electromuscular Stimulator")), activation("Sanguine Ammunition")

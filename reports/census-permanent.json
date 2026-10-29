@@ -2,11 +2,11 @@
  "generated": "2026-10-29",
  "totals": {
   "items": 2679,
-  "staves": 560,
-  "ours": 2119,
-  "activations": 2577,
+  "staves": 561,
+  "ours": 2118,
+  "activations": 2574,
   "results": {
-   "resolves": 1475,
+   "resolves": 1473,
    "builtin:cast-spell": 473,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
@@ -21,7 +21,7 @@
    "builtin:zone": 45,
    "builtin:pf2e-rules": 22,
    "builtin:modes": 36,
-   "builtin:objects": 42,
+   "builtin:objects": 43,
    "builtin:item-action": 28,
    "builtin:reservoir": 1,
    "builtin:conjure": 26,
@@ -37,7 +37,7 @@
    "builtin:spellstrike": 9,
    "builtin:take-condition": 1,
    "builtin:skill-swap": 1,
-   "none": 4,
+   "none": 2,
    "builtin:bond": 1,
    "builtin:transmogrify": 1,
    "builtin:grant-spell": 1,
@@ -46,7 +46,7 @@
   "live": {
    "save": 449,
    "cast": 473,
-   "item": 886,
+   "item": 884,
    "focus": 49,
    "counteract": 39,
    "fortune": 69,
@@ -59,9 +59,9 @@
    "inert": 1,
    "teleport": 32,
    "zone": 45,
-   "none": 27,
+   "none": 25,
    "toggle": 36,
-   "objects": 42,
+   "objects": 43,
    "action": 28,
    "reservoir": 1,
    "conjure": 26,
@@ -82,14 +82,14 @@
    "grant-spell": 1,
    "feat-use": 1
   },
-  "withFrequency": 1734,
+  "withFrequency": 1733,
   "withTrigger": 427
  },
  "byType": {
   "equipment": {
-   "activations": 1674,
+   "activations": 1671,
    "results": {
-    "resolves": 904,
+    "resolves": 903,
     "builtin:cast-spell": 347,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
@@ -116,7 +116,7 @@
     "builtin:pf2e-rules": 1,
     "builtin:take-condition": 1,
     "builtin:skill-swap": 1,
-    "none": 3,
+    "none": 1,
     "builtin:bond": 1,
     "builtin:transmogrify": 1,
     "builtin:grant-spell": 1
@@ -125,7 +125,7 @@
   "weapon": {
    "activations": 461,
    "results": {
-    "resolves": 285,
+    "resolves": 284,
     "builtin:cast-spell": 81,
     "builtin:reroll": 7,
     "builtin:zone": 9,
@@ -136,7 +136,7 @@
     "builtin:item-action": 9,
     "builtin:counteract": 2,
     "builtin:readied-bonus": 10,
-    "builtin:objects": 7,
+    "builtin:objects": 8,
     "builtin:souls": 2,
     "builtin:pf2e-rules": 2,
     "builtin:teleport": 7,
@@ -21602,17 +21602,6 @@
    "live": "item"
   },
   {
-   "name": "Juubun's One Thousand Poems",
-   "type": "equipment",
-   "activation": "Poetic Spellcasting",
-   "time": "1",
-   "frequency": "once per day",
-   "trigger": false,
-   "result": "resolves",
-   "kind": "effect",
-   "live": "item"
-  },
-  {
    "name": "Sanguine Klar",
    "type": "shield",
    "activation": null,
@@ -22424,9 +22413,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "resolves",
-   "kind": "check",
-   "live": "item"
+   "result": "builtin:objects",
+   "kind": null,
+   "live": "objects"
   },
   {
    "name": "Animate Dreamer",
@@ -24052,30 +24041,6 @@
    "result": "builtin:zone",
    "kind": null,
    "live": "zone"
-  },
-  {
-   "name": "Spell Reservoir",
-   "type": "equipment",
-   "activation": "Channeled Release",
-   "time": "2",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
-   "rune": true
-  },
-  {
-   "name": "Spell Reservoir",
-   "type": "equipment",
-   "activation": "Safe Release",
-   "time": "1",
-   "frequency": null,
-   "trigger": false,
-   "result": "none",
-   "kind": null,
-   "live": null,
-   "rune": true
   },
   {
    "name": "Fanged",

@@ -184,7 +184,8 @@ export async function charmChoices(objects, actor = null) {
 
 export async function postObjectsCard({ message, plan, used, actor, token }) {
     const holderId = String(used.data.uuid ?? "").split(".Item.")[1]?.split(".")[0] ?? used.data._id ?? null;
-    const held = storedOf(actor?.items?.get?.(holderId));
+    // (A Spell Reservoir's spell is the spell module's to keep: what it holds, from its API.)
+    const held = plan.objects.op === "cast-reservoir" ? game.modules.get(SPELL_ID)?.api?.itemCasts?.reservoirHeld?.({ actor, weapon: actor?.items?.get?.(holderId) }) ?? null : storedOf(actor?.items?.get?.(holderId));
     const own = plan.objects.op === "reshape" ? await reshapeChoices(actor?.items?.get?.(holderId), plan.objects) : plan.objects.op === "create" && plan.objects.choose ? await charmChoices(plan.objects, actor) : objectChoices(actor, plan.objects, holderId);
     // (And the items of the creatures within its user's reach, Forgefather's Seal's "an item within reach": each named with its owner, 2026-10-27.)
     const choices = plan.objects.op === "douse" ? lightChoices(token, actor, plan.objects) : plan.objects.reach ? [...own, ...reachChoices(token, actor, plan.objects)] : own;
@@ -202,7 +203,7 @@ export async function applyObjectsCard(message, { pick = 0, targets = [], amount
     if (!actor) throw new Error(`${state.user.name} isn't there any more.`);
     const objects = state.plan.objects;
     const holder = state.item.id ? actor.items.get(state.item.id) : null;
-    if (["cast-stored", "ready-stored", "expend-stored"].includes(objects.op)) {
+    if (["cast-stored", "ready-stored", "expend-stored", "cast-reservoir"].includes(objects.op)) {
         const line = await storedSpellOp(state, { actor, holder, pick: Number(pick) || 0, targets });
         const next = { ...state, status: "applied", pick: Number(pick) || 0, results: [line] };
         return message.update({ content: objectsCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
@@ -483,9 +484,28 @@ export function setUpMadeWeapons() {
 }
 
 // (Its stored spell: stored from a pick, cast through the spell module, readied, or let go — src/compiler/stored-spell.js.)
+async function castReservoir(state, { actor, holder, targets }) {
+    const objects = state.plan.objects;
+    const casts = game.modules.get(SPELL_ID)?.api?.itemCasts;
+    if (!casts?.reservoirCast) throw new Error("The spell module doesn't cast a Spell Reservoir's spell for other modules yet: release it by hand.");
+    const held = casts.reservoirHeld?.({ actor, weapon: holder }) ?? null;
+    if (!held) throw new Error(`${holder.name} holds no spell.`);
+    const tokens = (await Promise.all((targets ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
+    if (tokens.length !== 1) throw new Error("Target the one creature it hit and damaged within the last minute first.");
+    const own = state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null;
+    const scene = own?.parent ?? null;
+    const grid = { size: scene?.grid?.size ?? 100, gridFeet: scene?.grid?.distance ?? 5 };
+    if (objects.within && own && tokens[0].parent?.id === scene?.id && distanceFeet(spaceOf(own), spaceOf(tokens[0]), grid) > objects.within) throw new Error(`${tokens[0].name} is beyond ${objects.within} feet.`);
+    const cast = await casts.reservoirCast({ actor, weapon: holder, targets: tokens, dc: objects.dc, attack: objects.attack });
+    return `${holder.name} casts ${cast?.released ?? held.name} at ${tokens[0].name} (spell attack +${objects.attack}, DC ${objects.dc}): it's empty`;
+}
+
 async function storedSpellOp(state, { actor, holder, pick, targets }) {
     if (!holder) throw new Error(`${state.item.name} isn't on ${state.user.name} any more.`);
     const objects = state.plan.objects;
+    // (The spell its Spell Reservoir rune holds, the spell module's: cast at its targets within its reach, at the weapon's own numbers —
+    // Animate Dreamer's Unleash Spell, 2026-10-29.)
+    if (objects.op === "cast-reservoir") return castReservoir(state, { actor, holder, targets });
     const held = storedOf(holder);
     if (objects.op === "expend-stored") {
         if (!held) throw new Error(`${holder.name} holds no spell.`);

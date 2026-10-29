@@ -14,6 +14,8 @@ export function objectsText(objects, item = {}, stored = null) {
     if (objects.op === "cast-stored") return `Nothing stored: store ${objects.store?.from === "scroll" ? "one of its user's scrolls that fits (the scroll is burned)" : "one of its user's spells that fits (spending its casting is its user's own)"}`;
     if (objects.op === "ready-stored") return stored ? `Ready to unleash ${stored.name} on a foe that hits its user, until its next turn` : `Nothing stored in ${item.name ?? "it"} to unleash`;
     if (objects.op === "expend-stored") return stored ? `${stored.name} let go: ${item.name ?? "it"} is empty` : `Nothing stored in ${item.name ?? "it"}`;
+    // (Its Spell Reservoir's spell, the spell module's: cast at the one creature targeted, at its own numbers.)
+    if (objects.op === "cast-reservoir") return `${stored ? `${stored.name} (rank ${stored.rank})` : "Its stored spell"} cast from ${item.name ?? "it"} at the creature its user targets — one it hit and damaged within the last minute${objects.within ? `, within ${objects.within} feet` : ""} —, spell attack +${objects.attack}, DC ${objects.dc}; it's empty after`;
     const limit = Number.isFinite(objects.maxBulk) ? ` (${BULK_WORDS(objects.maxBulk)} or less)` : "";
     if (objects.op === "store") return `Into ${item.name ?? "it"}: an item it's holding${limit}`;
     if (objects.op === "retrieve") return `Out of ${item.name ?? "it"}, into a hand: an item stored in it`;
