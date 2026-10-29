@@ -6595,7 +6595,8 @@ export const cases = {
         const statistic = check.flags["pf2e-automatic-ability-resolution"].card.plan.resolution.check.statistic;
         assert(statistic === "perception", `a Perception check (${statistic})`);
         await rollAndApply(check);
-        await until(() => foe.hasCondition("off-guard"), "Off-Guard", { timeout: 10000 });
+        // (Off-Guard to its wearer's attacks alone, as the text scopes it: the ability module's Effect on the wearer since 0.9.4 — 2026-10-29.)
+        await until(() => wearer.itemTypes.effect.some((effect) => /Cunning Dodge/.test(effect.name) && /off-guard to you/.test(effect.name)), "Off-Guard to the wearer", { timeout: 10000 });
         return { statistic };
     },
 
@@ -10142,7 +10143,8 @@ export const cases = {
     // vitality at the undead, basic DC 37 Fortitude), Briar's tenth activation (DC 50 Fortitude, Stunned 1, Stunned 3 on a critical failure).
     async rewordSaves(scene) {
         const { actor: user } = await creature(scene, "Reword Saver", { type: "character", x: 13, y: 10 });
-        const { token: foe } = await creature(scene, "Reword Foe", { x: 14, y: 10, alliance: "opposition" });
+        // (Named Nyrissa: Briar's save is hers alone, its ifTarget named — 2026-10-29.)
+        const { token: foe } = await creature(scene, "Nyrissa Reword Foe", { x: 14, y: 10, alliance: "opposition" });
         const saveFor = async (name, index, choices = {}) => {
             const item = await give(user, name);
             let since = Date.now();
