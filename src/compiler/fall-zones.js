@@ -2,9 +2,10 @@
 // module's — a flask that covers a 10-foot square for a minute, falls into it counted 50 feet shorter, their damage nonlethal, a creature it
 // would hurt rolling Acrobatics or Athletics (DC 10, 1 more per 10 feet fallen) to land standing, and jumps from it up to 10 feet longer. Its
 // square a zone the user places, as Invisible Net's (src/compiler/moving-readings.js): zone.fall { shorter, nonlethal, landCheck }, which
-// scripts/falls.js netsUnder passes to the environment module's fall as it lands — the shorter fall played now; the nonlethal damage and the
-// check to land standing the environment module's still (a request), so the card says them and the plan stays partial. The jump's longer
-// distance is the creature's own move, a line. Its flavour no rule. Their words stay theirs: the regexes split by \s+. Pure.
+// scripts/falls.js netsUnder passes to the environment module's fall as it lands — the shorter fall, its nonlethal damage and the check to
+// land standing all played there (core easedFall's nonlethal and landCheck, the environment module's applyRow: 2026-10-29, core 0.7.8, env
+// 0.2.2). The jump's longer distance is the creature's own move, a line. Its flavour no rule. Their words stay theirs: the regexes split by
+// \s+. Pure.
 
 import { sentencesOf } from "./lasting.js";
 import { zoneOf } from "./area-readings.js";
@@ -35,7 +36,7 @@ export function withSoftSquare(plan, text, { base, info } = {}) {
         lasts,
         notes: [
             `Placed where its user pours it; a creature falling into it falls ${shorter[1]} feet less (the environment module's fall, while it lasts).`,
-            `Its falling damage there is nonlethal, and one it would hurt rolls Acrobatics or Athletics, DC ${dc} and ${add} more per ${per} feet fallen, to land standing (the GM's, until the environment module plays them).`,
+            `Its falling damage there is nonlethal, and one it would hurt rolls Acrobatics or Athletics, DC ${dc} and ${add} more per ${per} feet fallen, to land standing (the environment module's fall).`,
             `A creature in it can Leap, High Jump or Long Jump up to ${jumps[1]} feet farther (its own move).`
         ],
         fall: { shorter: Number(shorter[1]), nonlethal: true, landCheck: { statistics: ["acrobatics", "athletics"], dc: Number(dc), add: Number(add), per: Number(per) } }
@@ -48,7 +49,6 @@ export function withSoftSquare(plan, text, { base, info } = {}) {
         actions: null,
         targeting: { target: null, range: null, area: zone.area },
         zone,
-        item: { ...(info ?? plan?.item ?? {}) },
-        partial: true
+        item: { ...(info ?? plan?.item ?? {}) }
     };
 }

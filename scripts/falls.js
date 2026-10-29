@@ -47,8 +47,8 @@ export function fallEases(actor) {
 // (2026-10-27) A net spread on the ground below the token, Invisible Net's: the ability module's zone flagged fall { noDamage } (src/compiler/
 // moving-readings.js) whose area holds the token's centre, tested at the zone's own bottom (the token may be in the air still) → [{ noDamage,
 // source }]. The zone gone when its minute is up, it eases nothing more.
-// (2026-10-28: or a softer square, Impact Jelly's fall { shorter, nonlethal, landCheck } — src/compiler/fall-zones.js: its shorter fall the
-// environment module's now, its nonlethal damage and its check to land standing passed on for when it reads them.)
+// (2026-10-28: or a softer square, Impact Jelly's fall { shorter, nonlethal, landCheck } — src/compiler/fall-zones.js: all three the
+// environment module's, its nonlethal damage and its check to land standing since core 0.7.8 and env 0.2.2, 2026-10-29.)
 export function netsUnder(token, abilityId = ABILITY_ID) {
     const doc = token?.document ?? token;
     const scene = doc?.parent ?? null;

@@ -65,11 +65,11 @@ test("used as part of its user's own move: Buoyant Hyacinth (Lesser)'s Swim card
     assert.deepEqual([grass.partial, routeOf(grass), grass.reduce, grass.item.move.within, grass.item.move.from, grass.item.move.move.verb, grass.notes.length], [undefined, "item", [{ slug: "prone", by: "all" }], 15, "self", "Crawl", 1]);
 });
 
-test("Impact Jelly: its 10-foot square a zone placed for the minute, falls into it 50 feet shorter through netsUnder (the environment module's), its nonlethal damage and its check to land standing passed on — partial till that module plays them", () => {
+test("Impact Jelly: its 10-foot square a zone placed for the minute, falls into it 50 feet shorter through netsUnder (the environment module's), its nonlethal damage and its check to land standing passed on — the environment module plays them (core 0.7.8, env 0.2.2)", () => {
     const jelly = third(...ALCHEMISTS, "Impact Jelly");
     if (!jelly) return;
     const plan = compileItem(jelly, { basicActions });
-    assert.deepEqual([plan.builtin, plan.partial, plan.noteOnly, routeOf(plan), plan.zone.area, plan.zone.centre, plan.zone.lasts.value, plan.zone.lasts.unit], ["zone", true, undefined, "zone", { type: "square", value: 10 }, "placed", 1, "minutes"]);
+    assert.deepEqual([plan.builtin, plan.partial, plan.noteOnly, routeOf(plan), plan.zone.area, plan.zone.centre, plan.zone.lasts.value, plan.zone.lasts.unit], ["zone", undefined, undefined, "zone", { type: "square", value: 10 }, "placed", 1, "minutes"]);
     assert.deepEqual(plan.zone.fall, { shorter: 50, nonlethal: true, landCheck: { statistics: ["acrobatics", "athletics"], dc: 10, add: 1, per: 10 } });
     assert.equal(plan.zone.notes.length, 3);
     const region = (fall) => ({ name: "Impact Jelly", elevation: { bottom: 0 }, flags: { "pf2e-automatic-ability-resolution": { zone: { zone: { fall }, itemName: "Impact Jelly" } } }, testPoint: () => true });
