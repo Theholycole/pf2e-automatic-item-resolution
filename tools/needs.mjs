@@ -177,6 +177,8 @@ writeFileSync(path.join(root, ".cache/needs-third-party.json"), `${JSON.stringif
 
 const label = (entry) => `${entry.name}${entry.activation ? ` (${entry.activation})` : ""}`;
 const RESULT_WORD = { partial: "partial", "note-only": "note only", none: "nothing read", "builtin:no-effect": "the GM's", gaps: "gaps", error: "error" };
+// One summary line: its entries by kind and result ("none left" when it has none).
+const summaryLine = (label, entries, totals) => (entries.length ? `- **${label}:** ${entries.length} entries (${byKind(entries, "consumable")} consumables, ${byKind(entries, "activation")} activations): ${Object.entries(totals.results).map(([result, count]) => `${count} ${RESULT_WORD[result] ?? result}`).join(", ")}.` : `- **${label}:** none left.`);
 const pf2eTotals = summary(pf2e);
 const thirdTotals = summary(thirdParty);
 const byKind = (list, kind) => list.filter((entry) => entry.kind === kind).length;
@@ -229,8 +231,8 @@ const lines = [
     "",
     "How an item is sorted: the words its card leaves over (its notes, unread sentences, GM lines and note Effects; for one nothing reads, its own text) are matched against each need's words in `tools/needs-rules.mjs`. An item gets every need its words show. Its **main** need is the first in the table's order, the most particular first, so a Strike that also needs a creature summoned is listed under creatures. The sorting reads words, not rules, so an item can sit under a need it mentions only in passing.",
     "",
-    `- **PF2e:** ${pf2e.length} entries (${byKind(pf2e, "consumable")} consumables, ${byKind(pf2e, "activation")} activations): ${Object.entries(pf2eTotals.results).map(([result, count]) => `${count} ${RESULT_WORD[result] ?? result}`).join(", ")}.`,
-    `- **Installed modules:** ${thirdParty.length} entries (${byKind(thirdParty, "consumable")} consumables, ${byKind(thirdParty, "activation")} activations): ${Object.entries(thirdTotals.results).map(([result, count]) => `${count} ${RESULT_WORD[result] ?? result}`).join(", ")}.`,
+    summaryLine("PF2e", pf2e, pf2eTotals),
+    summaryLine("Installed modules", thirdParty, thirdTotals),
     "",
     "## The needs",
     "",
