@@ -89,3 +89,8 @@ test("strike sustain: a turn after the cast's without a Strike ends the cast's E
         Object.assign(globalThis, saved);
     }
 });
+
+test("Dreadsmoke Thurible: Mist's smoke the ability module's zone round its user for the minute, concealed inside; undead and void effects seeing through it card lines", () => {
+    const plan = compileActivations(item("Dreadsmoke Thurible"), { spells })[0].plan;
+    assert.deepEqual([done(plan), routeOf(plan), plan.zone.area, plan.zone.centre, plan.zone.concealed, plan.zone.lasts.value, plan.zone.lasts.unit, plan.zone.notes.length], [true, "zone", { type: "burst", value: 20 }, "self", true, 1, "minutes", 3]);
+});

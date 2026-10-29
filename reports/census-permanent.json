@@ -7,7 +7,7 @@
   "activations": 2573,
   "results": {
    "resolves": 1473,
-   "builtin:cast-spell": 473,
+   "builtin:cast-spell": 472,
    "builtin:focus-point": 49,
    "builtin:counteract": 39,
    "builtin:readied-bonus": 54,
@@ -18,7 +18,7 @@
    "builtin:craft": 2,
    "builtin:inert": 1,
    "builtin:teleport": 32,
-   "builtin:zone": 45,
+   "builtin:zone": 46,
    "builtin:pf2e-rules": 22,
    "builtin:modes": 36,
    "builtin:objects": 43,
@@ -44,7 +44,7 @@
   },
   "live": {
    "save": 449,
-   "cast": 473,
+   "cast": 472,
    "item": 883,
    "focus": 49,
    "counteract": 39,
@@ -57,7 +57,7 @@
    "craft": 2,
    "inert": 1,
    "teleport": 32,
-   "zone": 45,
+   "zone": 46,
    "none": 25,
    "toggle": 36,
    "objects": 43,
@@ -89,7 +89,7 @@
    "activations": 1670,
    "results": {
     "resolves": 903,
-    "builtin:cast-spell": 347,
+    "builtin:cast-spell": 346,
     "builtin:focus-point": 45,
     "builtin:counteract": 35,
     "builtin:readied-bonus": 34,
@@ -101,7 +101,7 @@
     "builtin:inert": 1,
     "builtin:teleport": 19,
     "builtin:objects": 24,
-    "builtin:zone": 26,
+    "builtin:zone": 27,
     "builtin:item-action": 16,
     "builtin:conjure": 25,
     "builtin:modes": 19,
@@ -16021,9 +16021,9 @@
    "time": "2",
    "frequency": null,
    "trigger": false,
-   "result": "builtin:cast-spell",
+   "result": "builtin:zone",
    "kind": null,
-   "live": "cast"
+   "live": "zone"
   },
   {
    "name": "Diver's Gloves (Greater)",

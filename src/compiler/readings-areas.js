@@ -401,7 +401,38 @@ function tidalCard([, gains, check], _plan, { base, html }) {
     return vehicleNote(base, { label: "Tidal boost", text, duration: timeOf(value, unit) }, ["Only while the figurehead's tempest (its Tempest Roar) is round the ship: target the ship."]);
 }
 
+// (Dreadsmoke Thurible, 2026-10-29 — docs/spell-module-requests.md row 11, built here instead: its smoke "has the effect of Mist" around its
+// user for Mist's minute — the ability module's zone, concealed inside, where it's swung (an emanation of its, not following it: a circle at its
+// space). Undead and those using or affected by a void effect see through it: PF2e's concealment is the concealed creature's, not an observer's,
+// so those are lines of the card, the GM's.)
+const THURIBLE = [
+    /^You swing the [\w' ]+? around you, spreading inky black smoke in an? (\d+)-foot emanation that has the effect of Mist\.$/,
+    /^Undead creatures can see through the smoke as if it didn't exist\.$/,
+    /^Void energy also disrupts the magic of the smoke; anyone who uses a void effect, along with creatures affected by a void effect, can see through the smoke for (\d+) rounds?\.$/
+];
+function thuribleCard([[, feet], , [, rounds]], plan) {
+    if (plan?.builtin !== "cast-spell" || plan.spell?.name !== "Mist") return null;
+    const zone = zoneOf({
+        area: { type: "burst", value: Number(feet) },
+        centre: "self",
+        lasts: timeOf(1, "minute"),
+        concealed: true,
+        notes: [
+            "Its smoke stays where it was swung, round its user's space then; its user can Dismiss it (Mist's).",
+            "Undead see through it as if it weren't there (the GM's: those inside aren't concealed to them).",
+            `One that uses a void effect, or is affected by one, sees through it for ${rounds} round${Number(rounds) === 1 ? "" : "s"} (the GM's).`
+        ]
+    });
+    return { builtin: "zone", actions: plan.actions ?? 2, targeting: { target: null, range: null, area: zone.area }, zone };
+}
+
 const READINGS = [
+    {
+        names: ["Dreadsmoke Thurible"],
+        over: true,
+        sentences: THURIBLE,
+        card: thuribleCard
+    },
     {
         names: ["Sea Dragon Figurehead: Tempest Roar"],
         sentences: TEMPEST,
