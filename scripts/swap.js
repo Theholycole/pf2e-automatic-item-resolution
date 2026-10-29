@@ -10,6 +10,13 @@ import { ABILITY_ID, MODULE_ID } from "./foundry.js";
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 const allied = (one, two) => (one?.isAllyOf?.(two) ?? (one?.alliance && one.alliance === two?.alliance)) === true;
 
+// Two tokens of one scene trade places (Foundry's teleport, no animation).
+// (Also an item card's own, Rumbustious Robes' "You and the target swap places": plan.item.swapPlaces, scripts/live.js — 2026-10-28.)
+export async function tradePlaces(source, token) {
+    const [from, to] = [{ x: source.x, y: source.y, elevation: source.elevation }, { x: token.x, y: token.y, elevation: token.elevation }];
+    await source.parent.updateEmbeddedDocuments("Token", [{ _id: source.id, ...to }, { _id: token.id, ...from }], { teleport: true, animate: false, [MODULE_ID]: { swapped: true } });
+}
+
 export async function swapAfterSave({ state, targets }) {
     const swap = state?.plan?.swap;
     if (!swap) return;
@@ -22,8 +29,7 @@ export async function swapAfterSave({ state, targets }) {
             await ChatMessage.create({ content: `<p><strong>${escape(name)}</strong>: ${escape(target.name)} failed — trade its place with ${escape(state.source?.name ?? "its user")}'s by hand.</p>` });
             continue;
         }
-        const [from, to] = [{ x: source.x, y: source.y, elevation: source.elevation }, { x: token.x, y: token.y, elevation: token.elevation }];
-        await source.parent.updateEmbeddedDocuments("Token", [{ _id: source.id, ...to }, { _id: token.id, ...from }], { teleport: true, animate: false, [MODULE_ID]: { swapped: true } });
+        await tradePlaces(source, token);
         // (Its allies Off-Guard to its user until the end of its user's turn.)
         const allies = token.parent.tokens.contents.filter((other) => other.id !== token.id && other.id !== source.id && other.actor && allied(other.actor, token.actor)).map((other) => other.object ?? other).filter(Boolean);
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;

@@ -361,7 +361,8 @@ export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, i
     // (The saves it calls for at creatures' turns near its bearer, Clockwork Sun's illumination: entry.turnAuras, scripts/turn-auras.js.)
     // (2026-10-28: the trail its creature's Strides leave while it lasts, Instinct Crown (Breach)'s — entry.trail, scripts/trails.js —, and gone
     // when its rage ends — entry.untilRage, scripts/live.js.)
-    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.trail ? { trail: entry.trail } : {}), ...(entry.untilRage ? { untilRage: true } : {}), ...(entry.untilRest ? { untilRest: true } : {}), ...(entry.replaces ? { replaces: entry.replaces } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}), ...(entry.turnAuras ? { turnAuras: entry.turnAuras, from: item.name ?? null } : {}) }, item, user, worldTime, initiative, moduleId });
+    // (The healings it adds to, counted down, Medicinal Hotpot's three: entry.healingUses, scripts/healing-uses.js — 2026-10-28.)
+    return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.trail ? { trail: entry.trail } : {}), ...(entry.untilRage ? { untilRage: true } : {}), ...(entry.untilRest ? { untilRest: true } : {}), ...(Number(entry.healingUses) > 0 ? { healingUses: Number(entry.healingUses) } : {}), ...(entry.replaces ? { replaces: entry.replaces } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}), ...(entry.turnAuras ? { turnAuras: entry.turnAuras, from: item.name ?? null } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Protection from heat or cold in words, with its time and its terms: "Severe heat counts as mild heat for 24 hours".
@@ -554,10 +555,12 @@ function ownEffectSource({ name, img, words, rules, duration, flag, extraFlags =
 // A rune it lends a weapon, in words: "Gives the weapon the Vitalizing rune for 1 minute"; one of several, "the Decaying, Grievous or
 // Wounding rune (picked)" until it's picked.
 export function runeText(rune, weaponName = null) {
-    const time = rune.duration?.mode === "fixed" ? (rune.duration.value === 0 ? " until the end of the turn" : ` for ${timeText(rune.duration)}`) : "";
+    // (Until its user's rage ends, Instinct Crown (Rune)'s: a minute at most, a Rage's — 2026-10-28.)
+    const time = rune.untilRage ? " until the end of the rage" : rune.duration?.mode === "fixed" ? (rune.duration.value === 0 ? " until the end of the turn" : ` for ${timeText(rune.duration)}`) : "";
     // (One rune of several types, Bane Oil's: "the Bane rune of the type picked".)
     const typed = rune.choices?.length && rune.choices.every((choice) => choice.traits?.length);
-    const name = typed && !rune.picked ? `${rune.name} rune of the type picked` : rune.choices?.length && !rune.picked ? `${rune.choices.slice(0, -1).map((choice) => choice.name).join(", ")} or ${rune.choices.at(-1).name} rune (picked)` : `${rune.name} rune`;
+    // (Or one of many, the same crown's runes of its user's level or lower: "the property rune picked".)
+    const name = typed && !rune.picked ? `${rune.name} rune of the type picked` : rune.choices?.length > 6 && !rune.picked ? "property rune picked" : rune.choices?.length && !rune.picked ? `${rune.choices.slice(0, -1).map((choice) => choice.name).join(", ")} or ${rune.choices.at(-1).name} rune (picked)` : `${rune.name} rune`;
     // (Its damage of the target's greatest weakness, Fundamental Oil's: the type on its toggle.)
     if (rune.damageTypes?.length) return `Gives ${weaponName ?? "the weapon picked"} 1d6 more damage against ${rune.traits.join(" or ")} creatures, of the target's greatest weakness among ${rune.damageTypes.slice(0, -1).join(", ")} or ${rune.damageTypes.at(-1)} (set on its toggle), else the weapon's own type${time}`;
     return `Gives ${weaponName ?? (rune.own ? "its weapon" : "the weapon picked")} the ${name}${time}`;
@@ -591,7 +594,8 @@ export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user
     const rules = typed ?? (rune.traits?.length
         ? [{ key: "DamageDice", selector: `${weapon.id}-damage`, slug: "bane-oil", label: rune.name, diceNumber: 1, dieSize: "d6", predicate: [against] }]
         : [{ key: "AdjustStrike", mode: "add", property: "property-runes", value: key, definition: [`item:id:${weapon.id}`] }]);
-    return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules, duration: rune.duration, flag: { rune: key, weaponId: weapon.id }, item, user, worldTime, initiative, moduleId });
+    // (Gone with its user's Rage, flagged untilRage — scripts/live.js, 2026-10-28.)
+    return ownEffectSource({ name: `${rune.name} (${weapon.name})`, img: "icons/svg/sword.svg", words: runeText(rune, weapon.name), rules, duration: rune.duration, flag: { rune: key, weaponId: weapon.id, ...(rune.untilRage ? { untilRage: true } : {}) }, item, user, worldTime, initiative, moduleId });
 }
 
 // Conditions until the end of the rage, in words: "Quickened until the end of the rage".

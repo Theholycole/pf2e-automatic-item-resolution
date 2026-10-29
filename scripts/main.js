@@ -45,6 +45,7 @@ import { setUpBleedGrows } from "./bleed-grows.js";
 import { setUpPreventCondition } from "./prevent-condition.js";
 import { setUpHalfDamage } from "./half-damage.js";
 import { setUpHealAfter } from "./heal-after.js";
+import { setUpHealingUses } from "./healing-uses.js";
 import { setUpEndsOn } from "./ends-on.js";
 import { setUpThenFor } from "./then-for.js";
 import { setUpUntilRest } from "./until-rest.js";
@@ -296,6 +297,8 @@ Hooks.once("ready", async () => {
     // (Half the triggering attack's damage, Laurel of the Empath's: scripts/half-damage.js.)
     setUpHalfDamage();
     setUpHealAfter();
+    // (An Effect's extra healing counted down, Medicinal Hotpot's three: scripts/healing-uses.js, 2026-10-28.)
+    setUpHealingUses();
     // (A shrink whose steps a save at each of its creature's turns moves, Implosion Dust's: scripts/implosion.js.)
     setUpImplosion();
     setUpEndsOn();

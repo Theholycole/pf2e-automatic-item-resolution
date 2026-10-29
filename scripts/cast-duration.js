@@ -21,7 +21,10 @@ export function setUpCastDurations() {
 
 // After the cast: the mark on its message, and the Effects already made on the caster and its targets set to the duration. → a line or none.
 export async function rememberCastDuration(cast, castDuration, { actor, targets = [] } = {}) {
-    const time = castDurationAt(castDuration, actor?.level);
+    // (A rolled time, Rumbustious Robes' Dragon Form for 1d8 rounds: castDuration.formula, rolled as it's cast — 2026-10-28.)
+    const rolled = castDuration?.formula ? await new Roll(String(castDuration.formula)).evaluate().catch(() => null) : null;
+    if (rolled) await rolled.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `Its duration (${castDuration.formula} ${castDuration.unit})` }).catch(() => null);
+    const time = rolled ? { value: Math.max(1, Number(rolled.total) || 1), unit: castDuration.unit } : castDurationAt(castDuration, actor?.level);
     if (!time || !cast?.spellUuid) return null;
     if (cast.message) await cast.message.setFlag(MODULE_ID, "castDuration", { spellUuid: cast.spellUuid, ...time }).catch(() => null);
     const actors = [actor, ...targets.map((token) => token?.actor ?? token?.document?.actor ?? null)].filter(Boolean);

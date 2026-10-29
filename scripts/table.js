@@ -49,22 +49,34 @@ export async function applyTableCard(message, { total = null } = {}, postCardFor
         const next = { ...state, status: "applied", results: lines };
         return message.update({ content: tableCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
     }
-    let rolled = total === null || total === undefined || total === "" ? NaN : Number(total);
-    if (!Number.isFinite(rolled)) {
-        const roll = await new Roll(state.plan.table.die).evaluate();
-        await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: its table` });
-        rolled = roll.total;
+    // (Several rolls, their rows in order, some results ignored — Rumbustious Robes' 20, "roll twice … ignore any further rolls of 20": table.rolls,
+    // table.ignore, 2026-10-28.)
+    const times = Math.max(1, Math.floor(Number(state.plan.table.rolls)) || 1);
+    const ignored = new Set((state.plan.table.ignore ?? []).map(Number));
+    const lines = [];
+    let rolled = NaN;
+    for (let time = 0; time < times; time++) {
+        rolled = time === 0 && !(total === null || total === undefined || total === "") ? Number(total) : NaN;
+        if (!Number.isFinite(rolled)) {
+            const roll = await new Roll(state.plan.table.die).evaluate();
+            await roll.toMessage?.({ speaker: ChatMessage.getSpeaker({ actor }), flavor: `${state.item.name}: its table` });
+            rolled = roll.total;
+        }
+        if (ignored.has(rolled)) {
+            lines.push(`${rolled}: ignored.`);
+            continue;
+        }
+        const row = rowFor(state.plan.table, rolled);
+        if (!row) throw new Error(`No row of ${state.item.name}'s table for ${rolled}.`);
+        const span = row.low === row.high ? `${row.low}` : `${row.low}–${row.high}`;
+        lines.push(`${rolled}: ${row.text}`);
+        if (row.plan) {
+            const data = state.item.data ?? { name: state.item.name, system: {} };
+            const used = { data: { ...data, name: `${state.item.name} (${span})`, system: { ...(data.system ?? {}), description: { value: `<p>${row.text}</p>` } } }, actor };
+            await postCardFor({ message: null, plan: row.plan, used, actor, token });
+            lines.push("Its card follows.");
+        } else lines.push("The GM resolves it.");
     }
-    const row = rowFor(state.plan.table, rolled);
-    if (!row) throw new Error(`No row of ${state.item.name}'s table for ${rolled}.`);
-    const span = row.low === row.high ? `${row.low}` : `${row.low}–${row.high}`;
-    const lines = [`${rolled}: ${row.text}`];
-    if (row.plan) {
-        const data = state.item.data ?? { name: state.item.name, system: {} };
-        const used = { data: { ...data, name: `${state.item.name} (${span})`, system: { ...(data.system ?? {}), description: { value: `<p>${row.text}</p>` } } }, actor };
-        await postCardFor({ message: null, plan: row.plan, used, actor, token });
-        lines.push("Its card follows.");
-    } else lines.push("The GM resolves it.");
     const next = { ...state, status: "applied", rolled, results: lines };
     return message.update({ content: tableCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

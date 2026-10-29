@@ -48,6 +48,7 @@ import { postSphereCard } from "./sphere.js";
 import { placeWallsAround, postInertCard } from "./cube.js";
 import { postEmbedCard } from "./embedded-places.js";
 import { postSwapCard } from "./skill-swap.js";
+import { tradePlaces } from "./swap.js";
 import { postPortalCard } from "./portals.js";
 import { postSoulsCard } from "./souls.js";
 import { postReservoirCard } from "./reservoir.js";
@@ -1118,6 +1119,13 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     // (A phantom raised and every PC's maximum Hit Points up, the soulheart spent: src/compiler/unique-rules.js withPhantomBolster, 2026-10-27.)
     if (state.plan.item?.phantom) lines.push(...await bolsterPhantom(state, others));
     if (state.plan.item?.putsOut && user.actor) lines.push(...await putOut(state, user.actor));
+    // (Places traded with the creature targeted, Rumbustious Robes' chaos: its user's token and its — scripts/swap.js, 2026-10-28.)
+    if (state.plan.item?.swapPlaces && target.token) {
+        if (user.token && user.token.parent?.id === target.token.parent?.id && user.token.id !== target.token.id) {
+            await tradePlaces(user.token, target.token);
+            lines.push(`${state.user.name} and ${recipient.name} trade places`);
+        } else lines.push(`${state.user.name} and ${recipient.name}: trade their places by hand (not on one scene).`);
+    }
     // (PF2e's own rules on it: Mirrorblade's flanking — an Effect with them.)
     for (const given of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
@@ -1368,6 +1376,8 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
         const weapon = rune.own ? { id: state.item.uuid?.split(".Item.").at(-1) ?? null, name: String(state.item.name).replace(/: .*$/, "") } : state.weapons[state.runeWeapon ?? 0];
         const key = runeKeyOf(rune);
         if (!key) lines.push(`${state.item.name}: PF2e has no ${rune.name} rune; apply it by hand.`);
+        // (Only while its user rages, Instinct Crown (Rune)'s: none otherwise — 2026-10-28.)
+        else if (rune.untilRage && !isRaging(user.actor)) lines.push(`${state.user.name} isn't raging: no ${rune.name} rune.`);
         else if (weapon?.id) {
             // (A new coat in place of the last, Bane Oil's "Any new application of this oil supersedes any previous one": that weapon's earlier one gone.)
             const earlier = rune.supersedes ? (user.actor.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.rune === key && effect.flags[MODULE_ID].weaponId === weapon.id).map((effect) => effect.id) : [];
