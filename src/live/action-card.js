@@ -3,6 +3,8 @@
 // action is aimed at one; then, for the actions the ability module compiles, that action's row for the degree goes on
 // the target (Trip's prone, Grapple's grabbed). Pure; the ability module's classes.
 
+import { LEVEL_DCS } from "../compiler/counteract.js";
+
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 export function createActionCard({ plan, item, user }) {
@@ -14,7 +16,17 @@ export function chosenAction(state) {
     const action = state.plan.action;
     if (!action.slugs) return action;
     const index = Number.isInteger(state.choice) && action.slugs[state.choice] ? state.choice : 0;
-    return { ...action, slug: action.slugs[index], name: action.names[index], basic: action.basics?.[action.slugs[index]] ?? null };
+    // (Or one skill of several for the same action, Memory Mugwort's Occultism or Religion: action.statistics, 2026-10-28.)
+    return { ...action, slug: action.slugs[index], name: action.names[index], basic: action.basics?.[action.slugs[index]] ?? null, ...(action.statistics?.[index] ? { statistic: action.statistics[index] } : {}) };
+}
+
+// (The DC of its target's level, adjusted — Memory Mugwort's, the hard one for the level of the creature or hazard targeted: action.dc.level,
+// 2026-10-28; PF2e's DCs by level and its difficulty adjustments.)
+const ADJUSTMENTS = { "incredibly easy": -10, "very easy": -5, easy: -2, normal: 0, hard: 2, "very hard": 5, "incredibly hard": 10 };
+export function levelDifficulty(action, level) {
+    const adjustment = ADJUSTMENTS[String(action?.dc?.level ?? "").toLowerCase()];
+    if (adjustment === undefined || !Number.isFinite(Number(level))) return null;
+    return { value: (LEVEL_DCS[Math.max(0, Math.min(25, Number(level)))] ?? 14) - (Number(level) < 0 ? 1 : 0) + adjustment };
 }
 
 // "Sneak with a +1 item bonus", "Escape".

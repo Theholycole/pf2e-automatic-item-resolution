@@ -150,7 +150,7 @@ export function previewLines(state) {
     // (A rune it lends a weapon, src/compiler/rune-loans.js.)
     if (plan?.item?.rune) lines.push(runeText(plan.item.rune));
     // (A condition until the end of the user's rage, src/compiler/rage-time.js.)
-    if (plan?.item?.untilRage) lines.push(`${untilRageText(plan.item.untilRage)}, while raging`);
+    if (plan?.item?.untilRage) lines.push(`${untilRageText(plan.item.untilRage)}, while raging${untilRageOnly(plan.item.untilRage)}`);
     // (Only after its user's check succeeds, Diplomat's Badge's Recall Knowledge: src/compiler/consumables.js checkGated.)
     if (plan?.checkGate) lines.push(gateText(plan.checkGate));
     // (Its resistance, src/compiler/rows.js: the card's own Effect.)
@@ -597,6 +597,8 @@ export function runeEffectSource(rune, { key = rune.key, weapon, item = {}, user
 // Conditions until the end of the rage, in words: "Quickened until the end of the rage".
 const conditionWords = (conditions) => conditions.map((entry) => `${entry.slug.charAt(0).toUpperCase()}${entry.slug.slice(1)}${entry.value ? ` ${entry.value}` : ""}`).join(" and ");
 export const untilRageText = (untilRage) => `${[untilRage.conditions.length ? conditionWords(untilRage.conditions) : null, untilRage.fastHealing ? `Fast healing ${Number.isFinite(untilRage.fastHealing.value) ? untilRage.fastHealing.value : "half the user's level"}` : null].filter(Boolean).join(" and ")} until the end of the rage`;
+// (What its extra action may be used for, a Barbarians+ crown's: untilRage.only, on its card's line and its Effect's words — 2026-10-28.)
+export const untilRageOnly = (untilRage) => (untilRage?.only ? ` (its extra action only to ${untilRage.only})` : "");
 
 // Their Effect: PF2e's GrantItem for each condition (uuids: the conditions' own, by slug), lasting at most a minute (a Rage's),
 // flagged untilRage so the Rage's end removes it (scripts/live.js).
@@ -604,7 +606,7 @@ export function untilRageEffectSource(untilRage, uuids, { item = {}, user = {}, 
     const rules = untilRage.conditions.map((entry, index) => ({ key: "GrantItem", uuid: uuids[index], ...(entry.value ? { alterations: [{ mode: "override", property: "badge-value", value: entry.value }] } : {}) })).filter((rule) => rule.uuid);
     // (Its fast healing, at the value live play worked out from its user's level.)
     if (Number.isFinite(untilRage.fastHealing?.value)) rules.push({ key: "FastHealing", value: untilRage.fastHealing.value });
-    return ownEffectSource({ name: untilRageText(untilRage), img: "icons/svg/aura.svg", words: untilRageText(untilRage), rules, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { untilRage: true }, item, user, worldTime, initiative, moduleId });
+    return ownEffectSource({ name: untilRageText(untilRage), img: "icons/svg/aura.svg", words: `${untilRageText(untilRage)}${untilRageOnly(untilRage)}`, rules, duration: { mode: "fixed", value: 1, unit: "minutes", expiry: "turn-start" }, flag: { untilRage: true }, item, user, worldTime, initiative, moduleId });
 }
 
 // Its resistances with a chosen type filled in (index into the entry's choose list, the first by default).

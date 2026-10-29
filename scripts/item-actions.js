@@ -3,7 +3,7 @@
 // spell module rolls its maneuvers), the item's bonus a PF2e Modifier on it, at the creature the presser targeted; then
 // the ability module's row for that action and degree goes on the target (scripts/foundry.js applyRiders).
 
-import { actionCardHTML, actionText, chosenAction, createActionCard, outcomeText } from "../src/live/action-card.js";
+import { actionCardHTML, actionText, chosenAction, createActionCard, levelDifficulty, outcomeText } from "../src/live/action-card.js";
 import { ABILITY_ID, FLAG, MODULE_ID, afflictionsOf, applyRiders, entryOf, healCreature, lowerAfflictionStage, recover, stateOf } from "./foundry.js";
 
 const sluggify = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -156,7 +156,9 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     const poison = action.slug === "treat-poison" ? (action.stage?.vector ? poisonDC(patient, ofVector(action.stage.vector)) : null) ?? poisonDC(patient) : null;
     const higher = (...dcs) => (dcs.some(Boolean) ? { value: Math.max(...dcs.filter(Boolean).map((dc) => dc.value)) } : null);
     const base = firstAid && variant === "stabilize" ? (action.both ? higher(stabilize, bleed) : stabilize) : firstAid && variant === "stop-bleeding" ? bleed : poison;
-    const difficultyClass = base ? { value: base.value - (Number(action.dc?.less) || 0) + (Number(action.dc?.more) || 0) } : null;
+    // (Or its target's level's, Memory Mugwort's hard DC of the creature's or hazard's level: action.dc.level, 2026-10-28.)
+    const leveled = action.dc?.level && patient ? levelDifficulty(action, patient.level ?? patient.system?.details?.level?.value) : null;
+    const difficultyClass = base ? { value: base.value - (Number(action.dc?.less) || 0) + (Number(action.dc?.more) || 0) } : leveled;
     // (Rolled with no DC to give it: why, for the card's line.)
     const patientName = targetToken?.name ?? patient?.name ?? "The creature";
     const noDC = difficultyClass ? null : firstAid && variant === "stabilize" ? `${patientName} isn't dying` : firstAid && variant === "stop-bleeding" ? `${patientName} has no persistent bleed` : action.slug === "treat-poison" ? `${patientName} has no poison with a DC to treat` : null;

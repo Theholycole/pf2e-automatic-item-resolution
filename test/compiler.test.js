@@ -789,7 +789,9 @@ test("effects its user picks one of, each its own named paragraph (a third-party
     const [confusion, beam] = plan.ways.map((way) => way.plan.resolution);
     assert.deepEqual([confusion.check.statistic, confusion.check.against.value, confusion.outcomes.failure.effects[0].slug, confusion.outcomes.failure.effects[0].duration.valueRoll], ["will", 40, "confused", "1d4"]);
     assert.deepEqual([beam.check.basic, beam.sharedDamage.components[0].formula], [true, "20d6[sonic]"]);
-    assert.match(plan.notes[0], /Its area is there: target the creatures in it\.$/);
+    // (2026-10-28, src/compiler/readings-plain.js: the flight a line of each way's own save card — the ways card shows no lines —, the plan done.)
+    assert.deepEqual([plan.notes, plan.partial], [undefined, undefined]);
+    assert.ok(plan.ways.every((way) => way.plan.notes.some((note) => /flies up to 60 feet\b/.test(note))));
 });
 
 test("third-party bonuses read from their own packs (their words not kept here): a lodestone's saves and Fortitude DC against forced movement, a pearl's saves against curses, a steak's Intimidation and a lozenge's Performance, the narrower words notes", async () => {
