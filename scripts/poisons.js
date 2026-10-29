@@ -7,7 +7,7 @@ import { ATTACKER, MODULE_KEY, afterExposure, createExposureCard, distancePenalt
 import { itemDuration, plainText } from "../src/compiler/rows.js";
 import { withDamageChoice } from "../src/compiler/beads.js";
 import { scaledPlan } from "../src/compiler/scaled.js";
-import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, healCreature, lowerCondition, spaceOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, creaturesNear, entryOf, healCreature, lowerCondition, spaceOf, stateOf, itemRecord } from "./foundry.js";
 import { distanceFeet } from "../../pf2e-resolution-core/src/model/grid.js";
 import { targetGroups } from "../src/live/if-target.js";
 import { withoutHitDamage } from "../src/live/scaled.js";
@@ -236,7 +236,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         const worse = critical === true && state.plan.thenCritical === "worse";
         if (worse) lines.push("After a critical hit: its save one degree worse.");
         if (postCard && actor) {
-            await postCard({ plan: worse ? worseSave(state.plan.thenSave) : state.plan.thenSave, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: `${state.item.name} hit` });
+            await postCard({ plan: worse ? worseSave(state.plan.thenSave) : state.plan.thenSave, item: itemRecord(state.item.name, state.item.uuid, state.plan), sourceActor: actor, sourceToken, tokens: tokens.map((token) => token.object ?? token), cause: `${state.item.name} hit` });
             lines.push(`${names}: its save card follows.`);
         } else lines.push(`${names}: ${saveText(state.plan.thenSave)} (roll it by hand).`);
         const done = { ...state, status: "applied", step: null, results: [...state.results, ...lines].slice(-6) };
@@ -294,14 +294,14 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
                 continue;
             }
             carded.push(...group.tokens);
-            await postCard({ plan: group.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: group.tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
+            await postCard({ plan: group.plan, item: itemRecord(state.item.name, state.item.uuid, state.plan), sourceActor: actor, sourceToken, tokens: group.tokens.map((token) => token.object ?? token), cause: state.delivery ? `${state.delivery} poison` : undefined });
         }
         // (Warriors beyond the enemies targeted, Spiritual Warhorn's: each Strikes them again in turn, a card of its own.)
         const warriors = Number(played?.ownCheck?.warriors) || 0;
         if (warriors > tokens.length && carded.length) {
             for (let extra = tokens.length; extra < warriors; extra++) {
                 const token = carded[extra % carded.length];
-                await postCard({ plan: played, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: [token.object ?? token], cause: `${state.item.name}: warrior ${extra + 1} of ${warriors}` });
+                await postCard({ plan: played, item: itemRecord(state.item.name, state.item.uuid, state.plan), sourceActor: actor, sourceToken, tokens: [token.object ?? token], cause: `${state.item.name}: warrior ${extra + 1} of ${warriors}` });
             }
             lines.push(`${warriors - tokens.length} more warrior${warriors - tokens.length === 1 ? "" : "s"}: ${warriors - tokens.length === 1 ? "its card follows" : "their cards follow"}.`);
         }
@@ -321,7 +321,7 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         const where = `within ${entry.radius} feet of ${center.name ?? centerActor?.name ?? "the target"}`;
         if (!others.length) lines.push(`No ${entry.allies ? "ally of it" : "creature"} ${where}.`);
         else if (postCard && actor) {
-            await postCard({ plan: entry.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken, tokens: others, cause: `${state.item.name} at ${center.name ?? centerActor?.name ?? "the target"}` });
+            await postCard({ plan: entry.plan, item: itemRecord(state.item.name, state.item.uuid, state.plan), sourceActor: actor, sourceToken, tokens: others, cause: `${state.item.name} at ${center.name ?? centerActor?.name ?? "the target"}` });
             lines.push(`${saveText(entry.plan)} for ${others.length} creature${others.length === 1 ? "" : "s"} ${where}: its card follows.`);
         } else lines.push(`${saveText(entry.plan)} for the creatures ${where} (roll it by hand).`);
     }

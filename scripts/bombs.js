@@ -8,7 +8,7 @@
 import { compileBomb, isBomb } from "../src/compiler/bombs.js";
 import { onlyHarms } from "../src/compiler/pf2e-rules.js";
 import { bombCardHTML, cloudLine, createBombCard, riderRow, saveFor, splashRadiusOf, splashText, withChoices } from "../src/live/bomb-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, applyRiders, creatureOf, creaturesNear, damageRollClass, entryOf, stateOf, itemRecord } from "./foundry.js";
 import { withUserDCs } from "./item-dcs.js";
 
 // Whether the creature hit takes a gated rider: "void-healing" (undead, or a creature with void healing), "living" (not undead nor
@@ -182,7 +182,7 @@ export async function applyBombCard(message, { included = null } = {}) {
         const tokens = (await Promise.all(savers.map((entry) => (entry.tokenUuid ? fromUuid(entry.tokenUuid).catch(() => null) : null)))).filter(Boolean).map((token) => token.object ?? token);
         const check = save.plan.resolution.check;
         if (postCard && sourceActor && tokens.length) {
-            await postCard({ plan: save.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor, sourceToken, tokens, cause: "bomb" });
+            await postCard({ plan: save.plan, item: itemRecord(state.item.name, state.item.uuid, state.plan), sourceActor, sourceToken, tokens, cause: "bomb" });
             lines.push(`${state.item.name}'s save card: ${savers.map((entry) => entry.name).join(", ")}`);
         } else {
             lines.push(`${savers.map((entry) => entry.name).join(", ")}: DC ${check.against.value} ${check.statistic} save against ${state.item.name} (roll it by hand).`);

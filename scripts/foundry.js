@@ -53,6 +53,11 @@ export function itemsNear(token, name, feet) {
 }
 
 // The actor and token of a card's entry.
+// An item's record for the ability module's save card: its level, type and traits beside its name and uuid, so a save with the incapacitation
+// trait keeps the item's level once it's used up and gone (the ability module's state.ability.item, 2026-10-29 — after a reload it can't
+// remember the deleted item itself).
+export const itemRecord = (name, uuid, plan) => ({ name, uuid: uuid ?? null, ...(Number(plan?.item?.level) > 0 ? { level: Number(plan.item.level) } : {}), ...(plan?.item?.type ? { type: plan.item.type } : {}), ...(plan?.traits?.length ? { traits: plan.traits } : {}) });
+
 export async function creatureOf(entry) {
     const token = entry?.tokenUuid ? await fromUuid(entry.tokenUuid).catch(() => null) : null;
     return { token, actor: token?.actor ?? (entry?.actorUuid ? await fromUuid(entry.actorUuid).catch(() => null) : null) };

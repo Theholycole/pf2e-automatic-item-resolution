@@ -4,7 +4,7 @@
 // the ability module's row for that action and degree goes on the target (scripts/foundry.js applyRiders).
 
 import { actionCardHTML, actionText, chosenAction, createActionCard, levelDifficulty, outcomeText } from "../src/live/action-card.js";
-import { ABILITY_ID, FLAG, MODULE_ID, afflictionsOf, applyRiders, entryOf, healCreature, lowerAfflictionStage, recover, stateOf } from "./foundry.js";
+import { ABILITY_ID, FLAG, MODULE_ID, afflictionsOf, applyRiders, entryOf, healCreature, lowerAfflictionStage, recover, stateOf, itemRecord } from "./foundry.js";
 
 const sluggify = (text) => String(text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -188,7 +188,7 @@ export async function applyActionCard(message, { targets = [], choice = null } =
         const damage = action.damage?.[outcome] ?? null;
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
         if (damage && targetToken && postCard) {
-            await postCard({ plan: damage, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: actor, sourceToken: actor.getActiveTokens?.(true, true)?.[0] ?? null, tokens: [targetToken.object ?? targetToken], cause: outcomeText(outcome) });
+            await postCard({ plan: damage, item: itemRecord(state.item.name, state.item.uuid, state.plan), sourceActor: actor, sourceToken: actor.getActiveTokens?.(true, true)?.[0] ?? null, tokens: [targetToken.object ?? targetToken], cause: outcomeText(outcome) });
             lines.push(`${state.item.name}'s damage for ${outcomeText(outcome)}: its card.`);
         } else if (damage && targetToken) lines.push(`${state.item.name}: ${targetToken.name ?? targetToken.actor.name} takes ${damage.resolution.sharedDamage.components[0].formula} ${damage.resolution.sharedDamage.components[0].type ?? ""} damage; apply it by hand.`.replace(/\s+damage;/, " damage;"));
         // (Each other creature: the same total and die against its own DC — the action's defense, Demoralize's Will DC — or, when

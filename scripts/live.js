@@ -20,7 +20,7 @@ import { armedMarkSource, checkGateMet, gateOption, gateWords } from "../src/liv
 import { ownEffectsToEnd } from "../src/live/ends-own.js";
 import { abilityState, installedEffectSource, installedText, picksWeapon, proficiencyEffectSource, proficiencyText, applicationFor, cardHTML, chosenResistances, createItemCard, createdItemSource, spaceSource, storeAfter, DRINKER_ID, effectSource, recipientOf, recoveryText, resistanceEffectSource, resistanceText, rolledHealing, runeEffectSource, runeText, senseEffectSource, lightEffectSource, lightText, levelTempText, untilRageEffectSource, untilRageText, senseText, speedEffectSource, speedText, rollFormula, USER_ID, weaponEffectSource, weaponText, attackEffectSource, attackText, fastHealingEffectSource, fastHealingText, markEffectSource, markText, modifierText, shieldFormEffectSource, shieldFormText, strikeDamageEffectSource, strikeDamageText, skillPickEffectSource, firstDegreeEffectSource, firstDegreeText, suppressEffectSource, suppressText, ruleEffectSource, temperatureEffectSource, fallEffectSource, fallLine, weatherEffectSource, weatherLine, temperatureLine, attackFloorRule, itemNoteSource } from "../src/live/card.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
-import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf } from "./foundry.js";
+import { ABILITY_ID, afflictionSaves, afflictionsOf, lowerAfflictionStage, CORE_ID, creatureOf, creaturesNear, damageRollClass, destroyUsedItem, itemsNear, entryOf, FLAG, healCreature as heal, isActiveGM, lowerCondition, mayApply, MODULE_ID, ownerDCsOf, ownerOf, presserUuid, recover, removeAfflictions, SOCKET, startInitiative, stateOf, itemRecord } from "./foundry.js";
 import { fillOwnerDCs, hasOwnerDC } from "../src/compiler/item-data.js";
 import { applyBombCard, cardForBomb, cloudOnMiss, hideCoveredSplash, rememberDeletedBomb } from "./bombs.js";
 import { applyExposureCard, applyPoisonCard, postExposureCard, postPoisonCard, strikeWithPoison } from "./poisons.js";
@@ -1027,7 +1027,7 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     if (unless?.traits?.some((trait) => kinds.has(trait))) {
         const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
         const tokens = [target.token?.object ?? target.token].filter(Boolean);
-        if (postCard && tokens.length) await postCard({ plan: unless.save, item: { name: state.item.name, uuid: state.item.uuid ?? null }, sourceActor: user.actor ?? target.actor, sourceToken: user.token ?? null, tokens });
+        if (postCard && tokens.length) await postCard({ plan: unless.save, item: itemRecord(state.item.name, state.item.uuid, state.plan), sourceActor: user.actor ?? target.actor, sourceToken: user.token ?? null, tokens });
         // (Or works only on a success, Hagbane Biscuit's hag: unlessKind.works, the save card's success rows its own — 2026-10-27.)
         return [`${recipient.name} is ${unless.traits.join(" or ")}: ${state.item.name} ${unless.works ? "works only if it succeeds at its save" : "fails to work"}${postCard && tokens.length ? ", and its save card follows" : `; roll its ${unless.save.resolution.check.statistic} save (DC ${unless.save.resolution.check.against.value}) by hand`}`];
     }
