@@ -121,7 +121,9 @@ async function castAfter(thenSpell, state) {
 // Its user's latest roll of a PF2e action in the recent chat (its roll options' "action:…") → { total, natural } or null.
 function latestActionRoll(actorUuid, action) {
     const option = `action:${action}`;
-    const found = (game.messages?.contents ?? []).slice(-40).reverse().find((entry) => (entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null)) === actorUuid && (entry.flags?.pf2e?.context?.options ?? []).includes(option) && entry.rolls?.[0]);
+    // (The check itself: PF2e's Treat Wounds posts its healing as a second message with the check's flags copied and its origin's messageId —
+    // that one's total isn't the check's, found by the 2026-10-29 case writers.)
+    const found = (game.messages?.contents ?? []).slice(-40).reverse().find((entry) => (entry.actor?.uuid ?? (entry.speaker?.actor ? `Actor.${entry.speaker.actor}` : null)) === actorUuid && (entry.flags?.pf2e?.context?.options ?? []).includes(option) && entry.rolls?.[0] && !entry.flags?.pf2e?.origin?.messageId && entry.rolls[0].constructor?.name !== "DamageRoll");
     if (!found) return null;
     const roll = found.rolls[0];
     return { total: Number(roll.total), natural: Number(roll.dice?.[0]?.total ?? NaN) };

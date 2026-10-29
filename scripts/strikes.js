@@ -469,6 +469,11 @@ async function damageWithRider(message) {
     const options = context.options ?? [];
     if (rider.weaponId && !options.includes(`item:id:${rider.weaponId}`)) return;
     if (rider.plan.strike?.unarmed && !options.includes("item:category:unarmed")) return;
+    // (Only a weapon of that base, and of its range, as the attack roll's side has it (riderFor): another weapon's damage roll doesn't spend
+    // a Power Gauntlet's readied Strike — found by the 2026-10-29 case writers.)
+    if (rider.plan.strike?.base && !options.includes(`item:base:${rider.plan.strike.base}`)) return;
+    const ranged = options.includes("item:ranged") && !options.includes("item:melee");
+    if ((rider.plan.strike?.range === "melee" && ranged) || (rider.plan.strike?.range === "ranged" && !ranged)) return;
     // (Another ammunition's damage roll, as its attack roll: not this one's — 2026-10-27.)
     if (rider.ammoId && options.some((option) => /(?:^|:)ammo:id:/.test(option)) && !options.some((option) => option === `ammo:id:${rider.ammoId}` || option.endsWith(`:ammo:id:${rider.ammoId}`))) return;
     await useOne(actor, effect, rider);

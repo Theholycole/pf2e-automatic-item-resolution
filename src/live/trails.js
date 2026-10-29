@@ -8,8 +8,9 @@ import { squaresAlong } from "./teleport-card.js";
 // (PF2e's difficult terrain, as the zones' own: src/compiler/area-readings.js DIFFICULT.)
 const DIFFICULT = [{ movement: ["walk"], difficulty: 2 }];
 
-// (Foundry's movement actions that are walking on the ground: a Stride, a Step.)
-const WALKED = new Set(["walk"]);
+// (Foundry's movement actions that are walking on the ground: a Stride, a Step — and PF2e 8.6.1's "travel", what it names a creature's walk
+// outside an encounter, as the ability module's zones read it: found by the 2026-10-29 case writers.)
+const WALKED = new Set(["walk", "travel"]);
 
 // A moveToken movement → its walked legs: [{ from: { x, y }, to: { x, y } }] — from its origin through the waypoints it passed, each leg
 // walked when the waypoint it reaches was (no action said: a walk).

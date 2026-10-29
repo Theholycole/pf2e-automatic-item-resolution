@@ -595,7 +595,9 @@ export function raiseItemDCs(plan, dcs = {}, { plus = null, reason = "the world 
     const tos = [...new Set(raised.map((entry) => entry.to))].sort((a, b) => a - b);
     const base = froms.every((from) => from <= value) ? `its user's ${label ?? which} DC${bonus ? ` ${value} + ${bonus} (${plus.name})` : ""}` : `+${bonus} (${plus?.name ?? "bonus"})`;
     const note = `Its DC is ${tos.join(" and ")}, ${base}, over the item's own ${froms.join(" and ")} (${reason}).`;
-    return { plan: { ...next, notes: [...(next.notes ?? []), note] }, raised };
+    // (A zone's card shows its zone's notes, not the plan's: there too, so the GM sees why its save is higher — 2026-10-29.)
+    const zone = next.zone ? { zone: { ...next.zone, notes: [...(next.zone.notes ?? []), note] } } : {};
+    return { plan: { ...next, ...zone, notes: [...(next.notes ?? []), note] }, raised };
 }
 
 // The plan with each owner's DC filled in from dcs ({ class, spell }: numbers or null): "class-spell" the higher one. The
