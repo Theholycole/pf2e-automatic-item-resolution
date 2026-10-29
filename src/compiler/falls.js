@@ -18,7 +18,8 @@ const SHORTER = /\b(?:you )?treat (?:your fall|all falls|falls) as (?:if it were
 // casts Gentle Landing on you", Soft-Landing's "You gain the effects of Gentle Landing for 1 minute".)
 // (And Emerald Grasshopper's "you flutter in the air until the end of your turn, then fall harmlessly at a rate of 60 feet per round until you
 // reach the ground", 2026-10-27: no damage, its rate and its flutter words on the Effect, until the end of its next turn.)
-const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling damage|whenever you fall\b[^.]*?\bcasts? Gentle Landing on you|You gain the effects of Gentle Landing|fall harmlessly at a rate of \d+ feet per round)\b/i;
+// (And Alchemists+'s Osteoanabolic Broth's "take no fall damage", beside its resistance, 2026-10-28.)
+const NO_DAMAGE = /\b(?:you take no damage from the fall|never take falling damage|take no fall damage|whenever you fall\b[^.]*?\bcasts? Gentle Landing on you|You gain the effects of Gentle Landing|fall harmlessly at a rate of \d+ feet per round)\b/i;
 // (Tumbler's Belt's "Regardless of whether you take damage or not from the fall, you land on your feet": landsOnFeet, no Prone — the
 // environment module's, 2026-10-26.)
 const ON_FEET = /\bRegardless of whether you take damage or not from the fall, you land on your feet\b/i;

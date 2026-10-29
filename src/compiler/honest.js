@@ -207,6 +207,9 @@ function heldOf(plan) {
         if (!node || typeof node !== "object") return;
         const value = Number(node.value);
         if (Number.isFinite(value) && typeof node.type === "string") found.add(`${node.type.toLowerCase()}:${value}`);
+        // (A custom resistance's damage types, held at its value: a third-party food's resistance to spirit and void damage from unholy
+        // creatures, 2026-10-28.)
+        if (Number.isFinite(value) && node.type === "custom" && Array.isArray(node.damage)) for (const type of node.damage) found.add(`${String(type).toLowerCase()}:${value}`);
         if (node.key === "BaseSpeed" && Number.isFinite(value)) found.add(`${String([].concat(node.selector ?? "")[0]).replace(/-speed$/, "")}:${value}`);
         // (A Speed as a formula, the Winged rune's "min(25,@actor.system.movement.speeds.land.value)": its numbers.)
         if (typeof node.type === "string" && /^(?:fly|swim|climb|burrow)$/i.test(node.type)) for (const number of String(node.value ?? "").match(/\d+/g) ?? []) found.add(`${node.type.toLowerCase()}:${Number(number)}`);

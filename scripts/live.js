@@ -66,6 +66,7 @@ import { winePlan } from "../src/live/grail.js";
 import { rememberAfterRest } from "./after-rest.js";
 import { applyDeckCard, postDeckCard, setUpDecks } from "./deck.js";
 import { impeccableEffect, impeccablePlan } from "../src/live/craft-card.js";
+import { instinctAuras } from "../src/live/disaster.js";
 import { applyDisbeliefCard, postDisbeliefCard } from "./disbelief.js";
 import { applyTakeCard, postTakeCard } from "./take.js";
 import { applyFeatUseCard, postFeatUseCard } from "./feat-uses.js";
@@ -241,11 +242,12 @@ async function postWhisper({ plan, used, actor, token }) {
     const owners = (game.users ?? []).filter((user) => user.isGM || actor?.testUserPermission?.(user, "OWNER") || also.some((other) => other.testUserPermission?.(user, "OWNER"))).map((user) => user.id);
     const who = token?.name ?? actor?.name ?? "its user";
     const told = also.length ? `, and ${also.map((other) => other.name).join(", ")}'s` : "";
-    // (Its secret flat check, The Carnival's: rolled now, for the GM alone — whisper.flat { dc, failure }.)
+    // (Its secret flat check, The Carnival's: rolled now, for the GM alone — whisper.flat { dc, failure }; its success's own words, Quantum
+    // Duplicator's loyal duplicate: whisper.flat.success, 2026-10-28.)
     if (plan.whisper.flat?.dc) {
         const roll = await new Roll("1d20").evaluate();
         const passed = roll.total >= Number(plan.whisper.flat.dc);
-        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), blind: true, content: `<p><strong>${escapeHTML(used.data.name)}</strong>: secret flat check DC ${Number(plan.whisper.flat.dc)}: ${roll.total} — ${passed ? "a success: the answer is as it is" : `a failure. ${escapeHTML(plan.whisper.flat.failure ?? "")}`}</p>` });
+        await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), whisper: (game.users?.filter?.((user) => user.isGM) ?? []).map((user) => user.id), blind: true, content: `<p><strong>${escapeHTML(used.data.name)}</strong>: secret flat check DC ${Number(plan.whisper.flat.dc)}: ${roll.total} — ${passed ? `a success: ${escapeHTML(plan.whisper.flat.success ?? "the answer is as it is")}` : `a failure. ${escapeHTML(plan.whisper.flat.failure ?? "")}`}</p>` });
     }
     // (A secret check of its own, Spectacles of Discernment's counteract to see through: rolled now, for the GM alone — whisper.secret.)
     if (plan.whisper.secret?.formula) {
@@ -1147,6 +1149,20 @@ async function applyToRecipient(state, { core, others = [], reduce = [] }) {
     for (const given of state.plan.item?.ruleEffects ?? []) {
         if (!target.actor) break;
         let entry = given;
+        // (Only while its creature rages, gone as its Rage ends — Instinct Crown (Disaster)'s herald, 2026-10-28; its turn auras' damage and
+        // radius from its creature's own instinct, src/live/disaster.js.)
+        if (entry.untilRage && !isRaging(target.actor)) {
+            lines.push(`${recipient.name} isn't raging: no ${entry.name}.`);
+            continue;
+        }
+        if (entry.fromInstinct) {
+            const filled = instinctAuras(entry, target.actor);
+            if (filled.error) {
+                lines.push(`${recipient.name} ${filled.error}: no ${entry.name}.`);
+                continue;
+            }
+            entry = filled.entry;
+        }
         // (In place of its earlier one: Terrain Adaptation's of that name, Flame of the Radiant Spark's of any item ("any"), Kaldemash's Lament's
         // damage type of that kind (a word, 2026-10-27) — scripts/until-rest.js replacedBy.)
         const replaced = entry.replaces ? replacedBy(target.actor, { itemUuid: state.item.uuid, name: entry.name, any: entry.replaces === "any", of: typeof entry.replaces === "string" && entry.replaces !== "any" ? entry.replaces : null }) : [];

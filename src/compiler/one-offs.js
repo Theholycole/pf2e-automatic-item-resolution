@@ -230,6 +230,10 @@ export const ONE_OFFS = new Map([
     // (2026-10-28, the areas group: the item put in a Subliming Aludel sets its gas's strength — no other item's; its zones are built,
     // src/compiler/readings-areas.js, their numbers set from the aludel's own level.)
     ["Subliming Aludel", { rule: "its gas deals or heals half the level of the bomb or healing elixir put in it (minimum 1), set at half the aludel's level", build: "the card's pick of its user's bombs and healing elixirs, the one picked used up and its level halved into the zone's damage or fast healing" }],
+    // (2026-10-28, the afflictions group's third-party entries: each its own item's mechanism, checked with the tools' greps of every PF2e and
+    // installed module item's text — the furnace's grades share it, one item's.)
+    ["Alkahest", { rule: "an object passed through it (an artifact too) is unmade into four essences worth its value, enough to Craft an item of equal or lower level and rarity; a willing or dead creature dissolved with the same care (a living one killed) leaves essences for a creature of equal or lower level, whose memories or demeanor may come out changed; brewed by an alchemist with Craft Alkahest once a month, potent for a month", build: "an objects card destroying the item or creature picked and keeping its essences' value and level on its user for a later Craft" }],
+    ["Pill Furnace (Moderate)", { rule: "one alchemical item refined in it for a minute, its user's Crafting check against that item's Craft DC: the item's first damage or healing gets +2 status (+4 when its user is a master in Crafting), halved when that damage or healing goes to several creatures, never its persistent or splash damage", build: "a check card at an alchemical item its user holds, flagging it refined, and its card's first damage or healing raised by the flag as it's used (halved for several targets)" }]
 ]);
 
 export const oneOff = (name) => ONE_OFFS.get(String(name ?? "")) ?? null;

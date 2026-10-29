@@ -31,6 +31,7 @@ import { setUpTurnHeals } from "./turn-heal.js";
 import { setUpShieldRepair } from "./shield-repair.js";
 import { setUpBonds } from "./bonds.js";
 import { setUpEndEarly } from "./end-early.js";
+import { setUpHealCost } from "./heal-cost.js";
 import { setUpSlainWait } from "./slain-wait.js";
 import { setUpPausedItem } from "./paused-item.js";
 import { setUpMarkEnds } from "./mark-ends.js";
@@ -272,6 +273,8 @@ Hooks.once("ready", async () => {
     setUpBonds();
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     setUpEndEarly();
+    // (What its user pays for the healing its card gave others, Iron Heart's Hit Points: scripts/heal-cost.js.)
+    setUpHealCost();
     // (A conjured creature slain that its item then waits for, a Wondrous Figurine's week: scripts/slain-wait.js.)
     setUpSlainWait((item) => compileActivations(dataOf(item), options()));
     // (An item that gives none of its other benefits while the creature it became is out, Horns of Naraga: invested again once it's gone.)

@@ -6,6 +6,7 @@
 
 import { saveText } from "./poison-card.js";
 import { volleyLines } from "../compiler/volley.js";
+import { ROLLED_CRITICAL } from "../compiler/rolled-critical.js";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -42,7 +43,17 @@ function whenText(entry) {
     const conditions = (entry?.predicate ?? []).filter((term) => typeof term === "string" && term.startsWith("target:condition:")).map((term) => term.slice("target:condition:".length).replace(/-/g, " "));
     const against = conditions.length ? ` against a ${conditions.join(" and ")} target` : "";
     const critical = entry?.critical === true ? " on a critical hit" : entry?.critical === false ? " on a hit (not a critical hit)" : "";
-    return `${against}${critical}`;
+    // (Only when the roll itself was a critical hit, before its better degree: Pham Lê Ngọc's Ceremonial Sword's, 2026-10-28.)
+    const rolled = (entry?.predicate ?? []).includes(ROLLED_CRITICAL) ? " when the roll itself was one (before its better degree)" : "";
+    return `${against}${critical}${rolled}`;
+}
+
+// (Dice only when the roll itself was a critical hit, src/compiler/rolled-critical.js: after an attack roll whose unadjusted outcome — PF2e's
+// context.unadjustedOutcome — was a critical success, the readied Effect's rules with the roll option those dice wait for; else null.)
+export function rolledCriticalRules(plan, context, rules = []) {
+    if (!plan?.strike?.rolledCritical || context?.unadjustedOutcome !== "criticalSuccess") return null;
+    if (rules.some((rule) => rule?.key === "RollOption" && rule.option === ROLLED_CRITICAL)) return null;
+    return [...rules, { key: "RollOption", domain: "all", option: ROLLED_CRITICAL }];
 }
 
 // A die in words: "4d6 mental", "1d4 persistent force", "1d8 precision", "1d6".

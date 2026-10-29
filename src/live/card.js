@@ -360,7 +360,7 @@ export function ruleEffectSource(entry, { item = {}, user = {}, worldTime = 0, i
     // Lament's damage type: 2026-10-27.)
     // (The saves it calls for at creatures' turns near its bearer, Clockwork Sun's illumination: entry.turnAuras, scripts/turn-auras.js.)
     // (2026-10-28: the trail its creature's Strides leave while it lasts, Instinct Crown (Breach)'s — entry.trail, scripts/trails.js —, and gone
-    // when its rage ends — entry.untilRage, scripts/live.js.)
+    // when its rage ends — entry.untilRage, scripts/live.js; Instinct Crown (Disaster)'s herald too.)
     // (The healings it adds to, counted down, Medicinal Hotpot's three: entry.healingUses, scripts/healing-uses.js — 2026-10-28.)
     return ownEffectSource({ name: entry.name, img: "icons/svg/aura.svg", words: entry.words, rules: entry.rules, duration: entry.duration, flag: { ruleEffect: entry.name, ...(entry.trail ? { trail: entry.trail } : {}), ...(entry.untilRage ? { untilRage: true } : {}), ...(entry.untilRest ? { untilRest: true } : {}), ...(Number(entry.healingUses) > 0 ? { healingUses: Number(entry.healingUses) } : {}), ...(entry.replaces ? { replaces: entry.replaces } : {}), ...(entry.endsOnStrike ? { endsOnStrike: true } : {}), ...(entry.prevents ? { prevents: entry.prevents } : {}), ...(entry.turnHeal ? { turnHeal: { ...entry.turnHeal, name: item.name ?? null } } : {}), ...(entry.turnAuras ? { turnAuras: entry.turnAuras, from: item.name ?? null } : {}) }, item, user, worldTime, initiative, moduleId });
 }

@@ -10,7 +10,7 @@ import { postEndEarlyAt } from "./end-early.js";
 import { markDrained } from "./drain.js";
 import { postCounteractAt } from "./counteract.js";
 import { afterEndsEffectSource } from "../src/live/card.js";
-import { MODULE_KEY, createStrikeCard, degreeAgainst, degreeWords, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord, withFeatDie } from "../src/live/strike-card.js";
+import { MODULE_KEY, createStrikeCard, degreeAgainst, degreeWords, dieText, insteadDamagePlan, isMetalTarget, itemIdOf, riderFor, rolledCriticalRules, strikeCardHTML, strikeEffectSource, strikeHint, strikeWord, withFeatDie } from "../src/live/strike-card.js";
 import { saveText } from "../src/live/poison-card.js";
 import { bombCardHTML, createBombCard } from "../src/live/bomb-card.js";
 import { postActionCard } from "./item-actions.js";
@@ -211,6 +211,10 @@ export async function strikeWithRider(message) {
     // (A hit whose damage roll the Effect adds to: kept for it.)
     if (what === "hit" && rolled) await effect.update({ [`flags.${MODULE_ID}.${MODULE_KEY}.awaiting`]: true });
     else await useOne(actor, effect, rider);
+    // (Its dice only when the roll itself was a critical hit, Pham Lê Ngọc's Ceremonial Sword's: the roll option they wait for, on the Effect
+    // before its damage roll — src/live/strike-card.js rolledCriticalRules, 2026-10-28.)
+    const rolledCritical = what === "hit" && rolled ? rolledCriticalRules(rider.plan, context, effect.toObject?.().system?.rules ?? effect.system?.rules ?? []) : null;
+    if (rolledCritical) await effect.update({ "system.rules": rolledCritical });
     const speaker = ChatMessage.getSpeaker({ actor });
     if (what === "spend") {
         // (Hydra Head Club's: a miss gives the activation's use back on the item's record.)
