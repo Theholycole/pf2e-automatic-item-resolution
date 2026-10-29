@@ -124,11 +124,19 @@ async function target(...tokens) {
     await wait(200);
 }
 
+// (Its attack never a natural 1 unless the case fixed the die itself, withDie: a hit at AC 1 the cases count on, a natural 1 missing it now
+// and then — silverOrbCloud, blessedAmpouleSpirit, 2026-10-29. Every other face as it falls.)
 async function strike(actor, weapon) {
     const action = (actor.system.actions ?? []).find((entry) => entry.item?.id === weapon.id);
     assert(action, `${actor.name} has no Strike with ${weapon.name}.`);
     const since = Date.now();
-    await action.variants[0].roll({ event: shift() });
+    const random = CONFIG.Dice.randomUniform;
+    if (!dieFixed) CONFIG.Dice.randomUniform = () => Math.min(random(), 0.9499);
+    try {
+        await action.variants[0].roll({ event: shift() });
+    } finally {
+        CONFIG.Dice.randomUniform = random;
+    }
     const attack = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "attack-roll", { what: "attack roll" });
     return { action, attack };
 }
@@ -216,12 +224,15 @@ async function applyAbilityCard(message) {
 
 // Every die at that face while fn runs (Foundry's CONFIG.Dice.randomUniform, a face of ceil((1 − r) × faces)): a d20 at 10 for the degree a
 // case needs, whatever the luck.
+let dieFixed = 0;
 async function withDie(face, fn) {
     const random = CONFIG.Dice.randomUniform;
     CONFIG.Dice.randomUniform = () => 1 - face / 20 + 1e-9;
+    dieFixed++;
     try {
         return await fn();
     } finally {
+        dieFixed--;
         CONFIG.Dice.randomUniform = random;
     }
 }
@@ -330,7 +341,8 @@ export const cases = {
         await orb.update({ "system.equipped.carryType": "held", "system.equipped.handsHeld": 1 });
         await throwerToken.object?.control?.();
         await target(foeToken);
-        const { action, attack } = await strike(thrower, orb);
+        // (A 15 on the die: a hit at AC 1 — a natural 1 missed it once, 2026-10-29.)
+        const { action, attack } = await withDie(15, () => strike(thrower, orb));
         assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
         const since = Date.now();
         await action.damage({ event: shift() });
@@ -7815,7 +7827,8 @@ export const cases = {
         return { targets: state.targets.length };
     },
 
-    // Alchemists+ Fume Ammunition: its readied Strike; on PF2e's hit (AC 1) the target is Dazzled and the damage roll carries 3d4 persistent acid.
+    // Alchemists+ Fume Ammunition: its readied Strike; on PF2e's hit (AC 1) the damage roll carries 3d4 persistent acid, and once that's
+    // applied the target is Dazzled for as long as it lasts (batch 5's whilePersistent note Effect — no longer at the hit itself).
     async tpFumeAmmo(scene) {
         const { actor: archer, token: archerToken } = await creature(scene, "Fume Archer", { type: "character", x: 0, y: 11 });
         const { actor: foe, token: foeToken } = await creature(scene, "Fume Target", { x: 3, y: 11, ac: 1, alliance: "opposition" });
@@ -7832,12 +7845,13 @@ export const cases = {
         const { action, attack } = await strike(archer, bow);
         const outcome = attack.flags.pf2e.context.outcome;
         assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
-        await until(() => foe.hasCondition("dazzled"), "dazzled on the hit", { timeout: 10000 });
         since = Date.now();
         await (outcome === "criticalSuccess" ? action.critical : action.damage)({ event: shift() });
         const rolled = await messageAfter(since, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the damage roll" });
         const formula = rolled.rolls.map((roll) => roll.formula).join(" ");
         assert(/3d4/.test(formula) && /persistent/.test(formula) && /acid/.test(formula), `3d4 persistent acid on the roll (${formula})`);
+        await foe.applyDamage({ damage: rolled.rolls[0], token: foeToken });
+        await until(() => foe.hasCondition("dazzled") && foe.itemTypes.condition.some((condition) => condition.slug === "persistent-damage"), `dazzled once its persistent acid is on it (${foe.itemTypes.condition.map((condition) => condition.slug).join(", ")})`, { timeout: 10000 });
         return { formula };
     },
 
