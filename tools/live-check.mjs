@@ -10547,19 +10547,24 @@ export const cases = {
     },
 
     // Hollow Robes' Hollow Target: its user's persistent fire and bleed ended outright, for a Mythic Point (a mythic NPC's).
+    // (2026-10-29: Hollow Target is the readied (fortune) card since 2026-10-27, f6838a2 — not the item card this case waited for. Its Apply,
+    // no drinker to pick, spends the point, readies the Effect flagged noDamage and ends every persistent damage (the recovery is the readied
+    // card's now, scripts/fortune.js applyFortuneCard). The zeroed damage itself: tools/live-cases/b3-places.mjs b3PlacesHollowTargetZero.)
     async hollowTarget(scene) {
         const { actor: user } = await creature(scene, "Hollow Wearer", { x: 20, y: 10 });
         await user.update({ "system.traits.value": [...(user.system.traits.value ?? []), "mythic"] });
         await user.update({ "system.resources.mythicPoints.value": 1 });
+        await until(() => user.system.resources.mythicPoints.value === 1, `a Mythic Point on the wearer (${user.system.resources.mythicPoints?.value})`, { timeout: 5000 });
         const persistent = (formula, damageType) => { const source = game.pf2e.ConditionManager.getCondition("persistent-damage").toObject(); source.system.persistent = { formula, damageType, dc: 15 }; return source; };
         await user.createEmbeddedDocuments("Item", [persistent("1d6", "fire"), persistent("2", "bleed")]);
         const robes = await give(user, "Hollow Robes");
         const since = Date.now();
         await game.modules.get(NS).api.live.activate(robes.uuid, 1);
-        const card = await messageAfter(since, itemCard("item"), { what: "the robes' card" });
-        await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        const card = await messageAfter(since, itemCard("fortune"), { what: "the robes' readied card" });
+        await game.modules.get(NS).api.live.apply(card.id);
         await until(() => !user.itemTypes.condition.some((entry) => entry.slug === "persistent-damage"), "the persistent damage ended", { timeout: 8000 });
-        assert(user.system.resources.mythicPoints.value === 0, `the Mythic Point spent (${user.system.resources.mythicPoints.value})`);
+        await until(() => user.system.resources.mythicPoints.value === 0, `the Mythic Point spent (${user.system.resources.mythicPoints.value})`, { timeout: 8000 });
+        assert(user.itemTypes.effect.some((effect) => effect.getFlag(NS, "rollTwice")?.noDamage), `the readied Effect, its triggering damage to be 0 (${user.itemTypes.effect.map((effect) => effect.name).join(", ") || "none"})`);
         return { results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
@@ -10631,10 +10636,15 @@ export const cases = {
     },
 
     // Narrow bonuses on PF2e's roll options: Elixir of the Peaks (Lesser)'s +1 item to Athletics for Climb, High Jump and Long Jump; Potion of
-    // Disguise (Lesser)'s +4 status Deception DC; Healing Vapor (Lesser)'s +1 item to saves against diseases and poisons for both creatures targeted.
+    // Disguise (Lesser)'s +4 status Deception DC; Healing Vapor (Lesser)'s +1 item to saves against diseases and poisons for both creatures in it.
+    // (2026-10-29: Healing Vapor is a zone since 2026-10-27, 7169bfb — a placed 5-foot burst for 10 minutes whose zone.modifiers carry the same
+    // predicated bonus to those inside —, not an item card at the creatures targeted. Its placement click stood in for, as litAreas does: the
+    // burst centred on the edge between the two, both inside. The two moved onto the lab's own squares, 17–18 of row 19, for the Region's
+    // events: the lab is 20 squares across.)
     async rollOptionBonuses(scene) {
-        const { actor: user, token: userToken } = await creature(scene, "Bonus Drinker", { type: "character", x: 20, y: 18 });
-        const { actor: ally, token: allyToken } = await creature(scene, "Bonus Ally", { type: "character", x: 21, y: 18 });
+        await clearSquares(scene, [[17, 19], [18, 19]]);
+        const { actor: user, token: userToken } = await creature(scene, "Bonus Drinker", { type: "character", x: 17, y: 19 });
+        const { actor: ally, token: allyToken } = await creature(scene, "Bonus Ally", { type: "character", x: 18, y: 19 });
         const ruled = (actor, test) => actor.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "FlatModifier" && test(rule)));
         const drink = async (name, choices) => {
             const potion = await give(user, name);
@@ -10648,15 +10658,29 @@ export const cases = {
         assert(ruled(user, (rule) => [].concat(rule.selector).includes("athletics") && rule.value === 1 && JSON.stringify(rule.predicate ?? []).includes("action:climb")), "+1 item to Athletics to Climb");
         await drink("Potion of Disguise (Lesser)", { drinker: 0 });
         assert(ruled(user, (rule) => [].concat(rule.selector).includes("deception-dc") && rule.value === 4 && rule.type === "status"), "+4 status Deception DC");
-        await drink("Healing Vapor (Lesser)", { targets: [userToken.uuid, allyToken.uuid] });
-        const vapor = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("saving-throw") && rule.value === 1 && JSON.stringify(rule.predicate ?? []).includes("item:trait:disease"));
-        await until(() => vapor(user) && vapor(ally), "+1 item to saves against diseases and poisons for both", { timeout: 8000 });
+        const vapor = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("saving-throw") && rule.value === 1 && rule.type === "item" && JSON.stringify(rule.predicate ?? []).includes("item:trait:disease") && JSON.stringify(rule.predicate ?? []).includes("item:trait:poison"));
+        const cloud = () => scene.regions.find((region) => region.flags?.["pf2e-automatic-ability-resolution"]?.zone && /Healing Vapor/.test(region.name));
+        await until(() => userToken.object && allyToken.object, "the tokens drawn", { timeout: 5000 });
+        await userToken.object?.control?.();
+        const placing = canvas.regions.placeRegion;
+        canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [{ ...data, shapes: (data.shapes ?? []).map((shape) => ({ ...shape, x: allyToken.x, y: allyToken.y + canvas.grid.size / 2 })) }]))[0];
+        try {
+            await (await give(user, "Healing Vapor (Lesser)")).consume();
+            await until(cloud, "the vapor's Region", { timeout: 8000 });
+            await until(() => vapor(user) && vapor(ally), `+1 item to saves against diseases and poisons for both inside (${[user, ally].map((actor) => actor.itemTypes.effect.map((effect) => effect.name).join(", ") || "none").join(" / ")})`, { timeout: 8000 });
+        } finally {
+            canvas.regions.placeRegion = placing;
+            await cloud()?.delete().catch(() => null);
+        }
         return { ok: true };
     },
 
     // Area buffs: Inspiring Spotlight (Portable)'s placed 5-foot burst (the click stood in for), +1 item to saves and Charisma-based checks
     // for a creature that steps into it; Undead Compendium's +2 item to attack rolls against undead for the creatures targeted — the
     // target's trait, not an origin.
+    // (2026-10-29: Undead Compendium is a ways card since 2026-10-27, aef027e — the undead read about picked, one way each (Ghost … Zombie) —,
+    // not one item card. Its Zombie way here: its item card at both, +2 item to attack rolls predicated on the target's trait
+    // (target:trait:zombie, not an origin) and +2 item to saves against the zombies' effects (origin:trait:zombie).)
     async areaBuffs(scene) {
         const { actor: user, token: userToken } = await creature(scene, "Spotlight Holder", { type: "character", x: 7, y: 2 });
         const { actor: ally, token: allyToken } = await creature(scene, "Spotlight Ally", { type: "character", x: 8, y: 2 });
@@ -10677,18 +10701,21 @@ export const cases = {
             canvas.regions.placeRegion = placing;
             await burst()?.delete().catch(() => null);
         }
-        const use = async (name) => {
-            const item = await give(user, name);
-            const since = Date.now();
-            await game.modules.get(NS).api.live.activate(item.uuid, 0);
-            const card = await messageAfter(since, itemCard("item"), { what: `${name}'s card` });
-            await game.modules.get(NS).api.live.apply(card.id, { targets: [userToken.uuid, allyToken.uuid] });
-            await wait(800);
-        };
-        await use("Undead Compendium");
-        const versed = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("attack-roll") && JSON.stringify(rule.predicate ?? []).includes("target:trait:undead"));
-        await until(() => versed(user) && versed(ally), "+2 item to attacks against undead for both", { timeout: 8000 });
-        return { ok: true };
+        const compendium = await give(user, "Undead Compendium");
+        let since = Date.now();
+        await game.modules.get(NS).api.live.activate(compendium.uuid, 0);
+        const ways = await messageAfter(since, itemCard("ways"), { what: "the compendium's ways card" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((entry) => entry.name);
+        assert(names.includes("Zombie") && names.includes("Ghost"), `a way for each kind of undead (${names})`);
+        since = Date.now();
+        await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf("Zombie") });
+        const card = await messageAfter(since, itemCard("item"), { what: "the Zombie way's card" });
+        await game.modules.get(NS).api.live.apply(card.id, { targets: [userToken.uuid, allyToken.uuid] });
+        const versed = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("attack-roll") && rule.value === 2 && rule.type === "item" && JSON.stringify(rule.predicate ?? []).includes("target:trait:zombie") && !JSON.stringify(rule.predicate ?? []).includes("origin:trait"));
+        const warded = (actor) => ruled(actor, (rule) => [].concat(rule.selector).includes("saving-throw") && rule.value === 2 && JSON.stringify(rule.predicate ?? []).includes("origin:trait:zombie"));
+        await until(() => versed(user) && versed(ally), "+2 item to attacks against zombies (the target's trait) for both", { timeout: 8000 });
+        assert(warded(user) && warded(ally), "+2 item to saves against zombies' effects for both");
+        return { ways: names.length, results: game.messages.get(card.id).getFlag(NS, "card").results };
     },
 
     // Hollow Robes' Empty Robes: +2 item to Intimidation for the minute, its wearer not made Invisible (the robes stay seen).
@@ -10710,6 +10737,10 @@ export const cases = {
     // Third-party bonuses read from their packs: Magic+'s Steady Support (+2 item to the Fortitude DC against forced movement, a Shove's or
     // Reposition's option), Tian Xia+'s Black Pearl of Mewru (+2 status to saves against curses), Alchemists+' Draconic Steak (+2
     // circumstance Intimidation) and Honeyed Voice (+2 item Performance).
+    // (2026-10-29: Honeyed Voice is a ways card since 72f0e34 (2026-10-27, merged c1b5084: src/compiler/secondary-rules.js) — its use and its
+    // secondary effect, each its own way —, so no item card follows its Use at once. Its use way's card gives the +2 item Performance as before;
+    // its secondary effect's, pressed on the same ways card (still open), the minute's note Effect with PF2e's RollTwice on Performance to
+    // Perform, the higher kept.)
     async thirdPartyBonuses(scene) {
         for (const module of ["pf2e-team-plus-magic", "pf2e-team-plus-tian-xia", "pf2e-team-plus-alchemists"]) assert(game.modules.get(module)?.active, `${module} isn't active in pftest.`);
         const { actor: user } = await creature(scene, "Third Bonus User", { type: "character", x: 20, y: 16 });
@@ -10734,8 +10765,24 @@ export const cases = {
         await until(() => ruled((rule) => [].concat(rule.selector).includes("saving-throw") && rule.type === "status" && JSON.stringify(rule.predicate ?? []).includes("item:trait:curse")), "+2 status to saves against curses", { timeout: 8000 });
         await eat("Draconic Steak", "pf2e-team-plus-alchemists.pf2e-items");
         await until(() => ruled((rule) => [].concat(rule.selector).includes("intimidation") && rule.type === "circumstance" && rule.value === 2), "+2 circumstance Intimidation", { timeout: 8000 });
-        await eat("Honeyed Voice", "pf2e-team-plus-alchemists.pf2e-items");
+        const lozenge = await give(user, "Honeyed Voice", "pf2e-team-plus-alchemists.pf2e-items");
+        let since = Date.now();
+        await lozenge.consume();
+        const ways = await messageAfter(since, itemCard("ways"), { what: "Honeyed Voice's ways card" });
+        const names = ways.getFlag(NS, "card").plan.ways.map((entry) => entry.name);
+        assert(names.join(",") === "Its use,Its secondary effect", `its ways (${names})`);
+        const way = async (name) => {
+            since = Date.now();
+            await game.modules.get(NS).api.live.apply(ways.id, { choice: names.indexOf(name) });
+            const card = await messageAfter(since, itemCard("item"), { what: `Honeyed Voice's ${name} card` });
+            await game.modules.get(NS).api.live.apply(card.id, { drinker: 0 });
+        };
+        await way("Its use");
         await until(() => ruled((rule) => [].concat(rule.selector).includes("performance") && rule.type === "item" && rule.value === 2), "+2 item Performance", { timeout: 8000 });
+        assert(game.messages.get(ways.id).getFlag(NS, "card").status === "open", "the ways card open for the secondary effect");
+        await way("Its secondary effect");
+        const song = () => user.itemTypes.effect.some((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "RollTwice" && [].concat(rule.selector).includes("performance") && rule.keep === "higher" && JSON.stringify(rule.predicate ?? []).includes("action:perform")));
+        await until(song, `Performance to Perform rolled twice, the higher kept (${user.itemTypes.effect.map((effect) => effect.name).join(", ") || "none"})`, { timeout: 8000 });
         return { before, after: [fortitudeDC(["forced-movement"]), fortitudeDC([])] };
     },
 
@@ -11054,26 +11101,45 @@ export const cases = {
         return { outcome };
     },
 
-    // The "Item DCs from their user" world setting: a level-8 NPC with a spellcasting entry (spell DC 26, over its class DC 24) posts Spark
-    // Wafer's Reflex save at 26 (the wafer's own is 14), with the card's note; the setting off, the wafer's own 14. The setting is put back
-    // as it was.
+    // The "Item DCs from their user" world setting: a level-8 NPC with a spellcasting entry (spell DC 26, over its class DC 24) posts
+    // Blindpepper Tube's Reflex save at 26 (the tube's own is 15), with the card's note; the setting off, the tube's own 15. The setting is put
+    // back as it was.
+    // (2026-10-29: Spark Wafer was this case's item until it became a lit zone on 2026-10-26 — no save card on its use any more, so nothing
+    // here to wait for. Blindpepper Tube is the same kind the wafer was: a non-poison consumable's fixed-DC Reflex save at the creature it's
+    // used on, its card on its Use (route "save" — scripts/poisons.js postExposureCard, the expose card). The wafer's zone still checked under
+    // the setting: its save raised on the zone the ability module keeps (the Region's flag), its placement stood in for as sparkZoneLight does.)
     async itemDCsFromUser(scene) {
         const before = game.settings.get(NS, "itemDCsFromUser");
         const { actor: user } = await creature(scene, "DC Caster", { x: 20, y: 12, level: 8 });
         await user.createEmbeddedDocuments("Item", [{ name: "Arcane Innate Spells", type: "spellcastingEntry", system: { spelldc: { value: 16, dc: 26 }, tradition: { value: "arcane" }, prepared: { value: "innate" } } }]);
         await until(() => Number(user.system.attributes.spellDC?.value) === 26, `its spell DC 26 (${user.system.attributes.spellDC?.value})`, { timeout: 8000 });
         const spellDC = 26;
-        const wafer = async () => {
-            const item = await give(user, "Spark Wafer");
+        const tube = async () => {
+            const item = await give(user, "Blindpepper Tube");
             const since = Date.now();
             await item.consume();
-            return messageAfter(since, itemCard("expose"), { what: "the wafer's card" });
+            return messageAfter(since, itemCard("expose"), { what: "the tube's card" });
         };
+        const ABILITY = "pf2e-automatic-ability-resolution";
+        const sparks = () => scene.regions.find((region) => region.flags?.[ABILITY]?.zone && /Spark Wafer/.test(region.name));
+        let zoneDC = null;
         try {
             await game.settings.set(NS, "itemDCsFromUser", true);
-            const raised = (await wafer()).getFlag(NS, "card").plan;
+            const raised = (await tube()).getFlag(NS, "card").plan;
             assert(raised.resolution.check.against.value === spellDC, `at the spell DC ${spellDC} (${raised.resolution.check.against.value})`);
-            assert((raised.notes ?? []).some((note) => note.includes(`Its DC is ${spellDC}, its user's spell DC, over the item's own 14`)), `its note (${JSON.stringify(raised.notes)})`);
+            assert((raised.notes ?? []).some((note) => note.includes(`Its DC is ${spellDC}, its user's spell DC, over the item's own 15`)), `its note (${JSON.stringify(raised.notes)})`);
+            // (Spark Wafer's zone: its save at the spell DC, the wafer's own 14 raised as the zone is made.)
+            const placing = canvas.regions.placeRegion;
+            canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
+            try {
+                await (await give(user, "Spark Wafer")).consume();
+                await until(sparks, "the sparks' Region", { timeout: 8000 });
+                zoneDC = sparks().flags[ABILITY].zone.zone?.saves?.[0]?.plan?.resolution?.check?.against?.value ?? null;
+                assert(zoneDC === spellDC, `the wafer's zone save at the spell DC ${spellDC} (${zoneDC})`);
+            } finally {
+                canvas.regions.placeRegion = placing;
+                await sparks()?.delete().catch(() => null);
+            }
             // (A poison's too: Black Adder Venom's 18 at the spell DC.)
             const venom = await give(user, "Black Adder Venom");
             const since = Date.now();
@@ -11082,12 +11148,12 @@ export const cases = {
             const poisonDC = Number(/"dc":"fixed","value":(\d+)/.exec(JSON.stringify(coat.getFlag(NS, "card").plan))?.[1]);
             assert(poisonDC === spellDC, `the venom at the spell DC ${spellDC} (${poisonDC})`);
             await game.settings.set(NS, "itemDCsFromUser", false);
-            const own = (await wafer()).getFlag(NS, "card").plan;
-            assert(own.resolution.check.against.value === 14, `the wafer's own 14 with the setting off (${own.resolution.check.against.value})`);
+            const own = (await tube()).getFlag(NS, "card").plan;
+            assert(own.resolution.check.against.value === 15, `the tube's own 15 with the setting off (${own.resolution.check.against.value})`);
         } finally {
             await game.settings.set(NS, "itemDCsFromUser", before);
         }
-        return { spellDC, classDC: user.system.attributes.classDC?.value ?? null };
+        return { spellDC, zoneDC, classDC: user.system.attributes.classDC?.value ?? null };
     },
 
     // Bangles of Crowns' reaction: the frightened enemy targeted marked, +1 circumstance to its user's checks against it (PF2e's Demoralize at
@@ -11498,6 +11564,10 @@ export const cases = {
 
     // Minotaur Chair: an attack at every foe in the line — Apply with those targeted readies one Strike at each; a Strike at another isn't one
     // of them; the last spends it.
+    // (2026-10-29: since 2026-10-27, 6e0bb96, the chair's readied Strike adds to its damage roll — against a prone foe +1 circumstance per
+    // weapon die and its wounding rune's bleed, strike.flat and strike.runeDice —, so a hit keeps it "awaiting" its damage roll, and PF2e's
+    // damage roll spends that one (scripts/strikes.js addsToDamage, damageWithRider): this case rolled no damage, and none was spent. Each hit's
+    // damage now rolled before its count is read.)
     async volleyEachTargeted(scene) {
         await clearSquares(scene, [[12, 15], [13, 15], [14, 15], [13, 16]]);
         const { actor: rider, token: riderToken } = await creature(scene, "Chair Rider", { type: "character", x: 12, y: 15 });
@@ -11522,17 +11592,29 @@ export const cases = {
         assert(/^Target each enemy/.test(refused ?? ""), `refused with none targeted (${refused})`);
         await game.modules.get(NS).api.live.apply(card.id, { targets: [oneToken.uuid, twoToken.uuid] });
         await until(() => readied()?.flags[NS].strikeRider.uses === 2, "one at each of the two", { timeout: 8000 });
+        // (A hit at AC 1, kept for its damage roll; PF2e's damage roll for it spends it.)
+        const hitAndDamage = async () => {
+            const { action, attack } = await strike(rider, sword);
+            const outcome = attack.flags.pf2e.context.outcome;
+            assert(["success", "criticalSuccess"].includes(outcome), `a hit (AC 1): ${outcome}`);
+            await until(() => readied()?.flags[NS].strikeRider.awaiting === true || !readied(), "the hit kept for its damage roll", { timeout: 8000 });
+            const rolled = Date.now();
+            await (outcome === "criticalSuccess" ? action.critical({ event: shift() }) : action.damage({ event: shift() }));
+            await messageAfter(rolled, (message) => message.flags?.pf2e?.context?.type === "damage-roll", { what: "the hit's damage roll" });
+            return outcome;
+        };
         await target(oneToken);
-        await strike(rider, sword);
+        const first = await hitAndDamage();
         await until(() => readied()?.flags[NS].strikeRider.uses === 1, "one spent", { timeout: 8000 });
         await target(otherToken);
         since = Date.now();
         await strike(rider, sword);
         await messageAfter(since, (message) => /isn't one of those targeted for it/.test(message.content ?? ""), { what: "the line for a creature not targeted" });
+        assert(readied()?.flags[NS].strikeRider.uses === 1, `none spent at the creature not targeted (${readied()?.flags[NS].strikeRider.uses})`);
         await target(twoToken);
-        await strike(rider, sword);
+        const second = await hitAndDamage();
         await until(() => !readied(), "all spent", { timeout: 8000 });
-        return { refused };
+        return { refused, outcomes: [first, second] };
     },
 
     // Caress of the Great Serpent's Serpent's Kiss: each Strike made of the eight deals its user 1d6 piercing, hit or miss; −2 to each.
