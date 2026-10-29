@@ -708,68 +708,7 @@ export default (h) => {
             }
         },
 
-        // Slithermaw's Bane's Terrain Adaptation (src/compiler/special-readings.js withTerrainAdaptation: each way's note Effect with PF2e's
-        // ChoiceSet of the terrains, an ActiveEffectLike on system.movement.terrain.difficult.ignored and +1 circumstance to saves there): in the
-        // terrain its user picks, its non-magical difficult terrain is ignored and its hazards' saves are +1. Worn and invested, its Heat way's
-        // item card: PF2e's ChoiceSet prompt answered "forest" — the note Effect's
-        // selection forest, and the creature's ignored difficult terrain has { environment forest, feature all }. With the lab's environment
-        // types forest (PF2e's roll option terrain:forest on it), a save with the environment module's "environment" roll option is +1 higher
-        // than one without; in a desert, no +1.
-        async b4G5TerrainAdaptationForest(scene) {
-            await h.clearSquares(scene, [[17, 5]]);
-            const { actor: user } = await h.creature(scene, "Slithermaw Adapter", { type: "character", x: 17, y: 5, level: 15 });
-            const armor = await h.give(user, "Slithermaw's Bane");
-            await armor.update({ "system.equipped.carryType": "worn", "system.equipped.inSlot": true, "system.equipped.invested": true }).catch(() => null);
-            const ways = await activated(armor, 1, "ways", "Terrain Adaptation's ways card");
-            const heat = wayOf(ways, /^Heat$/);
-            let since = Date.now();
-            await live().apply(ways.id, { choice: heat });
-            const card = await h.messageAfter(since, h.itemCard("item"), { what: "the Heat way's item card" });
-            // (The Apply waits on PF2e's ChoiceSet prompt for the note Effect: answered here — an apply failing first, its error.)
-            let failed = null;
-            let done = false;
-            const applying = live().apply(card.id, {}).then(() => {
-                done = true;
-            }, (error) => {
-                failed = error;
-            });
-            let picked = null;
-            for (const stop = Date.now() + 12000; Date.now() < stop && !picked && !failed && !done; ) {
-                picked = await answerPrompt(["forest"]);
-                if (!picked) await h.wait(150);
-            }
-            // (No prompt found while the Apply still waits: whatever prompt there is closed, so nothing is left open for the next case.)
-            if (!picked && !failed && !done) {
-                await promptOpen()?.close?.().catch?.(() => null);
-                throw new Error("PF2e's ChoiceSet prompt for the terrain wasn't found within 12 seconds (its Apply still waiting).");
-            }
-            await applying;
-            if (failed) throw failed;
-            const note = () => user.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => rule.key === "ChoiceSet" && rule.flag === "terrain"));
-            await h.until(note, `the note Effect with its ChoiceSet (${effectNames(user)}; prompt ${picked})`, { timeout: 8000 });
-            h.assert(picked === "forest" && note().flags?.pf2e?.rulesSelections?.terrain === "forest", `forest picked on PF2e's prompt (${picked}; ${JSON.stringify(note().flags?.pf2e?.rulesSelections ?? null)})`);
-            const ignored = () => user.system.movement?.terrain?.difficult?.ignored ?? [];
-            await h.until(() => ignored().some((entry) => entry.environment === "forest" && entry.feature === "all"), `forest's difficult terrain ignored (${JSON.stringify(ignored())})`, { timeout: 5000 });
-            const rule = (note().system.rules ?? []).find((entry) => entry.key === "FlatModifier");
-            const types = scene.flags?.pf2e?.environmentTypes ?? [];
-            const terrain = () => Object.keys(user.rollOptions?.all ?? {}).filter((option) => option.startsWith("terrain:"));
-            try {
-                await scene.update({ "flags.pf2e.environmentTypes": ["forest"] });
-                user.reset();
-                await h.until(() => Boolean(user.rollOptions?.all?.["terrain:forest"]), `PF2e's terrain:forest roll option in a forest (${terrain().join(", ") || "none"})`, { timeout: 5000 });
-                const plain = modWith(user, "reflex", []);
-                const environmental = modWith(user, "reflex", ["environment"]);
-                h.assert(environmental === plain + 1, `+1 circumstance to an environment save in the forest (${plain} → ${environmental}; its predicate ${JSON.stringify(rule?.predicate)}; PF2e's ${terrain().join(", ")})`);
-                await scene.update({ "flags.pf2e.environmentTypes": ["desert"] });
-                user.reset();
-                await h.until(() => !user.rollOptions?.all?.["terrain:forest"], "no forest in the desert", { timeout: 5000 });
-                h.assert(modWith(user, "reflex", ["environment"]) === modWith(user, "reflex", []), "no +1 in the desert");
-                return { picked, ignored: ignored(), plain, environmental };
-            } finally {
-                await scene.update({ "flags.pf2e.environmentTypes": types }).catch(() => null);
-                user.reset();
-            }
-        },
+        // (b4G5TerrainAdaptationForest superseded 2026-10-29 by b4G1TerrainAdaptationRest (the base Slithermaw's Bane reads as the Heroic one since batch 5).)
 
         // What Doors We Open's Open the Door Within (plan.item.space; scripts/live.js applyToRecipient → src/live/card.js spaceSource): the
         // book's own extradimensional space, as a Spacious Pouch (Type II). The item card's Apply the first time: PF2e's Spacious Pouch (Type

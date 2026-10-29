@@ -447,58 +447,7 @@ export default (h) => {
             return { own, floor: floor.value, total: attack.rolls?.[0]?.total };
         },
 
-        // Soulspark Candle (zones.js ownLight, live.js gate.lit and putOut, plan.onlyAgainst): unlit, its limn and put-out refused ("isn't lit"). Lit:
-        // the ability module's 40-foot zone on its user, its user's light Effect (PF2e's TokenLight 20/40), and a worshipper of Pharasma inside with
-        // the zone's +3 status (its Fortitude save's modifier). Limn: refused at a creature that isn't undead; at an undead, its card gives it the
-        // 'Limned in blue fire' note. Put out: the light Effect and the zone's Regions gone, the undead's note set to 1 minute, the candle unlit again.
-        async b4G4SoulsparkCandle(scene) {
-            await h.clearSquares(scene, [[13, 1], [14, 1], [15, 1], [15, 2]]);
-            const { actor: user, token: userToken } = await h.creature(scene, "Candle Bearer", { type: "character", x: 13, y: 1, level: 20 });
-            const { actor: worshipper } = await h.creature(scene, "Candle Pharasmin", { type: "character", x: 14, y: 1, level: 10 });
-            const { actor: undead, token: undeadToken } = await h.creature(scene, "Candle Undead", { x: 15, y: 1, hp: 300, alliance: "opposition", level: 10 });
-            const { token: livingToken } = await h.creature(scene, "Candle Living", { x: 15, y: 2, hp: 300, alliance: "opposition", level: 10 });
-            await undead.update({ "system.traits.value": ["undead"] });
-            await h.give(worshipper, "Pharasma", "pf2e.deities");
-            await h.until(() => worshipper.rollOptions?.all?.["deity:primary:pharasma"], "a worshipper of Pharasma (deity:primary:pharasma)", { timeout: 5000 });
-            const candle = await h.give(user, "Soulspark Candle");
-            await candle.update(held(1));
-            await userToken.object?.control?.();
-            const unlitPut = await errorOf(api().activate(candle.uuid, 1));
-            const unlitLimn = await errorOf(api().activate(candle.uuid, 2));
-            h.assert(/isn't lit/.test(unlitPut ?? "") && /isn't lit/.test(unlitLimn ?? ""), `refused while unlit (${unlitPut}; ${unlitLimn})`);
-            // (Lit.)
-            await api().activate(candle.uuid, 0);
-            const light = () => user.itemTypes.effect.find((effect) => effect.flags?.[h.NS]?.light && effect.system?.context?.origin?.item === candle.uuid);
-            await h.until(() => light(), `its light on its user (${names(user)})`, { timeout: 10000 });
-            const rule = (light().system.rules ?? []).find((entry) => entry.key === "TokenLight");
-            h.assert(rule?.value?.bright === 20 && rule.value.dim === 40, `PF2e's TokenLight 20/40 (${JSON.stringify(rule)})`);
-            const regions = () => (scene.regions?.contents ?? []).filter((region) => region.flags?.[ABILITY]?.zone?.itemUuid === candle.uuid);
-            await h.until(() => regions().length > 0, "the candle's zone", { timeout: 10000 });
-            const pharasma = () => (worshipper.saves?.fortitude?.modifiers ?? []).find((modifier) => modifier.slug === "soulspark-candle-pharasma" && modifier.enabled !== false && !modifier.ignored);
-            await h.until(() => pharasma()?.modifier === 3, `+3 status for Pharasma's worshipper inside (${names(worshipper)})`, { timeout: 10000 });
-            // (Limned.)
-            let from = since();
-            await api().activate(candle.uuid, 2);
-            const limn = await h.messageAfter(from, h.itemCard("expose"), { what: "the limning card" });
-            const living = await errorOf(api().apply(limn.id, { targets: [livingToken.uuid] }));
-            h.assert(/isn't undead/.test(living ?? ""), `refused at a living creature (${living})`);
-            from = since();
-            await api().apply(limn.id, { targets: [undeadToken.uuid] });
-            const note = await h.messageAfter(from, abilityCardAt(undead), { what: "the limning's card at the undead" });
-            await h.applyAbilityCard(note);
-            const limned = () => undead.itemTypes.effect.find((effect) => (effect.system?.rules ?? []).some((entry) => entry.key === "RollOption" && entry.option === "limned-in-candlelight"));
-            await h.until(() => limned(), `the undead limned (${names(undead)})`, { timeout: 10000 });
-            // (Put out.)
-            from = since();
-            await api().activate(candle.uuid, 1);
-            const out = await h.messageAfter(from, h.itemCard("item"), { what: "the put-out card" });
-            await api().apply(out.id);
-            await h.until(() => !light() && !regions().length, `its light and zone gone (${names(user)}; ${regions().length} Regions)`, { timeout: 10000 });
-            await h.until(() => limned()?.system?.duration?.value === 1 && limned().system.duration.unit === "minutes", `the limning for 1 minute more (${JSON.stringify(limned()?.system?.duration)})`, { timeout: 8000 });
-            const again = await errorOf(api().activate(candle.uuid, 2));
-            h.assert(/isn't lit/.test(again ?? ""), `unlit again (${again})`);
-            return { out: resultsOf(out), limned: limned().name };
-        },
+        // (b4G4SoulsparkCandle superseded 2026-10-29 by b5WireSoulsparkLimnPutOut and b5WireSoulsparkFlames (its limning a zone since batch 5).)
 
         // The Marriage (src/live/bond-card.js, scripts/bonds.js, scripts/counteract.js failCopies and endsBond): Bond refused at a creature 15 feet
         // away; at the adjacent ally, both get the bond Effect. PF2e gives the ally Frightened 2: its user gets the counteract card at the ally,

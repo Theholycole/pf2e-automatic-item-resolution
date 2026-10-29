@@ -668,41 +668,7 @@ export default (h) => {
             return { stored: text(stored), rule, outcome };
         },
 
-        // Crimson Fulcrum Lens's possession (scripts/lens-possession.js; scripts/activations.js's inert refusal): "make a melee spell attack roll with
-        // a modifier of +18. On a hit, you force the splinter of Nhimbaloth's essence from the lens to possess the target. You're no longer invested
-        // in the lens … The lens doesn't have any magical abilities until the possession effect ends." The attack card at +18 (every die a 10 against
-        // AC 10, a hit): PF2e's Effect: Crimson Fulcrum Lens and the possession's note Effect on the creature, the lens no longer invested and inert,
-        // the chat says so; its other activation refused. The note Effect deleted: the lens no longer inert, its activation's card posted.
-        async b4G3CrimsonLensPossession(scene) {
-            await h.clearSquares(scene, [[2, 18], [3, 18]]);
-            const { actor: user, token: userToken } = await h.creature(scene, "Lens Bearer", { type: "character", x: 2, y: 18, level: 9 });
-            const { actor: host, token: hostToken } = await h.creature(scene, "Lens Host", { x: 3, y: 18, ac: 10, alliance: "opposition" });
-            const lens = await h.give(user, "Crimson Fulcrum Lens");
-            await lens.update({ ...held(1), "system.equipped.invested": true });
-            const own = () => user.items.get(lens.id);
-            await h.until(() => own().system.equipped.invested === true, "the lens invested", { timeout: 5000 });
-            await userToken.object?.control?.();
-            const card = await activated(lens, 1, "expose", "the possession's card");
-            let since = Date.now();
-            await live().apply(card.id, { targets: [hostToken.uuid] });
-            const attack = await h.messageAfter(since, (message) => h.abilitySaveCard(message) && aimsAt(host)(message), { what: "the attack card at the creature" });
-            h.assert(Number(abilityState(attack).plan.resolution.check.modifier) === 18, `at +18 (${JSON.stringify(abilityState(attack).plan.resolution.check)})`);
-            since = Date.now();
-            await h.withDie(10, () => h.rollAndApply(attack));
-            const benefit = () => host.itemTypes.effect.find((effect) => effect.name === "Effect: Crimson Fulcrum Lens");
-            const note = () => host.itemTypes.effect.find((effect) => /: Possessed by Nhimbaloth's essence$/.test(effect.name));
-            await h.until(() => benefit() && note(), `the lens's Effect and the possession's note on the creature (${effectNames(host)})`, { timeout: 10000 });
-            await h.until(() => own().system.equipped.invested === false && own().getFlag(h.NS, "inert"), `the lens uninvested and inert (${own().system.equipped.invested}; ${JSON.stringify(own().flags?.[h.NS] ?? {})})`, { timeout: 8000 });
-            const said = await h.messageAfter(since, (message) => /its essence possesses/.test(text(message)), { what: "the chat's line" });
-            const refused = await errorOf(live().activate(lens.uuid, 0));
-            h.assert(/inert/.test(refused ?? ""), `its other activation refused (${refused})`);
-            await note().delete();
-            await h.until(() => !own().getFlag(h.NS, "inert") && !own().getFlag(h.NS, "possessed"), `the essence back: not inert (${JSON.stringify(own().flags?.[h.NS] ?? {})})`, { timeout: 8000 });
-            since = Date.now();
-            await live().activate(lens.uuid, 0);
-            await h.messageAfter(since, h.itemCard("strike"), { what: "its other activation's card once the possession ends" });
-            return { degree: degreeOf(attack, host), line: text(said) };
-        },
+        // (b4G3CrimsonLensPossession superseded 2026-10-29 by b5LeftoversOchrePossessionEnds (Crimson Fulcrum Lens plays the same possession since batch 5).)
 
         // Scene Stealer's Tunic's Look At Me! (no new code: the question live play alone answers): its rows give PF2e's own Effect: Look at Me!,
         // whose rules are predicated on "origin:signature:{item|origin.signature}". Its Will card critically failed (−30, every die a 10): the

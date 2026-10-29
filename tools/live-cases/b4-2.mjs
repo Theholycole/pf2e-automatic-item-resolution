@@ -640,51 +640,7 @@ export default (h) => {
             return { results: resultsOf(posted) };
         },
 
-        // Ochre Fulcrum Lens' possession (legend-readings.js; plan.uninvest — scripts/uninvest.js on the ability module's "applied" hook): its user
-        // holds the invested lens and has PF2e's Effect: Ochre Fulcrum Lens (from the compendium). Its +21 attack card at an adjacent creature with
-        // AC 60 (a 10 on the die: a miss): nothing — the lens still invested, its Effect kept, no Effect on that creature. At another with AC 1 (a
-        // hit): that creature gets "Effect: Ochre Fulcrum Lens" and the "Possessed by Nhimbaloth's splinter" note Effect, and once applied the
-        // user's lens is no longer invested, its own Effect deleted, and a line says so.
-        async b4G2OchrePossession(scene) {
-            await h.clearSquares(scene, [[3, 11], [4, 11], [4, 12]]);
-            const { actor: user, token: userToken } = await h.creature(scene, "Ochre Lens Bearer", { type: "character", x: 3, y: 11, level: 11 });
-            const { actor: missed, token: missedToken } = await h.creature(scene, "Ochre Missed", { x: 4, y: 11, ac: 60, alliance: "opposition" });
-            const { actor: possessed, token: possessedToken } = await h.creature(scene, "Ochre Possessed", { x: 4, y: 12, ac: 1, alliance: "opposition" });
-            const lens = await h.give(user, "Ochre Fulcrum Lens");
-            await lens.update({ ...held(1), "system.equipped.invested": true });
-            const template = await fromUuid(OCHRE_EFFECT).catch(() => null);
-            h.assert(template, "PF2e's Effect: Ochre Fulcrum Lens");
-            const source = game.items?.fromCompendium ? game.items.fromCompendium(template) : template.toObject();
-            delete source._id;
-            foundry.utils.setProperty(source, "_stats.compendiumSource", OCHRE_EFFECT);
-            foundry.utils.setProperty(source, "flags.core.sourceId", OCHRE_EFFECT);
-            await user.createEmbeddedDocuments("Item", [source]);
-            const ownEffect = () => user.itemTypes.effect.find((effect) => (effect._stats?.compendiumSource ?? effect.flags?.core?.sourceId) === OCHRE_EFFECT);
-            const lensEffect = (actor) => actor.itemTypes.effect.find((effect) => effect.name === "Effect: Ochre Fulcrum Lens");
-            await h.until(ownEffect, `the user's own Effect: Ochre Fulcrum Lens (${effectNames(user)})`, { timeout: 5000 });
-            await userToken.object?.control?.();
-            const attack = async (token) => {
-                let since = Date.now();
-                await live().activate(lens.uuid, 1);
-                const posted = await h.messageAfter(since, h.itemCard("expose"), { what: "the lens's attack card" });
-                since = Date.now();
-                await live().apply(posted.id, { targets: [token.uuid] });
-                const save = await h.messageAfter(since, (message) => h.abilitySaveCard(message) && targetsActor(message, token.actor), { what: "the ability module's attack card" });
-                h.assert(Number(checkOf(save).modifier) === 21, `its +21 (${JSON.stringify(checkOf(save))})`);
-                await h.withDie(10, () => h.rollAndApply(save));
-                return since;
-            };
-            await attack(missedToken);
-            await h.wait(2000);
-            h.assert(user.items.get(lens.id)?.system?.equipped?.invested === true && ownEffect() && !lensEffect(missed), `a miss changes nothing (invested ${user.items.get(lens.id)?.system?.equipped?.invested}; ${effectNames(user)} / ${effectNames(missed)})`);
-            const since = await attack(possessedToken);
-            await h.until(() => lensEffect(possessed), `the creature hit gets Effect: Ochre Fulcrum Lens (${effectNames(possessed)})`, { timeout: 10000 });
-            h.assert(possessed.itemTypes.effect.some((effect) => /Possessed by Nhimbaloth's splinter$/.test(effect.name)), `the possession's note Effect (${effectNames(possessed)})`);
-            await h.until(() => user.items.get(lens.id)?.system?.equipped?.invested === false, "the user no longer invested in the lens", { timeout: 8000 });
-            await h.until(() => !ownEffect(), `the user's own Effect: Ochre Fulcrum Lens gone (${effectNames(user)})`, { timeout: 8000 });
-            const line = await h.messageAfter(since, (message) => /is no longer invested in Ochre Fulcrum Lens/.test(message.content ?? ""), { what: "the line saying so" });
-            return { line: text(line), possessed: effectNames(possessed) };
-        },
+        // (b4G2OchrePossession superseded 2026-10-29 by b5LeftoversOchrePossessionEnds (the lenses' possession is one mechanism since batch 5).)
 
         // The Dance (legend-readings.js; the RollOption air-initiative-thrice on an Effect, scripts/initiative-thrice.js on updateCombatant): its item
         // card gives its user the Effect. In a fixture encounter its initiative is rolled (PF2e's, a 2 on the die), the two more d20s then rolled

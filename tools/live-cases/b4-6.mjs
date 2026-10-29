@@ -385,51 +385,7 @@ export default (h) => {
             }
         },
 
-        // Lesser Cube of Nex (the ways card; scripts/item-structures.js placeItemStructure/removeItemStructures; the counteract card beside a
-        // zone): face 5, "walls of force (as wall of force) appear on each side of the cube" — the environment module's structure round its user,
-        // its walls Hardness 30 and 60 Hit Points, sourced to the cube; face 6 dismisses it — the structure gone. Face 1's zone (the GM's
-        // placement stood in for) posts the counteract card at +20, rank 10, for a gas or wind effect that crosses.
-        async b4G6LesserCubeWalls(scene) {
-            const env = game.modules.get(ENV);
-            h.assert(env?.active && env.api?.placeStructure && env.api?.placedStructures, "PF2e Automatic Environment Resolution active, with its structures");
-            const { actor: user, token: userToken } = await h.creature(scene, "Lesser Cube Holder", { type: "character", x: 8, y: 8, level: 20 });
-            const cube = await h.give(user, "Lesser Cube of Nex");
-            await userToken.object?.control?.();
-            const own = () => (env.api.placedStructures(scene) ?? []).filter((entry) => entry.source?.itemUuid === cube.uuid);
-            const placing = canvas.regions.placeRegion;
-            const regions = () => scene.regions.filter((region) => region.flags?.[ABILITY]?.zone?.itemUuid === cube.uuid);
-            try {
-                const faces = await activated(cube, 0, "ways", "the cube's ways card");
-                h.assert((stateOf(faces).plan.ways ?? []).length === 6, `six faces (${(stateOf(faces).plan.ways ?? []).map((way) => way.name)})`);
-                let since = Date.now();
-                await api().apply(faces.id, { choice: 4 });
-                await h.until(() => own().length === 1 && own()[0].walls.length >= 4, `its walls round the holder (${JSON.stringify(own())})`, { timeout: 8000 });
-                const walls = own()[0].walls.map((id) => scene.walls.get(id));
-                const stats = walls.map((wall) => wall?.flags?.[ENV]?.structure?.stats ?? null);
-                h.assert(stats.every((entry) => Number(entry?.hardness) === 30 && Number(entry?.hp) === 60), `Hardness 30, 60 Hit Points (${JSON.stringify(stats)})`);
-                await h.messageAfter(since, (message) => /walls placed around/.test(message.content ?? ""), { what: "the walls' line" });
-                const sight = walls.map((wall) => wall?.sight);
-                const dismiss = await activated(cube, 0, "ways", "the cube's second ways card");
-                since = Date.now();
-                await api().apply(dismiss.id, { choice: 5 });
-                await h.until(() => own().length === 0, `its walls gone (${JSON.stringify(own())})`, { timeout: 8000 });
-                await h.messageAfter(since, (message) => /Its walls removed \(1\)/.test(message.content ?? ""), { what: "the removal's line" });
-                // (Face 1: its zone placed — the click stood in for — and the counteract card beside it.)
-                canvas.regions.placeRegion = async (data) => (await scene.createEmbeddedDocuments("Region", [data]))[0];
-                const gas = await activated(cube, 0, "ways", "the cube's third ways card");
-                since = Date.now();
-                await api().apply(gas.id, { choice: 0 });
-                const counter = await h.messageAfter(since, h.itemCard("counteract"), { what: "face 1's counteract card" });
-                const counteract = stateOf(counter).counteract;
-                h.assert(counteract.modifier === 20 && counteract.rank === 10 && /gas or wind/.test(counteract.free?.name ?? ""), `+20 at rank 10 against a gas or wind effect (${JSON.stringify(counteract)})`);
-                await h.until(() => regions().length > 0, "face 1's zone", { timeout: 8000 });
-                return { stats, sight, counteract: { modifier: counteract.modifier, rank: counteract.rank } };
-            } finally {
-                canvas.regions.placeRegion = placing;
-                for (const region of regions()) await region.delete().catch(() => null);
-                for (const entry of own()) await env.api.removeStructure(scene, entry.id).catch(() => null);
-            }
-        },
+        // (b4G6LesserCubeWalls superseded 2026-10-29 by b5LeftoversCubeOfForceTimes (Lesser Cube of Nex reads as Cube of Nex since batch 5).)
 
         // Planar Ribbon's reach (plan.swap, scripts/swap.js): "The target must succeed at a DC 42 Reflex save or you exchange positions with the
         // target and all of that creature's allies are off-guard to you until the end of your turn." At a foe 20 feet off (its Reflex −30), the
