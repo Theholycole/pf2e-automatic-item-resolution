@@ -1,36 +1,10 @@
 {
  "generated": "2026-10-29",
  "totals": {
-  "entries": 1,
-  "results": {
-   "none": 1
-  },
-  "main": {
-   "triggers": 1
-  },
-  "any": {
-   "triggers": 1,
-   "strike": 1,
-   "spells": 1,
-   "objects": 1
-  }
+  "entries": 0,
+  "results": {},
+  "main": {},
+  "any": {}
  },
- "entries": [
-  {
-   "name": "Sorshen's Sinuous Guisarme",
-   "kind": "activation",
-   "tier": "special",
-   "level": 23,
-   "activation": "Arcane Shift",
-   "result": "none",
-   "main": "triggers",
-   "work": "Trigger: the guisarme transforms …",
-   "needs": [
-    "triggers",
-    "strike",
-    "spells",
-    "objects"
-   ]
-  }
- ]
+ "entries": []
 }

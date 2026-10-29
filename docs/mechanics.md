@@ -1491,3 +1491,10 @@ Items that waited on a field of the ability module, the core or the environment 
   - a failure rolls a DC 11 flat check, which shatters the lens when it fails;
   - a critical failure loses the spell (`api.casting.lose`) and shatters the lens.
   A shattered lens makes the scope inert until its user puts in a Starless Scope Lens from their inventory, which is the card's second Apply.
+- **An item that becomes a staff for a while** (`src/compiler/staff-form.js`, the staff-form card, `scripts/staff-form.js`): Sorshen's Sinuous Guisarme's Arcane Shift. Used, it makes the guisarme the Staff of Control (Major):
+  - its Strikes are the staff's (damage, group, base weapon, hands, build traits and the staff trait) and its weapon runes are off; its own are kept on it and come back when the form ends;
+  - its user gets the form's Effect, with the staff's own rule (+1 status to Diplomacy to Request) and its 10 charges on the badge;
+  - the staff card lists the staff's spells by rank (read from the staff's description), plus a pick that reverts it. A cast goes through the spell module's `castFromItem` at its user's own spell DC: the best of their prepared or spontaneous entries (an NPC's innate too) of a tradition the spell has. It refuses a user without one;
+  - a cast takes charges equal to its rank (a cantrip none), or 1 with a spontaneous caster's slot of that rank. The mythic tick takes 10 charges and a Mythic Point (a Hero Point under the setting): rank 10, its DC with the user's level + 10 as its proficiency;
+  - each cast posts the card again with the charges left. The last charge spent, the revert pick, or the Effect deleted however it goes puts the guisarme back, on the active GM's client;
+  - Impose Will is refused while it's the staff. The guisarme's own casts from the staff are a card line.

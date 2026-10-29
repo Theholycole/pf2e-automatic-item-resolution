@@ -41,7 +41,7 @@
    "builtin:transmogrify": 1,
    "builtin:grant-spell": 1,
    "builtin:feat-use": 1,
-   "none": 1
+   "builtin:staff-form": 1
   },
   "live": {
    "save": 449,
@@ -59,7 +59,7 @@
    "inert": 1,
    "teleport": 32,
    "zone": 46,
-   "none": 24,
+   "none": 23,
    "toggle": 36,
    "objects": 43,
    "action": 28,
@@ -81,7 +81,8 @@
    "bond": 1,
    "transmogrify": 1,
    "grant-spell": 1,
-   "feat-use": 1
+   "feat-use": 1,
+   "staff-form": 1
   },
   "withFrequency": 1732,
   "withTrigger": 427
@@ -142,7 +143,7 @@
     "builtin:teleport": 7,
     "builtin:portal": 2,
     "builtin:roll-twice": 2,
-    "none": 1,
+    "builtin:staff-form": 1,
     "builtin:whisper": 1
    }
   },
@@ -28018,9 +28019,9 @@
    "time": "free",
    "frequency": "once per day",
    "trigger": true,
-   "result": "none",
+   "result": "builtin:staff-form",
    "kind": null,
-   "live": null
+   "live": "staff-form"
   },
   {
    "name": "Sorshen's Sinuous Guisarme",

@@ -10,6 +10,7 @@ import { withPlacedStructure } from "./placed-structures.js";
 import { withWonderRows } from "./wonder-table.js";
 import { withBoons } from "./boons.js";
 import { withCastBoost } from "./cast-boost.js";
+import { withStaffForm } from "./staff-form.js";
 
 const READINGS = [
     // (Instant Fortress, Warding Escutcheon's door, Testudo Shield's barrier: the structure card — src/compiler/placed-structures.js.)
@@ -27,7 +28,9 @@ const READINGS = [
     withBoons,
     // (Starless Scope's reaction as its user casts: a Religion check against the spell's DC, its degree the spell's — src/compiler/cast-boost.js,
     // 2026-10-29.)
-    withCastBoost
+    withCastBoost,
+    // (Sorshen's Sinuous Guisarme's Arcane Shift: the item a staff with its charges till they're spent — src/compiler/staff-form.js, 2026-10-29.)
+    withStaffForm
 ];
 
 export function withLeftoversGroup(plan, context) {

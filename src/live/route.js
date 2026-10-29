@@ -125,6 +125,8 @@ export function routeOf(plan, text = "") {
     if (plan.builtin === "boon" && plan.boon) return "boon";
     // (A check that changes its user's last cast, Starless Scope's: scripts/cast-boost.js, 2026-10-29.)
     if (plan.builtin === "cast-boost" && plan.castBoost) return "cast-boost";
+    // (An item a staff for a while, Sorshen's Sinuous Guisarme's Arcane Shift: scripts/staff-form.js, 2026-10-29.)
+    if (plan.builtin === "staff-form" && plan.staffForm) return "staff-form";
     // (A lasting area or a snare: the ability module's zone.)
     if (plan.builtin === "zone" && plan.zone) return "zone";
     // (A creature it becomes, Wondrous Figurines': the ability module's conjured token.)

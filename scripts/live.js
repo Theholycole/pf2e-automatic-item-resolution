@@ -58,6 +58,7 @@ import { applyCraftCard, postCraftCard } from "./craft.js";
 import { startPulse } from "./pulse.js";
 import { postBoonCard } from "./boons.js";
 import { applyCastBoostCard, postCastBoostCard } from "./cast-boost.js";
+import { applyStaffCard, postStaffFormCard, staffFormRefusal } from "./staff-form.js";
 import { itemFormEffectSource, itemFormText, itemIdOf } from "../src/live/item-form.js";
 import { setFormBulk } from "./item-form.js";
 import { applyTransmogrifyCard, postTransmogrifyCard } from "./transmogrify.js";
@@ -359,6 +360,9 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     }
     // (Only while its own light is on its user, Soulspark Candle's "The candle is lit": refused otherwise — src/compiler/unique-rules.js, 2026-10-27.)
     if (plan?.gate?.lit && !litBy(actor, used.data)) throw new Error(`${used.data.name} isn't lit.`);
+    // (An activation its staff form refuses, Sorshen's Sinuous Guisarme's Impose Will while it's the staff: scripts/staff-form.js, 2026-10-29.)
+    const unformed = route !== "staff-form" ? staffFormRefusal(used.data, plan?.item?.activation?.name) : null;
+    if (unformed) throw new Error(unformed);
     // (Put out as it's used, Soulspark Candle's flames — "its light immediately goes out": now, on a card that isn't the item card, which puts it
     // out as it applies — 2026-10-28.)
     if (plan?.item?.putsOut && route !== "item" && actor) {
@@ -468,6 +472,7 @@ export async function postCardFor({ message, plan, used, actor, token, origin = 
     if (route === "boon") return postBoonCard({ message, plan, used, actor, token });
     // (A check that changes its user's last cast, Starless Scope's: scripts/cast-boost.js, 2026-10-29.)
     if (route === "cast-boost") return postCastBoostCard({ message, plan, used, actor, token });
+    if (route === "staff-form") return postStaffFormCard({ message, plan, used, actor, token });
     if (route !== "item") return;
     const user = entryOf(token, actor);
     const roll = message?.rolls?.[0];
@@ -557,6 +562,8 @@ function choicesOf(state, root) {
     // (The GM's pick, typed: scripts/found.js.)
     if (state.kind === "found") return { name: String(root.querySelector("[data-air-field='found']")?.value ?? "") };
     if (state.kind === "cast-boost") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
+    // (The staff's spell picked, or its revert, and how it's paid: scripts/staff-form.js.)
+    if (state.kind === "staff-form") return { pick: Number(root.querySelector("[data-air-field='pick']")?.value ?? 0), mythic: Boolean(root.querySelector("[data-air-field='mythic']")?.checked), slot: Boolean(root.querySelector("[data-air-field='slot']")?.checked), targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A bonus for the creature targeted: the presser's targets.)
     if (state.kind === "fortune") return { targets: [...(game.user.targets ?? [])].map((token) => token.document?.uuid ?? token.uuid).filter(Boolean) };
     // (A spell at others: the presser's own targets.)
@@ -595,6 +602,7 @@ const APPLY = {
     bond: (message, choices) => applyBondCard(message, choices),
     found: (message, choices) => applyFoundCard(message, choices),
     "cast-boost": (message, choices) => applyCastBoostCard(message, choices),
+    "staff-form": (message, choices) => applyStaffCard(message, choices),
     // (An item's effect a creature ends early, Fire-Douse Snare's flat checks: scripts/end-early.js.)
     "end-early": (message, choices) => applyEndEarlyCard(message, choices),
     // (What a creature drops of what it holds, Deadweight Snare's metal: scripts/drop-held.js.)
@@ -725,6 +733,7 @@ async function onRequest(data) {
         : state.kind === "bond" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "found" ? { name: typeof data.name === "string" ? data.name : "" }
         : state.kind === "cast-boost" ? { targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
+        : state.kind === "staff-form" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, mythic: data.mythic === true, slot: data.slot === true, targets: Array.isArray(data.targets) ? data.targets.map(String) : [] }
         : state.kind === "drop" ? { ticked: Array.isArray(data.ticked) ? data.ticked.map(String) : null }
         : state.kind === "end-early" ? { entry: Number.isFinite(Number(data.entry)) && data.entry !== null && data.entry !== "" ? Number(data.entry) : null, critical: typeof data.critical === "boolean" ? data.critical : null }
         : state.kind === "craft" ? { pick: Number.isInteger(data.pick) ? data.pick : 0, gm: Boolean(sender.isGM) }

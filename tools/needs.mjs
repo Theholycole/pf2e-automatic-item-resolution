@@ -261,7 +261,7 @@ const lines = [
     "|---|---:|---:|---:|",
     ...[["general", "General books"], ["adventure", "Adventure books"], ["special", "Unique items and artifacts (last, highest level first)"]].map(([tier, title]) => { const list = pf2e.filter((entry) => entry.tier === tier); return `| ${title} | ${list.length} | ${byKind(list, "consumable")} | ${byKind(list, "activation")} |`; }),
     "",
-    `The special ones, in their order: ${pf2e.filter((entry) => entry.tier === "special").sort((a, b) => b.level - a.level || label(a).localeCompare(label(b))).map((entry) => `${label(entry)} (${entry.level})`).join(", ")}.`,
+    `The special ones, in their order: ${pf2e.filter((entry) => entry.tier === "special").sort((a, b) => b.level - a.level || label(a).localeCompare(label(b))).map((entry) => `${label(entry)} (${entry.level})`).join(", ") || "none left"}.`,
     "",
     `Kept to build later (one-off rules, a line of their card): ${ONE_OFFS.size} — \`docs/build-later.md\`.`,
     "",
