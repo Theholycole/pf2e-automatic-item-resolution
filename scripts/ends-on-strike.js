@@ -10,13 +10,24 @@ export const isStrikeRoll = (context) => context?.type === "attack-roll" && Bool
 
 export async function endOnStrike(message) {
     const context = message?.flags?.pf2e?.context;
-    if (!isStrikeRoll(context)) return [];
-    const actor = message.actor;
+    const actor = message?.actor;
+    const options = context?.options ?? [];
     // (Or only a Strike with a weapon of a trait, Magnetite Scope's scatter: endsOnStrike { trait }, its options' "item:trait:scatter-10".)
-    const options = context.options ?? [];
     // (Or only a Strike with one weapon, Reaper's Grasp's Soul Shot: endsOnStrike { slug }, its options' "item:slug:reapers-grasp".)
-    const ends = (flag) => flag === true || (!!flag?.trait && options.some((option) => option === `item:trait:${flag.trait}` || option.startsWith(`item:trait:${flag.trait}-`))) || (!!flag?.slug && options.includes(`item:slug:${flag.slug}`));
-    const ids = (actor?.itemTypes?.effect ?? []).filter((effect) => ends(effect.flags?.[MODULE_ID]?.endsOnStrike)).map((effect) => effect.id);
+    const fits = (flag) => flag === true || (!!flag?.trait && options.some((option) => option === `item:trait:${flag.trait}` || option.startsWith(`item:trait:${flag.trait}-`))) || (!!flag?.slug && options.includes(`item:slug:${flag.slug}`));
+    const effects = (actor?.itemTypes?.effect ?? []).filter((effect) => effect.flags?.[MODULE_ID]?.endsOnStrike && fits(effect.flags[MODULE_ID].endsOnStrike));
+    // (One whose rules add to the Strike's damage, Soul Shot's +2 per level, ends with that damage roll, not the attack's: a hit marks it
+    // struck, a miss ends it — found by the 2026-10-28 case writers, the damage never had the void.)
+    const later = (effect) => Boolean(effect.flags[MODULE_ID].endsOnStrike?.afterDamage);
+    if (context?.type === "damage-roll") {
+        const ids = effects.filter((effect) => later(effect) && effect.flags[MODULE_ID].struck).map((effect) => effect.id);
+        if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
+        return ids;
+    }
+    if (!isStrikeRoll(context)) return [];
+    const hit = context.outcome === "success" || context.outcome === "criticalSuccess";
+    for (const effect of effects.filter((entry) => later(entry) && hit)) await effect.update({ [`flags.${MODULE_ID}.struck`]: true });
+    const ids = effects.filter((effect) => !(later(effect) && hit)).map((effect) => effect.id);
     if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
     return ids;
 }

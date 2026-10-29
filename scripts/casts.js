@@ -208,8 +208,11 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
         }
         // (All its damage of one type, Soulcutter's Soulcutting Storm's spirit: the spell module's damageType, once it takes it — its
         // castFromItemOptions says so; until then, a line to change it by hand. 2026-10-27.)
-        const typed = state.plan.castDamageType && (game.modules.get(SPELL_ID)?.api?.castFromItemOptions ?? []).includes("damageType") ? { damageType: state.plan.castDamageType.type } : {};
-        if (state.plan.castDamageType && !typed.damageType) lines.push(`All its damage is ${state.plan.castDamageType.type}: change its type by hand on the spell's damage.`);
+        // (Sacred Valkyrie Helm's "all electricity" too, plan.castDamage: the spell module rolls some spells' damage itself, Weapon Storm's
+        // weapon dice, where PF2e's DamageAlteration never reaches — found by the 2026-10-28 case writers; its damageType when it takes one.)
+        const wanted = state.plan.castDamageType ?? state.plan.castDamage ?? null;
+        const typed = wanted && (game.modules.get(SPELL_ID)?.api?.castFromItemOptions ?? []).includes("damageType") ? { damageType: wanted.type } : {};
+        if (wanted && !typed.damageType) lines.push(`All its damage is ${wanted.type}: change its type by hand on the spell's damage${state.plan.castDamage ? " where it isn't already" : ""}.`);
         // (A contract's spell cast today already, or not its signer's selection: refused.)
         const holder = state.plan.contract && state.item.uuid ? await fromUuid(state.item.uuid).catch(() => null) : null;
         const refused = holder ? contractRefusal(state.plan, holder.getFlag(MODULE_ID, CONTRACT), chosenSpell(state), dayOf(game.time.worldTime)) : null;

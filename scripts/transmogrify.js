@@ -76,7 +76,8 @@ async function drinkMutagen(state, actor, { pick = 0 }) {
     const remaining = same.map((effect) => Number(effect.remainingDuration?.remaining) || 0).filter((value) => value > 0);
     const seconds = Math.max(hours * 3600, ...remaining);
     const dcs = ownerDCsOf(actor);
-    const dc = Math.max(...[dcs?.class, dcs?.spell].map(Number).filter(Number.isFinite), -Infinity);
+    // (Only a DC it has: ownerDCsOf gives null for none, which Number made a DC 0 — 2026-10-28.)
+    const dc = Math.max(...[dcs?.class, dcs?.spell].filter((dc) => dc !== null && dc !== undefined).map(Number).filter((dc) => Number.isFinite(dc) && dc > 0), -Infinity);
     const name = `Transmogrifying Mutagen (${creature?.name ?? "creature"}): ${choice?.label ?? "the GM's ability"}`;
     const effect = {
         name,

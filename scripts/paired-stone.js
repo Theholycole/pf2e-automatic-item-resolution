@@ -16,9 +16,14 @@ function stonesFor(sourceToken, paired) {
     const scene = sourceToken?.parent;
     const size = scene?.grid?.size ?? 100;
     const grid = { size, gridFeet: scene?.grid?.distance ?? 5 };
-    const here = (scene?.tokens?.contents ?? [...(scene?.tokens ?? [])]).filter((token) => isStone(token, paired)).sort((a, b) => distanceFeet(spaceIn(sourceToken, size), spaceIn(a, size), grid) - distanceFeet(spaceIn(sourceToken, size), spaceIn(b, size), grid));
-    const used = here[0] ?? null;
-    const others = [...(game.scenes?.contents ?? [])].flatMap((one) => (one.tokens?.contents ?? [...(one.tokens ?? [])]).filter((token) => isStone(token, paired) && token.uuid !== used?.uuid));
+    // (Never its user's own token, whose actor holds the item it activates: it counted as a stone and was always the nearest, so creatures went
+    // back beside the stone they stood at — found by the 2026-10-28 case writers. Its user holds the stone it uses when none stands within
+    // 10 feet of it.)
+    const own = (token) => token.id === sourceToken?.id || (sourceToken?.actor && token.actor?.id === sourceToken.actor.id);
+    const away = (token) => distanceFeet(spaceIn(sourceToken, size), spaceIn(token, size), grid);
+    const here = (scene?.tokens?.contents ?? [...(scene?.tokens ?? [])]).filter((token) => isStone(token, paired) && !own(token)).sort((a, b) => away(a) - away(b));
+    const used = here[0] && away(here[0]) <= 10 ? here[0] : sourceToken ?? null;
+    const others = [...(game.scenes?.contents ?? [])].flatMap((one) => (one.tokens?.contents ?? [...(one.tokens ?? [])]).filter((token) => isStone(token, paired) && !own(token) && token.uuid !== used?.uuid));
     return { used, other: others.find((token) => token.parent?.id === scene?.id) ?? others[0] ?? null };
 }
 

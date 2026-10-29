@@ -199,8 +199,11 @@ export async function againstRolled(message) {
     const remove = async (actor, effects) => {
         if (effects.length) await actor.deleteEmbeddedDocuments("Item", effects.map((effect) => effect.id)).catch(() => null);
     };
-    if (context.type === "damage-taken" && flags.appliedDamage && !flags.appliedDamage.isHealing) {
-        const actor = await actorOf(flags.appliedDamage.uuid);
+    // (Its damage all taken away too — resisted or zeroed, bonus.noDamage's —: PF2e leaves appliedDamage null then, the message's speaker the
+    // creature that took it. Found by the 2026-10-28 case writers: Hollow Target's and Redeemer's Pistol's Effects were never spent.)
+    if (context.type === "damage-taken" && !flags.appliedDamage?.isHealing) {
+        const actor = flags.appliedDamage?.uuid ? await actorOf(flags.appliedDamage.uuid) : message.actor;
+        if (!actor) return;
         return remove(actor, guarded(actor).filter((effect) => effect.flags[MODULE_ID][MODULE_KEY].against.damage));
     }
     if (context.type === "saving-throw") return remove(message.actor, guarded(message.actor).filter((effect) => { const against = effect.flags[MODULE_ID][MODULE_KEY].against; return against.save && !against.damage; }));

@@ -29,6 +29,17 @@ export async function startItemZone({ plan, used, actor, token }) {
         if (old.length) await actor.deleteEmbeddedDocuments("Item", old);
         await actor.createEmbeddedDocuments("Item", [lightEffectSource(plan.ownLight, { item: { name: used.data.name, uuid: used.data.uuid ?? null, img: used.data.img ?? null }, user: { actorUuid: actor.uuid, tokenUuid: token?.document?.uuid ?? token?.uuid ?? null }, worldTime: game.time.worldTime, moduleId: MODULE_ID })]);
     }
+    // (Until it's used again — Cube of Nex's faces, Soulspark Candle's light —: the item's earlier zones ended first, the ability module's
+    // endZones; one whose second use dismisses it, The Eye of the Slumberer's Vortex, ends and starts no other. Found by the 2026-10-28 case
+    // writers: a second use added a second zone.)
+    const endZones = game.modules.get(ABILITY_ID)?.api?.live?.endZones;
+    if (plan.zone?.untilReused && endZones && used.data.uuid) {
+        const ended = Number(await endZones({ itemUuid: used.data.uuid }).catch(() => 0)) || 0;
+        if (ended && plan.zone.dismissOnReuse) {
+            await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<p><strong>${escape(used.data.name)}</strong>: dismissed.</p>` });
+            return null;
+        }
+    }
     if (startZone) {
         // (A square round its user, Cube of Nex's walls: its grid squares, src/live/cube.js.)
         const own = plan.zone?.centre === "around" ? token?.document ?? token : null;

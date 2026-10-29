@@ -14,6 +14,13 @@ import { withoutHitDamage } from "../src/live/scaled.js";
 import { withStrikeFormula } from "../src/live/strike-as.js";
 import { withWeaponStrike } from "../src/live/self-fighting.js";
 
+// A creature's PF2e Immunity to a poison delivered that way (inhaled, ingested, contact, injury) or to poison at all → its words, or null.
+export function immuneTo(actor, delivery) {
+    const types = new Set((actor?.attributes?.immunities ?? actor?.system?.attributes?.immunities ?? []).map((entry) => String(entry?.type ?? entry)));
+    if (delivery && types.has(delivery)) return `${delivery}`;
+    return types.has("poison") ? "poison" : null;
+}
+
 // (scripts/activations.js's flag of when each activation is usable again: not imported, as that module reaches this one.)
 const WAITS = "activationRecharges";
 
@@ -73,7 +80,15 @@ export async function strikeWithPoison(message) {
     const sourceToken = message.token?.object ?? actor.getActiveTokens?.(true)?.[0] ?? null;
     const postCard = game.modules.get(ABILITY_ID)?.api?.live?.postCard;
     if (postCard && targetToken) {
-        await postCard({ plan: poison.plan, item: { name: poison.item.name, uuid: poison.item.uuid ?? null }, sourceActor: actor, sourceToken: sourceToken?.document ?? sourceToken, tokens: [targetToken.object ?? targetToken], cause: `${poison.weaponName} hit` });
+        // (Its rows by the creature's kind first, Necrobinding Serum's undead, as the exposure card's are (src/live/if-target.js); a kind immune
+        // to it, or a creature immune to its delivery, no card — found by the 2026-10-28 case writers: a coated weapon's hit used the plan as is.)
+        const [group] = targetGroups(poison.plan, [targetToken]);
+        const immune = !group?.plan ? "by kind" : immuneTo(targetToken.actor ?? targetToken.object?.actor, "injury");
+        if (immune) {
+            await ChatMessage.create({ speaker, content: `<p><strong>${poison.item.name}</strong>: ${targetToken.name ?? targetToken.actor?.name} is immune to it (${immune}).</p>` });
+            return;
+        }
+        await postCard({ plan: group.plan, item: { name: poison.item.name, uuid: poison.item.uuid ?? null }, sourceActor: actor, sourceToken: sourceToken?.document ?? sourceToken, tokens: [targetToken.object ?? targetToken], cause: `${poison.weaponName} hit` });
         return;
     }
     // (Without the ability module's save card: the GM rolls it.)
@@ -251,7 +266,11 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         // (A rider only for some creatures, Moonlit Spellgun's Enfeebled at one silver gets past: their card has it, src/live/if-target.js.)
         const played = withAttackChoice(scaledPlan(withDamageChoice(withCheckChoice(state.plan, state.checkChoice ?? 0), state.damageChoice ?? 0), state.scaledAmount), state);
         const carded = [];
-        for (const group of targetGroups(played, tokens)) {
+        // (A creature immune to its delivery, PF2e's Immunity — Choral Toga's Elysium's Gasp against an inhaled poison —: no card for it, found by
+        // the 2026-10-28 case writers.)
+        const delivered = state.delivery ? tokens.filter((token) => immuneTo(token.actor ?? token.object?.actor, state.delivery)) : [];
+        for (const token of delivered) lines.push(`${token.name ?? token.actor?.name}: immune to ${state.item.name} (${immuneTo(token.actor ?? token.object?.actor, state.delivery)}).`);
+        for (const group of targetGroups(played, tokens.filter((token) => !delivered.includes(token)))) {
             // (A kind immune to it, Lamentation of the Faithless's unholy creatures: no card for them, src/compiler/kind-saves.js.)
             if (!group.plan) {
                 lines.push(`${group.tokens.map((token) => token.name ?? token.actor?.name).join(", ")}: immune to ${state.item.name} (by kind).`);

@@ -35,7 +35,9 @@ async function rollThrice(combatant) {
     const speaker = ChatMessage.getSpeaker({ actor });
     const name = combatant.name ?? actor.name;
     const from = String(effect.name ?? "").replace(/:.*$/, "") || "The item";
-    const message = (game.messages?.contents ?? []).slice(-30).reverse().find((entry) => entry.flags?.pf2e?.context?.type === "initiative" && (entry.actor?.id === actor.id || entry.speaker?.actor === actor.id));
+    // (The roll that set it: its total the initiative now — a value set by hand in the tracker has none, and an older encounter's roll was taken
+    // for it, found by the 2026-10-28 case writers.)
+    const message = (game.messages?.contents ?? []).slice(-30).reverse().find((entry) => entry.flags?.pf2e?.context?.type === "initiative" && (entry.actor?.id === actor.id || entry.speaker?.actor === actor.id) && Number(entry.rolls?.[0]?.total) === Number(combatant.initiative));
     const roll = message?.rolls?.[0];
     const natural = roll?.dice?.[0]?.total;
     if (!roll || !Number.isFinite(Number(natural))) {

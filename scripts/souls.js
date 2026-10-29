@@ -34,7 +34,7 @@ export async function applySouls(message, { pick = 0 } = {}) {
         name: `${state.item.name}: ${soul.name}'s soul`,
         type: "effect",
         img: state.item.img ?? "icons/svg/skull.svg",
-        flags: { [MODULE_ID]: strike ? { endsOnStrike: { slug: weapon.system?.slug ?? SLUG } } : {} },
+        flags: { [MODULE_ID]: strike ? { endsOnStrike: { slug: weapon.system?.slug ?? SLUG, afterDamage: true } } : {} },
         system: {
             description: { value: `<p>${strike ? `+${amount} ${souls.type} damage on its next Strike with ${weapon.name} this turn` : `${amount} temporary Hit Points till the end of its next turn`} (${soul.name}'s soul, level ${soul.level}).</p>` },
             duration: strike ? { value: 0, unit: "rounds", expiry: "turn-end", sustained: false } : { value: 1, unit: "rounds", expiry: "turn-end", sustained: false },

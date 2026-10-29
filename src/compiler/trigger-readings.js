@@ -199,7 +199,7 @@ const READINGS = [
                 targeting: { target: "the creature the Strike hits", range: null, area: null },
                 trigger: { event: "strike", on: ["criticalSuccess"], cost: "free", ...(frequency ? { frequency } : {}) },
                 resolution: { kind: "save", check: { roll: "attack", statistic: "strike", against: { dc: "target", statistic: "ac" } }, outcomes: rows },
-                strike: { range: null, save: null, own: true, damage: [], attack: null, alteration: type, unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: true, lines: [`Its user regains Hit Points equal to half the ${type} damage the creature struck takes (after its resistances)`], notes: [] },
+                strike: { range: null, save: null, own: true, damage: [], attack: null, alteration: type, alterationFrom: instead[1].toLowerCase(), unarmed: false, uses: 1, until: "turn-end", missKeeps: false, hit: true, lines: [`Its user regains Hit Points equal to half the ${type} damage the creature struck takes (after its resistances)`], notes: [] },
                 drain: { fraction: 0.5, type, duration: null, heal: true, immediate: true },
                 gate: { strike: { critical: true, maneuvers: [] } },
                 item: info

@@ -136,13 +136,16 @@ const READINGS = [
         card: ([churns], _plan, { requirements }) => ({
             builtin: "zone",
             actions: null,
-            targeting: { target: null, range: `${requirements[1]} feet`, area: { type: "emanation", value: Number(churns[1]) } },
+            // (A burst of the emanation's size, placed on the Eye: the ability module puts an emanation round its user's token, not where it's
+            // placed; and its second use dismisses it, dismissOnReuse — both found by the 2026-10-28 case writers.)
+            targeting: { target: null, range: `${requirements[1]} feet`, area: { type: "burst", value: Number(churns[1]) } },
             zone: {
-                area: { type: "emanation", value: Number(churns[1]) },
+                area: { type: "burst", value: Number(churns[1]) },
                 centre: "placed",
                 range: Number(requirements[1]),
                 lasts: null,
                 untilReused: true,
+                dismissOnReuse: true,
                 concealed: false,
                 terrain: [{ movement: ["swim"], difficulty: 2 }],
                 exceptTraits: [churns[3].toLowerCase()],

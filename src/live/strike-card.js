@@ -69,7 +69,7 @@ export function strikeLines(plan) {
         strike.userWords ?? null,
         // (A volley's penalty is its own line.)
         strike.attack && !(strike.volley?.penalty && strike.attack.value === strike.volley.penalty) ? (strike.attack.value < 0 ? `${strike.attack.value} ${strike.attack.type === "untyped" ? "" : `${strike.attack.type} `}penalty to the attack roll` : `+${strike.attack.value} ${strike.attack.type} bonus to the attack roll${strike.attack.against === "metal" ? ` against a creature made of metal or wearing metal armor${strike.attack.metalTarget === true ? " (its target is)" : strike.attack.metalTarget === false ? " (its target isn't: only against a metal creature)" : ""}` : ""}`) : null,
-        strike.alteration ? `All its damage is ${strike.alteration}` : null,
+        strike.alteration ? `All its ${strike.alterationFrom ? `${strike.alterationFrom} ` : ""}damage is ${strike.alteration}` : null,
         strike.withoutRune ? `No ${strike.withoutRune} rune damage on it, nor that rune's critical effect, from a weapon with one${strike.runeDC ? ` (its save is DC ${strike.runeDC.dc} then)` : ""}` : null,
         strike.material ? `It's treated as ${strike.material.replace(/-/g, " ")}` : null,
         strike.degree ? "Its attack roll's outcome is one degree better" : null,
@@ -212,7 +212,9 @@ export function strikeRules(plan, { weaponId = null, ammoId = null, label = null
     // "target:trait:metal" alone, as its armor isn't a roll option of PF2e's.)
     const metalOnly = strike.attack?.against === "metal" && strike.attack.metalTarget !== true ? ["target:trait:metal"] : [];
     if (strike.attack) rules.push({ key: "FlatModifier", selector: attackSelector, slug: `${slug}-attack`, ...(label ? { label } : {}), type: strike.attack.type, value: strike.attack.value, ...(weaponId && range ? { predicate: [`item:${range}`, ...metalOnly] } : metalOnly.length ? { predicate: metalOnly } : {}) });
-    if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration });
+    // (Only the damage of the type it replaces, Grisly Scythe's slashing: PF2e's predicate on each die's and modifier's own type, so a rune's
+    // persistent bleed stays bleed — 2026-10-28, from the case writers' reading.)
+    if (strike.alteration) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "damage-type", value: strike.alteration, ...(strike.alterationFrom ? { predicate: [`damage:type:${strike.alterationFrom}`] } : {}) });
     // (A property rune it doesn't benefit from, Storm Arrow's shock: that rune's dice — PF2e slugs them by the rune — none.)
     if (strike.withoutRune) rules.push({ key: "DamageAlteration", selectors: [damageSelector], mode: "override", property: "dice-number", value: 0, slug: strike.withoutRune });
     // (A precious material for it: PF2e's AdjustStrike on the Strikes it's for.)

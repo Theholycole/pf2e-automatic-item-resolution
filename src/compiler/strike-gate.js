@@ -32,10 +32,14 @@ export function withStrikeGate(plan, text) {
     return gate ? { ...plan, gate: { ...(plan.gate ?? {}), ...gate } } : plan;
 }
 
+const DAMAGE_TYPES = new Set(["damage-roll", "damage-taken"]);
+
 // Whether the user's latest rolls meet it — messages: the chat's recent ones, newest last, as { actorUuid, type, outcome, itemUuid, slug,
 // targetUuid, ranged, unarmed, round } — and the creature struck: { ok, struck, why }.
 export function gateMet(gate, messages, { actorUuid, itemUuid, round = null } = {}) {
-    const mine = (messages ?? []).filter((entry) => entry.actorUuid === actorUuid && entry.outcome);
+    // (Its rolls, not their damage: PF2e's damage roll and damage-taken messages carry the hit's outcome too, so a damage roll after the hit
+    // was taken for the latest roll and refused every gate — found by the 2026-10-28 case writers, Shadowed Scale's kill.)
+    const mine = (messages ?? []).filter((entry) => entry.actorUuid === actorUuid && entry.outcome && !DAMAGE_TYPES.has(entry.type));
     const hit = (entry) => entry.outcome === "success" || entry.outcome === "criticalSuccess";
     if (gate?.twoUnarmed) {
         const hits = mine.filter((entry) => entry.type === "attack-roll" && entry.unarmed && hit(entry) && (round === null || entry.round === round));

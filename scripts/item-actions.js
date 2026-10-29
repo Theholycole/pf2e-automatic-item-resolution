@@ -163,7 +163,13 @@ export async function applyActionCard(message, { targets = [], choice = null } =
     // (A degree the item changes, Ensnaring Disk's critical failure made a failure: the outcome the card acts on, said.)
     const outcome = rolled ? action.degree?.[rolled] ?? rolled : null;
     const lines = [];
-    if (!outcome) lines.push(results?.[0] && noDC ? `${actionText(action)}: no result — ${noDC}, so PF2e's roll has no DC (compare it by hand).` : `${actionText(action)}: no result (cancelled).`);
+    // (Rolled with no DC PF2e knows, Pick a Lock's — the lock's is the GM's —: its total for the GM to compare, and the card done, so a second
+    // press neither rolls again nor spends a second Mythic Point — found by the 2026-10-28 case writers, Spindle Key's Breach.)
+    // (A roll made: a cancelled one has none.)
+    const unjudged = Boolean(results?.[0]?.roll) && !outcome && !noDC;
+    const total = results?.[0]?.roll?.total ?? results?.[0]?.message?.rolls?.[0]?.total ?? null;
+    if (unjudged) lines.push(`${state.user.name}'s ${action.name}: ${Number.isFinite(total) ? `${total}, ` : ""}rolled with no DC of PF2e's — the GM compares it with the DC.`);
+    else if (!outcome) lines.push(results?.[0] && noDC ? `${actionText(action)}: no result — ${noDC}, so PF2e's roll has no DC (compare it by hand).` : `${actionText(action)}: no result (cancelled).`);
     else {
         lines.push(`${state.user.name}'s ${action.name}${targetToken ? ` against ${targetToken.name ?? targetToken.actor.name}` : ""}: ${outcomeText(outcome)}${outcome !== rolled ? ` (${outcomeText(rolled)} rolled, made ${outcomeText(outcome)} by ${state.item.name})` : ""}.`);
         // (What its success does more for that variant, Crying Angel Pendant's, src/compiler/first-aid.js: its Hit Point healed while the target's
@@ -219,6 +225,6 @@ export async function applyActionCard(message, { targets = [], choice = null } =
         const line = ability?.applyChange ? await ability.applyChange({ op: "condition", slug: condition.slug, value: condition.value, target: "t0", duration: condition.duration }, own) : null;
         lines.push(line ?? `${actor.name} is then ${condition.slug} ${condition.value} for ${condition.duration.value} ${condition.duration.unit} (by hand).`);
     }
-    const next = { ...state, status: outcome ? "applied" : "open", results: [...state.results, ...lines].slice(-6) };
+    const next = { ...state, status: outcome || unjudged ? "applied" : "open", results: [...state.results, ...lines].slice(-6) };
     return message.update({ content: actionCardHTML(next, { canApply: true }), [`flags.${MODULE_ID}.${FLAG}`]: next });
 }

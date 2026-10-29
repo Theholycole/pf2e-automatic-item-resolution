@@ -124,7 +124,8 @@ test("Jahan Waystone: the save card at the creatures in the stone's 10-foot ligh
 
 test("The Eye of the Slumberer's Vortex: a 30-foot zone placed on the Eye, difficult terrain for swimming — the water trait's creatures spared by the core's selective terrain — until used again", () => {
     const plan = activation("The Eye of the Slumberer", "Vortex");
-    assert.deepEqual([done(plan), routeOf(plan), plan.zone.area, plan.zone.centre, plan.zone.untilReused, plan.zone.terrain, plan.zone.exceptTraits], [true, "zone", { type: "emanation", value: 30 }, "placed", true, [{ movement: ["swim"], difficulty: 2 }], ["water"]]);
+    // (A burst of the emanation's size since 2026-10-28: the ability module put an emanation round its user, not where placed.)
+    assert.deepEqual([done(plan), routeOf(plan), plan.zone.area, plan.zone.centre, plan.zone.untilReused, plan.zone.terrain, plan.zone.exceptTraits], [true, "zone", { type: "burst", value: 30 }, "placed", true, [{ movement: ["swim"], difficulty: 2 }], ["water"]]);
     assert.deepEqual(exemptSpec(plan.zone, [{ actorUuid: "Actor.eel", traits: ["animal", "water"] }, { actorUuid: "Actor.pc", traits: ["humanoid"] }]), { actions: ["swim"], default: 2, creatures: [{ actorUuid: "Actor.eel", difficulty: 1 }] });
 });
 
