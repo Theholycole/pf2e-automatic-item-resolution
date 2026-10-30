@@ -37,7 +37,7 @@ test("the staff's spells by rank from its description, its weapon on the item an
     const guisarme = named("Sorshen's Sinuous Guisarme");
     const { update, kept } = staffWeaponUpdate(guisarme, staff);
     assert.deepEqual([update["system.damage"], update["system.group"], update["system.baseItem"], update["system.category"], update["system.usage"]], [{ damageType: "bludgeoning", dice: 1, die: "d4" }, "club", "staff", "simple", { value: "held-in-one-hand" }]);
-    assert.deepEqual(update["system.traits.value"], ["artifact", "intelligent", "magical", "mythic", "staff", "two-hand-d8"]);
+    assert.deepEqual(update["system.traits.value"], ["artifact", "intelligent", "magical", "mythic", "two-hand-d8"]);
     assert.deepEqual(update["system.runes"], { potency: 0, striking: 0, property: [] });
     assert.deepEqual(kept.runes, { potency: 4, property: ["keen", "speed", "shifting", "spellStoring"], striking: 4 });
     const back = revertUpdate(kept);

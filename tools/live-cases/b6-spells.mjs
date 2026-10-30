@@ -54,15 +54,20 @@ export default (h) => {
             const { actor: mage, token: mageToken } = await h.creature(scene, "Magekiller Mage", { x: 5, y: 16, ac: 1, hp: 300, alliance: "opposition", level: 10 });
             const sling = await h.give(slinger, "Sling");
             const bullets = await h.give(slinger, "Magekiller Bullet");
-            await sling.update({ ...held(1), "system.selectedAmmoId": bullets.id });
+            // (Sling bullets: the helper presets arrows for ammunition of no type.)
+            await bullets.update({ "system.baseItem": "sling-bullets" });
+            await sling.update(held(1));
             let since = Date.now();
             await api().activate(bullets.uuid, 0);
             const card = await h.messageAfter(since, h.itemCard("strike"), { what: "the bullet's Strike card" });
             await api().apply(card.id);
             await h.wait(600);
+            // (Loaded: the sling's Reload 1 — PF2e's attach, the bullet its subitem, as its sheet's load does.)
+            await sling.attach(slinger.items.get(bullets.id), { quantity: 1, stack: true });
+            await h.until(() => [...(slinger.items.get(sling.id)?.subitems ?? [])].some((entry) => entry.type === "ammo"), "the bullet loaded in the sling", { timeout: 5000 });
             await slingerToken.object?.control?.();
             await h.target(mageToken);
-            const { attack } = await h.withDie(15, () => h.strike(slinger, sling));
+            const { attack } = await h.withDie(15, () => h.strike(slinger, slinger.items.get(sling.id)));
             h.assert(["success", "criticalSuccess"].includes(attack.flags.pf2e.context.outcome), `a hit (AC 1): ${attack.flags.pf2e.context.outcome}`);
             const cursed = () => mage.itemTypes.effect.find((effect) => (effect.system.rules ?? []).some((rule) => rule.option === "air-cast-curse:11:2d12:force"));
             await h.until(cursed, `the curse's note Effect on the mage (${mage.itemTypes.effect.map((effect) => effect.name).join(", ")})`, { timeout: 10000 });

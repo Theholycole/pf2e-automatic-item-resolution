@@ -19,16 +19,17 @@ export function staffSpellsOf(html) {
 }
 
 // The weapon traits that are its build, not its magic: the staff's replace the item's own.
-const BUILD = /^(?:two-hand-d\d+|monk|parry|trip|reach|shove|sweep|backswing|disarm|finesse|agile|forceful|deadly-d\d+|fatal(?:-aim)?-d\d+|versatile-[a-z]+|thrown(?:-\d+)?|twin|nonlethal|propulsive|volley-\d+|jousting-d\d+|brace|ranged-trip|razing|hampering|free-hand|grapple|concealable|climbing|backstabber|combination|capacity-\d+|concussive|kickback|scatter-\d+|repeating|modular|staff)$/;
+const BUILD = /^(?:two-hand-d\d+|monk|parry|trip|reach|shove|sweep|backswing|disarm|finesse|agile|forceful|deadly-d\d+|fatal(?:-aim)?-d\d+|versatile-[a-z]+|thrown(?:-\d+)?|twin|nonlethal|propulsive|volley-\d+|jousting-d\d+|brace|ranged-trip|razing|hampering|free-hand|grapple|concealable|climbing|backstabber|combination|capacity-\d+|concussive|kickback|scatter-\d+|repeating|modular)$/;
 const WEAPON = ["damage", "group", "baseItem", "category", "usage", "bulk", "range", "reload"];
 
 // The item's source and the staff's → { update, kept }: its weapon the staff's (its damage, group, base, category, hands, Bulk and build
-// traits, the staff trait with them), its runes off when the form says so; kept, its own, put back by revertUpdate.
+// traits), its runes off when the form says so; kept, its own, put back by revertUpdate. Not the staff trait: the spell module claims an item
+// with it as a staff of its own (found live 2026-10-29), and the item's activations would be gone with it.
 export function staffWeaponUpdate(item, staff, { runesOff = true } = {}) {
     const own = item?.system ?? {};
     const theirs = staff?.system ?? {};
     const kept = { ...Object.fromEntries(WEAPON.map((key) => [key, structuredClone(own[key] ?? null)])), traits: [...(own.traits?.value ?? [])], runes: structuredClone(own.runes ?? null) };
-    const traits = [...new Set([...(own.traits?.value ?? []).filter((trait) => !BUILD.test(trait)), ...(theirs.traits?.value ?? []).filter((trait) => BUILD.test(trait)), "staff"])].sort();
+    const traits = [...new Set([...(own.traits?.value ?? []).filter((trait) => !BUILD.test(trait)), ...(theirs.traits?.value ?? []).filter((trait) => BUILD.test(trait))])].sort();
     const update = { ...Object.fromEntries(WEAPON.filter((key) => theirs[key] !== undefined).map((key) => [`system.${key}`, structuredClone(theirs[key])])), "system.traits.value": traits };
     if (runesOff) update["system.runes"] = { potency: 0, striking: 0, property: [] };
     return { update, kept };
