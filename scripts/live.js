@@ -100,6 +100,9 @@ import { plateShield } from "./shield-temp.js";
 import { endSpeedPenalties, granterOf, sparedBy } from "./speed-penalties.js";
 import { replacedBy } from "./until-rest.js";
 import { degreeOf } from "../src/compiler/consumables.js";
+import { reflectable } from "../../pf2e-automatic-ability-resolution/src/live/reflect.js";
+
+const SPELL_MODULE_ID = "pf2e-automatic-resolution";
 
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
@@ -820,12 +823,26 @@ async function giveUserConditions(effects, { actor, token, used }) {
 }
 
 // The ability module's latest open save or attack card at the item's user, turned back (plan.reflect) → the card's line.
+// (Or the spell module's latest cast at it when that's the newer — a fear spell at Cayden's Tankard's user, an energy line, ray or attack spell
+// at Scale of Igroon's: its api.casting.reaim, 2026-10-29, docs/spell-module-requests.md row 17.)
 async function reflectBack(state, targets) {
     const reflect = game.modules.get(ABILITY_ID)?.api?.live?.reflect;
-    if (!reflect) return "Turn the effect back by hand: the ability module's reflect isn't there.";
+    const casting = game.modules.get(SPELL_MODULE_ID)?.api?.casting;
     const { actor, token } = await creatureOf(state.user);
     const userToken = token?.document ?? token ?? (state.user.tokenUuid ? await fromUuid(state.user.tokenUuid).catch(() => null) : null);
     const aimed = (await Promise.all((targets ?? []).map((uuid) => fromUuid(uuid).catch(() => null)))).filter(Boolean);
+    const cast = casting?.reaimable && userToken ? casting.reaimable({ reflect: state.plan.reflect, userToken }) : null;
+    const who = { actorUuid: actor?.uuid ?? state.user.actorUuid, tokenUuid: userToken?.uuid ?? null, name: state.user.name };
+    const card = (game.messages?.contents ?? []).filter((message) => reflectable(message.getFlag?.(ABILITY_ID, "card"), state.plan.reflect, who)).at(-1) ?? null;
+    if (cast && (!card || cast.timestamp >= (Number(card.timestamp) || 0))) {
+        const turned = await casting.reaim({ reflect: state.plan.reflect, userToken, targets: aimed, item: { name: state.item.name, uuid: state.item.uuid ?? null } });
+        if (turned) {
+            const at = turned.at?.length ? ` at ${turned.at.join(", ")}` : "";
+            const beyond = turned.beyond?.length ? `; out of its range: ${turned.beyond.join(", ")}` : "";
+            return state.plan.reflect.to === "creator" ? `${turned.spell} counteracted for all its targets, cast again${at}.` : `${turned.spell} turned${at}${beyond}.`;
+        }
+    }
+    if (!reflect) return "Turn the effect back by hand: the ability module's reflect isn't there.";
     const turned = await reflect({ plan: state.plan, item: { name: state.item.name, uuid: state.item.uuid ?? null, actor }, userToken, targets: aimed });
     if (!turned) return `${state.item.name}: no open card targets ${state.user.name} (the GM has a note).`;
     const at = turned.at?.length ? ` at ${turned.at.join(", ")}` : "";

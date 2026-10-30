@@ -6,6 +6,8 @@
 // - Blessed Reformer: Calm at half its user's level, one target, its save penalty the weapon's damage dice.
 // - Phoenix Fighting Fan: Quandary kept up by a Strike each round, ended by a round without one.
 // - Animate Dreamer: a spell stored in its etched Spell Reservoir, Unleash Spell at +25 and DC 33; another stored and Safe Release.
+// - Cayden's Tankard: a foe's Fear at its user counteracted and cast again at the foe alone (the spell module's api.casting.reaim).
+// - Scale of Igroon: a foe's Force Barrage at its user cast again at another creature within what's left of its range.
 
 const SPELLS = "pf2e-automatic-resolution";
 
@@ -39,6 +41,20 @@ export default (h) => {
         }
         const spells = sources.length ? await actor.createEmbeddedDocuments("Item", sources) : [];
         return { entry: actor.items.get(entry.id), spells };
+    }
+    // An NPC's spontaneous entry at a DC (its attack 10 lower), with rank 1 slots, and these spells on it → { entry, spells }.
+    async function npcCaster(actor, tradition, dc, names) {
+        const system = { tradition: { value: tradition }, prepared: { value: "spontaneous" }, spelldc: { dc, value: dc - 10 }, slots: { slot1: { value: 3, max: 3 } } };
+        const [entry] = await actor.createEmbeddedDocuments("Item", [{ name: `${tradition} spells`, type: "spellcastingEntry", system }]);
+        const index = await game.packs.get("pf2e.spells-srd").getIndex();
+        const sources = [];
+        for (const name of names) {
+            const source = (await game.packs.get("pf2e.spells-srd").getDocument(index.find((one) => one.name === name)._id)).toObject();
+            delete source._id;
+            source.system.location = { value: entry.id };
+            sources.push(source);
+        }
+        return { entry: actor.items.get(entry.id), spells: await actor.createEmbeddedDocuments("Item", sources) };
     }
     // Its own cast of the spell from its entry (PF2e's: a slot spent, the cast message) → that message.
     async function ownCast(actor, entry, spell, rank) {
@@ -315,6 +331,63 @@ export default (h) => {
                 await spells.itemCasts.reservoirExpend({ actor: user, weapon: user.items.get(gun.id) });
                 await h.until(() => !holding(), "Safe Release: expended", { timeout: 5000 });
                 return { results: resultsOf(card) };
+            } finally {
+                await closeWindows();
+            }
+        },
+
+        // Cayden's Tankard's reaction: a foe casts Fear (DC 25) at its user; the tankard's card counteracts it for all its targets (the cast lost)
+        // and the spell module casts it again from the foe at the foe alone, at its rank and DC.
+        async b7CaydensTankardFearSpell(scene) {
+            assertSpells();
+            const { actor: user, token: userToken } = await h.creature(scene, "Tankard Hero", { type: "character", x: 8, y: 14, level: 20 });
+            const { actor: foe, token: foeToken } = await h.creature(scene, "Tankard Caster", { x: 10, y: 14, alliance: "opposition", hp: 300, level: 10 });
+            const { entry, spells: [fear] } = await npcCaster(foe, "occult", 25, ["Fear"]);
+            const tankard = await h.give(user, "Cayden's Tankard");
+            await tankard.update(held(1));
+            try {
+                await h.target(userToken);
+                const cast = await ownCast(foe, entry, fear, 1);
+                await h.until(() => (game.messages.get(cast.id)?.getFlag(SPELLS, "castTargets") ?? []).includes(user.uuid), `Fear's targets the hero (${JSON.stringify(game.messages.get(cast.id)?.getFlag(SPELLS, "castTargets") ?? null)})`, { timeout: 8000 });
+                let since = Date.now();
+                await api().activate(tankard.uuid, await activationIndex(tankard, (plan) => plan?.reflect?.to === "creator"));
+                const card = await h.messageAfter(since, (message) => message.getFlag(h.NS, "card")?.status === "open", { what: "the tankard's card" });
+                since = Date.now();
+                await api().apply(card.id, { targets: [] });
+                const again = await castMessage(since);
+                const flag = again.flags[SPELLS].castFromItem;
+                h.assert(game.messages.get(cast.id).getFlag(SPELLS, "spellLost") && again.actor?.id === foe.id && JSON.stringify(flag.targets) === JSON.stringify([foeToken.uuid]) && Number(flag.dc) === 25 && Number(flag.rank) === 1, `Fear lost, cast again at the foe at DC 25 (${JSON.stringify({ lost: game.messages.get(cast.id).getFlag(SPELLS, "spellLost") ?? null, flag, results: resultsOf(card) })})`);
+                h.assert(resultsOf(card).some((line) => /Fear counteracted for all its targets, cast again at/.test(line)), `the card's line (${JSON.stringify(resultsOf(card))})`);
+                return { results: resultsOf(card), flag };
+            } finally {
+                await closeWindows();
+            }
+        },
+
+        // Scale of Igroon's reflection: a foe's Force Barrage (rank 1) at its user, turned at another creature 10 feet from the user (within
+        // what's left of its 120 feet); the foe's cast left as it was.
+        async b7ScaleOfIgroonReflectSpell(scene) {
+            assertSpells();
+            const { actor: user, token: userToken } = await h.creature(scene, "Igroon Blocker", { type: "character", x: 8, y: 18, level: 20 });
+            const { actor: foe, token: foeToken } = await h.creature(scene, "Igroon Caster", { x: 12, y: 18, alliance: "opposition", hp: 300, level: 10 });
+            const { token: otherToken } = await h.creature(scene, "Igroon Other", { x: 8, y: 20, alliance: "opposition", hp: 300, level: 10 });
+            const { entry, spells: [barrage] } = await npcCaster(foe, "arcane", 27, ["Force Barrage"]);
+            const scale = await h.give(user, "Scale of Igroon");
+            await scale.update(held(1));
+            try {
+                await h.target(userToken);
+                const cast = await ownCast(foe, entry, barrage, 1);
+                await h.until(() => (game.messages.get(cast.id)?.getFlag(SPELLS, "castTargets") ?? []).includes(user.uuid), "Force Barrage's targets the blocker", { timeout: 8000 });
+                let since = Date.now();
+                await api().activate(scale.uuid, await activationIndex(scale, (plan) => plan?.reflect?.to === "chosen"));
+                const card = await h.messageAfter(since, (message) => message.getFlag(h.NS, "card")?.status === "open", { what: "the scale's card" });
+                since = Date.now();
+                await api().apply(card.id, { targets: [otherToken.uuid] });
+                const again = await castMessage(since);
+                const flag = again.flags[SPELLS].castFromItem;
+                h.assert(!game.messages.get(cast.id).getFlag(SPELLS, "spellLost") && again.actor?.id === foe.id && JSON.stringify(flag.targets) === JSON.stringify([otherToken.uuid]) && Number(flag.dc) === 27, `cast again at the other creature at DC 27, the first cast kept (${JSON.stringify({ flag, results: resultsOf(card) })})`);
+                h.assert(resultsOf(card).some((line) => /Force Barrage turned at/.test(line)), `the card's line (${JSON.stringify(resultsOf(card))})`);
+                return { results: resultsOf(card), flag };
             } finally {
                 await closeWindows();
             }
