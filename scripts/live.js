@@ -691,7 +691,8 @@ function wireCard(message, html) {
             else if (!game.users.activeGM) throw new Error("No GM is connected to apply it.");
             else game.socket.emit(SOCKET, { action: "apply", messageId: message.id, ...choices, userId: game.user.id });
         } catch (error) {
-            ui.notifications.error(`${state.item.name}: ${error.message}`);
+            // (Once, when the error already names it: "Tactical Entry: that space is occupied", not twice.)
+            ui.notifications.error(String(error.message).startsWith(`${state.item.name}:`) ? error.message : `${state.item.name}: ${error.message}`);
             console.error(`${MODULE_ID} |`, error);
             button.disabled = false;
         }
