@@ -86,7 +86,7 @@ export function rerollText(reroll) {
 // PF2e's degree of success: 10 over the DC a critical success, 10 under a critical failure; a natural 20 one step better,
 // a natural 1 one step worse. → 0 (critical failure) … 3 (critical success), or null without a DC.
 export function degreeOf({ total, dc, natural = null }) {
-    if (!Number.isFinite(Number(dc)) || !Number.isFinite(Number(total))) return null;
+    if (dc === null || dc === undefined || dc === "" || !Number.isFinite(Number(dc)) || !Number.isFinite(Number(total))) return null;
     let degree = total >= dc + 10 ? 3 : total >= dc ? 2 : total <= dc - 10 ? 0 : 1;
     if (natural === 20) degree = Math.min(3, degree + 1);
     if (natural === 1) degree = Math.max(0, degree - 1);
