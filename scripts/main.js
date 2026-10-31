@@ -10,6 +10,7 @@ import { etchedRuneActivations, runeIndex } from "../src/compiler/runes.js";
 import { etchedCritRiders } from "../src/compiler/rune-strikes.js";
 import { applyMessage, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
+import { postTeleportCard } from "./teleport.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { setUpPlacedLights } from "./placed-light.js";
 import { setUpPlacedMoves } from "./placed-moves.js";
@@ -360,8 +361,10 @@ Hooks.once("ready", async () => {
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)
+    // (live.postTeleport({ plan, item, actor, token }): the move or teleport card for another module's plan, the feat module's Stride and Leap
+    // feats (plan.builtin "teleport", src/compiler/move.js); item: { name, uuid }.)
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
     // (temperatureProtections: what its items protect a creature from in heat and cold, for the environment module — synchronous,
     // scripts/temperature.js.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, sphereTouched, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, sphereTouched, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune, postTeleport: ({ plan, item, actor, token = null, message = null }) => postTeleportCard({ message, plan, used: { data: item }, actor, token }) }) });
 });
