@@ -8,7 +8,7 @@ import { compileActivations } from "../src/compiler/permanent.js";
 import { equipmentEffectIndex } from "../src/compiler/degree-effects.js";
 import { etchedRuneActivations, runeIndex } from "../src/compiler/runes.js";
 import { etchedCritRiders } from "../src/compiler/rune-strikes.js";
-import { applyMessage, setUpLivePlay } from "./live.js";
+import { applyMessage, postCardFor, setUpLivePlay } from "./live.js";
 import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { setUpPlacedLights } from "./placed-light.js";
@@ -360,8 +360,10 @@ Hooks.once("ready", async () => {
     const module = game.modules.get(MODULE_ID);
     // (live.apply(messageId, choices): a card applied from code — choices as its controls give them: { drinker }, { included },
     // { weapon }, { targets: [token uuids] }.)
+    // (live.postCard({ plan, item, actor, token, message }): this module's card for another module's plan, as for an item's — the feat module's
+    // Stride and Leap feats (plan.builtin "teleport", src/compiler/move.js) and rerolls (src/compiler/rerolls.js); item: that module's Item.)
     // (live.activate(itemUuid, index): a permanent item's activation, as its sheet button does — on the active GM's client.)
     // (temperatureProtections: what its items protect a creature from in heat and cold, for the environment module — synchronous,
     // scripts/temperature.js.)
-    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, sphereTouched, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune }) });
+    if (module) module.api = Object.freeze({ compileItem: compile, handlesItem: handles, temperatureProtections, fallEases, weatherIgnores, sphereTouched, live: Object.freeze({ apply: applyMessage, activate: (itemUuid, index) => activate(itemUuid, index, game.user.id), etch: etchRune, postCard: ({ plan, item, actor, token = null, message = null }) => postCardFor({ message, plan, used: { data: item }, actor, token }) }) });
 });
