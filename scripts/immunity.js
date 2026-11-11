@@ -8,6 +8,7 @@ import { immunityEffect, isImmune } from "../../pf2e-automatic-ability-resolutio
 import { recipientOf } from "../src/live/card.js";
 import { ABILITY_ID, MODULE_ID, isActiveGM, stateOf } from "./foundry.js";
 
+import { noticeImmunity } from "./immunity-notice.js";
 // (Kinds whose card holds to it some other way: a save at the creatures, the ability module's; a Strike's or a bomb's, theirs.)
 const OWN_KINDS = new Set(["item", "cast", "fortune", "reroll", "ways", "counteract", "item-action", "toggle", "focus", "take"]);
 
@@ -58,6 +59,8 @@ export async function withImmunityGuard(message, state, choices, run) {
     const creatures = await recipientsOf(state, choices);
     const immune = creatures.filter((creature) => immuneNow(creature.actor, immunity));
     const time = timeWords(immunity.duration);
+    // (2026-11-11: the GM told of each refused or left out, the core's immunity notice.)
+    for (const creature of immune) noticeImmunity({ actor: creature.actor, token: creature.token, target: creature.name, blocked: state.item?.name ?? "the item", why: `temporarily immune (${time})` });
     if (creatures.length && immune.length === creatures.length) throw new Error(`${immune.map((creature) => creature.name).join(", ")} ${immune.length === 1 ? "is" : "are"} still immune to ${state.item?.name ?? "it"} (temporarily, ${time}).`);
     // (Several targeted, some immune: the rest only.)
     const given = immune.length ? { ...choices, targets: (choices.targets ?? []).filter((uuid) => !immune.some((creature) => creature.uuid === uuid)) } : choices;
