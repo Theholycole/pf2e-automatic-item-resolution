@@ -14,6 +14,7 @@ import { withoutHitDamage } from "../src/live/scaled.js";
 import { withStrikeFormula } from "../src/live/strike-as.js";
 import { withWeaponStrike } from "../src/live/self-fighting.js";
 
+import { noticeImmunity } from "./immunity-notice.js";
 // A creature's PF2e Immunity to a poison delivered that way (inhaled, ingested, contact, injury) or to poison at all → its words, or null.
 export function immuneTo(actor, delivery) {
     const types = new Set((actor?.attributes?.immunities ?? actor?.system?.attributes?.immunities ?? []).map((entry) => String(entry?.type ?? entry)));
@@ -85,6 +86,7 @@ export async function strikeWithPoison(message) {
         const [group] = targetGroups(poison.plan, [targetToken]);
         const immune = !group?.plan ? "by kind" : immuneTo(targetToken.actor ?? targetToken.object?.actor, "injury");
         if (immune) {
+            noticeImmunity({ actor: targetToken.actor ?? targetToken.object?.actor, token: targetToken, blocked: poison.item.name, why: immune === "by kind" ? "immune by its kind" : `immune to ${immune}` });
             await ChatMessage.create({ speaker, content: `<p><strong>${poison.item.name}</strong>: ${targetToken.name ?? targetToken.actor?.name} is immune to it (${immune}).</p>` });
             return;
         }
@@ -276,11 +278,15 @@ export async function applyExposureCard(message, { targets = [], damageChoice = 
         // (A creature immune to its delivery, PF2e's Immunity — Choral Toga's Elysium's Gasp against an inhaled poison —: no card for it, found by
         // the 2026-10-28 case writers.)
         const delivered = state.delivery ? tokens.filter((token) => immuneTo(token.actor ?? token.object?.actor, state.delivery)) : [];
-        for (const token of delivered) lines.push(`${token.name ?? token.actor?.name}: immune to ${state.item.name} (${immuneTo(token.actor ?? token.object?.actor, state.delivery)}).`);
+        for (const token of delivered) {
+            lines.push(`${token.name ?? token.actor?.name}: immune to ${state.item.name} (${immuneTo(token.actor ?? token.object?.actor, state.delivery)}).`);
+            noticeImmunity({ actor: token.actor ?? token.object?.actor, token, blocked: state.item.name, why: `immune to ${immuneTo(token.actor ?? token.object?.actor, state.delivery)}` });
+        }
         for (const group of targetGroups(played, tokens.filter((token) => !delivered.includes(token)))) {
             // (A kind immune to it, Lamentation of the Faithless's unholy creatures: no card for them, src/compiler/kind-saves.js.)
             if (!group.plan) {
                 lines.push(`${group.tokens.map((token) => token.name ?? token.actor?.name).join(", ")}: immune to ${state.item.name} (by kind).`);
+                for (const token of group.tokens) noticeImmunity({ actor: token.actor ?? token.object?.actor, token, blocked: state.item.name, why: "immune by its kind" });
                 continue;
             }
             // (Healed instead, no save — Spirit Fan's living target: its dice rolled and the Hit Points given here, src/live/if-target.js.)

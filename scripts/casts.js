@@ -19,6 +19,7 @@ import { rememberTurnHeal } from "./turn-heal.js";
 import { startItemZone } from "./zones.js";
 import { createExposureCard, exposureCardHTML } from "../src/live/poison-card.js";
 
+import { noticeImmunity } from "./immunity-notice.js";
 const SPELL_ID = "pf2e-automatic-resolution";
 
 export async function postCastCard({ message, plan, used, actor, token }) {
@@ -188,6 +189,7 @@ export async function applyCastCard(message, { drinker = null, targets = [], cho
             const ofKind = (target) => state.plan.castTraits.immune.some((trait) => traitsOf(target).includes(trait));
             const immune = targetTokens.filter((target) => own(target) || ofKind(target) || (only.length && !only.some((trait) => traitsOf(target).includes(trait))));
             castTargets = targetTokens.filter((target) => !immune.includes(target));
+            for (const target of immune.filter((one) => own(one) || ofKind(one))) noticeImmunity({ actor: target.actor, token: target, blocked: state.item?.name ?? "the cast", why: own(target) ? "immune (its user)" : `immune (${state.plan.castTraits.immune.join(" or ")})` });
             for (const target of immune) lines.push(own(target) ? `${target.name} is immune (its user): left out of the cast.` : ofKind(target) ? `${target.name} is immune (${state.plan.castTraits.immune.join(" or ")}): left out of the cast.` : `${target.name} isn't a ${only.join(" or ")}: left out of the cast.`);
             for (const given of state.plan.castTraits.penalties) {
                 // (Its value the weapon's damage dice, Blessed Reformer's: read off the weapon now, its runes as they are — 2026-10-29.)

@@ -19,6 +19,7 @@ import { withoutUse } from "../src/live/activations-card.js";
 import { ABILITY_ID, CORE_ID, FLAG, MODULE_ID, applyRiders, creaturesNear, damageRollClass, entryOf, isActiveGM, recover, startInitiative, stateOf } from "./foundry.js";
 import { planFor, withoutAloftProne } from "../src/live/if-target.js";
 
+import { noticeImmunity } from "./immunity-notice.js";
 const SPELL_ID = "pf2e-automatic-resolution";
 
 const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
@@ -296,6 +297,8 @@ export async function strikeWithRider(message) {
     const ranged = timed?.placed?.nearSource === "weapon-range" ? { ...timed, placed: { ...timed.placed, nearSource: Number(weapon?.system?.range) || null } } : timed;
     // (A rider only for some creatures, Rattling Bolt's undead's lifesense: the target's own plan, src/live/if-target.js.)
     const save = fits && ranged ? planFor(ranged, targetToken.actor) : null;
+    // (A kind immune to it, src/live/if-target.js: the GM told — 2026-11-11.)
+    if (fits && ranged && !save) noticeImmunity({ actor: targetToken.actor, token: targetToken, blocked: `${rider.item.name}'s save`, why: "immune by its kind" });
     // (No damage on the hit, Juxtaposition Ammunition's "it doesn't deal the Strike's normal damage": said, for its damage roll.)
     if (rider.plan.strike?.noDamage) lines.unshift(`${target.name} takes none of the Strike's damage (don't roll it)`);
     if (save) {
