@@ -26,4 +26,10 @@ test("whose save: the item's targets, not its user", () => {
     assert.equal(isOwnSaveWords("Upon drinking, you attempt a "), true);
     assert.equal(isOwnSaveWords("If you fail, you must succeed at a "), true);
     assert.equal(isOwnSaveWords("You and each creature within 30 feet must attempt a "), false);
+    // (Cole's PC, 2026-11-17: a heading in the block, an instruction with no subject, and another creature after "but".)
+    assert.equal(isOwnSaveWords("Effect You drink from the bottle and must succeed at a "), true, "Energy Toxin Bottle");
+    assert.equal(isOwnSaveWords("Upon drinking the potion, attempt a "), true, "Truth Potion");
+    assert.equal(isOwnSaveWords("You're unharmed by this transformation, but the blood drinker must attempt a "), false, "Bitterblood Elixir");
+    assert.equal(isOwnSaveWords("Saving Throw "), false);
+    assert.equal(isOwnSaveWords("If you fail, you must attempt another "), true);
 });
