@@ -63,12 +63,23 @@ export function withUserDCs(plan, actor, text = "", item = null) {
 // clicked, so it's its user's DC as it is then.
 
 const SAVES = new Set(["fortitude", "reflex", "will"]);
-// (The words before the link in its sentence: the item's user is the one who attempts it.)
-const OWN_SUBJECT = /(?:^|[,;:]\s*|\b(?:then|and|or)\s+)(?:you|the (?:drinker|wearer|wielder|user|imbiber|bearer|holder|reader|eater)|its (?:user|wearer|wielder|drinker))\b(?![^,]*\bcreatures?\b)[^.!?]*$/i;
-const OWN_PHRASE = /\b(?:you|the drinker|the wearer|its user)\s+(?:must\s+|can\s+|then\s+)?(?:attempt|succeed|roll|make)s?\b[^.!?]*$/i;
+// (The words before the link in its sentence, from its last clause: the item's user is the one who attempts it — "you must attempt",
+// "the drinker attempts", or an instruction to its user with no subject, Truth Potion's "Upon drinking the potion, attempt a". Not when
+// that clause names another — Bitterblood Elixir's "You're unharmed by this transformation, but the blood drinker must attempt a". A
+// heading in the same block, Energy Toxin Bottle's "Effect You drink from the bottle and must succeed at a", starts its sentence over.
+// Live check on Cole's PC, 2026-11-17.)
+const HEADING = /\b(?:Activate|Effect|Drawback|Benefit|Saving Throw|Onset|Maximum Duration|Stage \d+|Trigger|Requirements|Frequency|Usage|Craft Requirements|Destruction|Special)\b(?:\s*\([^)]*\))?/g;
+const OWN_CLAUSE = /^(?:you|the (?:drinker|wearer|wielder|user|imbiber|bearer|holder|reader|eater)|its (?:user|wearer|wielder|drinker))\b(?![^,]*\bcreatures?\b)/i;
+const COMMAND = /^(?:attempt|succeed at|roll|make)\b/i;
 export const isOwnSaveWords = (before = "") => {
-    const sentence = String(before ?? "").split(/(?<=[.!?])\s+/).pop() ?? "";
-    return OWN_PHRASE.test(sentence) || (OWN_SUBJECT.test(sentence) && /\b(?:attempt|succeed|roll|save)\b/i.test(sentence));
+    let sentence = String(before ?? "").split(/(?<=[.!?])\s+/).pop() ?? "";
+    const headings = [...sentence.matchAll(HEADING)];
+    if (headings.length) {
+        const last = headings.at(-1);
+        sentence = sentence.slice(last.index + last[0].length);
+    }
+    const clause = (sentence.split(/[,;:]/).pop() ?? "").trim().replace(/^(?:(?:but|and|or|then|so|instead)\s+)+/i, "");
+    return COMMAND.test(clause) || (OWN_CLAUSE.test(clause) && /\b(?:attempt|succeed|roll|save|must)s?\b/i.test(clause));
 };
 
 // A link's DC under the setting → { dc, which } when it's raised, else null. Pure.
