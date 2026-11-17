@@ -54,7 +54,7 @@ import { setUpUntilRest } from "./until-rest.js";
 import { setUpAfterDamage } from "./after-damage.js";
 import { ownerOf } from "./foundry.js";
 import { registerSpendSettings } from "./spend.js";
-import { registerItemDCSettings } from "./item-dcs.js";
+import { registerItemDCSettings, setUpInlineDCs } from "./item-dcs.js";
 import { setUpImmunityAfter } from "./immunity.js";
 import { setUpExpiringItems } from "./expiring.js";
 import { setUpArmed } from "./armed.js";
@@ -213,6 +213,8 @@ Hooks.once("ready", async () => {
     setUpImmunityAfter();
     // (Items it made that wither after a time, Verdant Branch's fruits: scripts/expiring.js.)
     setUpExpiringItems();
+    // (PF2e's own links to an item's saves at its user's DC too, under the world setting: scripts/item-dcs.js.)
+    setUpInlineDCs();
     // (An item waiting on its wearer for a kind of damage, Flame Layer Balm's: scripts/armed.js.)
     setUpArmed();
     // (A shield's own temporary Hit Points, Ablative Shield Plating's: scripts/shield-temp.js.)
