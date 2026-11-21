@@ -13,6 +13,7 @@ import { activate } from "./activations.js";
 import { setUpGenericItems } from "./generic-items.js";
 import { setUpPlacedLights } from "./placed-light.js";
 import { setUpPlacedMoves } from "./placed-moves.js";
+import { setUpActivationNotes } from "./drake-shot.js";
 import { setUpMadeWeapons } from "./objects.js";
 import { temperatureProtections } from "./temperature.js";
 import { fallEases, setUpFallOffers, setUpFoam } from "./falls.js";
@@ -196,6 +197,8 @@ Hooks.once("ready", async () => {
     // (A light an item puts in a square, removed when its time is up: scripts/placed-light.js.)
     setUpPlacedLights();
     setUpPlacedMoves();
+    // (2026-11-21: Drake Shot's notes only on its own Strike, not every hit with the rifle.)
+    setUpActivationNotes();
     // (A weapon an item made that lasts while it's held: scripts/objects.js.)
     setUpMadeWeapons();
     // (Its fall reactions offered as the environment module's card means a fall: scripts/falls.js.)
